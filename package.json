@@ -1,0 +1,19 @@
+{
+  "name": "App",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "4.0.0"
+  },
+  "dependencies": {
+    "mssql": "4.3.0",
+    "safer-buffer": "2.1.2"
+  }
+}

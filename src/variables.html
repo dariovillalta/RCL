@@ -1,0 +1,910 @@
+<link rel="stylesheet" href="src/variablesStyles.css">
+<link rel="stylesheet" href="src/libs/mathlive-master/dist/mathlive.core.css">
+<link rel="stylesheet" href="src/libs/mathlive-master/dist/mathlive.css">
+<link href="src/libs/iCheck/skins/flat/green.css" rel="stylesheet">
+<link href="src/libs/datatables.net-bs/css/dataTables.bootstrap.min.css" rel="stylesheet">
+<link href="src/libs/datatables.net-buttons-bs/css/buttons.bootstrap.min.css" rel="stylesheet">
+<link href="src/libs/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css" rel="stylesheet">
+<link href="src/libs/datatables.net-responsive-bs/css/responsive.bootstrap.min.css" rel="stylesheet">
+<link href="src/libs/datatables.net-scroller-bs/css/scroller.bootstrap.min.css" rel="stylesheet">
+<link href="src/libs/overhang/overhang.min.css" rel="stylesheet">
+<div class="container body">
+  <div class="main_container">
+    <div class="col-md-3 left_col">
+      <div class="left_col scroll-view">
+        <div class="navbar nav_title" style="border: 0;" id="wrapper">
+          <a onclick="goHome()" class="site_title cursorHand"><img src="src/img/full-logo-example.png" alt="Financiera Finca Honduras" class="logo_company"> <img src="src/img/small-logo-example.png" alt="Financiera Finca Honduras" class="logo_company_solo"></a>
+        </div>
+
+        <div class="clearfix"></div>
+
+        <!-- menu profile quick info -->
+        <div class="profile clearfix">
+          <div class="profile_info">
+            <span>Bienvenido,</span>
+            <h2 id="nameUser"></h2>
+          </div>
+        </div>
+        <!-- /menu profile quick info -->
+
+        <br />
+
+        <!-- sidebar menu -->
+        <div id="sidebar-menu" class="main_menu_side hidden-print main_menu">
+          <div class="menu_section">
+            <h3>General</h3>
+            <ul class="nav side-menu">
+              <li><a><i class="fa fa-home"></i> Home <span class="fa fa-chevron-down"></span></a>
+              </li>
+            </ul>
+          </div>
+
+        </div>
+        <!-- /sidebar menu -->
+      </div>
+    </div>
+
+    <!-- top navigation -->
+    <div class="top_nav">
+      <div class="nav_menu">
+        <nav>
+          <div class="nav toggle">
+            <a id="menu_toggle"><i class="fa fa-bars"></i></a>
+          </div>
+
+          <ul class="nav navbar-nav navbar-right">
+            <li class="">
+              <a href="javascript:;" class="user-profile dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                <img src="" alt=""> <span id="navbar_name"></span>
+                <span class=" fa fa-angle-down"></span>
+              </a>
+              <ul class="dropdown-menu dropdown-usermenu pull-right">
+                <li id="varLabel"><a onclick="goVariables()"> Editar Variables </a></li>
+                <li id="userLabel"><a onclick="goUsers()"> Control de Usuarios </a></li>
+                <li><a onclick="logout()"><i class="fa fa-sign-out pull-right"></i> Cerrar Sesi&oacute;n</a></li>
+              </ul>
+            </li>
+
+            <li role="presentation" class="dropdown">
+              <a href="javascript:;" class="dropdown-toggle info-number" data-toggle="dropdown" aria-expanded="false">
+                <i class="fa fa-envelope-o"></i>
+                <span class="badge bg-green">6</span>
+              </a>
+              <ul id="menu1" class="dropdown-menu list-unstyled msg_list" role="menu">
+                <li>
+                  <a>
+                    <span class="image"><img src="" alt="Profile Image" /></span>
+                    <span>
+                      <span>John Smith</span>
+                      <span class="time">3 mins ago</span>
+                    </span>
+                    <span class="message">
+                      Film festivals used to be do-or-die moments for movie makers. They were where...
+                    </span>
+                  </a>
+                </li>
+                <li>
+                  <a>
+                    <span class="image"><img src="" alt="Profile Image" /></span>
+                    <span>
+                      <span>John Smith</span>
+                      <span class="time">3 mins ago</span>
+                    </span>
+                    <span class="message">
+                      Film festivals used to be do-or-die moments for movie makers. They were where...
+                    </span>
+                  </a>
+                </li>
+                <li>
+                  <a>
+                    <span class="image"><img src="" alt="Profile Image" /></span>
+                    <span>
+                      <span>John Smith</span>
+                      <span class="time">3 mins ago</span>
+                    </span>
+                    <span class="message">
+                      Film festivals used to be do-or-die moments for movie makers. They were where...
+                    </span>
+                  </a>
+                </li>
+                <li>
+                  <a>
+                    <span class="image"><img src="" alt="Profile Image" /></span>
+                    <span>
+                      <span>John Smith</span>
+                      <span class="time">3 mins ago</span>
+                    </span>
+                    <span class="message">
+                      Film festivals used to be do-or-die moments for movie makers. They were where...
+                    </span>
+                  </a>
+                </li>
+                <li>
+                  <div class="text-center">
+                    <a>
+                      <strong>See All Alerts</strong>
+                      <i class="fa fa-angle-right"></i>
+                    </a>
+                  </div>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+    <!-- /top navigation -->
+
+    <!-- page content -->
+    <div class="right_col" role="main">
+      <div class="page-title">
+        <div class="title_left">
+          <h3>Editar Variables <small> design</small></h3>
+        </div>
+
+        <div class="title_right">
+          <div class="col-md-5 col-sm-5 col-xs-12 form-group pull-right top_search">
+            <div class="input-group">
+              <input type="text" class="form-control" placeholder="Buscar...">
+              <span class="input-group-btn">
+                <button class="btn btn-default" type="button">Go!</button>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="clearfix"></div>
+
+      <div id="formula_div" class="row">
+        <div class="col-md-12">
+          <div class="x_panel">
+            <div class="x_title">
+              <h2>Formula del Ratio de Cobertura de Liquidez</h2>
+              <ul class="nav navbar-right panel_toolbox">
+                <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                </li>
+              </ul>
+              <div class="clearfix"></div>
+            </div>
+
+            <div class="x_content">
+
+              <div class="col-md-9 col-sm-8 col-xs-12">
+                <div id="contenedorTextoVariables">
+                </div>
+                <br/>
+                <h5>* Nota: Las variables son insensibles a may&uacute;sculas y min&uacute;sculas.</h5>
+                <br/>
+                <h4>Ingresar Formula RCL:</h4>
+                <br/>
+                <div id="wrapper">
+                  <div id="salida" class="formula_style">
+                  </div>
+                </div>
+                <div class="ln_solid"></div>
+                <div id="wrapper">
+                  <button onclick="resetFormula()" type="button" class="btn btn-info">Resetear</button>
+                  <button id="mostrar" onclick="saveFormula()" type="button" class="btn btn-success">Guardar</button>
+                </div>
+
+              </div>
+
+              <!-- start project-detail sidebar -->
+              <div class="col-md-3 col-sm-4 col-xs-12">
+
+                <section class="panel">
+
+                  <div class="x_title">
+                    <h3 class="green"><i class="fa fa-flag-checkered"></i> Comandos</h3>
+                    <div class="clearfix"></div>
+                  </div>
+                  <div class="panel-body">
+
+                    <table class="table table-bordered">
+                      <thead>
+                        <tr>
+                          <th>Nombre</th>
+                          <th>S&iacute;mbolo</th>
+                          <th>Teclas</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>Suma</td>
+                          <td>2+x</td>
+                          <td>+</td>
+                        </tr>
+                        <tr>
+                          <td>Resta</td>
+                          <td>2-x</td>
+                          <td>-</td>
+                        </tr>
+                        <tr>
+                          <td>Multiplicaci&oacute;n</td>
+                          <td>2*x</td>
+                          <td>xx</td>
+                        </tr>
+                        <tr>
+                          <td>Divisi&oacute;n</td>
+                          <td>&frac14;</td>
+                          <td>/</td>
+                        </tr>
+                        <tr>
+                          <td>Exponencial</td>
+                          <td>2 <sup>x</sup> </td>
+                          <td>^</td>
+                        </tr>
+                        <tr>
+                          <td>Sumatoria</td>
+                          <td>&Sigma;</td>
+                          <td>sum</td>
+                        </tr>
+                        <tr>
+                          <td>No Igual</td>
+                          <td>&#8800;</td>
+                          <td>!=</td>
+                        </tr>
+                        <tr>
+                          <td>Igual</td>
+                          <td>=</td>
+                          <td>=</td>
+                        </tr>
+                        <tr>
+                          <td>Menor</td>
+                          <td>&#60;</td>
+                          <td>&#60;</td>
+                        </tr>
+                        <tr>
+                          <td>Mayor</td>
+                          <td>&#62;</td>
+                          <td>&#62;</td>
+                        </tr>
+                        <tr>
+                          <td>Menor &oacute; Igual</td>
+                          <td>&le;</td>
+                          <td>&#60;=</td>
+                        </tr>
+                        <tr>
+                          <td>Mayor &oacute; Igual</td>
+                          <td>&ge;</td>
+                          <td>&#62;=</td>
+                        </tr>
+                        <tr>
+                          <td>Raiz Cuadrada</td>
+                          <td>&radic;</td>
+                          <td>sqrt</td>
+                        </tr>
+                      </tbody>
+                    </table>
+
+                  </div>
+
+                </section>
+
+              </div>
+              <!-- end project-detail sidebar -->
+
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="variables_div" class="row">
+        <div class="col-md-12">
+          <div class="x_panel">
+            <div class="x_title">
+              <h2>Variables de Formula del Ratio de Cobertura de Liquidez</h2>
+              <ul class="nav navbar-right panel_toolbox">
+                <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                </li>
+              </ul>
+              <div class="clearfix"></div>
+            </div>
+
+            <div class="x_content">
+
+              <div class="col-md-12 col-sm-12 col-xs-12">
+                <h5>Para editar el campo, haga click en la celda de la fila y columna que desea editar.</h5>
+                <h5>Para ver las variables asociadas con la variable de la formula, haga click en el bot&oacute;n verde de la primera fila.</h5>
+                <br/>
+
+                <div class="card-box table-responsive">
+                  <table id="datatable_variables" class="table table-striped table-bordered">
+                    <thead>
+                      <tr>
+                        <th></th>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Variables</th>
+                        <th>Descripci&oacute;n</th>
+                        <th>Guardar</th>
+                        <th>Eliminar</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                    </tbody>
+                  </table>
+                </div>
+
+                <br/>
+
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div> <!-- /end VARIABLES -->
+
+      <!-- <div id="variablesDeVariables_div" class="row">
+        <div class="col-md-12">
+          <div class="x_panel">
+            <div class="x_title">
+              <h2>Variables de Formula del Ratio de Cobertura de Liquidez</h2>
+              <ul class="nav navbar-right panel_toolbox">
+                <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                </li>
+              </ul>
+              <div class="clearfix"></div>
+            </div>
+
+            <div class="x_content">
+
+              <div class="col-md-12 col-sm-12 col-xs-12">
+                <h5>Para editar el campo, haga click en la celda de la fila y columna que desea editar.</h5>
+                <h5>Para ver las variables asociadas con la variable de la formula, haga click en el bot&oacute;n verde de la primera fila.</h5>
+                <br/>
+
+                <div class="card-box table-responsive">
+                  <table id="datatable_variablesOfVariables" class="table table-striped table-bordered">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Variable Padre</th>
+                        <th>Nombre</th>
+                        <th>Descripci&oacute;n</th>
+                        <th>Cuenta</th>
+                        <th>Guardar</th>
+                        <th>Eliminar</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                    </tbody>
+                  </table>
+                </div>
+
+                <br/>
+
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div> --> <!-- /end VARIABLESDEVARIABLES -->
+
+
+      <div id="variablesDeVariables_div" class="row">
+        <div class="col-md-12">
+          <div class="x_panel">
+            <div class="x_title">
+              <h2>Variables de Formula del Ratio de Cobertura de Liquidez</h2>
+              <ul class="nav navbar-right panel_toolbox">
+                <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                </li>
+              </ul>
+              <div class="clearfix"></div>
+            </div>
+
+            <div class="x_content">
+
+              <div class="col-md-12 col-sm-12 col-xs-12">
+                <h5>Para editar el campo, haga click en la celda de la fila y columna que desea editar.</h5>
+                <h5>Para ver las variables asociadas con la variable de la formula, haga click en el bot&oacute;n verde de la primera fila.</h5>
+                <br/>
+
+                <table id="datatable_variablesOfVariables" class="table table-striped">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Variable Padre</th>
+                      <th>Nombre</th>
+                      <th>Descripci&oacute;n</th>
+                      <th>Editar</th>
+                      <th>Eliminar</th>
+                    </tr>
+                  </thead>
+
+                  <tbody id="datatable_variablesOfVariables_body">
+                  </tbody>
+                </table>
+
+                <br/>
+
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>  <!-- /end VARIABLESDEVARIABLES -->
+
+
+      <div id="listas_div" class="row">
+        <div class="col-md-12">
+          <div class="x_panel">
+            <div class="x_title">
+              <h2>Importar Manual Contable y Administraci&oacute;n de Listas para las Reglas</h2>
+              <ul class="nav navbar-right panel_toolbox">
+                <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                </li>
+              </ul>
+              <div class="clearfix"></div>
+            </div>
+
+            <div class="x_content">
+
+              <div class="col-md-12 col-sm-12 col-xs-12">
+                <div class="row">
+                  <h4>Importar Manual Contable por archivo de excel:</h4>
+                  <br/>
+                  <button onclick="manualContableExcelUpload()" type="button" class="col-xs-10 col-xs-offset-1 btn btn-primary" style="margin-top:1.6em;">Seleccionar Archivo</button>
+                </div>
+                <div class="ln_solid"></div>
+                <h4>Crear listas de forma manual:</h4>
+                <div class="row">
+                  <label class="control-label col-sm-2 col-sm-offset-1 col-xs-6" for="nameList">Nombre Lista: </label>
+                  <div class="col-sm-3 col-xs-6">
+                    <input id="nameList" type="text" class="form-control" placeholder="Ingresar nombre de la lista">
+                  </div>
+                  <button type="button" onclick="createList()" class="btn btn-primary col-sm-offset-1 col-sm-3 col-xs-12">Crear Lista</button>
+                </div>
+                <br/>
+                <div class="row">
+                  <label class="control-label col-sm-2 col-sm-offset-1 col-xs-6" for="elementosLista">Editar nombre de Lista: </label>
+                  <div class="col-sm-3 col-xs-12">
+                    <div class="select-style">
+                      <select id="elementosDeListaEdit" onchange="$('#elementoNombreEdit').val($('#elementosDeListaEdit :selected').text())">
+                      </select>
+                    </div>
+                  </div>
+                  <div class="col-sm-offset-1 col-sm-2 col-xs-12">
+                    <input id="elementoNombreEdit" type="text" class="form-control" placeholder="Ingresar nombre de elemento">
+                  </div>
+                  <button type="button" onclick="updateList()" class="btn btn-success col-sm-1 col-xs-12"><span class="glyphicon glyphicon-pencil"></span></button>
+                  <button type="button" onclick="deleteList()" class="btn btn-danger col-sm-1 col-xs-12"><span class="glyphicon glyphicon-trash"></span></button>
+                </div>
+                <br/>
+                <div class="row">
+                  <label class="control-label col-sm-2 col-sm-offset-1 col-xs-6" for="elementosLista">Agregar Elemento a Lista: </label>
+                  <div class="col-sm-3 col-xs-12">
+                    <div class="select-style">
+                      <select id="elementosDeLista">
+                      </select>
+                    </div>
+                  </div>
+                  <div class="col-sm-offset-1 col-sm-3 col-xs-12">
+                    <input id="elementoNombre" type="text" class="form-control" placeholder="Ingresar nombre de elemento">
+                  </div>
+                  <div class="col-sm-2 col-xs-12">
+                    <input id="elementoValor" type="text" class="form-control" placeholder="Ingrese valor">
+                  </div>
+                </div>
+                <div class="row" id="wrapper">
+                  <br/>
+                  <button onclick="createElementList()" type="button" class="btn btn-success">Agregar Elemento a Lista</button>
+                </div>
+
+                <div class="ln_solid"></div>
+
+                <div class="row">
+                  <h4>Editar listas:</h4>
+                  <div class="col-sm-3 col-xs-12 col-sm-offset-3">
+                    <div class="select-style">
+                      <select id="elementosDeListaUpdate" onchange="loadListLists()">
+                      </select>
+                    </div>
+                  </div>
+                  <div class="col-sm-4 col-xs-12">
+                    <ul id="listsElements" class="to_do">
+                    </ul>
+                  </div>
+                </div>
+
+                <br/>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div> <!-- /end Manual Contable y Listas -->
+
+      <div id="fosede_div" class="row">
+        <div class="col-md-12">
+          <div class="x_panel">
+            <div class="x_title">
+              <h2>Monto de cobertura del Seguro de Dep&oacute;sitos</h2>
+              <ul class="nav navbar-right panel_toolbox">
+                <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                </li>
+              </ul>
+              <div class="clearfix"></div>
+            </div>
+
+            <div class="x_content">
+
+              <div class="col-md-12 col-sm-12 col-xs-12">
+                <h4>Monto de cobertura del Seguro de Dep&oacute;sitos &#8594; FOSEDE <span class="pull-right">Monto Actual: <span id="montoActual"></span></span></h4>
+                <br/>
+                <form class="form-horizontal form-label-left">
+
+                  <div class="form-group">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="first-name">Ingresar Monto:</label>
+                    <div class="col-md-3 col-sm-3 col-xs-12">
+                      <input type="text" id="lempiraInput" required="required" class="form-control col-md-7 col-xs-12" data-inputmask-alias="currency" data-inputmask-prefix="L " data-inputmask-clearmaskonlostfocus="true" style="display:none;">
+                      <input type="text" id="dollarInput" required="required" class="form-control col-md-7 col-xs-12" data-inputmask-alias="currency" data-inputmask-clearmaskonlostfocus="true" >
+                    </div>
+                    <div class="col-md-2 col-md-offset-1 col-sm-2 col-sm-offset-1 col-xs-3 col-xs-offset-3">
+                      <label class="control-label" for="first-name">Moneda:</label>
+                    </div>
+                    <div class="col-md-3 col-sm-3 col-xs-6">
+                      <div class="radio">
+                        <label>
+                          <input id="dollarInputRadio" onclick="showDollar()" type="radio" checked name="moneda"> Dolar
+                        </label>
+                      </div>
+                      <div class="radio">
+                        <label>
+                          <input id="lempiraInputRadio" onclick="showLempira()" type="radio" name="moneda"> Lempira
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="first-name">Tasa de Cambio:</label>
+                    <div class="col-md-3 col-sm-3 col-xs-12">
+                      <input type="text" id="lempiraInputCambio" required="required" class="form-control col-md-7 col-xs-12" data-inputmask-alias="currency" data-inputmask-prefix="L " data-inputmask-clearmaskonlostfocus="true">
+                      <!-- <input type="text" id="dollarInputCambio" required="required" class="form-control col-md-7 col-xs-12" data-inputmask-alias="currency" data-inputmask-clearmaskonlostfocus="true" data-inputmask-digits="3" style="display:none;"> -->
+                    </div>
+                    <div class="col-md-2 col-md-offset-1 col-sm-2 col-sm-offset-1 col-xs-3 col-xs-offset-3">
+                      <label class="control-label" for="first-name">Moneda:</label>
+                    </div>
+                    <div class="col-md-3 col-sm-3 col-xs-6">
+                      <!-- <div class="radio">
+                        <label>
+                          <input id="dollarRadio" type="radio" name="cambio" disabled="disabled"> Dolar
+                        </label>
+                      </div> -->
+                      <div class="radio">
+                        <label>
+                          <input id="lempiraRadio" type="radio" checked name="cambio" disabled="disabled"> Lempira
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="row tile_count">
+                    <div class="tile_stats_count" id="wrapper">
+                      <span class="count_top">Total:</span>
+                      <div class="count" id="totalTasaCambio"></div>
+                    </div>
+                  </div>
+
+                </form>
+
+                <br/>
+                <div class="ln_solid"></div>
+                <div id="wrapper">
+                  <button id="mostrar" onclick="calculateRateChange()" type="button" class="btn btn-info">Calcular</button>
+                  <button id="mostrar" onclick="verifyAndSaveFOSEDE()" type="button" class="btn btn-success">Guardar</button>
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div> <!-- /end FOSEDE -->
+
+      <div id="alac_div" class="row">
+        <div class="col-md-12">
+          <div class="x_panel">
+            <div class="x_title">
+              <h2>Importar Activos L&iacute;quidos de Alta Calidad</h2>
+              <ul class="nav navbar-right panel_toolbox">
+                <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                </li>
+              </ul>
+              <div class="clearfix"></div>
+            </div>
+
+            <div class="x_content">
+
+              <div class="col-md-12 col-sm-12 col-xs-12">
+
+                <div class="x_panel" role="tabpanel" data-example-id="togglable-tabs">
+                  <ul id="myTab" class="nav nav-tabs bar_tabs" role="tablist">
+                    <li role="presentation" class="active"><a href="#tab_content1" id="home-tab" role="tab" data-toggle="tab" aria-expanded="true">Conexi&oacute;n a una Base de Datos</a>
+                    </li>
+                    <li role="presentation" class=""><a href="#tab_content2" role="tab" id="profile-tab" data-toggle="tab" aria-expanded="false">Excel</a>
+                    </li>
+                  </ul>
+                  <div id="myTabContent" class="tab-content">
+                    <div role="tabpanel" class="tab-pane fade active in" id="tab_content1" aria-labelledby="home-tab">
+
+                      <div class="col-md-6">
+                        <div class="form-group">
+                          <label>Usuario</label>
+                          <input id="activosUserDB" type="text" class="form-control" placeholder="Ingrese el nombre de usuario de la base de datos">
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="form-group">
+                          <label>Contrase&ntilde;a</label>
+                          <input id="activosPasswordDB" type="password" class="form-control" placeholder="Ingrese la contrase&ntilde;a de la base de datos">
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="form-group">
+                          <label>Servidor</label>
+                          <input id="activosServerDB" type="text" class="form-control" placeholder="Ingrese la direcci&oacute;n del servidor de la base de datos">
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="form-group">
+                          <label>Base de Datos</label>
+                          <input id="activosDataBaseDB" type="text" class="form-control" placeholder="Ingrese el nombre de la base de datos">
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="form-group">
+                          <label>Tabla</label>
+                          <input id="activosTableDB" type="text" class="form-control" placeholder="Ingrese el nombre de la tabla">
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <br/>
+                        <button id="testConnection" onclick="activosConnectionTest()" type="button" class="btn btn-primary" style="margin-top:1%;">Probar Conexi&oacute;n</button>
+                      </div>
+
+                    </div>
+                    <div role="tabpanel" class="tab-pane fade" id="tab_content2" aria-labelledby="profile-tab">
+
+                      <button onclick="activosExcelUpload()" type="button" class="col-md-5 btn btn-primary" style="margin-top:1.6em;">Seleccionar Archivo</button>
+                      <div class="col-md-6">
+                        <div class="form-group">
+                          <label>Hoja</label>
+                          <input id="activosTableExcel" type="text" class="form-control" placeholder="Ingrese el nombre de la hoja de excel">
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+                </div>
+
+                <br/>
+                <h4 class="text-center">Mapeo de Campos</h4>
+                
+                <table class="table table-striped">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Campo</th>
+                      <th>Origen</th
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <th scope="row">1</th>
+                      <td>Cuenta</td>
+                      <td>
+                        <input type="text" id="lempiraInputCambio" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">2</th>
+                      <td>ID Persona</td>
+                      <td>
+                        <input type="text" id="lempiraInputCambio" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">3</th>
+                      <td>Monto</td>
+                      <td>
+                        <input type="text" id="lempiraInputCambio" required="required" class="form-control">
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <br/>
+                <div class="ln_solid"></div>
+                <div id="wrapper">
+                  <button id="mostrar" onclick="saveActivosFile()" type="button" class="btn btn-success">Guardar</button>
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div> <!-- /end ALAC -->
+
+    </div>
+    <!-- /page content -->
+
+  </div>
+</div>
+
+<!-- MODAL-->
+<div id="modalElement" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <div class="text-divider"><h2>Modificar Elemento de Lista</h2></div>
+      </div>
+      <div class="modal-body">
+        <form id="" data-parsley-validate class="form-horizontal form-label-left">
+          
+          <div class="form-group">
+            <label class="control-label col-md-3 col-sm-3 col-xs-12" for="elementosDeListaModify">Lista Asociada</label>
+            <div class="col-md-6 col-sm-6 col-xs-12">
+              <div class="select-style">
+                <select id="elementosDeListaModify">
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="control-label col-md-3 col-sm-3 col-xs-12" for="elementoNombreUpdate">Nombre</label>
+            <div class="col-md-6 col-sm-6 col-xs-12">
+              <input type="text" id="elementoNombreUpdate" required="required" class="form-control col-md-7 col-xs-12">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="control-label col-md-3 col-sm-3 col-xs-12" for="elementoValorUpdatename">Valor</label>
+            <div class="col-md-6 col-sm-6 col-xs-12">
+              <input type="text" id="elementoValorUpdate" name="elementoValorUpdatename" required="required" class="form-control col-md-7 col-xs-12">
+            </div>
+          </div>
+
+        </form>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" onclick="$('#modalElement').modal('toggle');" class="btn btn-info">Cancelar</button>
+        <button type="button" onclick="deleteElementList()" class="btn btn-danger">Eliminar</button>
+        <button type="button" onclick="updateElementList()" class="btn btn-success">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Datatables -->
+<script src="src/libs/datatables.net/js/jquery.dataTables.min.js"></script>
+<script src="src/libs/datatables.net/js/jquery.dataTablesEditor.js"></script>
+<script src="src/libs/datatables.net-bs/js/dataTables.bootstrap.min.js"></script>
+<script src="src/libs/datatables.net-buttons/js/dataTables.buttons.min.js"></script>
+<script src="src/libs/datatables.net-buttons-bs/js/buttons.bootstrap.min.js"></script>
+<script src="src/libs/datatables.net-buttons/js/buttons.colVis.min.js"></script>
+<script src="src/libs/datatables.net-buttons/js/buttons.flash.min.js"></script>
+<script src="src/libs/datatables.net-buttons/js/buttons.html5.min.js"></script>
+<script src="src/libs/datatables.net-buttons/js/buttons.print.min.js"></script>
+<script src="src/libs/datatables.net-fixedheader/js/dataTables.fixedHeader.min.js"></script>
+<script src="src/libs/datatables.net-keytable/js/dataTables.keyTable.min.js"></script>
+<script src="src/libs/datatables.net-responsive/js/dataTables.responsive.min.js"></script>
+<script src="src/libs/datatables.net-responsive-bs/js/responsive.bootstrap.js"></script>
+<script src="src/libs/datatables.net-scroller/js/dataTables.scroller.min.js"></script>
+<script src="src/libs/jszip/dist/jszip.min.js"></script>
+<script src="src/libs/pdfmake/build/pdfmake.min.js"></script>
+<script src="src/libs/pdfmake/build/vfs_fonts.js"></script>
+
+<script src="src/libs/iCheck/icheck.min.js"></script>
+
+<script src="src/libs/jquery.inputmask/dist/min/jquery.inputmask.bundle.min.js"></script>
+
+<script src="src/libs/jquery-ui/jquery-ui.min.js"></script>
+
+<script src="src/libs/overhang/overhang.min.js"></script>
+
+<script src="src/libs/mathjs/math.js"></script>
+
+<script src="src/variables.js"></script>
+
+<script src="src/libs/mathlive-master/dist/mathlive.js"></script>
+<script > 
+  var mathfield = MathLive.makeMathField('salida');
+  function saveFormula () {
+    var formula = mathfield.text();
+    var resultado = '';
+    for (var i = 0; i < formula.length; i++) {
+      var tipo = '';
+      if(formula.charAt(i) == '\\')
+        tipo = getType(formula, i);
+      else if( formula.charAt(i) == '{' )
+        resultado+='(';
+      else if( formula.charAt(i) == '}' )
+        resultado+=')';
+      else if( formula.charAt(i) == '(' )
+        resultado+='(';
+      else if( formula.charAt(i) == ')' )
+        resultado+=')';
+      else if( formula.charAt(i) != ' ' || formula.charAt(i) == '<' || formula.charAt(i) == '>' )/*if( !isNaN(formula.charAt(i)) )*/
+        resultado+=formula.charAt(i);
+      if(tipo.length>0){
+        if(tipo == 'le')
+          resultado+='<=';
+        else if(tipo == 'ge')
+          resultado+='>=';
+        else if(tipo == 'ne')
+          resultado+='!=';
+        else if(tipo == 'frac')
+          resultado+='/';
+        else if(tipo == 'sqrt')
+          resultado+='√';
+        else if(tipo == 'times')
+          resultado+='*';
+        i+=tipo.length;
+      }
+    }
+    console.log('resultado 1');
+    console.log(resultado);
+    var banderaPosiciones = [];
+    for (var i = 0; i < resultado.length; i++) {
+      var fraccion = '';
+      if(resultado.charAt(i) == '/' && !banderaPosiciones[i]){
+        var posNumerado = countPosFractioParenthes(resultado, i);
+        banderaPosiciones[posNumerado] = true;
+        resultado = [resultado.slice(0, i), resultado.slice(i+1, posNumerado+1), "/", resultado.slice(posNumerado+1) ].join('');
+      }
+    }
+    console.log('resultado 2');
+    console.log(resultado);
+    verifyAndSaveFormula(resultado, formula);
+  }
+
+  function countPosFractioParenthes (cadena, pos) {
+    var contadorFrac = 0;
+    for (var i = pos+1; i < cadena.length; i++) {
+      if( cadena.charAt(i) == '(' )
+        contadorFrac++;
+      else if( cadena.charAt(i) == ')' )
+        contadorFrac--;
+      if(contadorFrac == 0)
+        return i;
+    }
+    return i;
+  }
+
+  function getType (formula, index) {
+    var text = '';
+    for (var i = index+1; i < formula.length; i++) {
+      if( isNaN(formula.charAt(i)) && formula.charAt(i) != '{' && formula.charAt(i) != '(' && formula.charAt(i) != '}' && formula.charAt(i) != ')' && formula.charAt(i) != ' '){
+        text+=formula.charAt(i);
+      } else /*if( formula.charAt(i) == ' ' )*/
+        break;
+    }
+    return text;
+  }
+
+  String.prototype.splice = function(idx, rem, str) {
+    return this.slice(0, idx) + str + this.slice(idx + Math.abs(rem));
+  };
+
+  resetFormula();
+
+  function resetFormula () {
+    if(formulaMATHLIVEGlobal != null)
+      $("#salida").text(formulaMATHLIVEGlobal);
+    else
+      $("#salida").text("f(x)");
+    mathfield = MathLive.makeMathField('salida');
+  }
+
+</script>
+
+<!-- Custom Theme Scripts -->
+<script src="src/libs/custom.min.js"></script>
