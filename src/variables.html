@@ -448,7 +448,7 @@
                 <div class="row">
                   <h4>Importar Manual Contable por archivo de excel:</h4>
                   <br/>
-                  <button onclick="manualContableExcelUpload()" type="button" class="col-xs-10 col-xs-offset-1 btn btn-primary" style="margin-top:1.6em;">Seleccionar Archivo</button>
+                  <button data-toggle="modal" href="#modalManual" type="button" class="col-xs-10 col-xs-offset-1 btn btn-primary" style="margin-top:1.6em;">Seleccionar Archivo</button>
                 </div>
                 <div class="ln_solid"></div>
                 <h4>Crear listas de forma manual:</h4>
@@ -484,7 +484,7 @@
                     </div>
                   </div>
                   <div class="col-sm-offset-1 col-sm-3 col-xs-12">
-                    <input id="elementoNombre" type="text" class="form-control" placeholder="Ingresar nombre de elemento">
+                    <input id="elementoNombre" type="text" class="form-control" placeholder="Ingrese nombre de elemento">
                   </div>
                   <div class="col-sm-2 col-xs-12">
                     <input id="elementoValor" type="text" class="form-control" placeholder="Ingrese valor">
@@ -738,7 +738,7 @@
   </div>
 </div>
 
-<!-- MODAL-->
+<!-- MODAL ELEMENTO LISTA-->
 <div id="modalElement" class="modal fade" role="dialog">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -783,6 +783,74 @@
   </div>
 </div>
 
+
+<!-- MODAL IMPORTAR MANUAL CONTABLE-->
+<div id="modalManual" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <div class="text-divider"><h2>Importar Manual Contable</h2></div>
+      </div>
+      <div class="modal-body">
+        <form id="" data-parsley-validate class="form-horizontal form-label-left">
+          
+          <div class="row">
+            <div class="form-group">
+              <label class="control-label col-md-4 col-sm-4 col-xs-12" for="hojaNombre">Nombre de Hoja de Excel</label>
+              <div class="col-md-7 col-sm-7 col-xs-12">
+                <input type="text" id="hojaNombre" required="required" class="form-control col-md-7 col-xs-12" placeholder="Ingrese el Nombre de la Hoja de Excel">
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-xs-5 col-xs-offset-1">
+              <form class="form-horizontal form-label-left">
+                <div class="form-group">
+                  <label>Columna de N&uacute;mero Cuenta</label>
+                  <input id="numeroCuenta" type="text" class="form-control" placeholder="N&uacute;mero Cuenta">
+                </div>
+              </form>
+            </div>
+            <div class="col-xs-5 ">
+              <form class="form-horizontal form-label-left">
+                <div class="form-group">
+                  <label>Columna de Nombre de Cuenta</label>
+                  <input id="nombreCuenta" type="text" class="form-control" placeholder="Nombre de Cuenta">
+                </div>
+              </form>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-xs-5 col-xs-offset-1">
+              <form class="form-horizontal form-label-left">
+                <div class="form-group">
+                  <label>Fila Inicial</label> <small>Fila donde se empezar&aacute;n a tomar las valores</small>
+                  <input id="filaInicial" type="text" class="form-control" placeholder="Fila" data-inputmask="'mask': '9[9][9][9]'" data-inputmask-clearmaskonlostfocus="true">
+                </div>
+              </form>
+            </div>
+            <div class="col-xs-5 ">
+              <form class="form-horizontal form-label-left">
+                <div class="form-group">
+                  <label>Fila Final </label> <small>(opcional: si vac&iacute;o se toma hasta el final del archivo)</small>
+                  <input id="filaFinal" type="text" class="form-control" placeholder="Fila" data-inputmask="'mask': '9[9][9][9]'" data-inputmask-clearmaskonlostfocus="true">
+                </div>
+              </form>
+            </div>
+          </div>
+
+        </form>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" onclick="$('#modalManual').modal('toggle');" class="btn btn-info">Cancelar</button>
+        <button type="button" onclick="importExcel()" class="btn btn-success">Importar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Datatables -->
 <script src="src/libs/datatables.net/js/jquery.dataTables.min.js"></script>
 <script src="src/libs/datatables.net/js/jquery.dataTablesEditor.js"></script>
@@ -811,6 +879,8 @@
 <script src="src/libs/overhang/overhang.min.js"></script>
 
 <script src="src/libs/mathjs/math.js"></script>
+
+<script src="src/libs/jquery.inputmask/dist/min/jquery.inputmask.bundle.min.js"></script>
 
 <script src="src/variables.js"></script>
 

@@ -1,10 +1,11 @@
 $("#app_root").load("src/variables.html");
 //setTimeout(function(){ $("#app_root").empty(); }, 4000);
 
-var variableDeVariable = null;
+var variableDeVariableID = null;
 var nombrePadre = null;
 var nombreHijo = null;
 var descripcionHijo = null;
+var factorHijo = null;
 
 function setNombrePadre (object) {
 	nombrePadre = object;
@@ -18,22 +19,30 @@ function setDescripcionHijo (object) {
 	descripcionHijo = object;
 }
 
-function setVariableDeVariable (object) {
-	variableDeVariable = object;
+function setFactorHijo (object) {
+	factorHijo = object;
 }
 
-function getNombrePadre (object) {
+function setVariableDeVariableID (object) {
+	variableDeVariableID = object;
+}
+
+function getNombrePadre () {
 	return nombrePadre;
 }
 
-function getNombreHijo (object) {
+function getNombreHijo () {
 	return nombreHijo;
 }
 
-function getDescripcionHijo (object) {
+function getDescripcionHijo () {
 	return descripcionHijo;
 }
 
-function getVariableDeVariable (object) {
-	return variableDeVariable;
+function getFactornHijo () {
+	return factorHijo;
+}
+
+function getVariableDeVariableID () {
+	return variableDeVariableID;
 }

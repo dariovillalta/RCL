@@ -2,6 +2,7 @@ const electron = require('electron');
 const path = require('path');
 const remote = require('electron').remote;
 const sql = require('mssql');
+const XLSX = require('xlsx-style');
 
 const config = {
     user: 'SA',
@@ -732,7 +733,7 @@ function format ( rowdata ) {
 			          '<th>#</th>'+
 			          '<th>Nombre</th>'+
 			          '<th>Descripción</th>'+
-			          /*'<th>Cuenta</th>'+*/
+			          '<th>Factor</th>'+
 			          '<th>Guardar</th>'+
 			          '<th>Borrar</th>'+
 			        '</tr>'+
@@ -741,7 +742,7 @@ function format ( rowdata ) {
 	for (var i = 0; i < arregloVariablesAsociadas.length; i++) {
 		tabla+= '<tr><td>'+i+'</td><td> <input type="text" id="variablesdeVariablesNombre'+rowdata.ID+''+i+'" required="required" class="form-control" value="'+arregloVariablesAsociadas[i].nombre+'"> </td>';
 		tabla+='<td> <input type="text" id="variablesdeVariablesDescripcion'+rowdata.ID+''+i+'" required="required" class="form-control" value="'+arregloVariablesAsociadas[i].descripcion+'"> </td>';
-		//tabla+='<td> <input type="text" id="variablesdeVariablesCuenta'+rowdata.ID+''+i+'" required="required" class="form-control" value="'+arregloVariablesAsociadas[i].cuenta+'"> </td>';
+		tabla+='<td> <input type="text" id="variablesdeVariablesFactor'+rowdata.ID+''+i+'" required="required" class="form-control" value="'+arregloVariablesAsociadas[i].factor+'"> </td>';
 		tabla+='<td><a class="btn btn-app" onclick="updateVariableDeVariable('+arregloVariablesAsociadas[i].ID+','+i+','+rowdata.ID+')"> <i class="fa fa-save"></i> Guardar </a></td>';
 		tabla+='<td><a class="btn btn-app" onclick="deleteVariableDeVariable('+arregloVariablesAsociadas[i].ID+','+arregloVariablesAsociadas[i].Nombre+')"> <i class="fa fa-eraser"></i> Eliminar </a></td></tr>';
 	};
@@ -749,7 +750,7 @@ function format ( rowdata ) {
 	//Add new
 	tabla+= '<tr><td></td><td> <input type="text" id="variablesdeVariablesNombre'+rowdata.ID+'" required="required" class="form-control"> </td>';
 	tabla+='<td> <input type="text" id="variablesdeVariablesDescripcion'+rowdata.ID+'" required="required" class="form-control"> </td>';
-	//tabla+='<td> <input type="text" id="variablesdeVariablesCuenta'+rowdata.ID+'" required="required" class="form-control"> </td>';
+	tabla+='<td> <input type="text" id="variablesdeVariablesFactor'+rowdata.ID+'" required="required" class="form-control"> </td>';
 	tabla+='<td><a class="btn btn-app" onclick="createVariableDeVariable('+rowdata.ID+')"> <i class="fa fa-save"></i> Guardar </a></td>';
 	tabla+='<td></td></tr>';
 	tabla+='</tbody>'+
@@ -958,44 +959,67 @@ function loadVariableVariables () {
 function createVariableDeVariable (rowdataID) {
 	var nombre = $("#variablesdeVariablesNombre"+rowdataID).val();
 	var descripcion = $("#variablesdeVariablesDescripcion"+rowdataID).val();
+	var factor = $("#variablesdeVariablesFactor"+rowdataID).val();
 	if(nombre.length > 0 && nombre.length < 41){
 		if(descripcion.length < 701){
-			const transaction = new sql.Transaction( pool1 );
-		    transaction.begin(err => {
-		        var rolledBack = false
-		 
-		        transaction.on('rollback', aborted => {
-		            // emited with aborted === true
-		     
-		            rolledBack = true
-		        })
-		        const request = new sql.Request(transaction);
-		        request.query("insert into VariablesdeVariablesFormula (idVariable, nombre, descripcion) values ("+rowdataID+", '"+nombre+"', '"+descripcion+"')", (err, result) => {
-		            if (err) {
-		                if (!rolledBack) {
-		                    console.log('error en rolledBack Insert VariablesdeVariables');
-		                    transaction.rollback(err => {
-		                        console.log('error en rolledBack');
-		                        console.log(err);
-		                    });
-		                }
-		            }  else {
-		                transaction.commit(err => {
-		                    // ... error checks
-		                    console.log("Transaction committed Insert VariablesdeVariables");
-		                    $("body").overhang({
-							  	type: "success",
-							  	primary: "#40D47E",
-				  				accent: "#27AE60",
-							  	message: "Variable creada con exito.",
-							  	duration: 2,
-							  	overlay: true
-							});
-		                    loadVariableVariables();
-		                });
-		            }
-		        });
-		    }); // fin transaction
+			if(factor.length > 0){
+				if(!isNaN(factor)){
+					const transaction = new sql.Transaction( pool1 );
+				    transaction.begin(err => {
+				        var rolledBack = false
+				 
+				        transaction.on('rollback', aborted => {
+				            // emited with aborted === true
+				     
+				            rolledBack = true
+				        })
+				        const request = new sql.Request(transaction);
+				        request.query("insert into VariablesdeVariablesFormula (idVariable, nombre, descripcion, factor) values ("+rowdataID+", '"+nombre+"', '"+descripcion+"', "+factor+")", (err, result) => {
+				            if (err) {
+				                if (!rolledBack) {
+				                    console.log('error en rolledBack Insert VariablesdeVariables');
+				                    transaction.rollback(err => {
+				                        console.log('error en rolledBack');
+				                        console.log(err);
+				                    });
+				                }
+				            }  else {
+				                transaction.commit(err => {
+				                    // ... error checks
+				                    console.log("Transaction committed Insert VariablesdeVariables");
+				                    $("body").overhang({
+									  	type: "success",
+									  	primary: "#40D47E",
+						  				accent: "#27AE60",
+									  	message: "Variable creada con exito.",
+									  	duration: 2,
+									  	overlay: true
+									});
+				                    loadVariableVariables();
+				                });
+				            }
+				        });
+				    }); // fin transaction
+				} else {
+					$("body").overhang({
+					  	type: "error",
+					  	primary: "#f84a1d",
+						accent: "#d94e2a",
+					  	message: "Ingrese un número válido.",
+					  	duration: 3,
+					  	overlay: true
+					});
+				}
+			} else {
+				$("body").overhang({
+				  	type: "error",
+				  	primary: "#f84a1d",
+					accent: "#d94e2a",
+				  	message: "Ingrese un valor numérico para el factor.",
+				  	duration: 3,
+				  	overlay: true
+				});
+			}
 		} else {
 			$("body").overhang({
 			  	type: "error",
@@ -1021,58 +1045,81 @@ function createVariableDeVariable (rowdataID) {
 function updateVariableDeVariable (variableID, index, parentVariableId) {
 	var nombre = $("#variablesdeVariablesNombre"+parentVariableId+""+index).val();
 	var descripcion = $("#variablesdeVariablesDescripcion"+parentVariableId+""+index).val();
+	var factor = $("#variablesdeVariablesFactor"+parentVariableId+""+index).val();
 	if(nombre.length > 0 && nombre.length < 41){
 		if(descripcion.length < 701){
-			$("body").overhang({
-			  	type: "confirm",
-			  	primary: "#f5a433",
-			  	accent: "#dc9430",
-			  	yesColor: "#3498DB",
-			  	message: 'Esta seguro que desea guardar los cambios?',
-			  	overlay: true,
-			  	yesMessage: "Modificar",
-			  	noMessage: "Cancelar",
-			  	callback: function (value) {
-			    	if(value){
-			    		const transaction = new sql.Transaction( pool1 );
-					    transaction.begin(err => {
-					        var rolledBack = false
-					 
-					        transaction.on('rollback', aborted => {
-					            // emited with aborted === true
-					     
-					            rolledBack = true
-					        })
-					        const request = new sql.Request(transaction);
-					        request.query("update VariablesdeVariablesFormula set nombre = '"+nombre+"', descripcion = '"+descripcion+"' where ID = "+variableID+" ", (err, result) => {
-					            if (err) {
-					                if (!rolledBack) {
-					                    console.log('error en rolledBack Update VariablesdeVariables');
-					                    transaction.rollback(err => {
-					                        console.log('error en rolledBack');
-					                        console.log(err);
-					                    });
-					                }
-					            }  else {
-					                transaction.commit(err => {
-					                    // ... error checks
-					                    console.log("Transaction committed Update VariablesdeVariables");
-					                    $("body").overhang({
-										  	type: "success",
-										  	primary: "#40D47E",
-							  				accent: "#27AE60",
-										  	message: "Variable modificada con exito.",
-										  	duration: 2,
-										  	overlay: true
-										});
-					                    loadVariableVariables();
-					                });
-					            }
-					        });
-					    }); // fin transaction
-			    	}
-			  	}
-			});
+			if(factor.length > 0){
+				if(!isNaN(factor)){
+					$("body").overhang({
+					  	type: "confirm",
+					  	primary: "#f5a433",
+					  	accent: "#dc9430",
+					  	yesColor: "#3498DB",
+					  	message: 'Esta seguro que desea guardar los cambios?',
+					  	overlay: true,
+					  	yesMessage: "Modificar",
+					  	noMessage: "Cancelar",
+					  	callback: function (value) {
+					    	if(value){
+					    		const transaction = new sql.Transaction( pool1 );
+							    transaction.begin(err => {
+							        var rolledBack = false
+							 
+							        transaction.on('rollback', aborted => {
+							            // emited with aborted === true
+							     
+							            rolledBack = true
+							        })
+							        const request = new sql.Request(transaction);
+							        request.query("update VariablesdeVariablesFormula set nombre = '"+nombre+"', descripcion = '"+descripcion+"' where ID = "+variableID+" ", (err, result) => {
+							            if (err) {
+							                if (!rolledBack) {
+							                    console.log('error en rolledBack Update VariablesdeVariables');
+							                    transaction.rollback(err => {
+							                        console.log('error en rolledBack');
+							                        console.log(err);
+							                    });
+							                }
+							            }  else {
+							                transaction.commit(err => {
+							                    // ... error checks
+							                    console.log("Transaction committed Update VariablesdeVariables");
+							                    $("body").overhang({
+												  	type: "success",
+												  	primary: "#40D47E",
+									  				accent: "#27AE60",
+												  	message: "Variable modificada con exito.",
+												  	duration: 2,
+												  	overlay: true
+												});
+							                    loadVariableVariables();
+							                });
+							            }
+							        });
+							    }); // fin transaction
+					    	}
+					  	}
+					});
+				} else {
+					$("body").overhang({
+					  	type: "error",
+					  	primary: "#f84a1d",
+						accent: "#d94e2a",
+					  	message: "Ingrese un número válido.",
+					  	duration: 3,
+					  	overlay: true
+					});
+				}
+			} else {
+				$("body").overhang({
+				  	type: "error",
+				  	primary: "#f84a1d",
+					accent: "#d94e2a",
+				  	message: "Ingrese un valor numérico para el factor.",
+				  	duration: 3,
+				  	overlay: true
+				});
+			}
 		} else {
 			$("body").overhang({
 			  	type: "error",
@@ -1768,65 +1815,87 @@ function createList () {
 function updateList () {
 	var nombre = $("#elementoNombreEdit").val();
 	var listaId = $("#elementosDeListaEdit").val();
-	if(nombre.length > 0 && nombre.length < 61){
-		$("body").overhang({
-		  	type: "confirm",
-		  	primary: "#f5a433",
-		  	accent: "#dc9430",
-		  	yesColor: "#3498DB",
-		  	message: 'Esta seguro que desea modificar lista '+$("#elementosDeListaEdit :selected").text()+'?',
-		  	overlay: true,
-		  	yesMessage: "Modificar",
-		  	noMessage: "Cancelar",
-		  	callback: function (value) {
-		    	if(value){
-		    		const transaction = new sql.Transaction( pool1 );
-				    transaction.begin(err => {
-				        var rolledBack = false
-				 
-				        transaction.on('rollback', aborted => {
-				            // emited with aborted === true
-				     
-				            rolledBack = true
-				        })
-				        const request = new sql.Request(transaction);
-				        request.query("update Listas set nombre = '"+nombre+"' where ID = "+listaId, (err, result) => {
-				            if (err) {
-				                if (!rolledBack) {
-				                    console.log('error en rolledBack Listas creation');
-				                    transaction.rollback(err => {
-				                        console.log('error en rolledBack');
-				                        console.log(err);
-				                    });
-				                }
-				            }  else {
-				                transaction.commit(err => {
-				                    // ... error checks
-				                    console.log("Transaction committed Listas creation");
-				                    console.log(result);
-				                    $("body").overhang({
-									  	type: "success",
-									  	primary: "#40D47E",
-						  				accent: "#27AE60",
-									  	message: "Lista creada con éxito.",
-									  	duration: 2,
-									  	overlay: true
-									});
-									$("#elementoNombreEdit").val('');
-				                    loadLists();
-				                });
-				            }
-				        });
-				    }); // fin transaction
-		    	}
-		  	}
-		});
+	if(listaId != null) {
+		if(listaId.length > 0) {
+			if(nombre.length > 0 && nombre.length < 61){
+				$("body").overhang({
+				  	type: "confirm",
+				  	primary: "#f5a433",
+				  	accent: "#dc9430",
+				  	yesColor: "#3498DB",
+				  	message: 'Esta seguro que desea modificar lista '+$("#elementosDeListaEdit :selected").text()+'?',
+				  	overlay: true,
+				  	yesMessage: "Modificar",
+				  	noMessage: "Cancelar",
+				  	callback: function (value) {
+				    	if(value){
+				    		const transaction = new sql.Transaction( pool1 );
+						    transaction.begin(err => {
+						        var rolledBack = false
+						 
+						        transaction.on('rollback', aborted => {
+						            // emited with aborted === true
+						     
+						            rolledBack = true
+						        })
+						        const request = new sql.Request(transaction);
+						        request.query("update Listas set nombre = '"+nombre+"' where ID = "+listaId, (err, result) => {
+						            if (err) {
+						                if (!rolledBack) {
+						                    console.log('error en rolledBack Listas creation');
+						                    transaction.rollback(err => {
+						                        console.log('error en rolledBack');
+						                        console.log(err);
+						                    });
+						                }
+						            }  else {
+						                transaction.commit(err => {
+						                    // ... error checks
+						                    console.log("Transaction committed Listas creation");
+						                    console.log(result);
+						                    $("body").overhang({
+											  	type: "success",
+											  	primary: "#40D47E",
+								  				accent: "#27AE60",
+											  	message: "Lista creada con éxito.",
+											  	duration: 2,
+											  	overlay: true
+											});
+											$("#elementoNombreEdit").val('');
+						                    loadLists();
+						                });
+						            }
+						        });
+						    }); // fin transaction
+				    	}
+				  	}
+				});
+			} else {
+				$("body").overhang({
+				  	type: "error",
+				  	primary: "#f84a1d",
+					accent: "#d94e2a",
+				  	message: "El nombre de la lista debe tener longitud mayor a 0 y menor a 61.",
+				  	duration: 2,
+				  	overlay: true
+				});
+			}
+		} else {
+			$("body").overhang({
+			  	type: "error",
+			  	primary: "#f84a1d",
+				accent: "#d94e2a",
+			  	message: "Seleccione una lista primero.",
+			  	duration: 2,
+			  	overlay: true
+			});
+		}
 	} else {
 		$("body").overhang({
 		  	type: "error",
 		  	primary: "#f84a1d",
 			accent: "#d94e2a",
-		  	message: "El nombre de la lista debe tener longitud mayor a 0 y menor a 61.",
+		  	message: "Cree una lista primero.",
 		  	duration: 2,
 		  	overlay: true
 		});
@@ -1893,54 +1962,65 @@ function createElementList () {
 	var idLista = $("#elementosDeLista").val();
 	var nombre = $("#elementoNombre").val();
 	var valor = $("#elementoValor").val();
-	if(idLista.length > 0) {
-		if(nombre.length > 0 && nombre.length < 121){
-			if(nombre.length > 0 && nombre.length < 51){
-				const transaction = new sql.Transaction( pool1 );
-			    transaction.begin(err => {
-			        var rolledBack = false
-			 
-			        transaction.on('rollback', aborted => {
-			            // emited with aborted === true
-			     
-			            rolledBack = true
-			        })
-			        const request = new sql.Request(transaction);
-			        request.query("insert into ListasVariables (idLista, nombre, valor) values ("+idLista+",'"+nombre+"','"+valor+"')", (err, result) => {
-			            if (err) {
-			                if (!rolledBack) {
-			                    console.log('error en rolledBack Listas Variables');
-			                    transaction.rollback(err => {
-			                        console.log('error en rolledBack');
-			                        console.log(err);
-			                    });
-			                }
-			            }  else {
-			                transaction.commit(err => {
-			                    // ... error checks
-			                    console.log("Transaction committed Listas Variables");
-			                    console.log(result);
-			                    $("body").overhang({
-								  	type: "success",
-								  	primary: "#40D47E",
-					  				accent: "#27AE60",
-								  	message: "Elemento de lista creada con éxito.",
-								  	duration: 2,
-								  	overlay: true
-								});
-								$("#elementoNombre").val('');
-								$("#elementoValor").val('');
-								loadListLists();
-			                });
-			            }
-			        });
-			    }); // fin transaction
+	if(idLista != null) {
+		if(idLista.length > 0) {
+			if(nombre.length > 0 && nombre.length < 121){
+				if(nombre.length > 0 && nombre.length < 51){
+					const transaction = new sql.Transaction( pool1 );
+				    transaction.begin(err => {
+				        var rolledBack = false
+				 
+				        transaction.on('rollback', aborted => {
+				            // emited with aborted === true
+				     
+				            rolledBack = true
+				        })
+				        const request = new sql.Request(transaction);
+				        request.query("insert into ListasVariables (idLista, nombre, valor) values ("+idLista+",'"+nombre+"','"+valor+"')", (err, result) => {
+				            if (err) {
+				                if (!rolledBack) {
+				                    console.log('error en rolledBack Listas Variables');
+				                    transaction.rollback(err => {
+				                        console.log('error en rolledBack');
+				                        console.log(err);
+				                    });
+				                }
+				            }  else {
+				                transaction.commit(err => {
+				                    // ... error checks
+				                    console.log("Transaction committed Listas Variables");
+				                    console.log(result);
+				                    $("body").overhang({
+									  	type: "success",
+									  	primary: "#40D47E",
+						  				accent: "#27AE60",
+									  	message: "Elemento de lista creada con éxito.",
+									  	duration: 2,
+									  	overlay: true
+									});
+									$("#elementoNombre").val('');
+									$("#elementoValor").val('');
+									loadListLists();
+				                });
+				            }
+				        });
+				    }); // fin transaction
+				} else {
+					$("body").overhang({
+					  	type: "error",
+					  	primary: "#f84a1d",
+						accent: "#d94e2a",
+					  	message: "El valor del elemento de la lista debe tener una longitud mayor a 0 y menor a 51.",
+					  	duration: 2,
+					  	overlay: true
+					});
+				}
 			} else {
 				$("body").overhang({
 				  	type: "error",
 				  	primary: "#f84a1d",
 					accent: "#d94e2a",
-				  	message: "El valor del elemento de la lista debe tener una longitud mayor a 0 y menor a 51.",
+				  	message: "El nombre del elemento de la lista debe tener una longitud mayor a 0 y menor a 121.",
 				  	duration: 2,
 				  	overlay: true
 				});
@@ -1950,7 +2030,7 @@ function createElementList () {
 			  	type: "error",
 			  	primary: "#f84a1d",
 				accent: "#d94e2a",
-			  	message: "El nombre del elemento de la lista debe tener una longitud mayor a 0 y menor a 121.",
+			  	message: "Seleccione una lista.",
 			  	duration: 2,
 			  	overlay: true
 			});
@@ -1960,7 +2040,7 @@ function createElementList () {
 		  	type: "error",
 		  	primary: "#f84a1d",
 			accent: "#d94e2a",
-		  	message: "Seleccione una lista.",
+		  	message: "Cree una lista primero para agregar un elemento.",
 		  	duration: 2,
 		  	overlay: true
 		});
@@ -2123,6 +2203,247 @@ function showModalEditListVariable (index) {
 	$('#elementoNombreUpdate').val(listasVariablesSeleccionada.nombre);
 	$('#elementoValorUpdate').val(listasVariablesSeleccionada.valor);
 	$('#modalElement').modal('toggle');
+}
+
+var dialog = remote.dialog;
+
+function importExcel () {
+	var nombre = $('#hojaNombre').val();
+	var columnaNumero = $('#numeroCuenta').val();
+	var columnaNombre = $('#nombreCuenta').val();
+	var filaInicial = $('#filaInicial').val();
+	var filaFinal = $('#filaFinal').val();
+	if(nombre.length > 0) {
+		if(columnaNumero.length > 0) {
+			if( isNaN(columnaNumero) ) {
+				if(columnaNombre.length > 0) {
+					if( isNaN(columnaNombre) ) {
+						if(filaInicial.length > 0) {
+							if( !isNaN(filaInicial) ) {
+								if(filaFinal.length == 0)
+									filaFinal = 0;
+								if( !isNaN(filaFinal) ) {
+									var file = dialog.showOpenDialog({
+										title: 'Seleccione un archivo',
+										filters: [{
+											name: "Spreadsheets",
+											extensions: "xls|xlsx|xlsm|xlsb|xml|xlw|xlc|csv|txt|dif|sylk|slk|prn|ods|fods|uos|dbf|wks|123|wq1|qpw".split("|")
+										}],
+										properties: ['openFile']
+									});
+									var workbook;
+									if(file.length > 0) {
+										workbook = XLSX.readFile(file[0]);
+										var sheet = workbook.Sheets[nombre];
+										if(sheet != null) {
+											var arregloDeElementos = [];
+											var idLista = arregloListas.length+1;
+											columnaNumero = columnaNumero.toUpperCase();
+											columnaNombre = columnaNombre.toUpperCase();
+											filaInicial = parseInt(filaInicial);
+											filaFinal = parseInt(filaFinal);
+											if(filaFinal != 0){
+												for (var i = filaInicial; i <= filaFinal; i++) {
+													var numeroCuenta = sheet[columnaNumero+i].v;
+													var nombreCuenta = sheet[columnaNombre+i].v;
+													numeroCuenta = numeroCuenta.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
+													nombreCuenta = nombreCuenta.replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
+													nombreCuenta = nombreCuenta.toLowerCase();
+													nombreCuenta = UpperCasefirst(nombreCuenta);
+													if(numeroCuenta.length>0)
+														arregloDeElementos.push({idLista: idLista, nombre: nombreCuenta, valor: numeroCuenta});
+												};
+											} else {
+												var finalRow = sheet["!ref"].split(":")[1].replace(/[A-Z]/g, "");
+												finalRow = parseInt(finalRow);
+												for (var i = filaInicial; i <= finalRow; i++) {
+													var numeroCuenta = sheet[columnaNumero+i].v;
+													var nombreCuenta = sheet[columnaNombre+i].v;
+													numeroCuenta = numeroCuenta.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
+													nombreCuenta = nombreCuenta.replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
+													nombreCuenta = nombreCuenta.toLowerCase();
+													nombreCuenta = UpperCasefirst(nombreCuenta);
+													if(numeroCuenta.length>0)
+														arregloDeElementos.push({idLista: idLista, nombre: nombreCuenta, valor: numeroCuenta});
+												};
+											}
+											createListExcel(function() {
+												for (var i = 0; i < arregloDeElementos.length; i++) {
+													createElementListExcel(arregloDeElementos[i].idLista, arregloDeElementos[i].nombre, arregloDeElementos[i].valor);
+												}
+											}); /*Balance General*/
+											$("body").overhang({
+											  	type: "success",
+											  	primary: "#40D47E",
+								  				accent: "#27AE60",
+											  	message: "Manual contable importado con éxito.",
+											  	duration: 2,
+											  	overlay: true
+											});
+											$('#modalManual').modal('toggle');
+										} else {
+											$("body").overhang({
+											  	type: "error",
+											  	primary: "#f84a1d",
+												accent: "#d94e2a",
+											  	message: "Error al abrir hoja de excel.",
+											  	duration: 2,
+											  	overlay: true
+											});
+										}
+									}
+								} else {
+									$("body").overhang({
+									  	type: "error",
+									  	primary: "#f84a1d",
+										accent: "#d94e2a",
+									  	message: "Ingrese un número de fila válido donde terminar de tomar las cuentas.",
+									  	duration: 2,
+									  	overlay: true
+									});
+								}
+							} else {
+								$("body").overhang({
+								  	type: "error",
+								  	primary: "#f84a1d",
+									accent: "#d94e2a",
+								  	message: "Ingrese un número de fila válido donde iniciar a tomar las cuentas.",
+								  	duration: 2,
+								  	overlay: true
+								});
+							}
+						} else {
+							$("body").overhang({
+							  	type: "error",
+							  	primary: "#f84a1d",
+								accent: "#d94e2a",
+							  	message: "Ingrese el número de fila donde iniciar a tomar las cuentas.",
+							  	duration: 2,
+							  	overlay: true
+							});
+						}
+					} else {
+						$("body").overhang({
+						  	type: "error",
+						  	primary: "#f84a1d",
+							accent: "#d94e2a",
+						  	message: "Ingrese una letra para la columna del nombre de la cuenta.",
+						  	duration: 2,
+						  	overlay: true
+						});
+					}
+				} else {
+					$("body").overhang({
+					  	type: "error",
+					  	primary: "#f84a1d",
+						accent: "#d94e2a",
+					  	message: "Ingrese la columna para el nombre de la cuenta.",
+					  	duration: 2,
+					  	overlay: true
+					});
+				}
+			} else {
+				$("body").overhang({
+				  	type: "error",
+				  	primary: "#f84a1d",
+					accent: "#d94e2a",
+				  	message: "Ingrese una letra para la columna del número de la cuenta.",
+				  	duration: 2,
+				  	overlay: true
+				});
+			}
+		} else {
+			$("body").overhang({
+			  	type: "error",
+			  	primary: "#f84a1d",
+				accent: "#d94e2a",
+			  	message: "Ingrese la columna para el número de la cuenta.",
+			  	duration: 2,
+			  	overlay: true
+			});
+		}
+	} else {
+		$("body").overhang({
+		  	type: "error",
+		  	primary: "#f84a1d",
+			accent: "#d94e2a",
+		  	message: "Ingrese un nombre de hoja del archivo de excel.",
+		  	duration: 2,
+		  	overlay: true
+		});
+	}
+}
+
+function createListExcel (callback) {
+	var nombre = 'Manual Contable';
+	const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false
+ 
+        transaction.on('rollback', aborted => {
+            // emited with aborted === true
+     
+            rolledBack = true
+        })
+        const request = new sql.Request(transaction);
+        request.query("insert into Listas (nombre) values ('"+nombre+"')", (err, result) => {
+            if (err) {
+                if (!rolledBack) {
+                    console.log('error en rolledBack Listas creation');
+                    transaction.rollback(err => {
+                        console.log('error en rolledBack');
+                        console.log(err);
+                    });
+                }
+            }  else {
+                transaction.commit(err => {
+                    // ... error checks
+                    callback();
+                });
+            }
+        });
+    }); // fin transaction
+}
+
+function createElementListExcel (idLista, nombre, valor) {
+	const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false
+ 
+        transaction.on('rollback', aborted => {
+            // emited with aborted === true
+     
+            rolledBack = true
+        })
+        const request = new sql.Request(transaction);
+        request.query("insert into ListasVariables (idLista, nombre, valor) values ("+idLista+",'"+nombre+"','"+valor+"')", (err, result) => {
+            if (err) {
+                if (!rolledBack) {
+                    console.log('error en rolledBack Listas Variables');
+                    transaction.rollback(err => {
+                        console.log('error en rolledBack');
+                        console.log(err);
+                    });
+                }
+            }  else {
+                transaction.commit(err => {
+                    // ... error checks
+                    console.log('done excel ListasVariables');
+                });
+            }
+        });
+    }); // fin transaction
+}
+
+function toColumnName(num) {
+    for (var ret = '', a = 1, b = 26; (num -= a) >= 0; a = b, b *= 26) {
+        ret = String.fromCharCode(parseInt((num % b) / a) + 65) + ret;
+    }
+    return ret;
+}
+
+function UpperCasefirst(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
 }
 //	**********		Fin Manual Contable y Listas		**********
 
@@ -2450,14 +2771,17 @@ function logout () {
 
 function goRules (index) {
 	$("#app_root").empty();
+	var variableID = arregloVariableDeVariables[index].ID;
 	var nombrePadre = arregloVariables[(arregloVariableDeVariables[index].idVariable-1)].nombre;
 	var nombreHijo = arregloVariableDeVariables[index].nombre;
 	var descripcionHijo = arregloVariableDeVariables[index].descripcion;
-	$("#app_root").load("src/variableDetail.html");
-	setVariableDeVariable(arregloVariableDeVariables[index]);
+	var factorHijo = arregloVariableDeVariables[index].factor;
+	setVariableDeVariableID(variableID);
 	setNombrePadre(nombrePadre);
 	setNombreHijo(nombreHijo);
 	setDescripcionHijo(descripcionHijo);
+	setFactorHijo(factorHijo);
+	$("#app_root").load("src/variableDetail.html");
 	/*$.getScript("src/variableDetail.js").done(function( script, textStatus ) {
     	loadText(nombrePadre, nombreHijo, descripcionHijo, arregloVariableDeVariables[index]);
   	});*/

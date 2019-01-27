@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "mssql": "4.3.0",
-    "safer-buffer": "2.1.2"
+    "safer-buffer": "2.1.2",
+    "xlsx-style": "0.8.13"
   }
 }
