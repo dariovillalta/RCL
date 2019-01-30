@@ -175,17 +175,36 @@ function renderRules () {
 			    	var nombreVariable = valoresIndividual[i].split("(")[0];
 			    	var texto = '';
 			    	var value;
-			    		if(nombreVariable == 'RESULTADO') {
-			    			texto = 'Resultado';
-			    			value = 1;
-			    		} else if(nombreVariable == 'CAMPOOBJETIVO') {
-			    			texto = 'Campo Objetivo';
-			    			value = 2;
-			    		} else {
-			    			texto = 'Valor a Aplicar';
-			    			value = 3;
-			    		}
+		    		if(nombreVariable == 'RESULTADO') {
+		    			texto = 'Resultado';
+		    			value = 1;
+		    		} else if(nombreVariable == 'CAMPOOBJETIVO') {
+		    			texto = 'Campo Objetivo';
+		    			value = 2;
+		    		} else {
+		    			texto = 'Valor a Aplicar';
+		    			value = 3;
+		    		}
 			    	content += '<li> <p><input type="radio" name="variablesCampo" class="flat" value="'+value+'"> '+texto+' </p> </li>';
+			    	if(valoresIndividual[i].split("(").length > 1){
+				    	if(valoresIndividual[i].split("(")[1].indexOf("LISTA") == 0) {
+				    		content += '<div class="row">'+
+	                              '<div id="wrapper">'+
+	                                '<label>Valor a aplicar de Elemento de Lista</label>'+
+	                              '</div>'+
+	                            '</div>'+
+	                            '<div class="row">'+
+	                              '<div id="wrapper">'+
+	                                '<label>'+
+	                                  '<input id="nombreElementoListaCampoVariableRadio" type="radio" class="flat" name="listaCampoVariableRadio'+nombreVariable+'" checked value="1"> Campo Nombre de Elemento'+
+	                                '</label>'+
+	                                '<label>'+
+	                                  '<input id="valorElementoListaCampoVariableRadio" type="radio" class="flat" name="listaCampoVariableRadio'+nombreVariable+'" value="0"> Campo Valor de Elemento'+
+	                                '</label>'+
+	                              '</div>'+
+	                            '</div>';
+	                    }
+	                }
 			    };
 			    $("#variablesCampoUL").append(content);
 			    $("input[name='variablesCampo']").iCheck({
@@ -205,13 +224,32 @@ function renderRules () {
 			    for (var i = 0; i < valoresIndividual.length; i++) {
 			    	var nombreVariable = valoresIndividual[i].split("(")[0];
 			    	var texto = '';
-			    		if(nombreVariable == 'RESULTADO')
-			    			texto = 'Resultado';
-			    		else if(nombreVariable == 'CAMPOOBJETIVO')
-			    			texto = 'Campo Objetivo';
-			    		else
-			    			texto = 'Valor a Aplicar';
-			    	content2 += '<li style="float: right; margin: 0% 1%;"> <p><input type="radio" name="variablesValor" class="flat"> '+texto+' </p> </li>';
+		    		if(nombreVariable == 'RESULTADO')
+		    			texto = 'Resultado';
+		    		else if(nombreVariable == 'CAMPOOBJETIVO')
+		    			texto = 'Campo Objetivo';
+		    		else
+		    			texto = 'Valor a Aplicar';
+			    	content2 += '<li> <p><input type="radio" name="variablesValor" class="flat"> '+texto+' </p> </li>';
+			    	if(valoresIndividual[i].split("(").length > 1){
+				    	if(valoresIndividual[i].split("(")[1].indexOf("LISTA") == 0) {
+				    		content2 += '<div class="row">'+
+	                              '<div id="wrapper">'+
+	                                '<label>Valor a aplicar de Elemento de Lista</label>'+
+	                              '</div>'+
+	                            '</div>'+
+	                            '<div class="row">'+
+	                              '<div id="wrapper">'+
+	                                '<label>'+
+	                                  '<input id="nombreElementoListaValorVariableRadio" type="radio" class="flat" name="listaValorVariableRadio'+nombreVariable+'" checked value="1"> Campo Nombre de Elemento'+
+	                                '</label>'+
+	                                '<label>'+
+	                                  '<input id="valorElementoListaValorVariableRadio" type="radio" class="flat" name="listaValorVariableRadio'+nombreVariable+'" value="0"> Campo Valor de Elemento'+
+	                                '</label>'+
+	                              '</div>'+
+	                            '</div>';
+	                    }
+	                }
 			    };
 			    $("#variablesValorUL").append(content2);
 			    $("input[name='variablesValor']").iCheck({
@@ -346,8 +384,8 @@ function renderListsSelect () {
 	};
 	$("#listaCampoSelect").empty();
 	$("#listaCampoSelect").append(selectHTML);
-	$("#listaValorSelect").empty();
-	$("#listaValorSelect").append(selectHTML);
+	//$("#listaValorSelect").empty();
+	//$("#listaValorSelect").append(selectHTML);
 	$("#elementoValorSelect").empty();
 	$("#elementoValorSelect").append(selectHTML);
 	getElementsListsCamp(arregloListas[0].ID);
@@ -419,11 +457,11 @@ $("#variablesValorUL :input").prop('disabled', true);
 $("#diaValorInput").prop('disabled', true);
 $("#mesValorInput").prop('disabled', true);
 $("input[name='valorRadio']").on('ifClicked', function(event){
-	if(event.currentTarget.id == "listaValorRadio") {
+	/*if(event.currentTarget.id == "listaValorRadio") {
 		$("#listaValorSelect").prop('disabled', false);
 		$("#manualValorInput").prop('disabled', true);
-		/*$("#date_inline").css('pointer-events', 'none');
-		$('#date_inline').datepicker('setDate', null);*/
+		$("#date_inline").css('pointer-events', 'none');
+		$('#date_inline').datepicker('setDate', null);
 		$("#elementoValorSelect").prop('disabled', true);
 		$("#elementoValorOptionSelect").prop('disabled', true);
 		$("#elementoValorOptionSelect option").prop("selected", false);
@@ -431,8 +469,8 @@ $("input[name='valorRadio']").on('ifClicked', function(event){
 		$("#variablesValorUL :input").iCheck('uncheck');
 		$("#diaValorInput").prop('disabled', true);
 		$("#mesValorInput").prop('disabled', true);
-	} else if(event.currentTarget.id == "manualValorRadio") {
-		$("#listaValorSelect").prop('disabled', true);
+	} else*/ if(event.currentTarget.id == "manualValorRadio") {
+		//$("#listaValorSelect").prop('disabled', true);
 		$("#manualValorInput").prop('disabled', false);
 		/*$("#date_inline").css('pointer-events', 'none');
 		$('#date_inline').datepicker('setDate', null);*/
@@ -444,7 +482,7 @@ $("input[name='valorRadio']").on('ifClicked', function(event){
 		$("#diaValorInput").prop('disabled', true);
 		$("#mesValorInput").prop('disabled', true);
 	} else if(event.currentTarget.id == "fechaValorRadio") {
-		$("#listaValorSelect").prop('disabled', true);
+		//$("#listaValorSelect").prop('disabled', true);
 		$("#manualValorInput").prop('disabled', true);
 		//$("#date_inline").css('pointer-events', '');
 		$("#elementoValorSelect").prop('disabled', true);
@@ -455,7 +493,7 @@ $("input[name='valorRadio']").on('ifClicked', function(event){
 		$("#diaValorInput").prop('disabled', false);
 		$("#mesValorInput").prop('disabled', false);
 	} else if(event.currentTarget.id == "elementoValorRadio") {
-		$("#listaValorSelect").prop('disabled', true);
+		//$("#listaValorSelect").prop('disabled', true);
 		$("#manualValorInput").prop('disabled', true);
 		/*$("#date_inline").css('pointer-events', 'none');
 		$('#date_inline').datepicker('setDate', null);*/
@@ -466,7 +504,7 @@ $("input[name='valorRadio']").on('ifClicked', function(event){
 		$("#diaValorInput").prop('disabled', true);
 		$("#mesValorInput").prop('disabled', true);
 	} else if(event.currentTarget.id == "variableValorRadio") {
-		$("#listaValorSelect").prop('disabled', true);
+		//$("#listaValorSelect").prop('disabled', true);
 		$("#manualValorInput").prop('disabled', true);
 		/*$("#date_inline").css('pointer-events', 'none');
 		$('#date_inline').datepicker('setDate', null);*/
@@ -481,7 +519,7 @@ $("input[name='valorRadio']").on('ifClicked', function(event){
 	    $("#diaValorInput").prop('disabled', true);
 		$("#mesValorInput").prop('disabled', true);
 	} else {
-		$("#listaValorSelect").prop('disabled', true);
+		//$("#listaValorSelect").prop('disabled', true);
 		$("#manualValorInput").prop('disabled', true);
 		/*$("#date_inline").css('pointer-events', 'none');
 		$('#date_inline').datepicker('setDate', null);*/
@@ -514,6 +552,9 @@ function saveRule () {
 	if( $('#campoCampoRadio').is(':checked') )
 		campoObjetivo = 'COLUMNA='+$("#campoCampoInput").val();
 	else if( $('#listaCampoRadio').is(':checked') ){
+		var aplicarNombre = "1";
+		if($('#valorElementoListaCampoRadio').is(':checked'))
+			aplicarNombre = "0";
 		if( $('#listaCampoOptionsSelect').val() != null ){
 			var idCamposSeleccionas = $('#listaCampoOptionsSelect').val();
 			var valoresCamposSeleccionas =  arregloElementosDeListasCampo.filter(function( object ) {
@@ -523,24 +564,41 @@ function saveRule () {
 												};
 											    return false;
 											});
-			campoObjetivo = 'LISTA='+getSelectOptions(valoresCamposSeleccionas);
+			campoObjetivo = 'LISTA='+getSelectOptions(valoresCamposSeleccionas, aplicarNombre);
 		} else {
-			campoObjetivo = 'LISTA='+getSelectOptions(arregloElementosDeListasCampo);
+			campoObjetivo = 'LISTA='+getSelectOptions(arregloElementosDeListasCampo, aplicarNombre);
 		}
 	} else {
 		var valorVariables = $("input[name='variablesCampo']:checked").val();
+		//listaValorVariableRadio
 		if(valorVariables == 1)
 			campoObjetivo = "VARIABLE=RESULTADO";
 		else if(valorVariables == 2) {
-			if(campoObjetivo.length > 0)
-				campoObjetivo += ",OBJETIVO"
-			else
-				campoObjetivo = "VARIABLE=OBJETIVO";
+			var valorListaVariable = $("input[name='listaCampoVariableRadioCAMPOOBJETIVO']:checked").val();
+			if(valorListaVariable != null){
+				if(campoObjetivo.length > 0)
+					campoObjetivo += ",OBJETIVO$"+valorListaVariable;
+				else
+					campoObjetivo = "VARIABLE=OBJETIVO$"+valorListaVariable;
+			} else {
+				if(campoObjetivo.length > 0)
+					campoObjetivo += ",OBJETIVO"
+				else
+					campoObjetivo = "VARIABLE=OBJETIVO";
+			}
 		} else {
-			if(campoObjetivo.length > 0)
-				campoObjetivo += ",VALOR"
-			else
-				campoObjetivo = "VARIABLE=VALOR";
+			var	valorListaVariable = $("input[name='listaCampoVariableRadioVALOR']:checked").val();
+			if(valorListaVariable != null){
+				if(campoObjetivo.length > 0)
+					campoObjetivo += ",VALOR$"+valorListaVariable;
+				else
+					campoObjetivo = "VARIABLE=VALOR$"+valorListaVariable;
+			} else {
+				if(campoObjetivo.length > 0)
+					campoObjetivo += ",VALOR"
+				else
+					campoObjetivo = "VARIABLE=VALOR";
+			}
 		}
 	}
 	if( $('#meOperadorRadio').is(':checked') )
@@ -552,7 +610,7 @@ function saveRule () {
 	else if( $('#maigOperadorRadio').is(':checked') )
 		operacion = '>=';
 	else if( $('#igOperadorRadio').is(':checked') )
-		operacion = '=';
+		operacion = '==';
 	else if( $('#noigOperadorRadio').is(':checked') )
 		operacion = '!=';
 	else if( $('#masOperadorRadio').is(':checked') )
@@ -561,12 +619,14 @@ function saveRule () {
 		operacion = '*';
 	else if( $('#menOperadorRadio').is(':checked') )
 		operacion = '-';
-	else
+	else if( $('#entOperadorRadio').is(':checked') )
 		operacion = '/';
-	if( $('#listaValorRadio').is(':checked') )
+	else
+		operacion = '=';
+	/*if( $('#listaValorRadio').is(':checked') )
 		valor = getSelectOptions(arregloElementosDeListasCampo);
-	else if( $('#manualValorRadio').is(':checked') )
-		valor = $("#manualValorInput").val();
+	else*/ if( $('#manualValorRadio').is(':checked') )
+		valor = "COLUMNA="+$("#manualValorInput").val();
 	else if( $('#fechaValorRadio').is(':checked') ) {
 		//valor = $("#date_inline").datepicker( 'getDate' );
 		valor = 'DIA='+$("#diaValorInput").val();
@@ -574,17 +634,49 @@ function saveRule () {
 	} else if( $('#elementoValorRadio').is(':checked') ) {
 		var elementosSelect = $("#elementoValorOptionSelect").val();
 		var elementos = '';
+		var aplicarNombre = "1";
+		if($('#valorElementoListaValorRadio').is(':checked'))
+			aplicarNombre = "0";
 		if(elementosSelect != null) {
 			for (var i = 0; i < elementosSelect.length; i++) {
-				elementos+=arregloElementosDeListasValor[parseInt(elementosSelect[i])].nombre;
+				elementos+=arregloElementosDeListasValor[parseInt(elementosSelect[i])].nombre + "-" + arregloElementosDeListasValor[parseInt(elementosSelect[i])].valor + '$' +aplicarNombre;
 				if( (i+1) < elementosSelect.length )
 					elementos+=',';
 			};
-			valor = 'LISTA='+elementos;
+			valor = 'LISTA=' + elementos;
 		} else 
-			valor = '';
+			valor = 'LISTA=' + getSelectOptions(arregloElementosDeListasValor, aplicarNombre);
 	} else if( $('#variableValorRadio').is(':checked') ) {
-		//
+		var valorVariables = $("input[name='variablesValor']:checked").val();
+		if(valorVariables == 1)
+			valor = "VARIABLE=RESULTADO";
+		else if(valorVariables == 2) {
+			var valorListaVariable = $("input[name='listaValorVariableRadioCAMPOOBJETIVO']:checked").val();
+			if(valorListaVariable != null) {
+				if(valor.length > 0)
+					valor += ",OBJETIVO$"+valorListaVariable;
+				else
+					valor = "VARIABLE=OBJETIVO$"+valorListaVariable;
+			} else {
+				if(valor.length > 0)
+					valor += ",OBJETIVO";
+				else
+					valor = "VARIABLE=OBJETIVO";
+			}
+		} else {
+			var	valorListaVariable = $("input[name='listaValorVariableRadioVALOR']:checked").val();
+			if(valorListaVariable != null) {
+				if(valor.length > 0)
+					valor += ",VALOR$"+valorListaVariable;
+				else
+					valor = "VARIABLE=VALOR$"+valorListaVariable;
+			} else {
+				if(valor.length > 0)
+					valor += ",VALOR";
+				else
+					valor = "VARIABLE=VALOR";
+			}
+		}
 	} else
 		valor = "FACTOR="+variableDeVariableObject.factor;
 	if( $('#resultadoGuardarVariable').is(':checked') )
@@ -607,7 +699,7 @@ function saveRule () {
 	console.log(valor);
 	console.log(variables);
 	console.log(variableDeVariableReglaID);
-	/*if(campoObjetivo.length > 0 && campoObjetivo.length < 1001) {
+	if(campoObjetivo.length > 0 && campoObjetivo.length < 1001) {
 		if(operacion.length > 0 && operacion.length < 3) {
 			if(valor.toString().length > 0 && valor.toString().length < 1001) {
 				const transaction = new sql.Transaction( pool1 );
@@ -676,13 +768,25 @@ function saveRule () {
 		  	duration: 3,
 		  	overlay: true
 		});
-	}*/
+	}
 }
 
-function getSelectOptions (array) {
+/*function getSelectOptions (array, valorAplicar) {
 	var textoOption = '';
 	for (var i = 0; i < array.length; i++) {
-		textoOption+=array[i].nombre;
+		if(valorAplicar)
+			textoOption+=array[i].nombre;
+		else
+			textoOption+=array[i].valor;
+		if( (i+1) < array.length )
+			textoOption+=',';
+	};
+	return textoOption;
+}*/
+function getSelectOptions (array, aplicarNombre) {
+	var textoOption = '';
+	for (var i = 0; i < array.length; i++) {
+		textoOption+=array[i].nombre + "-" + array[i].valor + '$' + aplicarNombre;
 		if( (i+1) < array.length )
 			textoOption+=',';
 	};
@@ -717,6 +821,11 @@ function logout () {
 	session.defaultSession.clearStorageData([], (data) => {});
 }
 
+function goRCL () {
+	$("#app_root").empty();
+    $("#app_root").load("src/rcl.html");
+}
+
 
 function showRules () {
 	var rulesArray = [];
@@ -738,7 +847,9 @@ function showRules () {
 		}
 	}
 	var output = '';
+	console.log('rulesArray');
 	console.log(rulesArray);
+	console.log('rulesArray');
 	for (var i = 0; i < rulesArray.length; i++) {
 		output+=rulesArray[i];
 	}
@@ -762,7 +873,7 @@ function showRules () {
 
 function campoObjetivo (regla, arreglo, tabs) {
 	var esCondicion = false;
-	if(regla.operacion=="-" || regla.operacion=="+" || regla.operacion=="*" || regla.operacion=="/")
+	if(regla.operacion=="-" || regla.operacion=="+" || regla.operacion=="*" || regla.operacion=="/" || regla.operacion=="=")
 		esCondicion = false;
 	else
 		esCondicion = true;
@@ -783,12 +894,16 @@ function campoObjetivo (regla, arreglo, tabs) {
 
 			// Agregando campo Operacion
 			arreglo.push(tabsText+"if ( "+campo+" "+regla.operacion);
-			posicionesIF.push(arreglo.length-1);
+			//posicionesIF.push(arreglo.length-1);
+			posicionesIF.push(arreglo.length);
 		} else {
 			var campo = regla.campoObjetivo.split("=")[1];
 
 			// Agregando campo Operacion
-			arreglo.push(tabsText+campo+" = "+campo+" "+regla.operacion);
+			if(regla.operacion=="=")
+				arreglo.push(tabsText+campo+" "+regla.operacion);
+			else
+				arreglo.push(tabsText+campo+" = "+campo+" "+regla.operacion);
 		}
 		if(hasVariables)
 			textVariables.push(campo + " " + regla.operacion);
@@ -796,19 +911,60 @@ function campoObjetivo (regla, arreglo, tabs) {
 		var arregloLista = regla.campoObjetivo.split("=")[1].split(",");
 		if(esCondicion) {
 			// Agregando campo Operacion
-			for (var i = 0; i < arregloLista.length; i++) {
-				arreglo.push(tabsText+"if ( "+arregloLista[i]+" "+regla.operacion);
-				posicionesIF.push(arreglo.length-1);
-			};
+			if(regla.operacion == "!=") {
+				for (var i = 0; i < arregloLista.length; i++) {
+					var opcionAMostrar = arregloLista[i].split("$");
+					var valorElemento = arregloLista[i];
+					if(opcionAMostrar.length > 1) {
+						if(opcionAMostrar[1] == "1")
+							valorElemento = opcionAMostrar[0].split("-")[0];
+						else
+							valorElemento = opcionAMostrar[0].split("-")[1];
+					}
+					arreglo.push("\n"+tabsText+"if ( "+valorElemento+" "+regla.operacion);
+					if(posicionesIF.length>0)
+						posicionesIF.push(posicionesIF[posicionesIF.length-1]+2);
+					else
+						posicionesIF.push(1);
+					if(hasVariables)
+						textVariables.push(valorElemento + " " + regla.operacion);
+				};
+			} else {
+				for (var i = 0; i < arregloLista.length; i++) {
+					var opcionAMostrar = arregloLista[i].split("$");
+					var valorElemento = arregloLista[i];
+					if(opcionAMostrar.length > 1){
+						if(opcionAMostrar[1] == "1")
+							valorElemento = opcionAMostrar[0].split("-")[0];
+						else
+							valorElemento = opcionAMostrar[0].split("-")[1];
+					}
+					arreglo.push("\n"+tabsText+"if ( "+valorElemento+" "+regla.operacion);
+					if(posicionesIF.length>0)
+						posicionesIF.push(posicionesIF[posicionesIF.length-1]+2);
+					else
+						posicionesIF.push(1);
+					if(hasVariables)
+						textVariables.push(valorElemento + " " + regla.operacion);
+				};
+			}
 		} else {
 			// Agregando campo Operacion
 			for (var i = 0; i < arregloLista.length; i++) {
-				arreglo.push(tabsText+arregloLista[i]+" = "+arregloLista[i]+" "+regla.operacion);
-			};
-		}
-		if(hasVariables) {
-			for (var i = 0; i < arregloLista.length; i++) {
-				textVariables.push(arregloLista[i] + " " + regla.operacion);
+				var opcionAMostrar = arregloLista[i].split("$");
+				var valorElemento = arregloLista[i];
+				if(opcionAMostrar.length > 1){
+					if(opcionAMostrar[1] == "1")
+						valorElemento = opcionAMostrar[0].split("-")[0];
+					else
+						valorElemento = opcionAMostrar[0].split("-")[1];
+				}
+				if(regla.operacion=="=")
+					arreglo.push("\n"+tabsText+valorElemento+" "+regla.operacion);
+				else
+					arreglo.push("\n"+tabsText+valorElemento+" = "+valorElemento+" "+regla.operacion);
+				if(hasVariables)
+					textVariables.push(valorElemento + " " + regla.operacion);
 			};
 		}
 	} else if(regla.campoObjetivo.indexOf('VARIABLE') == 0) {
@@ -816,27 +972,280 @@ function campoObjetivo (regla, arreglo, tabs) {
 		if(esCondicion) {
 			// Agregando campo Operacion
 			for (var i = 0; i < arregloVariable.length; i++) {
-				var textVariables = '';
-				if(arregloVariable[i] == "RESULTADO")
-					textVariables = 'variableResultado'+regla.reglaPadre;
-				else if(arregloVariable[i] == "OBJETIVO")
-					textVariables = 'variableObjetivo'+regla.reglaPadre;
-				else if(arregloVariable[i] == "VALOR")
-					textVariables = 'variableValor'+regla.reglaPadre;
-				arreglo.push(tabsText+"if ( "+textVariables+" "+regla.operacion);
-				posicionesIF.push(arreglo.length-1);
+				var textCreatedVariables = '';
+				if(arregloVariable[i].indexOf("RESULTADO") == 0 )
+					textCreatedVariables = 'variableResultado'+regla.reglaPadre;
+				else if(arregloVariable[i].indexOf("OBJETIVO") == 0 )
+					textCreatedVariables = 'variableObjetivo'+regla.reglaPadre;
+				else if(arregloVariable[i].indexOf("VALOR") == 0 )
+					textCreatedVariables = 'variableValor'+regla.reglaPadre;
+				var valorLista = '';
+				if(arregloVariable[i].indexOf("$") > 0 ) {
+					if(arregloVariable[i].split("$")[1] == "1")
+						valorLista = ".nombre";
+					else
+						valorLista = ".valor";
+				}
+				arreglo.push(tabsText+"if ( "+textCreatedVariables+valorLista+" "+regla.operacion);
+				posicionesIF.push(arreglo.length);
+				if(hasVariables)
+					textVariables.push(textCreatedVariables+valorLista + " " + regla.operacion);
 			};
 		} else {
 			// Agregando campo Operacion
 			for (var i = 0; i < arregloVariable.length; i++) {
-				var textVariables = '';
-				if(arregloVariable[i] == "RESULTADO")
-					textVariables = 'variableResultado'+regla.reglaPadre;
-				else if(arregloVariable[i] == "OBJETIVO")
-					textVariables = 'variableObjetivo'+regla.reglaPadre;
-				else if(arregloVariable[i] == "VALOR")
-					textVariables = 'variableValor'+regla.reglaPadre;
-				arreglo.push(tabsText+textVariables+" "+regla.operacion);
+				var textCreatedVariables = '';
+				if(arregloVariable[i].indexOf("RESULTADO") == 0 )
+					textCreatedVariables = 'variableResultado'+regla.reglaPadre;
+				else if(arregloVariable[i].indexOf("OBJETIVO") == 0 )
+					textCreatedVariables = 'variableObjetivo'+regla.reglaPadre;
+				else if(arregloVariable[i].indexOf("VALOR") == 0 )
+					textCreatedVariables = 'variableValor'+regla.reglaPadre;
+				var valorLista = '';
+				if(arregloVariable[i].indexOf("$") > 0 ) {
+					if(arregloVariable[i].split("$")[1] == "1")
+						valorLista = ".nombre";
+					else
+						valorLista = ".valor";
+				}
+				if(regla.operacion=="=")
+					arreglo.push(tabsText+textCreatedVariables+valorLista+" "+regla.operacion);
+				else
+					arreglo.push(tabsText+textCreatedVariables+valorLista+" = "+textCreatedVariables+valorLista+" "+regla.operacion);
+				if(hasVariables)
+					textVariables.push(textCreatedVariables+valorLista + " " + regla.operacion);
+			};
+		}
+	}
+	console.log('arreglo Campo');
+	console.log(arreglo);
+	for (var i = 0; i < arreglo.length; i++) {
+		console.log(arreglo[i]);
+	};
+
+	if(regla.valor.indexOf('COLUMNA') == 0) {
+		if(esCondicion) {
+			var valor = regla.valor.split("=")[1];
+			for (var i = 0; i < arreglo.length; i++) {
+				arreglo[i] += " "+valor+" )  {";
+				textVariables[i] += " " + valor;
+			};
+			/*arreglo[arreglo.length-1] += " "+valor+" )  {";
+			textVariables[textVariables.length-1] += " " + valor;*/
+		} else {
+			var valor = regla.valor.split("=")[1];
+			for (var i = 0; i < arreglo.length; i++) {
+				arreglo[i] += " "+valor+" )  {";
+				textVariables[i] += " " + valor;
+			};
+		}
+	} else if(regla.valor.indexOf('LISTA') == 0) {
+		if(esCondicion) {
+			var arregloLista = regla.valor.split("=")[1].split(",");
+			var copiaRegla = arreglo.slice();
+			var copiaTextVariable = textVariables.slice();
+			var tamArreglo = arreglo.length;
+			if(regla.operacion == "!=") {
+				for (var j = 0; j < tamArreglo; j++) {
+					for (var i = 0; i < arregloLista.length; i++) {
+						var opcionAMostrar = arregloLista[i].split("$");
+						var valorElemento = arregloLista[i];
+						if(opcionAMostrar.length > 1){
+							if(opcionAMostrar[1] == "1")
+								valorElemento = opcionAMostrar[0].split("-")[0];
+							else
+								valorElemento = opcionAMostrar[0].split("-")[1];
+						}
+						if(i==0) {
+							var textoFinal = '';
+							if(i+1 == arregloLista.length)
+								textoFinal = " ) {";
+							arreglo[j] += " "+valorElemento + textoFinal;
+							textVariables[j] += " " + valorElemento;
+						} else {
+							var textoFinal = '';
+							if(i+1 == arregloLista.length)
+								textoFinal = " ) {";
+							arreglo[j] += " && "+copiaRegla[j].split(" ( ")[1]+" "+valorElemento+textoFinal;
+							textVariables[j] += " && " + valorElemento;
+						}
+					}
+					/*for (var j = 0; j < arreglo[0].length-1; j++) {
+						if(arreglo[0].charAt(j) == "!" && arreglo[0].charAt(j+1) == "=") {
+							var texto = arreglo[0].slice(0, j+2) + " "+ valorElemento + " " + arreglo[0].slice(j+2);
+							if(i > 0)
+								texto = texto;
+							arreglo[0] = texto;
+							j+=valorElemento.length+2;
+						}
+					};*/
+					/*for (var j = 0; j < tamArreglo; j++) {
+						var opcionAMostrar = arregloLista[i].split("$");
+						var valorElemento = arregloLista[i];
+						if(opcionAMostrar.length > 1){
+							if(opcionAMostrar[1] == "1")
+								valorElemento = opcionAMostrar[0].split("-")[0];
+							else
+								valorElemento = opcionAMostrar[0].split("-")[1];
+						}
+						if(i==0) {
+							arreglo[j] += " "+valorElemento + " ) {";
+							textVariables[j] += " " + valorElemento;
+						} else {
+							arreglo.push("\n"+copiaRegla[j]+" "+valorElemento+" ) {");
+							posicionesIF.push(posicionesIF[posicionesIF.length-1]+2);
+							textVariables.push(copiaTextVariable[j] + " " + valorElemento);
+						}
+					};*/
+				};
+			} else {
+				for (var i = 0; i < arregloLista.length; i++) {
+					var opcionAMostrar = arregloLista[i].split("$");
+					var valorElemento = arregloLista[i];
+					if(opcionAMostrar.length > 1){
+						if(opcionAMostrar[1] == "1")
+							valorElemento = opcionAMostrar[0].split("-")[0];
+						else
+							valorElemento = opcionAMostrar[0].split("-")[1];
+					}
+					for (var j = 0; j < tamArreglo; j++) {
+						if(i==0) {
+							arreglo[j] += " "+valorElemento + " ) {";
+							textVariables[j] += " " + valorElemento;
+						} else {
+							arreglo.push("\n"+copiaRegla[j]+" "+valorElemento+" ) {");
+							posicionesIF.push(posicionesIF[posicionesIF.length-1]+2);
+							textVariables.push(copiaTextVariable[j] + " " + valorElemento);
+						}
+					};
+				};
+			}
+			/*for (var j = 0; j < arreglo.length; j++) {
+				for (var i = 0; i < arregloLista.length; i++) {
+					if(i==0 && j==0) {
+						arreglo[0] += " "+arregloLista[0] + " ) {";
+						textVariables[0] += " " + arregloLista[0];
+					} else if(i > 0) {
+						arreglo.splice( (i+j), 0, arreglo[j] += " "+valor+" )  {" )
+					} else if(j==0) {
+						arreglo[j] += " "+valor+" )  {";
+						textVariables[j] += " " + valor;
+					} else {
+						arreglo.push("\n"+copiaRegla+" "+arregloLista[i]+" ) {");
+						posicionesIF.push(arreglo.length-1);
+						textVariables.push(copiaTextVariable + " " + arregloLista[0]);
+					}
+				};
+			};*/
+			/*arreglo[0] += " "+arregloLista[0] + " ) {";
+			textVariables[textVariables.length-1] += " " + arregloLista[0];
+			for (var i = 1; i < arregloLista.length; i++) {
+				arreglo.push("\n"+copiaRegla+" "+arregloLista[i]+" ) {");
+				posicionesIF.push(arreglo.length-1);
+				textVariables[i] += " " + arregloLista[0];
+			};*/
+		} else {
+			var arregloLista = regla.valor.split("=")[1].split(",");
+			var copiaRegla = arreglo[arreglo.length-1];
+			var copiaTextVariable = textVariables[textVariables.length-1];
+			for (var i = 0; i < arregloLista.length; i++) {
+				for (var j = 0; j < arreglo.length; j++) {
+					var opcionAMostrar = arregloLista[i].split("$");
+					var valorElemento = arregloLista[i];
+					if(opcionAMostrar.length > 1){
+						if(opcionAMostrar[1] == "1")
+							valorElemento = opcionAMostrar[0].split("-")[0];
+						else
+							valorElemento = opcionAMostrar[0].split("-")[1];
+					}
+					if(i==0) {
+						arreglo[j] += " "+valorElemento + " ) {";
+						textVariables[j] += " " + valorElemento;
+					} else {
+						arreglo.push("\n"+copiaRegla+" "+valorElemento);
+						//posicionesIF.push(arreglo.length-1);
+						textVariables.push(copiaTextVariable + " " + valorElemento);
+					}
+				};
+			};
+			/*arreglo[arreglo.length-1] += " "+arregloLista[0];
+			textVariables[textVariables.length-1] += " " + arregloLista[0];
+			for (var i = 0; i < arregloLista.length; i++) {
+				arreglo.push("\n"+copiaRegla+" "+arregloLista[i]);
+				textVariables[i] += " " + arregloLista[0];
+			};*/
+		}
+	} else if(regla.valor.indexOf('FACTOR') == 0) {
+		if(esCondicion) {
+			var factorValor = regla.valor.split("=")[1];
+			for (var i = 0; i < arreglo.length; i++) {
+				arreglo[i] += " "+factorValor + " ) {";
+				textVariables[i] += " " + factorValor;
+			};
+		} else {
+			var factorValor = regla.valor.split("=")[1];
+			for (var i = 0; i < arreglo.length; i++) {
+				arreglo[i] += " "+factorValor + ";";
+				textVariables[i] += " " + factorValor;
+			};
+		}
+	} else if(regla.valor.indexOf('DIA') == 0) {
+		if(esCondicion) {
+			var diaValor = regla.valor.split("=")[1];
+			for (var i = 0; i < arreglo.length; i++) {
+				arreglo[i] += " "+diaValor + " ) {";
+				textVariables[i] += " " + diaValor;
+			};
+		} else {
+			var diaValor = regla.valor.split("=")[1];
+			for (var i = 0; i < arreglo.length; i++) {
+				arreglo[i] += " "+diaValor + ";";
+				textVariables[i] += " " + diaValor;
+			};
+		}
+	} else if(regla.valor.indexOf('VARIABLE') == 0) {
+		var arregloVariable = regla.valor.split("=")[1].split(",");
+		if(esCondicion) {
+			// Agregando campo Operacion
+			for (var i = 0; i < arregloVariable.length; i++) {
+				var textCreatedVariables = '';
+				if(arregloVariable[i].indexOf("RESULTADO") == 0 )
+					textCreatedVariables = 'variableResultado'+regla.reglaPadre;
+				else if(arregloVariable[i].indexOf("OBJETIVO") == 0 )
+					textCreatedVariables = 'variableObjetivo'+regla.reglaPadre;
+				else if(arregloVariable[i].indexOf("VALOR") == 0 )
+					textCreatedVariables = 'variableValor'+regla.reglaPadre;
+				var valorLista = '';
+				if(arregloVariable[i].indexOf("$") > 0 ) {
+					if(arregloVariable[i].split("$")[1] == "1")
+						valorLista = ".nombre";
+					else
+						valorLista = ".valor";
+				}
+				for (var k = 0; k < arreglo.length; k++) {
+					arreglo[k] += " "+textCreatedVariables + valorLista + " ) {";
+				};
+			};
+		} else {
+			// Agregando campo Operacion
+			for (var i = 0; i < arregloVariable.length; i++) {
+				var textCreatedVariables = '';
+				if(arregloVariable[i].indexOf("RESULTADO") == 0 )
+					textCreatedVariables = 'variableResultado'+regla.reglaPadre;
+				else if(arregloVariable[i].indexOf("OBJETIVO") == 0 )
+					textCreatedVariables = 'variableObjetivo'+regla.reglaPadre;
+				else if(arregloVariable[i].indexOf("VALOR") == 0 )
+					textCreatedVariables = 'variableValor'+regla.reglaPadre;
+				var valorLista = '';
+				if(arregloVariable[i].indexOf("$") > 0 ) {
+					if(arregloVariable[i].split("$")[1] == "1")
+						valorLista = ".nombre";
+					else
+						valorLista = ".valor";
+				}
+				for (var k = 0; k < arreglo.length; k++) {
+					arreglo[k] += " "+textCreatedVariables + valorLista + ";";
+				};
 			};
 		}
 		if(hasVariables) {
@@ -845,156 +1254,233 @@ function campoObjetivo (regla, arreglo, tabs) {
 			};
 		}
 	}
-	console.log('arreglo Campo');
-	console.log(arreglo);
-
-	if(regla.valor.indexOf('COLUMNA') == 0) {
-		if(esCondicion) {
-			var valor = regla.valor.split("=")[1];
-			arreglo[arreglo.length-1] += " "+valor+" )  {";
-			textVariables[textVariables.length-1] += " " + valor;
-		} else {
-			var valor = regla.valor.split("=")[1];
-			arreglo[arreglo.length-1] += " "+valor;
-			textVariables[textVariables.length-1] += " " + valor;
-		}
-	} else if(regla.valor.indexOf('LISTA') == 0) {
-		if(esCondicion) {
-			var arregloLista = regla.valor.split("=")[1].split(",");
-			var copiaRegla = arreglo[arreglo.length-1];
-			arreglo[arreglo.length-1] += " "+arregloLista[0] + " ) {";
-			textVariables[textVariables.length-1] += " " + arregloLista[0];
-			for (var i = 1; i < arregloLista.length; i++) {
-				arreglo.push("\n"+copiaRegla+" "+arregloLista[i]+" ) {");
-				posicionesIF.push(arreglo.length-1);
-				textVariables[i] += " " + arregloLista[0];
-			};
-		} else {
-			var arregloLista = regla.valor.split("=")[1].split(",");
-			var copiaRegla = arreglo[arreglo.length-1];
-			arreglo[arreglo.length-1] += " "+arregloLista[0];
-			textVariables[textVariables.length-1] += " " + arregloLista[0];
-			for (var i = 0; i < arregloLista.length; i++) {
-				arreglo.push("\n"+copiaRegla+" "+arregloLista[i]);
-				textVariables[i] += " " + arregloLista[0];
-			};
-		}
-	} else if(regla.valor.indexOf('FACTOR') == 0) {
-		if(esCondicion) {
-			var factorValor = regla.valor.split("=")[1];
-			arreglo[arreglo.length-1] += " "+factorValor + " ) {";
-			textVariables[textVariables.length-1] += " " + factorValor;
-		} else {
-			var factorValor = regla.valor.split("=")[1];
-			arreglo[arreglo.length-1] += " "+factorValor;
-			textVariables[textVariables.length-1] += " " + factorValor;
-		}
-	} else if(regla.valor.indexOf('DIA') == 0) {
-		if(esCondicion) {
-			var diaValor = regla.valor.split("=")[1];
-			arreglo[arreglo.length-1] += " "+diaValor + " ) {";
-			textVariables[textVariables.length-1] += " " + diaValor;
-		} else {
-			var diaValor = regla.valor.split("=")[1];
-			arreglo[arreglo.length-1] += " "+diaValor;
-			textVariables[textVariables.length-1] += " " + diaValor;
-		}
-	}
 	console.log('arreglo Valor');
 	console.log(arreglo);
+	for (var i = 0; i < arreglo.length; i++) {
+		console.log(arreglo[i]);
+	};
+
+	console.log('arreglo posicionesIF');
+	console.log(posicionesIF);
+	for (var i = 0; i < posicionesIF.length; i++) {
+		console.log(posicionesIF[i]);
+	};
 
 	var cuerpo = arregloReglas.filter(function( object ) {
 	    return object.reglaPadre == regla.ID;
 	});
 	if(regla.variables.length > 0){
 		var variables = regla.variables.split("//")[1].split("#");
-		for (var i = 0; i < variables.length; i++) {
-			if(variables[i].indexOf('RESULTADO') == 0) {
-				var variablesText = '';
-				if(esCondicion) {
-					console.log(arreglo[arreglo.length-1].split("(")[1]);
-					variablesText = arreglo[arreglo.length-1].split("(")[1].replace(")", "").replace("{", "");
-				} else {
-					variablesText = arreglo[arreglo.length-1];
+		var tamArreglo = arreglo.length;
+		var contador = 0;
+		for (var j = 0; j < tamArreglo; j++) {
+			for (var i = 0; i < variables.length; i++) {
+				if(j == 0)
+					contador = 1;
+				else 
+					contador = 0;
+				if(variables[i].indexOf('RESULTADO') == 0) {
+					var variablesText = '';
+					if(esCondicion) {
+						console.log('textVariables[j]');
+						console.log(textVariables[j]);
+						variablesText = textVariables[j];
+					} else {
+						if( textVariables[j].indexOf(">") > 0 ){
+							variablesText+=textVariables[j].split(">")[0];
+						} else if( textVariables[j].indexOf(">=") > 0 ) {
+							variablesText+=textVariables[j].split(">=")[0];
+						} else if( textVariables[j].indexOf("<") > 0 ) {
+							variablesText+=textVariables[j].split("<")[0];
+						} else if( textVariables[j].indexOf("<=") > 0 ) {
+							variablesText+=textVariables[j].split("<=")[0];
+						} else if( textVariables[j].indexOf("==") > 0 ) {
+							variablesText+=textVariables[j].split("==")[0];
+						} else if( textVariables[j].indexOf("=") > 0 ) {
+							variablesText+=textVariables[j].split("=")[0];
+						} else if( textVariables[j].indexOf("!=") > 0 ) {
+							variablesText+=textVariables[j].split("!=");
+						}  else if( textVariables[j].indexOf("*") > 0 ) {
+							variablesText+=textVariables[j].split("*")[0];
+						} else if( textVariables[j].indexOf("+") > 0 ) {
+							variablesText+=textVariables[j].split("+")[0];
+						} else if( textVariables[j].indexOf("-") > 0 ) {
+							variablesText+=textVariables[j].split("-")[0];
+						} else if( textVariables[j].indexOf("/") > 0) {
+							variablesText+=textVariables[j].split("/")[0];
+						}
+					}
+					variablesText+=";";
+					//arreglo.push("\n"+tabsText+"\t"+"variableResultado"+(regla.ID)+" = "+variablesText);
+					arreglo.splice(j+(j*variables.length)+1, 0, "\n"+tabsText+"var variableResultado"+(regla.ID)+" = "+variablesText);
+					for (var k = j; k < posicionesIF.length; k++) {
+						posicionesIF[k]++;
+					};
+				} else if(variables[i].indexOf('CAMPOOBJETIVO') == 0) {
+					var variablesText = '';
+					for (var k = j; k < j+1; k++) {
+						variablesText = "var variableObjetivo"+(regla.ID)+" = ";
+						if(variables[i].indexOf("$") == -1) {
+							if( textVariables[k].indexOf(">") > 0 ){
+								variablesText+=textVariables[k].split(">")[0];
+							} else if( textVariables[k].indexOf(">=") > 0 ) {
+								variablesText+=textVariables[k].split(">=")[0];
+							} else if( textVariables[k].indexOf("<") > 0 ) {
+								variablesText+=textVariables[k].split("<")[0];
+							} else if( textVariables[k].indexOf("<=") > 0 ) {
+								variablesText+=textVariables[k].split("<=")[0];
+							} else if( textVariables[k].indexOf("==") > 0 ) {
+								variablesText+=textVariables[k].split("==")[0];
+							} else if( textVariables[k].indexOf("=") > 0 ) {
+								variablesText+=textVariables[k].split("=")[0];
+							} else if( textVariables[k].indexOf("!=") > 0 ) {
+								variablesText+=textVariables[k].split("!=");
+							}  else if( textVariables[k].indexOf("*") > 0 ) {
+								variablesText+=textVariables[k].split("*")[0];
+							} else if( textVariables[k].indexOf("+") > 0 ) {
+								variablesText+=textVariables[k].split("+")[0];
+							} else if( textVariables[k].indexOf("-") > 0 ) {
+								variablesText+=textVariables[k].split("-")[0];
+							} else if( textVariables[k].indexOf("/") > 0) {
+								variablesText+=textVariables[k].split("/")[0];
+							}
+						} else {
+							var nombre = '';
+							if( textVariables[k].indexOf(">") > 0 ){
+								nombre+=textVariables[k].split(">")[0];
+							} else if( textVariables[k].indexOf(">=") > 0 ) {
+								nombre+=textVariables[k].split(">=")[0];
+							} else if( textVariables[k].indexOf("<") > 0 ) {
+								nombre+=textVariables[k].split("<")[0];
+							} else if( textVariables[k].indexOf("<=") > 0 ) {
+								nombre+=textVariables[k].split("<=")[0];
+							} else if( textVariables[k].indexOf("==") > 0 ) {
+								nombre+=textVariables[k].split("==")[0];
+							} else if( textVariables[k].indexOf("=") > 0 ) {
+								nombre+=textVariables[k].split("=")[0];
+							} else if( textVariables[k].indexOf("!=") > 0 ) {
+								nombre+=textVariables[k].split("!=");
+								//
+							}  else if( textVariables[k].indexOf("*") > 0 ) {
+								nombre+=textVariables[k].split("*")[0];
+							} else if( textVariables[k].indexOf("+") > 0 ) {
+								nombre+=textVariables[k].split("+")[0];
+							} else if( textVariables[k].indexOf("-") > 0 ) {
+								nombre+=textVariables[k].split("-")[0];
+							} else if( textVariables[k].indexOf("/") > 0) {
+								nombre+=textVariables[k].split("/")[0];
+							}
+							var arregloVariables = variables[i].split("-")[1].split(",");
+							for (var i = 0; i < arregloVariables.length; i++) {
+								if(arregloVariables[i].replace(" ", "").indexOf(nombre).replace(" ", "") > -1){
+									var tipo = arregloVariables[i].split("-")[1].split("$")[1];
+									/*if(tipo == "1")
+										variablesText+=arregloVariables[i].split("-")[0];
+									else
+										variablesText+=arregloVariables[i].split("-")[1].split("$")[0];*/
+									var nombre = arregloVariables[i].split("-")[0], valor = arregloVariables[i].split("-")[1].split("$")[0];
+									variablesText+="{nombre: '"+nombre+"', valor: '"+valor+"'}"
+								}
+							};
+						}
+						variablesText+=";";
+						//arreglo.push("\n"+tabsText+"\t"+variablesText);
+						arreglo.splice(j+(j*variables.length)+1, 0, "\n"+tabsText+"\t"+variablesText);
+						for (var l = j; l < posicionesIF.length; l++) {
+							posicionesIF[l]++;
+						};
+					};
+				} else if(variables[i].indexOf('VALOR') == 0) {
+					var variablesText = '';
+					for (var k = j; k < j+1; k++) {
+						variablesText = "var variableValor"+(regla.ID)+" = ";
+						if(variables[i].indexOf("$") == -1) {
+							if( textVariables[k].indexOf(">") > 0 ){
+								variablesText+=textVariables[k].split(">")[1];
+							} else if( textVariables[k].indexOf(">=") > 0 ) {
+								variablesText+=textVariables[k].split(">=")[1];
+							} else if( textVariables[k].indexOf("<") > 0 ) {
+								variablesText+=textVariables[k].split("<")[1];
+							} else if( textVariables[k].indexOf("<=") > 0 ) {
+								variablesText+=textVariables[k].split("<=")[1];
+							} else if( textVariables[k].indexOf("==") > 0 ) {
+								variablesText+=textVariables[k].split("==")[1];
+							} else if( textVariables[k].indexOf("=") > 0 ) {
+								variablesText+=textVariables[k].split("=")[1];
+							} else if( textVariables[k].indexOf("!=") > 0 ) {
+								variablesText+=textVariables[k].split("!=");
+								//
+							}  else if( textVariables[k].indexOf("*") > 0 ) {
+								variablesText+=textVariables[k].split("*")[1];
+							} else if( textVariables[k].indexOf("+") > 0 ) {
+								variablesText+=textVariables[k].split("+")[1];
+							} else if( textVariables[k].indexOf("-") > 0 ) {
+								variablesText+=textVariables[k].split("-")[1];
+							} else if( textVariables[k].indexOf("/") > 0) {
+								variablesText+=textVariables[k].split("/")[1];
+							}
+						} else {
+							var nombre = '';
+							if( textVariables[k].indexOf(">") > 0 ){
+								nombre+=textVariables[k].split(">")[1];
+							} else if( textVariables[k].indexOf(">=") > 0 ) {
+								nombre+=textVariables[k].split(">=")[1];
+							} else if( textVariables[k].indexOf("<") > 0 ) {
+								nombre+=textVariables[k].split("<")[1];
+							} else if( textVariables[k].indexOf("<=") > 0 ) {
+								nombre+=textVariables[k].split("<=")[1];
+							} else if( textVariables[k].indexOf("==") > 0 ) {
+								nombre+=textVariables[k].split("==")[1];
+							} else if( textVariables[k].indexOf("=") > 0 ) {
+								nombre+=textVariables[k].split("=")[1];
+							} else if( textVariables[k].indexOf("!=") > 0 ) {
+								nombre+=textVariables[k].split("!=");
+								//
+							}  else if( textVariables[k].indexOf("*") > 0 ) {
+								nombre+=textVariables[k].split("*")[1];
+							} else if( textVariables[k].indexOf("+") > 0 ) {
+								nombre+=textVariables[k].split("+")[1];
+							} else if( textVariables[k].indexOf("-") > 0 ) {
+								nombre+=textVariables[k].split("-")[1];
+							} else if( textVariables[k].indexOf("/") > 0) {
+								nombre+=textVariables[k].split("/")[1];
+							}
+							var arregloVariables = variables[i].split("=")[1].split(",");
+							for (var i = 0; i < arregloVariables.length; i++) {
+								if(arregloVariables[i].replace(/( *)/, "").indexOf(nombre.replace(/( *)/, "")) > -1){
+									var tipo = arregloVariables[i].split("-")[1].split("$")[1].replace(")", "");
+									/*if(tipo == "1")
+										variablesText+=arregloVariables[i].split("-")[0];
+									else
+										variablesText+=arregloVariables[i].split("-")[1].split("$")[0];*/
+									var nombre = arregloVariables[i].split("-")[0], valor = arregloVariables[i].split("-")[1].split("$")[0];
+									variablesText+="{nombre: '"+nombre+"', valor: '"+valor+"'}"
+								}
+							};
+						}
+						variablesText+=";";
+						//arreglo.push("\n"+tabsText+"\t"+variablesText);
+						arreglo.splice(j+(j*variables.length)+1, 0, "\n"+tabsText+"\t"+variablesText);
+						for (var l = j; l < posicionesIF.length; l++) {
+							posicionesIF[l]++;
+						};
+					};
 				}
-				arreglo.push("\n"+tabsText+"\t"+"variableResultado"+(regla.ID)+" = "+variablesText);
-				for (var j = arreglo.length-2; j < posicionesIF.length; j++) {
-					posicionesIF[j]++;
-				};
-			} else if(variables[i].indexOf('CAMPOOBJETIVO') == 0) {
-				var variablesText = '';
-				for (var j = 0; j < textVariables.length; j++) {
-					variablesText = "variableObjetivo"+(regla.ID)+" = ";
-					if( textVariables[j].indexOf(">") > 0 ){
-						variablesText+=textVariables[j].split(">")[0];
-					} else if( textVariables[j].indexOf(">=") > 0 ) {
-						variablesText+=textVariables[j].split(">=")[0];
-					} else if( textVariables[j].indexOf("<") > 0 ) {
-						variablesText+=textVariables[j].split("<")[0];
-					} else if( textVariables[j].indexOf("<=") > 0 ) {
-						variablesText+=textVariables[j].split("<=")[0];
-					} else if( textVariables[j].indexOf("=") > 0 ) {
-						variablesText+=textVariables[j].split("=")[0];
-					} else if( textVariables[j].indexOf("==") > 0 ) {
-						variablesText+=textVariables[j].split("==")[0];
-					} else if( textVariables[j].indexOf("!=") > 0 ) {
-						variablesText+=textVariables[j].split("!=")[0];
-					}  else if( textVariables[j].indexOf("*") > 0 ) {
-						variablesText+=textVariables[j].split("*")[0];
-					} else if( textVariables[j].indexOf("+") > 0 ) {
-						variablesText+=textVariables[j].split("+")[0];
-					} else if( textVariables[j].indexOf("-") > 0 ) {
-						variablesText+=textVariables[j].split("-")[0];
-					} else if( textVariables[j].indexOf("/") > 0) {
-						variablesText+=textVariables[j].split("/")[0];
-					}
-					arreglo.push("\n"+tabsText+"\t"+variablesText);
-					for (var k = j; k < posicionesIF.length; k++) {
-						posicionesIF[k]++;
-					};
-				};
-			} else if(variables[i].indexOf('VALOR') == 0) {
-				var variablesText = '';
-				for (var j = 0; j < textVariables.length; j++) {
-					variablesText = "variableValor"+(regla.ID)+" = ";
-					if( textVariables[j].indexOf(">") > 0 ){
-						variablesText+=textVariables[j].split(">")[1];
-					} else if( textVariables[j].indexOf(">=") > 0 ) {
-						variablesText+=textVariables[j].split(">=")[1];
-					} else if( textVariables[j].indexOf("<") > 0 ) {
-						variablesText+=textVariables[j].split("<")[1];
-					} else if( textVariables[j].indexOf("<=") > 0 ) {
-						variablesText+=textVariables[j].split("<=")[1];
-					} else if( textVariables[j].indexOf("=") > 0 ) {
-						variablesText+=textVariables[j].split("=")[1];
-					} else if( textVariables[j].indexOf("==") > 0 ) {
-						variablesText+=textVariables[j].split("==")[1];
-					} else if( textVariables[j].indexOf("!=") > 0 ) {
-						variablesText+=textVariables[j].split("!=")[1];
-					}  else if( textVariables[j].indexOf("*") > 0 ) {
-						variablesText+=textVariables[j].split("*")[1];
-					} else if( textVariables[j].indexOf("+") > 0 ) {
-						variablesText+=textVariables[j].split("+")[1];
-					} else if( textVariables[j].indexOf("-") > 0 ) {
-						variablesText+=textVariables[j].split("-")[1];
-					} else if( textVariables[j].indexOf("/") > 0) {
-						variablesText+=textVariables[j].split("/")[1];
-					}
-					arreglo.push("\n"+tabsText+"\t"+variablesText);
-					for (var k = j; k < posicionesIF.length; k++) {
-						posicionesIF[k]++;
-					};
-				};
-			}
+			};
 		};
 	}
 	if(cuerpo.length > 0){
 		var arregloCuerpo = [];
 		for (var i = 0; i < cuerpo.length; i++) {
-			var retorno = campoObjetivo(cuerpo[i], [], tabs+1);
+			var cuantasTabs = tabs;
+			if(esCondicion)
+				cuantasTabs++;
+			var retorno = campoObjetivo(cuerpo[i], [], cuantasTabs);
 			retorno[0] = "\n"+retorno[0];
+			console.log('retorno');
+			console.log(retorno);
 			$.merge( arregloCuerpo, retorno );
-			for (var j = i; j < posicionesIF.length; j++) {
+			/*for (var j = i; j < posicionesIF.length; j++) {
 				console.log("//////////");
 				console.log(arreglo);
 				console.log(retorno);
@@ -1002,29 +1488,32 @@ function campoObjetivo (regla, arreglo, tabs) {
 				//posicionesIF[j]+=retorno.length;
 				console.log(arregloCuerpo);
 				console.log("despues = "+posicionesIF[j]);
-			};
+			};*/
 		};
 		//arreglo.concat(arregloCuerpo);
 		for (var i = 0; i < posicionesIF.length; i++) {
-			console.log("IFF -- "+i);
+			/*console.log("IFF -- "+i);
 			console.log(posicionesIF[i]);
 			console.log("BEFORE -- ");
 			for (var j = 0; j < arreglo.length; j++) {
 				console.log(arreglo[j]);
 			};
-			arreglo.splice(posicionesIF[i]+1, 0, ...arregloCuerpo);
-			console.log("AFTER -- ");
+			console.log(arregloCuerpo);*/
+			arreglo.splice(posicionesIF[i], 0, ...arregloCuerpo);
+			/*console.log("AFTER -- ");
 			for (var j = 0; j < arreglo.length; j++) {
 				console.log(arreglo[j]);
-			};
+			};*/
 			if(esCondicion)
-				arreglo.splice(posicionesIF[i]+arregloCuerpo.length+1, 0, "\n"+tabsText+"}");
+				arreglo.splice(posicionesIF[i]+arregloCuerpo.length, 0, "\n"+tabsText+"}");
 			for (var j = i; j < posicionesIF.length; j++) {
 				posicionesIF[j]+=arregloCuerpo.length;
-				if(esCondicion)
-					posicionesIF[j]++;
+				/*if(esCondicion)
+					posicionesIF[j]++;*/
 			};
 		};
+		if(posicionesIF.length == 0)
+			$.merge( arreglo, arregloCuerpo );
 		/*if(esCondicion){
 			for (var i = 0; i < posicionesIF.length; i++) {
 				arreglo.splice(posicionesIF[i]+1, 0, "\n}")
@@ -1039,14 +1528,14 @@ function campoObjetivo (regla, arreglo, tabs) {
 	} else {
 		if(esCondicion){
 			for (var i = 0; i < posicionesIF.length; i++) {
-				console.log('tabsText');
+				/*console.log('tabsText');
 				console.log(tabsText);
 				console.log(tabs);
-				console.log('tabsText');
-				arreglo.splice(posicionesIF[i]+1, 0, "\n"+tabsText+"}")
-				for (var j = i; j < posicionesIF.length; j++) {
+				console.log('tabsText');*/
+				arreglo.splice(posicionesIF[i], 0, "\n"+tabsText+"}")
+				/*for (var j = i; j < posicionesIF.length; j++) {
 					posicionesIF[j]++;
-				};
+				};*/
 			};
 		}
 		console.log('2');

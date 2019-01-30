@@ -1198,3 +1198,8 @@ function logout () {
     $("#app_root").load("src/login.html");
 	session.defaultSession.clearStorageData([], (data) => {});
 }
+
+function goRCL () {
+	$("#app_root").empty();
+    $("#app_root").load("src/rcl.html");
+}

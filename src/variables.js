@@ -26,6 +26,7 @@ const pool1 = new sql.ConnectionPool(config, err => {
 		loadVariablesMainDB();
 		loadVariablesIMG();
 		loadLists();
+		loadConections();
 	}
 });
 
@@ -328,7 +329,7 @@ function updateFormulaVariablesDB (equacion, formulaMATHLIVE) {
             rolledBack = true
         })
         const request = new sql.Request(transaction);
-        request.query("update Variables set formula = "+equacion+", formulaMATHLIVE = "+formulaMATHLIVE+" where ID = 1", (err, result) => {
+        request.query("update Variables set formula = '"+equacion+"', formulaMATHLIVE = '"+formulaMATHLIVE+"' where ID = 1", (err, result) => {
             if (err) {
                 if (!rolledBack) {
                     console.log('error en rolledBack update FOSEDE Variables');
@@ -395,10 +396,12 @@ function loadVariables () {
                     	console.log(arregloVariables);
                     	loadVariablesTable();
                     	printVariables();
+                    	renderConections();
                     } else{
                     	arregloVariables = [];
                     	loadVariablesTable();
                     	printVariables();
+                    	renderConections();
                     }
                 });
             }
@@ -800,6 +803,7 @@ function saveNewVariable (index) {
 								  	duration: 2,
 								  	overlay: true
 								});
+								renderConections();
 			                });
 			            }
 			        });
@@ -862,6 +866,7 @@ function modifyVariable (row) {
                     console.log("Transaction committed Update Variables");
                     console.log(result);
                     loadVariables();
+                    renderConections();
                     $("body").overhang({
 					  	type: "success",
 					  	primary: "#40D47E",
@@ -902,6 +907,7 @@ function deleteVariable (row) {
                     console.log("Transaction committed Delete Variables");
                     console.log(result);
                     loadVariables();
+                    renderConections();
                     $("body").overhang({
 					  	type: "success",
 					  	primary: "#40D47E",
@@ -2649,6 +2655,544 @@ function updateFOSEDEVariablesDB (montoFosede) {
 
 
 //	**********		Activos Conexion		**********
+var arregloConecciones = [];
+function loadConections () {
+	const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false
+ 
+        transaction.on('rollback', aborted => {
+            // emited with aborted === true
+     
+            rolledBack = true
+        })
+        const request = new sql.Request(transaction);
+        request.query("select * from Bases", (err, result) => {
+            if (err) {
+                if (!rolledBack) {
+                    console.log('error en rolledBack MainDB Variables');
+                    transaction.rollback(err => {
+                        console.log('error en rolledBack');
+                        console.log(err);
+                    });
+                }
+            }  else {
+                transaction.commit(err => {
+                    // ... error checks
+                    console.log("Transaction committed MainDB Variables");
+                    console.log(result);
+                    if(result.recordset.length > 0){
+                    	arregloConecciones = result.recordset;
+                    } else {
+                    	arregloConecciones = [];
+                    }
+                });
+            }
+        });
+    }); // fin transaction
+}
+
+function renderConections () {
+	$(".coneccionesTabla").remove();
+	for (var i = 0; i < arregloVariables.length; i++) {
+		window['ConnectionTest'+i] = new Function(
+		     'return function hola(){'+
+		     	'$("#testConnection'+i+'").prop("disabled", true);'+
+				'setTimeout(\' $("#testConnection'+i+'").prop("disabled", false); \', 3000);'+
+				'var user = $("#activosUserDB'+i+'").val();'+
+				'var password = $("#activosPasswordDB'+i+'").val();'+
+				'var server = $("#activosServerDB'+i+'").val();'+
+				'var database = $("#activosDataBaseDB'+i+'").val();'+
+				'var table = $("#activosTableDB'+i+'").val();'+
+                'const sql = require("mssql");'+
+                'console.log("sql");'+
+                'console.log("sql");'+
+                'console.log("sql");'+
+                'console.log(sql);'+
+				'if(user.length > 0){'+
+					'if(password.length > 0){'+
+						'if(server.length > 0){'+
+							'if(database.length > 0){'+
+								'if(table.length > 0){'+
+									'const pool = new sql.ConnectionPool({'+
+									    'user: user,'+
+									    'password: password,'+
+									    'server: server,'+
+									    'database: database'+
+									'});'+
+									'pool.connect(err => {'+
+										'pool.request()'+
+									    '.query("select * from "+table, (err, result) => {'+
+									    	'if(err){'+
+									    		'$("body").overhang({'+
+												  	'type: "error",'+
+												  	'primary: "#f84a1d",'+
+													'accent: "#d94e2a",'+
+												  	'message: "Intento de conexión fallido.",'+
+												  	'duration: 2,'+
+												  	'overlay: true'+
+												'});'+
+									    	'} else {'+
+									    		'$("body").overhang({'+
+												  	'type: "success",'+
+												  	'primary: "#40D47E",'+
+									  				'accent: "#27AE60",'+
+												  	'message: "Conexión realizada con exito.",'+
+												  	'duration: 2,'+
+												  	'overlay: true'+
+												'});'+
+									    	'}'+
+									    '});'+
+									'});'+
+								'} else {'+
+									'$("body").overhang({'+
+									  	'type: "error",'+
+									  	'primary: "#f84a1d",'+
+										'accent: "#d94e2a",'+
+									  	'message: "Ingrese un valor en el campo de ingresar el nombre de la tabla.",'+
+									  	'duration: 2,'+
+									  	'overlay: true'+
+									'});'+
+								'}'+
+							'} else {'+
+								'$("body").overhang({'+
+								  	'type: "error",'+
+								  	'primary: "#f84a1d",'+
+									'accent: "#d94e2a",'+
+								  	'message: "Ingrese un valor en el campo de ingresar el nombre de la base de datos.",'+
+								  	'duration: 2,'+
+								  	'overlay: true'+
+								'});'+
+							'}'+
+						'} else {'+
+							'$("body").overhang({'+
+							  	'type: "error",'+
+							  	'primary: "#f84a1d",'+
+								'accent: "#Ingrese un valor en el campo de ingresar dirección del servidor.",'+
+							  	'duration: 2,'+
+							  	'overlay: true'+
+							'});'+
+						'}'+
+					'} else {'+
+						'$("body").overhang({'+
+						  	'type: "error",'+
+						  	'primary: "#f84a1d",'+
+							'accent: "#d94e2a",'+
+						  	'message: "Ingrese un valor en el campo de ingresar contraseña.",'+
+						  	'duration: 2,'+
+						  	'overlay: true'+
+						'});'+
+					'}'+
+				'} else {'+
+					'$("body").overhang({'+
+					  	'type: "error",'+
+					  	'primary: "#f84a1d",'+
+						'accent: "#d94e2a",'+
+					  	'message: "Ingrese un valor en el campo de ingresar nombre de usuario.",'+
+					  	'duration: 2,'+
+					  	'overlay: true'+
+					'});'+
+				'}'+
+			'}'
+		)();
+
+		window['saveConections'+i] = new Function(
+		     'return function hola(tipoPar){'+
+		     	'var arreglo = "arreglo"+arregloVariables['+i+'].variables+'+i+';'+
+				'var usuario = $("#activosUserDB'+i+'").val();'+
+				'var constrasena = $("#activosPasswordDB'+i+'").val();'+
+				'var server = $("#activosServerDB'+i+'").val();'+
+				'var basedatos = $("#activosDataBaseDB'+i+'").val();'+
+				'var tabla = $("#activosTableDB'+i+'").val();'+
+				'var tipo = "mssql";'+
+				'var idVariable = arregloVariables['+i+'].ID;'+
+				'var existe = arregloConecciones.filter(function(object) {'+
+			        'return (object.tipo == tipo && object.idVariable == idVariable);'+
+			    '});'+
+                'const sql = require("mssql");'+
+			    'if(existe.length == 0) {'+
+					'if(arreglo.length>0 && arreglo.length<21){'+
+						'if(usuario.length>0 && usuario.length<101){'+
+							'if(constrasena.length>0 && constrasena.length<101){'+
+								'if(server.length>0 && server.length<101){'+
+									'if(basedatos.length>0 && basedatos.length<101){'+
+										'if(tabla.length>0 && tabla.length<101){'+
+											'if(tipo.length>0 && tipo.length<11){'+
+												'if(!isNaN(idVariable)){'+
+                                                    'const pool = new sql.ConnectionPool({'+
+                                                        'user: "SA",'+
+                                                        'password: "password111!",'+
+                                                        'server: "localhost",'+
+                                                        'database: "RCL_Dev"'+
+                                                    '});'+
+                                                    'pool.connect(err => {'+
+                                                        'pool.request()'+
+                                                        '.query("insert into Bases (arreglo, usuario, constrasena, server, basedatos, tabla, tipo, idVariable) values (\'"+arreglo+"\',\'"+usuario+"\',\'"+constrasena+"\',\'"+server+"\',\'"+basedatos+"\',\'"+tabla+"\',\'"+tipo+"\',"+idVariable+")", (err, result) => {'+
+                                                            'if(err){'+
+                                                                'console.log("err");'+
+                                                                'console.log(err);'+
+                                                                '$("body").overhang({'+
+                                                                    'type: "error",'+
+                                                                    'primary: "#f84a1d",'+
+                                                                    'accent: "#d94e2a",'+
+                                                                    'message: "Intento de conexión fallido.",'+
+                                                                    'duration: 2,'+
+                                                                    'overlay: true'+
+                                                                '});'+
+                                                            '} else {'+
+                                                                '$("body").overhang({'+
+                                                                    'type: "success",'+
+                                                                    'primary: "#40D47E",'+
+                                                                    'accent: "#27AE60",'+
+                                                                    'message: "Conexión realizada con exito.",'+
+                                                                    'duration: 2,'+
+                                                                    'overlay: true'+
+                                                                '});'+
+                                                            '}'+
+                                                        '});'+
+                                                    '});'+
+												'} else {'+
+													'$("body").overhang({'+
+													  	'type: "error",'+
+													  	'primary: "#f84a1d",'+
+														'accent: "#d94e2a",'+
+													  	'message: "Ingrese un número valido para el id de variable.",'+
+													  	'duration: 2,'+
+													  	'overlay: true'+
+													'});'+
+												'}'+
+											'} else {'+
+												'$("body").overhang({'+
+												  	'type: "error",'+
+												  	'primary: "#f84a1d",'+
+													'accent: "#d94e2a",'+
+												  	'message: "El tamaño del tipo de la db no puede ser igual 0 ó mayor a 10.",'+
+												  	'duration: 2,'+
+												  	'overlay: true'+
+												'});'+
+											'}'+
+										'} else {'+
+											'$("body").overhang({'+
+											  	'type: "error",'+
+											  	'primary: "#f84a1d",'+
+												'accent: "#d94e2a",'+
+											  	'message: "El tamaño del nombre de la tabla de la db no puede ser igual 0 ó mayor a 100.",'+
+											  	'duration: 2,'+
+											  	'overlay: true'+
+											'});'+
+										'}'+
+									'} else {'+
+										'$("body").overhang({'+
+										  	'type: "error",'+
+										  	'primary: "#f84a1d",'+
+											'accent: "#d94e2a",'+
+										  	'message: "El tamaño del nombre de la base de datos no puede ser igual 0 ó mayor a 100.",'+
+										  	'duration: 2,'+
+										  	'overlay: true'+
+										'});'+
+									'}'+
+								'} else {'+
+									'$("body").overhang({'+
+									  	'type: "error",'+
+									  	'primary: "#f84a1d",'+
+										'accent: "#d94e2a",'+
+									  	'message: "El tamaño del nombre del servidor de la db no puede ser igual 0 ó mayor a 100.",'+
+									  	'duration: 2,'+
+									  	'overlay: true'+
+									'});'+
+								'}'+
+							'} else {'+
+								'$("body").overhang({'+
+								  	'type: "error",'+
+								  	'primary: "#f84a1d",'+
+									'accent: "#d94e2a",'+
+								  	'message: "El tamaño de la constraseña de la db no puede ser igual 0 ó mayor a 100.",'+
+								  	'duration: 2,'+
+								  	'overlay: true'+
+								'});'+
+							'}'+
+						'} else {'+
+							'$("body").overhang({'+
+							  	'type: "error",'+
+							  	'primary: "#f84a1d",'+
+								'accent: "#d94e2a",'+
+							  	'message: "El tamaño del nombre de usuario de la db no puede ser igual 0 ó mayor a 100.",'+
+							  	'duration: 2,'+
+							  	'overlay: true'+
+							'});'+
+						'}'+
+					'} else {'+
+						'$("body").overhang({'+
+						  	'type: "error",'+
+						  	'primary: "#f84a1d",'+
+							'accent: "#d94e2a",'+
+						  	'message: "El tamaño del nombre del arreglo no puede ser igual 0 ó mayor a 11.",'+
+						  	'duration: 2,'+
+						  	'overlay: true'+
+						'});'+
+					'}'+
+				'} else {'+
+					//
+				'}'+
+			'}'
+		)();
+
+		var content = 	'<div id="alac_div" class="row">'+
+					        '<div class="col-md-12">'+
+					          	'<div class="x_panel">'+
+					            	'<div class="x_title">'+
+					              		'<h2>Importar '+arregloVariables[i].nombre+'</h2>'+
+					              		'<ul class="nav navbar-right panel_toolbox">'+
+					                		'<li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>'+
+					                		'</li>'+
+					              		'</ul>'+
+					              		'<div class="clearfix"></div>'+
+					            	'</div>'+
+					            	'<div class="x_content">'+
+						              	'<div class="col-md-12 col-sm-12 col-xs-12">'+
+							                '<div class="x_panel" role="tabpanel" data-example-id="togglable-tabs">'+
+							                  	'<ul id="myTab" class="nav nav-tabs bar_tabs" role="tablist">'+
+							                    	'<li role="presentation" class="active"><a href="#tab_content1" id="home-tab" role="tab" data-toggle="tab" aria-expanded="true">Conexi&oacute;n a una Base de Datos MSSQL</a>'+
+							                    	'</li>'+
+							                    	'<li role="presentation" class=""><a href="#tab_content2" role="tab" id="profile-tab" data-toggle="tab" aria-expanded="false">Excel</a>'+
+							                    	'</li>'+
+							                  	'</ul>'+
+							                  	'<div id="myTabContent" class="tab-content">'+
+							                    	'<div role="tabpanel" class="tab-pane fade active in" id="tab_content1" aria-labelledby="home-tab">'+
+							                      		'<div class="col-md-6">'+
+							                        		'<div class="form-group">'+
+							                          			'<label>Usuario</label>'+
+							                          			'<input id="activosUserDB'+(i)+'" type="text" class="form-control" placeholder="Ingrese el nombre de usuario de la base de datos">'+
+							                        		'</div>'+
+							                      		'</div>'+
+							                      		'<div class="col-md-6">'+
+								                        	'<div class="form-group">'+
+							                          			'<label>Contrase&ntilde;a</label>'+
+							                          			'<input id="activosPasswordDB'+(i)+'" type="password" class="form-control" placeholder="Ingrese la contrase&ntilde;a de la base de datos">'+
+							                        		'</div>'+
+							                      		'</div>'+
+							                      		'<div class="col-md-6">'+
+							                        		'<div class="form-group">'+
+							                          			'<label>Servidor</label>'+
+							                          			'<input id="activosServerDB'+(i)+'" type="text" class="form-control" placeholder="Ingrese la direcci&oacute;n del servidor de la base de datos">'+
+							                        		'</div>'+
+							                      		'</div>'+
+							                      		'<div class="col-md-6">'+
+							                        		'<div class="form-group">'+
+							                          			'<label>Base de Datos</label>'+
+							                          			'<input id="activosDataBaseDB'+(i)+'" type="text" class="form-control" placeholder="Ingrese el nombre de la base de datos">'+
+							                        		'</div>'+
+							                      		'</div>'+
+							                      		'<div class="col-md-6">'+
+							                        		'<div class="form-group">'+
+							                          			'<label>Tabla</label>'+
+							                          			'<input id="activosTableDB'+(i)+'" type="text" class="form-control" placeholder="Ingrese el nombre de la tabla">'+
+							                        		'</div>'+
+							                      		'</div>'+
+							                      		'<div class="col-md-6">'+
+							                        		'<br/>'+
+							                        		'<button id="testConnection'+(i)+'" onclick="ConnectionTest'+i+'()" type="button" class="btn btn-primary" style="margin-top:1%;">Probar Conexi&oacute;n</button>'+
+							                      		'</div>'+
+							                    	'</div>'+
+							                    	'<div role="tabpanel" class="tab-pane fade" id="tab_content2" aria-labelledby="profile-tab">'+
+							                      		'<button onclick="activosExcelUpload'+(i)+'()" type="button" class="col-md-5 btn btn-primary" style="margin-top:1.6em;">Seleccionar Archivo</button>'+
+							                      		'<div class="col-md-6">'+
+							                        		'<div class="form-group">'+
+							                          			'<label>Hoja</label>'+
+							                          			'<input id="activosTableExcel'+(i)+'" type="text" class="form-control" placeholder="Ingrese el nombre de la hoja de excel">'+
+							                        		'</div>'+
+							                      		'</div>'+
+							                    	'</div>'+
+							                	'</div>'+
+							            	'</div>'+
+							            	'<br/>'+
+							            	'<h4 class="text-center">Mapeo de Campos</h4>'+
+							            	'<table class="table table-striped">'+
+							                	'<thead>'+
+							                    	'<tr>'+
+							                      		'<th>#</th>'+
+							                      		'<th>Campo</th>'+
+							                      		'<th>Origen</th>'+
+							                    	'</tr>'+
+							                	'</thead>'+
+							                	'<tbody>'+
+							                    	'<tr>'+
+							                      		'<th scope="row">1</th>'+
+							                      		'<td>Cuenta</td>'+
+							                      		'<td>'+
+							                        		'<input type="text" id="lempiraInputCambio" required="required" class="form-control">'+
+							                      		'</td>'+
+							                    	'</tr>'+
+							                    	'<tr>'+
+							                      		'<th scope="row">2</th>'+
+							                      		'<td>ID Persona</td>'+
+							                      		'<td>'+
+							                        		'<input type="text" id="lempiraInputCambio" required="required" class="form-control">'+
+							                      		'</td>'+
+							                    	'</tr>'+
+							                    	'<tr>'+
+							                      		'<th scope="row">3</th>'+
+							                      		'<td>Monto</td>'+
+							                      		'<td>'+
+							                        		'<input type="text" id="lempiraInputCambio" required="required" class="form-control">'+
+							                      		'</td>'+
+							                    	'</tr>'+
+							                	'</tbody>'+
+							            	'</table>'+
+							            	'<br/>'+
+							            	'<div class="ln_solid"></div>'+
+						            		'<div id="wrapper">'+
+						                  		'<button id="mostrar" onclick="saveConections'+i+'()" type="button" class="btn btn-success">Guardar</button>'+
+						                	'</div>'+
+						            	'</div>'+
+						        	'</div>'+
+						    	'</div>'+
+							'</div>'+
+						'</div>';
+
+		//arregloVariables[i]
+		$(".right_col").append(content);
+	};
+}
+
+function saveConections () {
+	/*var arreglo = 'arreglo'+arregloVariables['+i+'].variables+'+i+';
+	var usuario = $("#activosUserDB'+i+'").val();
+	var constrasena = $("#activosPasswordDB'+i+'").val();
+	var server = $("#activosServerDB'+i+'").val();
+	var basedatos = $("#activosDataBaseDB'+i+'").val();
+	var tabla = $("#activosTableDB'+i+'").val();
+	var tipo = tipoPar;
+	var idVariable = arregloVariables['+i+'].ID;
+	var existe = arregloConecciones.filter(function(object) {
+        return (object.tipo == tipo && object.idVariable == idVariable);
+    });
+    if(existe.length == 0) {
+		if(arreglo.length>0 && arreglo.length<21){
+			if(usuario.length>0 && usuario.length<101){
+				if(constrasena.length>0 && constrasena.length<101){
+					if(server.length>0 && server.length<101){
+						if(basedatos.length>0 && basedatos.length<101){
+							if(tabla.length>0 && tabla.length<101){
+								if(tipo.length>0 && tipo.length<11){
+									if(!isNaN(idVariable)){
+										const transaction = new sql.Transaction( pool1 );
+									    transaction.begin(err => {
+									        var rolledBack = false
+									 
+									        transaction.on('rollback', aborted => {
+									            // emited with aborted === true
+									     
+									            rolledBack = true
+									        })
+									        const request = new sql.Request(transaction);
+									        request.query("insert intro Bases (arreglo, usuario, constrasena, server, basedatos, tabla, tipo, idVariable) values ('"+arreglo+"','"+usuario+"','"+constrasena+"','"+server+"','"+basedatos+"','"+tabla+"','"+tipo+"',"+idVariable+")", (err, result) => {
+									            if (err) {
+									                if (!rolledBack) {
+									                    console.log('error en rolledBack MainDB Variables');
+									                    transaction.rollback(err => {
+									                        console.log('error en rolledBack');
+									                        console.log(err);
+									                    });
+									                }
+									            }  else {
+									                transaction.commit(err => {
+									                    // ... error checks
+									                    console.log("Transaction committed MainDB Variables");
+									                    console.log(result);
+									                    if(result.recordset.length > 0){
+									                    	arregloConecciones = result.recordset;
+									                    } else {
+									                    	arregloConecciones = [];
+									                    }
+									                });
+									            }
+									        });
+									    }); // fin transaction
+									} else {
+										$("body").overhang({
+										  	type: "error",
+										  	primary: "#f84a1d",
+											accent: "#d94e2a",
+										  	message: "Ingrese un número valido para el id de variable.",
+										  	duration: 2,
+										  	overlay: true
+										});
+									}
+								} else {
+									$("body").overhang({
+									  	type: "error",
+									  	primary: "#f84a1d",
+										accent: "#d94e2a",
+									  	message: "El tamaño del tipo de la db no puede ser igual 0 ó mayor a 10.",
+									  	duration: 2,
+									  	overlay: true
+									});
+								}
+							} else {
+								$("body").overhang({
+								  	type: "error",
+								  	primary: "#f84a1d",
+									accent: "#d94e2a",
+								  	message: "El tamaño del nombre de la tabla de la db no puede ser igual 0 ó mayor a 100.",
+								  	duration: 2,
+								  	overlay: true
+								});
+							}
+						} else {
+							$("body").overhang({
+							  	type: "error",
+							  	primary: "#f84a1d",
+								accent: "#d94e2a",
+							  	message: "El tamaño del nombre de la base de datos no puede ser igual 0 ó mayor a 100.",
+							  	duration: 2,
+							  	overlay: true
+							});
+						}
+					} else {
+						$("body").overhang({
+						  	type: "error",
+						  	primary: "#f84a1d",
+							accent: "#d94e2a",
+						  	message: "El tamaño del nombre del servidor de la db no puede ser igual 0 ó mayor a 100.",
+						  	duration: 2,
+						  	overlay: true
+						});
+					}
+				} else {
+					$("body").overhang({
+					  	type: "error",
+					  	primary: "#f84a1d",
+						accent: "#d94e2a",
+					  	message: "El tamaño de la constraseña de la db no puede ser igual 0 ó mayor a 100.",
+					  	duration: 2,
+					  	overlay: true
+					});
+				}
+			} else {
+				$("body").overhang({
+				  	type: "error",
+				  	primary: "#f84a1d",
+					accent: "#d94e2a",
+				  	message: "El tamaño del nombre de usuario de la db no puede ser igual 0 ó mayor a 100.",
+				  	duration: 2,
+				  	overlay: true
+				});
+			}
+		} else {
+			$("body").overhang({
+			  	type: "error",
+			  	primary: "#f84a1d",
+				accent: "#d94e2a",
+			  	message: "El tamaño del nombre del arreglo no puede ser igual 0 ó mayor a 11.",
+			  	duration: 2,
+			  	overlay: true
+			});
+		}
+	} else {
+		//
+	}*/
+}
 
 function activosConnectionTest () {
 	$("#testConnection").prop('disabled', true);
@@ -2786,4 +3330,9 @@ function goRules (index) {
     	loadText(nombrePadre, nombreHijo, descripcionHijo, arregloVariableDeVariables[index]);
   	});*/
   	//html.find('script[src="src/variables.js"]').remove();
+}
+
+function goRCL () {
+	$("#app_root").empty();
+    $("#app_root").load("src/rcl.html");
 }

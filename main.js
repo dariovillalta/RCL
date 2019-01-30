@@ -21,6 +21,8 @@ const url = require('url')
       protocol: 'file:',
       slashes: true
     }) )
+
+    win.setMenu(null)
   
     // Open the DevTools.
     //win.webContents.openDevTools()

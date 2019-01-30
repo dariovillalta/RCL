@@ -20,6 +20,7 @@ const pool1 = new sql.ConnectionPool(config, err => {
 	else{
 		console.log('pool loaded');
 		loadVariablesMainDB();
+		loadRCL();
 	}
 });
 
@@ -105,9 +106,48 @@ function loadVariablesMainDB () {
     }); // fin transaction
 }
 /* ****************** 		END LOADING IMG 	********* */
+var chart_plot_02_data = [];
 
 init_daterangepicker();
-init_flot_chart();
+
+function loadRCL () {
+    const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false;
+        transaction.on('rollback', aborted => {
+            rolledBack = true;
+        });
+        const request = new sql.Request(transaction);
+        request.query("select * from RCL ", (err, result) => {
+            if (err) {
+                if (!rolledBack) {
+                    console.log('error en rolledBack MainDB Variables');
+                    transaction.rollback(err => {
+                        console.log('error en rolledBack');
+                        console.log(err);
+                    });
+                }
+            } else {
+                transaction.commit(err => {
+                    console.log("Transaction committed MainDB Variables");
+                    console.log(result);
+                    if(result.recordset.length > 0){
+                    	//chart_plot_02_data = result.recordset;
+                    	//[new Date(Date.today().add(i).days()).getTime(), randNum() + i + i + 10]
+                    	for (var i = 0; i < result.recordset.length; i++) {
+                    		chart_plot_02_data.push([result.recordset[i].fecha.getTime(), result.recordset[i].RCL]);
+                    	};
+                    } else {
+                    	chart_plot_02_data = [];
+                    }
+                    console.log('antesssssss');
+                    console.log(chart_plot_02_data);
+                    init_flot_chart2();
+                });
+            }
+        });
+    }); // fin transaction
+}
 
 function init_daterangepicker() {
 	if( typeof ($.fn.daterangepicker) === 'undefined'){ return; }
@@ -188,7 +228,7 @@ function gd(year, month, day) {
 	return new Date(year, month - 1, day).getTime();
 }
 
-function init_flot_chart(){
+function init_flot_chart2(){
 
 	var randNum = function() {
 	  return (Math.floor(Math.random() * (1 + 40 - 20))) + 20;
@@ -198,12 +238,10 @@ function init_flot_chart(){
 	
 	console.log('init_flot_chart');
 	
-	var chart_plot_02_data = [];
 	
-	
-	for (var i = 0; i < 30; i++) {
+	/*for (var i = 0; i < 30; i++) {
 	  chart_plot_02_data.push([new Date(Date.today().add(i).days()).getTime(), randNum() + i + i + 10]);
-	}
+	}*/
 	
 	var chart_plot_02_settings = {
 		grid: {
@@ -265,7 +303,7 @@ function init_flot_chart(){
 			minTickSize: [1, "day"],
 			timeformat: "%d/%m/%y",
 			min: chart_plot_02_data[0][0],
-			max: chart_plot_02_data[20][0]
+			max: chart_plot_02_data[0][0]
 		}
 	};
 	
@@ -335,4 +373,9 @@ function logout () {
 	$("#app_root").empty();
     $("#app_root").load("src/login.html");
 	session.defaultSession.clearStorageData([], (data) => {});
+}
+
+function goRCL () {
+	$("#app_root").empty();
+    $("#app_root").load("src/rcl.html");
 }
