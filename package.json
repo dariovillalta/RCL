@@ -1,10 +1,11 @@
 {
-  "name": "App",
+  "name": "RCL",
   "version": "1.0.0",
   "description": "",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "build-win": "electron-packager ./ --platform win32 --arch x64 --out ./dist --overwrite"
   },
   "keywords": [],
   "author": "",
@@ -16,6 +17,7 @@
   "dependencies": {
     "mssql": "4.3.0",
     "safer-buffer": "2.1.2",
+    "trip.js": "3.3.3",
     "xlsx-style": "0.8.13"
   }
 }

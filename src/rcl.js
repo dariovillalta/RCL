@@ -23,6 +23,8 @@ const pool1 = new sql.ConnectionPool(config, err => {
         loadVariablesMainDB();
         loadVariables();
         loadVariableVariables();
+        loadAssets();
+        loadDeposits();
 		/*loadLists();
 		loadText();*/
 	}
@@ -53,12 +55,16 @@ session.defaultSession.cookies.get({}, (error, cookies) => {
 
 var arregloVariables = [];
 var arregloVariablesDeVariables = [];
-var arregloConecciones = [];
+var arregloVarDeVarFormula = [];
+var arregloActivos = [];
+var arregloDepositos = [];
+var arregloDeFiltros = [];
 var arregloDeReglas = [];
-var arregloDeComprobacionDeReglas = [];
 var formulaGlobal = '';
+var contadorEntrarCreateFunctionsArray = 0;
+var contadorFuncionPrint = 0;
 
-function loadRules (id, idVariable) {
+/*function loadRules (id, idVariable) {
 	const transaction = new sql.Transaction( pool1 );
     transaction.begin(err => {
         var rolledBack = false
@@ -83,7 +89,7 @@ function loadRules (id, idVariable) {
                     // ... error checks
                     console.log("Transaction committed MainDB Variables");
                     console.log(result);
-                    if(result.recordset.length > 0){
+                    if(result.recordset.length > 0) {
                         var index = -1;
                         for (var i = 0; i < arregloDeComprobacionDeReglas.length; i++) {
                             if(arregloDeComprobacionDeReglas[i] == idVariable){
@@ -92,14 +98,71 @@ function loadRules (id, idVariable) {
                             }
                         };
                         if(index == -1) {
-                            arregloDeComprobacionDeReglas.push(arregloVariablesDeVariables[i].idVariable);
+                            console.log("11");
+                            console.log("Variables Regla Padre");
+                            console.log(id);
+                            console.log("Variables Padre");
+                            console.log(idVariable);
+                            arregloDeComprobacionDeReglas.push(idVariable);
                             arregloDeReglas.push(result.recordset);
-                        } else 
+                        } else {
                             $.merge( arregloDeReglas[index], result.recordset );
-                    } else {
+                            console.log("22");
+                            console.log("Variables Regla Padre");
+                            console.log(id);
+                            console.log("Variables Padre");
+                            console.log(idVariable);
+                        }
+                        //arregloDeReglas.push(result.recordset);
+                    }*//* else {
                         arregloDeReglas.push(null);
                         arregloDeComprobacionDeReglas.push(null);
+                    }*/
+                    /*contadorEntrarCreateFunctionsArray++;
+                    createFunctionsArray();
+                });
+            }
+        });
+    }); // fin transaction
+}*/
+
+function loadRules (id, idVariable) {
+    const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false;
+        transaction.on('rollback', aborted => {
+            rolledBack = true;
+        });
+        const request = new sql.Request(transaction);
+        request.query("select * from Reglas where variablePadre = "+id, (err, result) => {
+            if (err) {
+                if (!rolledBack) {
+                    console.log('error en rolledBack MainDB Variables');
+                    transaction.rollback(err => {
+                        console.log('error en rolledBack');
+                        console.log(err);
+                    });
+                }
+            } else {
+                transaction.commit(err => {
+                    // ... error checks
+                    console.log("Transaction committed loadRules");
+                    console.log(result);
+                    if(result.recordset.length > 0) {
+                        var arrReg = [], arrFil = [];
+                        for (var i = 0; i < result.recordset.length; i++) {
+                            if(result.recordset[i].esFiltro == '0')
+                                arrReg.push(result.recordset[i]);
+                            else
+                                arrFil.push(result.recordset[i]);
+                        };
+                        arregloDeReglas.push(arrReg);
+                        arregloDeFiltros.push(arrFil);
+                    } else {
+                        arregloDeReglas.push([]);
+                        arregloDeFiltros.push([]);
                     }
+                    contadorEntrarCreateFunctionsArray++;
                     createFunctionsArray();
                 });
             }
@@ -179,7 +242,6 @@ function loadVariables () {
                         loadConections();
                     } else{
                         arregloVariables = [];
-                        loadConections();
                     }
                 });
             }
@@ -219,7 +281,7 @@ function loadVariableVariables () {
     }); // fin transaction
 }
 
-function loadConections () {
+function loadAssets () {
     const transaction = new sql.Transaction( pool1 );
     transaction.begin(err => {
         var rolledBack = false;
@@ -227,10 +289,10 @@ function loadConections () {
             rolledBack = true
         });
         const request = new sql.Request(transaction);
-        request.query("select * from Bases", (err, result) => {
+        request.query("select * from Activos", (err, result) => {
             if (err) {
                 if (!rolledBack) {
-                    console.log('error en rolledBack MainDB Variables');
+                    console.log('error en rolledBack Activos');
                     transaction.rollback(err => {
                         console.log('error en rolledBack');
                         console.log(err);
@@ -241,36 +303,50 @@ function loadConections () {
                     console.log("Transaction committed MainDB Variables");
                     console.log(result);
                     if(result.recordset.length > 0){
-                        arregloConecciones = result.recordset;
+                        arregloActivos = result.recordset;
+                        console.log('arregloActivos');
+                        console.log(arregloActivos);
                     } else {
-                        arregloConecciones = [];
+                        arregloActivos = [];
                     }
-                    renderConections();
                 });
             }
         });
     }); // fin transaction
 }
 
-function renderConections () {
-    $("#coneccionesList").empty();
-    var content = '';
-    var entro = false;
-    for (var i = 0; i < arregloVariables.length; i++) {
-        content+="<div class='row'><label class='col-xs-offset-1 col-xs-5'>"+arregloVariables[i].nombre+"</label>"
-        var conneciones = arregloConecciones.filter(function( object ) {
-                                return object.idVariable == arregloVariables[i].ID;
-                            });
-        if(conneciones.length > 0)
-            content+="<div class='col-xs-offset-1 col-xs-5'><select class='select-style'>";
-        for (var j = 0; j < conneciones.length; j++) {
-            entro = true;
-            content+="<option value='"+conneciones[j].ID+"'>"+conneciones[j].tipo+"</option>";
-        };
-        content+="</select></div></div><br/>";
-    };
-    if(entro)
-        $("#coneccionesList").append(content);
+function loadDeposits () {
+    const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false;
+        transaction.on('rollback', aborted => {
+            rolledBack = true
+        });
+        const request = new sql.Request(transaction);
+        request.query("select * from Depositos", (err, result) => {
+            if (err) {
+                if (!rolledBack) {
+                    console.log('error en rolledBack Depositos');
+                    transaction.rollback(err => {
+                        console.log('error en rolledBack');
+                        console.log(err);
+                    });
+                }
+            } else {
+                transaction.commit(err => {
+                    console.log("Transaction committed MainDB Variables");
+                    console.log(result);
+                    if(result.recordset.length > 0){
+                        arregloDepositos = result.recordset;
+                        console.log('arregloDepositos');
+                        console.log(arregloDepositos);
+                    } else {
+                        arregloDepositos = [];
+                    }
+                });
+            }
+        });
+    }); // fin transaction
 }
 
 
@@ -283,57 +359,259 @@ function renderConections () {
 var arreglosNombres = [];
 function calculateRCL () {
     arreglosNombres = [];
-    /*for (var i = 0; i < arregloVariables.length; i++) {
-        var variables =  arregloVariables.filter(function( object ) {
-                                return object.idVariable == arregloVariables[i].ID;
-                            });
-        var opciones = [];
-        for (var j = i; j < document.getElementsByTagName("select").length; j++) {
-            opciones.push(document.getElementsByTagName("select")[j].value);
-            var id = parseInt(document.getElementsByTagName("select")[j].value);
-            var conec = arregloConecciones.filter(function( object ) {
-                            return object.ID == id;
-                        });
-            arreglosNombres.push(conec[0].arreglo);
-        };
-        console.log(opciones[i]);
-        console.log(variables);
-        // if(opciones[i].length<1 && variables.length<1){
-        //     $("body").overhang({
-        //         type: "error",
-        //         primary: "#f84a1d",
-        //         accent: "#d94e2a",
-        //         message: "No se selecciono una conección para la varaiable "+arregloVariables[i].nombre+".",
-        //         duration: 3,
-        //         overlay: true
-        //     });
-        //     entrar = false;
-        //     arreglosNombres = [];
-        //     break;
-        // }
-    }*/
-    for (var j = 0; j < document.getElementsByTagName("select").length; j++) {
-        var id = parseInt(document.getElementsByTagName("select")[j].value);
-        var conec = arregloConecciones.filter(function( object ) {
-                        return object.ID == id;
+    contadorFuncionPrint = 0;
+    if(formulaGlobal.length > 0) {
+        if(arregloVariables.length > 0) {
+            if(arregloVariablesDeVariables.length > 0) {
+                /*for (var i = 0; i < arregloVariables.length; i++) {
+                    for (var j = 0; j < arregloVariablesDeVariables.length; j++) {
+                        var entro = false;
+                        if(arregloVariables[i].ID == arregloVariablesDeVariables[j].idVariable) {
+                            var arregloNombre = '';
+                            if(arregloVariablesDeVariables[i].tablaAplicar == 1)
+                                arregloNombre = 'arregloActivos';
+                            else if(arregloVariablesDeVariables[i].tablaAplicar == 2)
+                                arregloNombre = 'arregloDepositos';
+                            arreglosNombres.push(arregloNombre);
+                            entro = true;
+                            contadorFuncionPrint++;
+                            break;
+                        } else if(j == arregloVariablesDeVariables.length-1 && !entro)
+                            arreglosNombres.push("");
+                    };
+                };
+                var cancelar = false, texto = '', tabla = '';
+                for (var i = 0; i < arregloVariables.length; i++) {
+                    if(arregloVariables[i].tablaAplicar == 1 && arregloActivos.length == 0) {
+                        cancelar = true;
+                        texto = arregloVariables[i].variables;
+                        tabla = 'activos';
+                        break;
+                    } else if(arregloVariables[i].tablaAplicar == 2 && arregloDepositos.length == 0) {
+                        cancelar = true;
+                        texto = arregloVariables[i].variables;
+                        tabla = 'depositos';
+                        break;
+                    }
+                };
+                if(cancelar) {
+                    $("body").overhang({
+                        type: "error",
+                        primary: "#f84a1d",
+                        accent: "#d94e2a",
+                        message: "No existen valores en la base de datos de la tabla "+tabla+" y la variable "+texto+" los ocupa.",
+                        duration: 3,
+                        overlay: true
                     });
-        arreglosNombres.push(conec[0].arreglo);
+                } else getRulesByVariable();*/
+                var variablesTexto = getVariables(formulaGlobal);
+                var salir = false, texto = '', tabla = '';
+                arregloVarDeVarFormula = []
+                for (var i = 0; i < variablesTexto.length; i++) {
+                    for (var j = 0; j < arregloVariables.length; j++) {
+                        if(arregloVariables[j].variables.toLowerCase() == variablesTexto[i].toLowerCase()){
+                            for (var k = 0; k < arregloVariablesDeVariables.length; k++) {
+                                if(arregloVariablesDeVariables[k].idVariable == arregloVariables[j].ID){
+                                    if(arregloVariablesDeVariables[k].tablaAplicar == 1 && arregloActivos.length == 0) {
+                                        salir = true;
+                                        texto = arregloVariablesDeVariables[k].nombre;
+                                        tabla = 'activos';
+                                        break;
+                                    } else if(arregloVariablesDeVariables[k].tablaAplicar == 2 && arregloDepositos.length == 0) {
+                                        salir = true;
+                                        texto = arregloVariablesDeVariables[k].nombre;
+                                        tabla = 'depositos';
+                                        break;
+                                    } else {
+                                        var encontro = arregloVarDeVarFormula.filter(function( object ) {
+                                                            return object.ID == arregloVariablesDeVariables[k].ID;
+                                                        });
+                                        if(encontro.length == 0) {
+                                            arregloVarDeVarFormula.push(arregloVariablesDeVariables[k]);
+                                            var arregloNombre = '';
+                                            if(arregloVariablesDeVariables[k].tablaAplicar == 1)
+                                                arregloNombre = 'arregloActivos';
+                                            else if(arregloVariablesDeVariables[k].tablaAplicar == 2)
+                                                arregloNombre = 'arregloDepositos';
+                                            arreglosNombres.push(arregloNombre);
+                                        }
+                                    }
+                                }
+                            };
+                        }
+                        if(salir)
+                            break;
+                    };
+                    if(salir)
+                        break;
+                };
+                if(salir) {
+                    $("body").overhang({
+                        type: "error",
+                        primary: "#f84a1d",
+                        accent: "#d94e2a",
+                        message: "No existen valores en la base de datos de la tabla "+tabla+" y la sub-variable "+texto+" los ocupa.",
+                        duration: 3,
+                        overlay: true,
+                        closeConfirm: true
+                    });
+                } else
+                    getRulesByVariable();
+            } else {
+                $("body").overhang({
+                    type: "error",
+                    primary: "#f84a1d",
+                    accent: "#d94e2a",
+                    message: "No existen sub-variables en la base de datos.",
+                    duration: 2,
+                    overlay: true,
+                    closeConfirm: true
+                });
+            }
+        } else {
+            $("body").overhang({
+                type: "error",
+                primary: "#f84a1d",
+                accent: "#d94e2a",
+                message: "No existen variables en la base de datos.",
+                duration: 2,
+                overlay: true,
+                closeConfirm: true
+            });
+        }
+    } else {
+        $("body").overhang({
+            type: "error",
+            primary: "#f84a1d",
+            accent: "#d94e2a",
+            message: "No existe una formula en la base de datos.",
+            duration: 2,
+            overlay: true,
+            closeConfirm: true
+        });
+    }
+}
+
+function getVariables (equacion) {
+    var variable = [];
+    for (var i = 0; i < equacion.length; i++) {
+        if(equacion.charAt(i) != "(" && equacion.charAt(i) != ")" && equacion.charAt(i) != "<" && equacion.charAt(i) != ">" && 
+            equacion.charAt(i) != "!" && equacion.charAt(i) != "=" && equacion.charAt(i) != "/" && equacion.charAt(i) != "*" && 
+            equacion.charAt(i) != "√" && equacion.charAt(i) != "+" && equacion.charAt(i) != "-" && isNaN(equacion.charAt(i))) {
+            var pal = getVariable(equacion, i);
+            variable.push(pal);
+            i+=pal.length;
+        }
     };
-    console.log(arreglosNombres);
-    getRulesByVariable();
+    return variable;
+}
+
+function getVariable (equacion, index) {
+    var variable = '';
+    for (var i = index; i < equacion.length; i++) {
+        if(equacion.charAt(i) != "(" && equacion.charAt(i) != ")" && equacion.charAt(i) != "<" && equacion.charAt(i) != ">" && 
+            equacion.charAt(i) != "!" && equacion.charAt(i) != "=" && equacion.charAt(i) != "/" && equacion.charAt(i) != "*" && 
+            equacion.charAt(i) != "√" && equacion.charAt(i) != "+" && equacion.charAt(i) != "-" && isNaN(equacion.charAt(i)))
+            variable+=equacion[i];
+        else
+            return variable;
+    };
+    return variable;
 }
 
 function getRulesByVariable () {
     arregloDeReglas = [];
     arregloDeComprobacionDeReglas = [];
-    for (var i = 0; i < arregloVariablesDeVariables.length; i++) {
-        loadRules(arregloVariablesDeVariables[i].ID, arregloVariablesDeVariables[i].idVariable);
+    console.log('arregloActivos');
+    console.log(arregloActivos);
+    console.log(arregloActivos[0].monto);
+    contadorEntrarCreateFunctionsArray = 0;
+    for (var i = 0; i < arregloVarDeVarFormula.length; i++) {
+        console.log('---------');
+        console.log(arregloVarDeVarFormula[i]);
+        console.log('---------');
+        loadRules(arregloVarDeVarFormula[i].ID);
     }
 }
-var arregloDeFunciones = [];
+
+var arregloDeFuncionesReglas = [];
+var arregloDeFuncionesFiltros = [];
+var arregloDeReglasNullPosiciones = [];
+
 function createFunctionsArray (argument) {
-    if(arregloDeReglas.length == arreglosNombres.length) {
-        arregloDeFunciones = [];
+    console.log("jkjkjkjkj");
+    console.log('arregloActivos');
+    console.log(arregloActivos);
+    console.log('arregloDeReglas');
+    console.log(arregloDeReglas);
+    console.log('arreglosNombres');
+    console.log(arreglosNombres);
+    console.log('arregloVarDeVarFormula');
+    console.log(arregloVarDeVarFormula);
+    console.log('contadorEntrarCreateFunctionsArray');
+    console.log(contadorEntrarCreateFunctionsArray);
+    var contienePurosNull = false, contadorDeNulls = 0;
+    for (var i = 0; i < arregloDeReglas.length; i++) {
+        if(arregloDeReglas[i].length == 0)
+            contadorDeNulls++;
+    };
+    if(contadorDeNulls == arregloDeReglas.length)
+        contienePurosNull = true;
+    if(arregloVarDeVarFormula.length == contadorEntrarCreateFunctionsArray && !contienePurosNull) {
+        //console.log("ANTES ANTES");
+        arregloDeReglasNullPosiciones = [];
+        for (var i = 0; i < arregloDeReglas.length; i++) {
+            //console.log(arregloDeReglas[i]);
+            if(arregloDeReglas[i].length == 0) {
+                arregloDeReglasNullPosiciones.push(i);
+            }
+        };
+        for (var i = 0; i < arregloDeReglas.length; i++) {
+            var indice = ubicacion(arregloDeReglas[i]);
+            if(indice != -1) {
+                var temp = arregloDeReglas[indice];
+                arregloDeReglas[indice] = arregloDeReglas[i];
+                arregloDeReglas[i] = temp;
+            }
+        };
+        for (var i = 0; i < arregloDeFiltros.length; i++) {
+            var indice = ubicacion(arregloDeFiltros[i]);
+            if(indice != -1) {
+                var temp = arregloDeFiltros[indice];
+                arregloDeFiltros[indice] = arregloDeFiltros[i];
+                arregloDeFiltros[i] = temp;
+            }
+        };
+        /*arregloDeFiltros.sort(function(a, b){
+            if(a.length > 0 && b.length == 0)
+                return 0;
+            if(a.length == 0 && b.length == 0)
+                return 0;
+            if(a.length == 0 && b.length > 0)
+                return 1;
+            if(a[0].variablePadre > b[0].variablePadre)
+                return 1;
+            else
+                return 0;
+        });*/
+        //console.log("ANTES ANTES");
+        /*for (var i = 0; i < arregloVariables.length; i++) {
+            var encontro = false;
+            for (var j = 0; j < arregloVariablesDeVariables.length; j++) {
+                if(arregloVariablesDeVariables[j].idVariable == arregloVariables[i].ID) {
+                    encontro = true;
+                    break;
+                }
+            };
+            if(!encontro)
+                arregloDeReglas.splice(i, 0, null);
+        };*/
+        /*console.log("DESPUES DESPUES");
+        for (var i = 0; i < arregloDeReglas.length; i++) {
+            console.log(arregloDeReglas[i]);
+        };
+        console.log("DESPUES DESPUES");*/
+        arregloDeFuncionesReglas = [];
         for (var i = 0; i < arregloDeReglas.length; i++) {
             var rulesArray = [];
             if(arregloDeReglas[i] != null) {
@@ -346,8 +624,27 @@ function createFunctionsArray (argument) {
                     }
                 }
             }
-            arregloDeFunciones.push(rulesArray);
+            arregloDeFuncionesReglas.push(rulesArray);
         };
+        for (var i = 0; i < arregloDeFiltros.length; i++) {
+            var rulesArray = [];
+            if(arregloDeFiltros[i] != null) {
+                for (var j = 0; j < arregloDeFiltros[i].length; j++) {
+                    if(arregloDeFiltros[i][j].reglaPadre == 0) {
+                        var arreglo = [];
+                        var resultado = campoObjetivo(arregloDeFiltros[i][j], arreglo, 0, i);
+                        resultado[0] = "\n"+resultado[0];
+                        $.merge( rulesArray, resultado );
+                    }
+                }
+            }
+            arregloDeFuncionesFiltros.push(rulesArray);
+        };
+        /*console.log("11111111========11111111");
+        for (var i = 0; i < arregloDeFunciones.length; i++) {
+            console.log(arregloDeFunciones[i]);
+        };
+        console.log("11111111========11111111");
         for (var j = 0; j < arregloVariables.length; j++) {
             var entro = false;
             var varialesHijas = arregloVariablesDeVariables.filter(function( object ) {
@@ -355,17 +652,61 @@ function createFunctionsArray (argument) {
                                 });
             for (var k = 0; k < varialesHijas.length; k++) {
                 for (var i = 0; i < arregloDeReglas.length; i++) {
-                    for (var r = 0; r < arregloDeReglas[i].length; r++) {
-                        if(arregloDeReglas[i][r].variablePadre == varialesHijas[k].ID)
-                            entro = true;
-                    };
+                    if(arregloDeReglas[i] != null) {
+                        for (var r = 0; r < arregloDeReglas[i].length; r++) {
+                            if(arregloDeReglas[i][r].variablePadre == varialesHijas[k].ID)
+                                entro = true;
+                        };
+                    }
                 };
             };
             if(!entro)
                 arregloDeFunciones.splice(j, 0, null);
+        };*/
+        console.log("+++++++========+++++++");
+        for (var i = 0; i < arregloDeFuncionesReglas.length; i++) {
+            console.log(arregloDeFuncionesReglas[i]);
         };
+        console.log("+++++++========+++++++");
         createMethods();
+    } else if(arregloVariablesDeVariables.length == contadorEntrarCreateFunctionsArray && contienePurosNull) {
+        $("body").overhang({
+            type: "error",
+            primary: "#f84a1d",
+            accent: "#d94e2a",
+            message: "No existen reglas en la base de datos.",
+            duration: 2,
+            overlay: true,
+            closeConfirm: true
+        });
     }
+}
+
+function ubicacion (arreglo) {
+    var index = -1;
+    /*console.log('---------------\n---\n-----+++');
+    console.log('HOHOHOHOHO');
+    console.log(arreglo);
+    console.log(arreglo[0]);*/
+    if(arreglo.length > 0){
+        for (var i = 0; i < arregloVarDeVarFormula.length; i++) {
+            /*console.log('arregloVarDeVarFormula[i]');
+            console.log(arregloVarDeVarFormula[i]);
+            console.log('HOHOHOHOHO');
+            console.log(arreglo);
+            console.log(arreglo[0]);*/
+            if(arregloVarDeVarFormula[i].ID == arreglo[0].variablePadre) {
+                /*console.log('arregloVarDeVarFormula[i]');
+                console.log(arregloVarDeVarFormula[i]);*/
+                index = i;
+                break;
+            }
+        };
+    }
+    /*console.log('index');
+    console.log(index);
+    console.log('---------------\n---\n-----+++');*/
+    return index;
 }
 
 function campoObjetivo (regla, arreglo, tabs, index) {
@@ -383,15 +724,18 @@ function campoObjetivo (regla, arreglo, tabs, index) {
         tabsText+='\t';
     };
     var posicionesIF = [];
+    console.log('index');
+    console.log(index);
+    console.log('index');
     if(regla.campoObjetivo.indexOf('COLUMNA') == 0) {
         if(esCondicion) {
-            var campo = arreglosNombres[index]+"[i]."+regla.campoObjetivo.split("=")[1];
+            var campo = arreglosNombres[index]+"Copia[i]."+regla.campoObjetivo.split("=")[1];
 
             // Agregando campo Operacion
             arreglo.push(tabsText+"if ( "+campo+" "+regla.operacion);
             posicionesIF.push(arreglo.length);
         } else {
-            var campo = arreglosNombres[index]+"[i]."+regla.campoObjetivo.split("=")[1];
+            var campo = arreglosNombres[index]+"Copia[i]."+regla.campoObjetivo.split("=")[1];
 
             // Agregando campo Operacion
             if(regla.operacion=="=")
@@ -415,7 +759,10 @@ function campoObjetivo (regla, arreglo, tabs, index) {
                         else
                             valorElemento = opcionAMostrar[0].split("-")[1];
                     }
-                    arreglo.push("\n"+tabsText+"if ( "+valorElemento+" "+regla.operacion);
+                    if(isNaN(valorElemento))
+                        arreglo.push("\n"+tabsText+"if ( '"+valorElemento+"'' "+regla.operacion);
+                    else
+                        arreglo.push("\n"+tabsText+"if ( "+valorElemento+" "+regla.operacion);
                     if(posicionesIF.length>0)
                         posicionesIF.push(posicionesIF[posicionesIF.length-1]+2);
                     else
@@ -433,7 +780,10 @@ function campoObjetivo (regla, arreglo, tabs, index) {
                         else
                             valorElemento = opcionAMostrar[0].split("-")[1];
                     }
-                    arreglo.push("\n"+tabsText+"if ( "+valorElemento+" "+regla.operacion);
+                    if(isNaN(valorElemento))
+                        arreglo.push("\n"+tabsText+"if ( '"+valorElemento+"'' "+regla.operacion);
+                    else
+                        arreglo.push("\n"+tabsText+"if ( "+valorElemento+" "+regla.operacion);
                     if(posicionesIF.length>0)
                         posicionesIF.push(posicionesIF[posicionesIF.length-1]+2);
                     else
@@ -453,10 +803,11 @@ function campoObjetivo (regla, arreglo, tabs, index) {
                     else
                         valorElemento = opcionAMostrar[0].split("-")[1];
                 }
-                if(regla.operacion=="=")
+                if(regla.operacion=="=") {
                     arreglo.push("\n"+tabsText+valorElemento+" "+regla.operacion);
-                else
+                } else {
                     arreglo.push("\n"+tabsText+valorElemento+" = "+valorElemento+" "+regla.operacion);
+                }
                 if(hasVariables)
                     textVariables.push(valorElemento + " " + regla.operacion);
             };
@@ -514,15 +865,21 @@ function campoObjetivo (regla, arreglo, tabs, index) {
 
     if(regla.valor.indexOf('COLUMNA') == 0) {
         if(esCondicion) {
-            var valor = arreglosNombres[index]+"[i]."+regla.valor.split("=")[1];
+            //var valor = arreglosNombres[index]+"[i]."+regla.valor.split("=")[1];
+            var valor = regla.valor.split("=")[1];
+            if(!isNaN(valor) && regla.campoObjetivo.split("=")[0] != "totalDepositos" && regla.campoObjetivo.split("=")[0] != "monto")
+                valor = '"'+valor+'"';
             for (var i = 0; i < arreglo.length; i++) {
                 arreglo[i] += " "+valor+" )  {";
                 textVariables[i] += " " + valor;
             };
         } else {
-            var valor = arreglosNombres[index]+"[i]."+regla.valor.split("=")[1];
+            //var valor = arreglosNombres[index]+"[i]."+regla.valor.split("=")[1];
+            var valor = regla.valor.split("=")[1];
+            if(!isNaN(valor) && regla.campoObjetivo.split("=")[0] != "totalDepositos" && regla.campoObjetivo.split("=")[0] != "monto")
+                valor = '"'+valor+'"';
             for (var i = 0; i < arreglo.length; i++) {
-                arreglo[i] += " "+valor+" )  {";
+                arreglo[i] += " "+valor+";";
                 textVariables[i] += " " + valor;
             };
         }
@@ -547,13 +904,19 @@ function campoObjetivo (regla, arreglo, tabs, index) {
                             var textoFinal = '';
                             if(i+1 == arregloLista.length)
                                 textoFinal = " ) {";
-                            arreglo[j] += " "+valorElemento + textoFinal;
+                            if(isNaN(valorElemento))
+                                arreglo[j] += " '"+valorElemento + "'" + textoFinal;
+                            else
+                                arreglo[j] += " "+valorElemento + textoFinal;
                             textVariables[j] += " " + valorElemento;
                         } else {
                             var textoFinal = '';
                             if(i+1 == arregloLista.length)
                                 textoFinal = " ) {";
-                            arreglo[j] += " && "+copiaRegla[j].split(" ( ")[1]+" "+valorElemento+textoFinal;
+                            if(isNaN(valorElemento))
+                                arreglo[j] += " && "+copiaRegla[j].split(" ( ")[1]+" '"+valorElemento+"'"+textoFinal;
+                            else 
+                                arreglo[j] += " && "+copiaRegla[j].split(" ( ")[1]+" "+valorElemento+textoFinal;
                             textVariables[j] += " && " + valorElemento;
                         }
                     }
@@ -570,10 +933,16 @@ function campoObjetivo (regla, arreglo, tabs, index) {
                     }
                     for (var j = 0; j < tamArreglo; j++) {
                         if(i==0) {
-                            arreglo[j] += " "+valorElemento + " ) {";
+                            //if(isNaN(valorElemento))
+                                arreglo[j] += " '"+valorElemento + "' ) {";
+                            /*else
+                                arreglo[j] += " "+valorElemento + " ) {";*/
                             textVariables[j] += " " + valorElemento;
                         } else {
-                            arreglo.push("\n"+copiaRegla[j]+" "+valorElemento+" ) {");
+                            //if(isNaN(valorElemento))
+                                arreglo.push("\n"+copiaRegla[j]+" '"+valorElemento+"' ) {");
+                            /*else
+                                arreglo.push("\n"+copiaRegla[j]+" "+valorElemento+" ) {");*/
                             posicionesIF.push(posicionesIF[posicionesIF.length-1]+2);
                             textVariables.push(copiaTextVariable[j] + " " + valorElemento);
                         }
@@ -584,8 +953,9 @@ function campoObjetivo (regla, arreglo, tabs, index) {
             var arregloLista = regla.valor.split("=")[1].split(",");
             var copiaRegla = arreglo[arreglo.length-1];
             var copiaTextVariable = textVariables[textVariables.length-1];
+            var tamArreglo = arreglo.length;
             for (var i = 0; i < arregloLista.length; i++) {
-                for (var j = 0; j < arreglo.length; j++) {
+                for (var j = 0; j < tamArreglo; j++) {
                     var opcionAMostrar = arregloLista[i].split("$");
                     var valorElemento = arregloLista[i];
                     if(opcionAMostrar.length > 1){
@@ -595,10 +965,10 @@ function campoObjetivo (regla, arreglo, tabs, index) {
                             valorElemento = opcionAMostrar[0].split("-")[1];
                     }
                     if(i==0) {
-                        arreglo[j] += " "+valorElemento + " ) {";
+                        arreglo[j] += " "+valorElemento + ";";
                         textVariables[j] += " " + valorElemento;
                     } else {
-                        arreglo.push("\n"+copiaRegla+" "+valorElemento);
+                        arreglo.push("\n"+copiaRegla+" "+valorElemento + ";");
                         textVariables.push(copiaTextVariable + " " + valorElemento);
                     }
                 };
@@ -910,33 +1280,151 @@ function campoObjetivo (regla, arreglo, tabs, index) {
     }
 }
 
+var contadorVariablesFinales = 0;
+var funcionesDeVariables = [];
 function createMethods () {
-    var conec = [];
-    for (var i = 0; i < arreglosNombres.length; i++) {
-        var object = arregloConecciones.filter(function( object ) {
-                return object.arreglo == arreglosNombres[i];
-            });
-        conec.push(object[0]);
+    window["variablesFinales"] = [];
+    funcionesDeVariables = [];
+    for (var i = 0; i < arregloVariables.length; i++) {
+        window[arregloVariables[i].variables] = 0;
+        for (var j = 0; j < arregloVarDeVarFormula.length; j++) {
+            console.log("arregloVarDeVarFormula[j]");
+            console.log(arregloVarDeVarFormula[j]);
+            console.log("arregloVariables[i]");
+            console.log(arregloVariables[i]);
+            if(arregloVarDeVarFormula[j].idVariable == arregloVariables[i].ID) {
+                if(arregloDeFuncionesReglas[j].length > 0) {
+                    contadorVariablesFinales++;
+                    var varMonto = '', varNombre = '';
+                    if(arreglosNombres[j] == "arregloActivos") {
+                        varMonto = 'saldo';
+                        varNombre = 'nombre';
+                    } if(arreglosNombres[j] == "arregloDepositos") {
+                        varMonto = 'saldo';
+                        varNombre = 'nombreCliente';
+                    }
+                    var contentFiltro = '';
+                    if(arregloDeFuncionesFiltros[j].length > 0) {
+                        contentFiltro = '\tfor (var i = 0; i < '+arreglosNombres[j]+'.length; i++) {';
+                        for (var k = 0; k < arregloDeFuncionesFiltros[j].length; k++) {
+                            //arregloDeFiltros[j][k]
+                            contentFiltro+='\t\t'+arregloDeFuncionesFiltros[j]+';';
+                        };
+                        contentFiltro+='\n\t};\n';
+                    } else
+                        contentFiltro+='\tvar '+arreglosNombres[j]+'Copia = '+arreglosNombres[j]+'.slice();\n';
+                    contentFiltro+='console.log('+arreglosNombres[j]+'Copia);\n';
+                    var contentRegla = '\tfor (var i = 0; i < '+arreglosNombres[j]+'Copia.length; i++) {';
+                    for (var k = 0; k < arregloDeFuncionesReglas[j].length; k++) {
+                        contentRegla+='\t\t'+arregloDeFuncionesReglas[j][k];
+                    }
+                    contentRegla+='\n\t};\n';
+
+                    contentRegla+='\tvar total = 0;\n';
+                    contentRegla+='\tfor (var j = 0; j < '+arreglosNombres[j]+'Copia.length; j++) {\n'+
+                                '\t\ttotal+='+arreglosNombres[j]+'Copia[j].'+varMonto+';\n'+
+                                '\t\tconsole.log('+arreglosNombres[j]+'Copia[j].'+varNombre+'+" = "+'+arreglosNombres[j]+'Copia[j].'+varMonto+');\n'+
+                                '\t\tconsole.log(total);\n'+
+                                '\t\tconsole.log('+arreglosNombres[j]+'Copia[j].ID);\n'+
+                            '\t}\n';
+                    contentRegla+='\tconsole.log("TOTAL = "+total);\n';
+                    contentRegla+='\twindow['+arregloVariables[i].variables+'] += total;\n';
+                    contentRegla+='\tvar encontro = window["variablesFinales"].filter(function( object ) {\n'+
+                                            'return object.variable == '+arregloVariables[i].variables+';\n'+
+                                        '});\n';
+                    contentRegla+='\tvar o = 0, encontro = false;\n';
+                    contentRegla+='\tfor (o = 0; o < window["variablesFinales"].length; o++) {\n';
+                        contentRegla+='\tif(window["variablesFinales"][o].variable == '+arregloVariables[i].variables+') {\n';
+                            contentRegla+='\tencontro = true;\n';
+                            contentRegla+='\tbreak;\n';
+                        contentRegla+='\t}\n';
+                    contentRegla+='\t};\n';
+                    contentRegla+='\tif(encontro)\n';
+                        contentRegla+='\twindow["variablesFinales"][o].total+=total;\n';
+                    contentRegla+='\telse\n';
+                    contentRegla+='\t\nwindow["variablesFinales"].push({variable: "'+arregloVariables[i].variables+'", total: total});\n';
+                    contentRegla+='\tprint();\n';
+                    window['Fun'+arregloVariables[i].variables] = new Function(
+                         'return function duncion(){'+
+                                contentFiltro+contentRegla+
+                        '}'
+                    )();
+                    window['Fun'+arregloVariables[i].variables]();
+                }
+            }
+        };
+        /*if(arregloDeFunciones[i].length > 0){
+            contadorVariablesFinales++;
+            var varMonto = '';
+            if(arreglosNombres[i] == "arregloActivos")
+                varMonto = 'monto';
+            if(arreglosNombres[i] == "arregloDepositos")
+                varMonto = 'totalDepositos';
+
+            //window[coneccion[0].arreglo] = [];
+            console.log("THOOOOR");
+            //console.log(arregloActivos[0].monto);
+            for (var k = 0; k < arregloActivos.length; k++) {
+                console.log(arregloActivos[k]);
+            };
+            console.log(arregloDeFunciones[i]);
+            console.log(arregloDeFunciones);
+            console.log("THOOOOR");
+
+            var content = '\tfor (var i = 0; i < '+arreglosNombres[i]+'.length; i++) {';
+            if(varMonto == "totalDepositos") {
+                content+='console.log(arregloDepositos[i].idCliente == "1");';
+                content+='console.log(arregloDepositos[i].idCliente);';
+            }
+            for (var j = 0; j < arregloDeFunciones[i].length; j++) {
+                content+="\t\t"+arregloDeFunciones[i][j]+"\n";
+            };
+            content+='\t}\n';
+            content+='\tvar total = 0;\n';
+            content+='\tfor (var j = 0; j < '+arreglosNombres[i]+'.length; j++) {\n'+
+                        '\t\ttotal+='+arreglosNombres[i]+'[j].'+varMonto+';\n'+
+                        '\t\tconsole.log('+arreglosNombres[i]+'[j].nombre+" = "+'+arreglosNombres[i]+'[j].'+varMonto+');\n'+
+                        '\t\tconsole.log(total);\n'+
+                    '\t}\n';
+            content+='\tconsole.log('+arreglosNombres[i]+');\n';
+            content+='\tconsole.log("TOTAL = "+total);\n';
+            content+='\twindow['+arregloVariables[i].variables+'] = total;\n';
+            content+='\twindow["variablesFinales"].push({variable: "'+arregloVariables[i].variables+'", total: total});\n';
+            content+='\tconsole.log("YEEEEEEEEEEEEEEEEEEEEEEE");\n';
+            content+='\tconsole.log(window["variablesFinales"]);\n';
+            content+='\tconsole.log("YEEEEEEEEEEEEEEEEEEEEEEE");\n';
+            content+='\tprint();\n';
+
+            window['Fun'+arregloVariables[i].variables] = new Function(
+                 'return function hola(){'+
+                        content+
+                '}'
+            )();
+
+            window['Fun'+arregloVariables[i].variables]();
+
+            //window['Connection'+i]();
+        }*/
     };
+}
+/*function createMethods () {
+    contadorVariablesFinales = 0;
+    window["variablesFinales"] = [];
+    console.log(arregloVariables);
     for (var i = 0; i < arregloVariables.length; i++) {
         console.log("21212121121");
         console.log(arregloDeFunciones[i]);
         console.log(arregloDeFunciones);
         console.log(arregloDeReglas);
         window[arregloVariables[i].variables] = 0;
-        window["variablesFinales"] = [];
-        if(arregloDeFunciones[i] != null){
-            console.log('conec');
-            console.log(conec);
-            console.log('arregloConecciones');
-            console.log(arregloConecciones);
-            console.log(arregloVariables[i].ID);
-            var coneccion = conec.filter(function( object ) {
+        //if(arregloDeFunciones[i]!= null){
+        if(arregloDeFunciones[i].length > 0){
+            contadorVariablesFinales++;
+            console.log(arregloVariables[i].ID);*/
+            /*var coneccion = conec.filter(function( object ) {
                 return object.idVariable == arregloVariables[i].ID;
-            });
-            console.log('coneccion');
-            console.log(coneccion);
-            window['Connection'+i] = new Function(
+            });*/
+            /*window['Connection'+i] = new Function(
                  'return function hola(){'+
                         'const sql = require("mssql");'+
                         'const pool = new sql.ConnectionPool({'+
@@ -973,23 +1461,48 @@ function createMethods () {
                             '});'+
                         '});'+
                 '}'
-            )();
+            )();*/
+            /*var varMonto = '';
+            if(arreglosNombres[i] == "arregloActivos")
+                varMonto = 'monto';
+            if(arreglosNombres[i] == "arregloDepositos")
+                varMonto = 'totalDepositos';*/
 
-            window[coneccion[0].arreglo] = [];
-
-            var content = 'for (var i = 0; i < '+coneccion[0].arreglo+'.length; i++) {';
-            for (var j = 0; j < arregloDeFunciones[i].length; j++) {
-                content+=arregloDeFunciones[i][j];
+            //window[coneccion[0].arreglo] = [];
+            //console.log("THOOOOR");
+            //console.log(arregloActivos[0].monto);
+            /*for (var k = 0; k < arregloActivos.length; k++) {
+                console.log(arregloActivos[k]);
             };
-            content+='}';
-            content+='var total = 0;';
-            content+='for (var j = 0; j < '+coneccion[0].arreglo+'.length; j++) {'+
-                        'total+='+coneccion[0].arreglo+'[j].monto;'+
-                    '}';
-            content+='console.log("TOTAL = "+total);';
-            content+='window['+arregloVariables[i].variables+'] = total;';
-            content+='window["variablesFinales"].push({variable: "'+arregloVariables[i].variables+'", total: total});';
-            content+='print();';
+            console.log(arregloDeFunciones[i]);
+            console.log(arregloDeFunciones);
+            console.log("THOOOOR");
+
+            var content = '\tfor (var i = 0; i < '+arreglosNombres[i]+'.length; i++) {';
+            if(varMonto == "totalDepositos") {
+                content+='console.log(arregloDepositos[i].idCliente == "1");';
+                content+='console.log(arregloDepositos[i].idCliente);';
+            }
+            for (var j = 0; j < arregloDeFunciones[i].length; j++) {
+                content+="\t\t"+arregloDeFunciones[i][j]+"\n";*/
+                /*content+='console.log("HOLAAAA = ");';
+                content+='console.log('+arreglosNombres[i]+'[0].monto);';*/
+            /*};
+            content+='\t}\n';
+            content+='\tvar total = 0;\n';
+            content+='\tfor (var j = 0; j < '+arreglosNombres[i]+'.length; j++) {\n'+
+                        '\t\ttotal+='+arreglosNombres[i]+'[j].'+varMonto+';\n'+
+                        '\t\tconsole.log('+arreglosNombres[i]+'[j].nombre+" = "+'+arreglosNombres[i]+'[j].'+varMonto+');\n'+
+                        '\t\tconsole.log(total);\n'+
+                    '\t}\n';
+            content+='\tconsole.log('+arreglosNombres[i]+');\n';
+            content+='\tconsole.log("TOTAL = "+total);\n';
+            content+='\twindow['+arregloVariables[i].variables+'] = total;\n';
+            content+='\twindow["variablesFinales"].push({variable: "'+arregloVariables[i].variables+'", total: total});\n';
+            content+='\tconsole.log("YEEEEEEEEEEEEEEEEEEEEEEE");\n';
+            content+='\tconsole.log(window["variablesFinales"]);\n';
+            content+='\tconsole.log("YEEEEEEEEEEEEEEEEEEEEEEE");\n';
+            content+='\tprint();\n';
 
             window['Fun'+arregloVariables[i].variables] = new Function(
                  'return function hola(){'+
@@ -997,31 +1510,41 @@ function createMethods () {
                 '}'
             )();
 
-            window['Connection'+i]();
-        }/* else 
+            window['Fun'+arregloVariables[i].variables]();
+
+            //window['Connection'+i]();
+        }*//* else 
             window["variablesFinales"].push({variable: arregloVariables[i].variables, total: 0});*/
         /*var reultado = new Function('console.log(window["ALAC"]);console.log("'+formulaGlobal+'");'+formulaGlobal+';console.log(window["RCL"]);');
         reultado();*/
-    };
+    //};
     /*console.log("YAAAAAA");
     console.log(window["variablesFinales"]);
     for (var i = 0; i < window["variablesFinales"].length; i++) {
         console.log(window["variablesFinales"][i]);
     };*/
-}
+//}
 
 function print () {
     var form = formulaGlobal;
-    if(window["variablesFinales"].length == arreglosNombres.length){
+    if(contadorVariablesFinales == contadorFuncionPrint){
         for (var i = 0; i < window["variablesFinales"].length; i++) {
             console.log(window["variablesFinales"][i]);
-            if(form.indexOf(window["variablesFinales"][i].variable) > -1) {
-                form = form.slice(0, form.indexOf(window["variablesFinales"][i].variable)) + window["variablesFinales"][i].total + form.slice(form.indexOf(window["variablesFinales"][i].variable) + window["variablesFinales"][i].variable.length);
+            console.log(window["variablesFinales"]);
+            console.log('FORMULA ANTES');
+            console.log(form);
+            if(form.indexOf(window["variablesFinales"][i].variable.toLowerCase()) > -1) {
+                form = form.slice(0, form.indexOf(window["variablesFinales"][i].variable.toLowerCase())) + window["variablesFinales"][i].total + form.slice(form.indexOf(window["variablesFinales"][i].variable.toLowerCase()) + window["variablesFinales"][i].variable.length);
+                console.log("i = "+i+" "+form);
+            } else if(form.indexOf(window["variablesFinales"][i].variable.toUpperCase()) > -1) {
+                form = form.slice(0, form.indexOf(window["variablesFinales"][i].variable.toUpperCase())) + window["variablesFinales"][i].total + form.slice(form.indexOf(window["variablesFinales"][i].variable.toUpperCase()) + window["variablesFinales"][i].variable.length);
                 console.log("i = "+i+" "+form);
             }
+            console.log('FORMULA DESPUES');
+            console.log(form);
         };
         var resultado = math.eval(form.split("=")[1]);
-        saveRCL(resultado);
+        //saveRCL(resultado);
     }
 }
 

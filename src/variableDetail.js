@@ -34,6 +34,8 @@ function loadText () {
 	var descripcionHijo = getDescripcionHijo();
 	var factorHijo = getFactornHijo();
 	var variable = getVariableDeVariableID();
+	var tabla = getTablaHijo();
+	loadSelectCampoObjetivo(tabla);
 	$("#variableName").text(nombrePadre);
 	$("#variableOfVariableName").text(nombreHijo);
 	$("#variableOfVariableName").css("white-space", "initial");
@@ -47,6 +49,45 @@ function loadText () {
 	variableDeVariableReglaID = variable;
 	loadRules();
 	loadVariableObject();
+}
+
+var tablaActivos = [
+	{valor: "cuenta",nombre: "Cuenta"},
+	{valor: "nombre",nombre: "Nombre"},
+	{valor: "saldo",nombre: "Saldo"},
+	{valor: "moneda",nombre: "Moneda"},
+	{valor: "tipoCuenta",nombre: "Tipo de Cuenta"},
+	{valor: "sucursal",nombre: "Sucursal"},
+	{valor: "columnaExtra1",nombre: "Columna Extra 1"},
+	{valor: "columnaExtra2",nombre: "Columna Extra 2"}
+];
+
+var tablaDepositos = [
+	{valor: "idCliente",nombre: "IdCliente"},
+	{valor: "nombreCliente",nombre: "Nombre del Cliente"},
+	{valor: "tipoPersona",nombre: "Tipo de Persona"},
+	{valor: "tipoSubPersona",nombre: "Tipo de Sub-Persona"},
+	{valor: "saldo",nombre: "Saldo"},
+	{valor: "moneda",nombre: "Moneda"},
+	{valor: "tipoCuenta",nombre: "Tipo de Cuenta"},
+	{valor: "sucursal",nombre: "Sucursal"},
+	{valor: "columnaExtra1",nombre: "Columna Extra 1"},
+	{valor: "columnaExtra2",nombre: "Columna Extra 2"}
+];
+
+function loadSelectCampoObjetivo (tabla) {
+	$("#campoCampoInput").empty();
+	var content = '';
+	if(tabla == 1) {
+		for (var i = 0; i < tablaActivos.length; i++) {
+			content+='<option value="'+tablaActivos[i].valor+'">'+tablaActivos[i].nombre+'</option>';
+		};
+	} else if(tabla == 2) {
+		for (var i = 0; i < tablaDepositos.length; i++) {
+			content+='<option value="'+tablaDepositos[i].valor+'">'+tablaDepositos[i].nombre+'</option>';
+		};
+	}
+	$("#campoCampoInput").append(content);
 }
 
 var arregloListas = [];
@@ -126,6 +167,24 @@ function loadVariableObject () {
     }); // fin transaction
 }
 
+/*$("#resultadoDisable").on('ifChecked', function(event){
+	$("#resultadoGuardarVariable").attr('disabled',true);
+	$("#resultadoGuardarVariable").iCheck('uncheck');
+	alert("!");
+});*/
+/*$("#resultadoDisable").on('ifClicked', function(event){
+	alert("!");
+	console.log('event');
+	console.log(event);
+});
+$("#resultadoDisable").on( "click", function() {
+  console.log( $( this ).text() );
+});*/
+/*$("#resultadoDisable").on('ifUnchecked', function(event){
+	$("#resultadoGuardarVariable").attr('disabled',false);
+});*/
+
+
 function renderRules () {
 	$("#listRules").empty();
 	var listContent = '';
@@ -175,9 +234,11 @@ function renderRules () {
 			    	var nombreVariable = valoresIndividual[i].split("(")[0];
 			    	var texto = '';
 			    	var value;
+			    	var id = '';
 		    		if(nombreVariable == 'RESULTADO') {
 		    			texto = 'Resultado';
 		    			value = 1;
+		    			id = 'id="resultadoDisable"';
 		    		} else if(nombreVariable == 'CAMPOOBJETIVO') {
 		    			texto = 'Campo Objetivo';
 		    			value = 2;
@@ -185,7 +246,7 @@ function renderRules () {
 		    			texto = 'Valor a Aplicar';
 		    			value = 3;
 		    		}
-			    	content += '<li> <p><input type="radio" name="variablesCampo" class="flat" value="'+value+'"> '+texto+' </p> </li>';
+			    	content += '<li> <p><input '+id+' type="radio" name="variablesCampo" class="flat" value="'+value+'"> '+texto+' </p> </li>';
 			    	if(valoresIndividual[i].split("(").length > 1){
 				    	if(valoresIndividual[i].split("(")[1].indexOf("LISTA") == 0) {
 				    		content += '<div class="row">'+
@@ -215,6 +276,31 @@ function renderRules () {
 		    		$("#variablesCampoUL :input").prop('disabled', false);
 		    	else
 		    		$("#variablesCampoUL :input").prop('disabled', true);
+		    	$("#resultadoDisable").on('ifChecked', function(event){
+					$("#resultadoGuardarVariable").attr('disabled',true);
+					$("#resultadoGuardarVariable").iCheck('uncheck');
+				});
+				$("#resultadoDisable").on('ifUnchecked', function(event){
+					$("#resultadoGuardarVariable").attr('disabled',false);
+				});
+		    } else {
+			    var content = '<li> <p><input type="radio" name="variablesCampo" class="flat" value="1"> Resultado </p> </li>';;
+			    $("#variablesCampoUL").append(content);
+			    $("input[name='variablesCampo']").iCheck({
+			        checkboxClass: 'icheckbox_flat-green',
+			        radioClass: 'iradio_flat-green'
+			    });
+			    if( $('#variablesCampoRadio').iCheck('update')[0].checked )
+		    		$("#variablesCampoUL :input").prop('disabled', false);
+		    	else
+		    		$("#variablesCampoUL :input").prop('disabled', true);
+		    	$("#resultadoDisable").on('ifChecked', function(event){
+					$("#resultadoGuardarVariable").attr('disabled',true);
+					$("#resultadoGuardarVariable").iCheck('uncheck');
+				});
+				$("#resultadoDisable").on('ifUnchecked', function(event){
+					$("#resultadoGuardarVariable").attr('disabled',false);
+				});
 		    }
 		}
 		$("#variablesValorUL").empty();
@@ -224,13 +310,18 @@ function renderRules () {
 			    for (var i = 0; i < valoresIndividual.length; i++) {
 			    	var nombreVariable = valoresIndividual[i].split("(")[0];
 			    	var texto = '';
-		    		if(nombreVariable == 'RESULTADO')
+			    	var value;
+		    		if(nombreVariable == 'RESULTADO') {
 		    			texto = 'Resultado';
-		    		else if(nombreVariable == 'CAMPOOBJETIVO')
+		    			value = 1;
+		    		} else if(nombreVariable == 'CAMPOOBJETIVO') {
 		    			texto = 'Campo Objetivo';
-		    		else
+		    			value = 2;
+		    		} else {
 		    			texto = 'Valor a Aplicar';
-			    	content2 += '<li> <p><input type="radio" name="variablesValor" class="flat"> '+texto+' </p> </li>';
+		    			value = 3;
+		    		}
+			    	content2 += '<li> <p><input type="radio" name="variablesValor" class="flat" value="'+value+'"> '+texto+' </p> </li>';
 			    	if(valoresIndividual[i].split("(").length > 1){
 				    	if(valoresIndividual[i].split("(")[1].indexOf("LISTA") == 0) {
 				    		content2 += '<div class="row">'+
@@ -260,8 +351,26 @@ function renderRules () {
 		    		$("#variablesValorUL :input").prop('disabled', false);
 		    	else
 		    		$("#variablesValorUL :input").prop('disabled', true);
+		    } else {
+			    var content = '<li> <p><input type="radio" name="variablesCampo" class="flat" value="1"> Resultado </p> </li>';;
+			    $("#variablesValorUL").append(content);
+			    $("input[name='variablesCampo']").iCheck({
+			        checkboxClass: 'icheckbox_flat-green',
+			        radioClass: 'iradio_flat-green'
+			    });
+			    if( $('#variableValorRadio').iCheck('update')[0].checked )
+		    		$("#variablesValorUL :input").prop('disabled', false);
+		    	else
+		    		$("#variablesValorUL :input").prop('disabled', true);
 		    }
 		}
+	});
+	$("#resultadoDisable").on('ifChecked', function(event){
+		$("#resultadoGuardarVariable").attr('disabled',true);
+		$("#resultadoGuardarVariable").iCheck('uncheck');
+	});
+	$("#resultadoDisable").on('ifUnchecked', function(event){
+		$("#resultadoGuardarVariable").attr('disabled',false);
 	});
 }
 
@@ -388,8 +497,10 @@ function renderListsSelect () {
 	//$("#listaValorSelect").append(selectHTML);
 	$("#elementoValorSelect").empty();
 	$("#elementoValorSelect").append(selectHTML);
-	getElementsListsCamp(arregloListas[0].ID);
-	getElementsListsValue(arregloListas[0].ID);
+	if(arregloListas.length > 0) {
+		getElementsListsCamp(arregloListas[0].ID);
+		getElementsListsValue(arregloListas[0].ID);
+	}
 }
 
 function renderElementsListsCampSelect () {
@@ -401,11 +512,24 @@ function renderElementsListsCampSelect () {
 	$("#listaCampoOptionsSelect").append(selectHTML);
 }
 
+$('#nombreElementoListaValorRadio').on('ifChecked', function () {
+	renderElementsListsValueSelect();
+});
+$('#valorElementoListaValorRadio').on('ifChecked', function () {
+	renderElementsListsValueSelect();
+});
+
 function renderElementsListsValueSelect () {
 	var selectHTML = '';
-	for (var i = 0; i < arregloElementosDeListasValor.length; i++) {
-		selectHTML+='<option value='+i+'>'+arregloElementosDeListasValor[i].nombre+'</option>';
-	};
+	if($('#nombreElementoListaValorRadio').iCheck('update')[0].checked){
+		for (var i = 0; i < arregloElementosDeListasValor.length; i++) {
+			selectHTML+='<option value='+i+'>'+arregloElementosDeListasValor[i].nombre+'</option>';
+		};
+	} else {
+		for (var i = 0; i < arregloElementosDeListasValor.length; i++) {
+			selectHTML+='<option value='+i+'>'+arregloElementosDeListasValor[i].valor+'</option>';
+		};
+	}
 	$("#elementoValorOptionSelect").empty();
 	$("#elementoValorOptionSelect").append(selectHTML);
 }
@@ -420,6 +544,7 @@ function renderElementsListsValueSelect () {
 /* *************	Radios	************* */
 $("#listaCampoSelect").prop('disabled', true);
 $("#listaCampoOptionsSelect").prop('disabled', true);
+$("input#resultadoDisable").prop('disabled', true);
 $("input[name='campoRadio']").on('ifClicked', function(event){
 	if(event.currentTarget.id == "campoCampoRadio"){
 		$("#campoCampoInput").prop('disabled', false);
@@ -428,13 +553,17 @@ $("input[name='campoRadio']").on('ifClicked', function(event){
 		$("#listaCampoOptionsSelect option").prop("selected", false);
 		$("#variablesCampoUL :input").prop('disabled', true);
 		$("#variablesCampoUL :input").iCheck('uncheck');
+		$("input#resultadoDisable").prop('disabled', true);
+		$("input#resultadoDisable").iCheck('uncheck');
+		$("input#resultadoGuardarVariable").prop('disabled', false);
+		$("input#resultadoGuardarVariable").iCheck('uncheck');
 	} else if(event.currentTarget.id == "listaCampoRadio") {
 		$("#campoCampoInput").prop('disabled', true);
 		$("#listaCampoSelect").prop('disabled', false);
 		$("#listaCampoOptionsSelect").prop('disabled', false);
 		$("#variablesCampoUL :input").prop('disabled', true);
 		$("#variablesCampoUL :input").iCheck('uncheck');
-	} else {
+	} else if(event.currentTarget.id == "variablesCampoRadio"){
 		$("#campoCampoInput").prop('disabled', true);
 		$("#listaCampoSelect").prop('disabled', true);
 		$("#listaCampoOptionsSelect").prop('disabled', true);
@@ -444,6 +573,26 @@ $("input[name='campoRadio']").on('ifClicked', function(event){
 	        checkboxClass: 'icheckbox_flat-green',
 	        radioClass: 'iradio_flat-green'
 	    });
+	    $("input#resultadoDisable").prop('disabled', false);
+		$("input#resultadoDisable").iCheck('uncheck');
+		$("#resultadoDisable").on('ifChecked', function(event){
+			$("#resultadoGuardarVariable").attr('disabled',true);
+			$("#resultadoGuardarVariable").iCheck('uncheck');
+		});
+		$("#resultadoDisable").on('ifUnchecked', function(event){
+			$("#resultadoGuardarVariable").attr('disabled',false);
+		});
+	} else {
+		$("#campoCampoInput").prop('disabled', true);
+		$("#listaCampoSelect").prop('disabled', true);
+		$("#listaCampoOptionsSelect").prop('disabled', true);
+		$("#listaCampoOptionsSelect option").prop("selected", true);
+		$("#variablesCampoUL :input").prop('disabled', true);
+		$("#variablesCampoUL :input").iCheck('uncheck');
+		$("input#resultadoDisable").prop('disabled', true);
+		$("input#resultadoDisable").iCheck('uncheck');
+		$("input#resultadoGuardarVariable").prop('disabled', true);
+		$("input#resultadoGuardarVariable").iCheck('uncheck');
 	}
 });
 
@@ -626,7 +775,7 @@ function saveRule () {
 	/*if( $('#listaValorRadio').is(':checked') )
 		valor = getSelectOptions(arregloElementosDeListasCampo);
 	else*/ if( $('#manualValorRadio').is(':checked') )
-		valor = "COLUMNA="+$("#manualValorInput").val();
+		valor = "COLUMNA="+$("#manualValorInput").val().toLowerCase();
 	else if( $('#fechaValorRadio').is(':checked') ) {
 		//valor = $("#date_inline").datepicker( 'getDate' );
 		valor = 'DIA='+$("#diaValorInput").val();
@@ -648,6 +797,8 @@ function saveRule () {
 			valor = 'LISTA=' + getSelectOptions(arregloElementosDeListasValor, aplicarNombre);
 	} else if( $('#variableValorRadio').is(':checked') ) {
 		var valorVariables = $("input[name='variablesValor']:checked").val();
+		console.log('valorVariables');
+		console.log(valorVariables);
 		if(valorVariables == 1)
 			valor = "VARIABLE=RESULTADO";
 		else if(valorVariables == 2) {
@@ -693,12 +844,14 @@ function saveRule () {
 		else
 			variables += '#VALOR('+valor+')';
 	}
+	console.log("-_------___----");
 	console.log(reglaPadre);
 	console.log(campoObjetivo);
 	console.log(operacion);
 	console.log(valor);
 	console.log(variables);
 	console.log(variableDeVariableReglaID);
+	console.log("-_------___----");
 	if(campoObjetivo.length > 0 && campoObjetivo.length < 1001) {
 		if(operacion.length > 0 && operacion.length < 3) {
 			if(valor.toString().length > 0 && valor.toString().length < 1001) {
@@ -746,7 +899,8 @@ function saveRule () {
 					accent: "#d94e2a",
 				  	message: "El campo de valor a aplicar de la regla debe tener una longitud mayor a 0 y menor a 1001.",
 				  	duration: 3,
-				  	overlay: true
+				  	overlay: true,
+                    closeConfirm: true
 				});
 			}
 		} else {
@@ -756,7 +910,8 @@ function saveRule () {
 				accent: "#d94e2a",
 			  	message: "El campo de operacion de la regla debe tener una longitud mayor a 0 y menor a 3.",
 			  	duration: 3,
-			  	overlay: true
+			  	overlay: true,
+                closeConfirm: true
 			});
 		}
 	} else {
@@ -766,7 +921,8 @@ function saveRule () {
 			accent: "#d94e2a",
 		  	message: "El campo objetivo de la regla debe tener una longitud mayor a 0 y menor a 1001.",
 		  	duration: 3,
-		  	overlay: true
+		  	overlay: true,
+            closeConfirm: true
 		});
 	}
 }
@@ -872,6 +1028,7 @@ function showRules () {
 }
 
 function campoObjetivo (regla, arreglo, tabs) {
+	console.log('yeahhhhh');
 	var esCondicion = false;
 	if(regla.operacion=="-" || regla.operacion=="+" || regla.operacion=="*" || regla.operacion=="/" || regla.operacion=="=")
 		esCondicion = false;
@@ -1070,33 +1227,6 @@ function campoObjetivo (regla, arreglo, tabs) {
 							textVariables[j] += " && " + valorElemento;
 						}
 					}
-					/*for (var j = 0; j < arreglo[0].length-1; j++) {
-						if(arreglo[0].charAt(j) == "!" && arreglo[0].charAt(j+1) == "=") {
-							var texto = arreglo[0].slice(0, j+2) + " "+ valorElemento + " " + arreglo[0].slice(j+2);
-							if(i > 0)
-								texto = texto;
-							arreglo[0] = texto;
-							j+=valorElemento.length+2;
-						}
-					};*/
-					/*for (var j = 0; j < tamArreglo; j++) {
-						var opcionAMostrar = arregloLista[i].split("$");
-						var valorElemento = arregloLista[i];
-						if(opcionAMostrar.length > 1){
-							if(opcionAMostrar[1] == "1")
-								valorElemento = opcionAMostrar[0].split("-")[0];
-							else
-								valorElemento = opcionAMostrar[0].split("-")[1];
-						}
-						if(i==0) {
-							arreglo[j] += " "+valorElemento + " ) {";
-							textVariables[j] += " " + valorElemento;
-						} else {
-							arreglo.push("\n"+copiaRegla[j]+" "+valorElemento+" ) {");
-							posicionesIF.push(posicionesIF[posicionesIF.length-1]+2);
-							textVariables.push(copiaTextVariable[j] + " " + valorElemento);
-						}
-					};*/
 				};
 			} else {
 				for (var i = 0; i < arregloLista.length; i++) {
@@ -1120,36 +1250,13 @@ function campoObjetivo (regla, arreglo, tabs) {
 					};
 				};
 			}
-			/*for (var j = 0; j < arreglo.length; j++) {
-				for (var i = 0; i < arregloLista.length; i++) {
-					if(i==0 && j==0) {
-						arreglo[0] += " "+arregloLista[0] + " ) {";
-						textVariables[0] += " " + arregloLista[0];
-					} else if(i > 0) {
-						arreglo.splice( (i+j), 0, arreglo[j] += " "+valor+" )  {" )
-					} else if(j==0) {
-						arreglo[j] += " "+valor+" )  {";
-						textVariables[j] += " " + valor;
-					} else {
-						arreglo.push("\n"+copiaRegla+" "+arregloLista[i]+" ) {");
-						posicionesIF.push(arreglo.length-1);
-						textVariables.push(copiaTextVariable + " " + arregloLista[0]);
-					}
-				};
-			};*/
-			/*arreglo[0] += " "+arregloLista[0] + " ) {";
-			textVariables[textVariables.length-1] += " " + arregloLista[0];
-			for (var i = 1; i < arregloLista.length; i++) {
-				arreglo.push("\n"+copiaRegla+" "+arregloLista[i]+" ) {");
-				posicionesIF.push(arreglo.length-1);
-				textVariables[i] += " " + arregloLista[0];
-			};*/
 		} else {
 			var arregloLista = regla.valor.split("=")[1].split(",");
 			var copiaRegla = arreglo[arreglo.length-1];
 			var copiaTextVariable = textVariables[textVariables.length-1];
+			var tamArreglo = arreglo.length;
 			for (var i = 0; i < arregloLista.length; i++) {
-				for (var j = 0; j < arreglo.length; j++) {
+				for (var j = 0; j < tamArreglo; j++) {
 					var opcionAMostrar = arregloLista[i].split("$");
 					var valorElemento = arregloLista[i];
 					if(opcionAMostrar.length > 1){
@@ -1159,21 +1266,14 @@ function campoObjetivo (regla, arreglo, tabs) {
 							valorElemento = opcionAMostrar[0].split("-")[1];
 					}
 					if(i==0) {
-						arreglo[j] += " "+valorElemento + " ) {";
+						arreglo[j] += " "+valorElemento + ";";
 						textVariables[j] += " " + valorElemento;
 					} else {
-						arreglo.push("\n"+copiaRegla+" "+valorElemento);
-						//posicionesIF.push(arreglo.length-1);
+						arreglo.push("\n"+copiaRegla+" "+valorElemento + ";");
 						textVariables.push(copiaTextVariable + " " + valorElemento);
 					}
 				};
 			};
-			/*arreglo[arreglo.length-1] += " "+arregloLista[0];
-			textVariables[textVariables.length-1] += " " + arregloLista[0];
-			for (var i = 0; i < arregloLista.length; i++) {
-				arreglo.push("\n"+copiaRegla+" "+arregloLista[i]);
-				textVariables[i] += " " + arregloLista[0];
-			};*/
 		}
 	} else if(regla.valor.indexOf('FACTOR') == 0) {
 		if(esCondicion) {

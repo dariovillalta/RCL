@@ -202,7 +202,8 @@ function createUser () {
 								accent: "#d94e2a",
 							  	message: "Contraseña no cumple política de mínimo de números.",
 							  	duration: 2,
-							  	overlay: true
+							  	overlay: true,
+                            	closeConfirm: true
 							});
 						}
 					} else{
@@ -212,7 +213,8 @@ function createUser () {
 							accent: "#d94e2a",
 						  	message: "Contraseña no cumple política de mínimo de caracteres especiales.",
 						  	duration: 2,
-						  	overlay: true
+						  	overlay: true,
+                            closeConfirm: true
 						});
 					}
 				} else{
@@ -222,7 +224,8 @@ function createUser () {
 						accent: "#d94e2a",
 					  	message: "Contraseña no cumple política de letras minúsculas.",
 					  	duration: 2,
-					  	overlay: true
+					  	overlay: true,
+                        closeConfirm: true
 					});
 				}
 			} else{
@@ -232,7 +235,8 @@ function createUser () {
 					accent: "#d94e2a",
 				  	message: "Contraseña no cumple política de letras mayúsculas.",
 				  	duration: 2,
-				  	overlay: true
+				  	overlay: true,
+                    closeConfirm: true
 				});
 			}
 		} else{
@@ -242,7 +246,8 @@ function createUser () {
 				accent: "#d94e2a",
 			  	message: "Contraseña no cumple política de caracteres especiales.",
 			  	duration: 2,
-			  	overlay: true
+			  	overlay: true,
+                closeConfirm: true
 			});
 		}
 	} else{
@@ -252,7 +257,8 @@ function createUser () {
 			accent: "#d94e2a",
 		  	message: "Contraseña no cumple política de longitud.",
 		  	duration: 2,
-		  	overlay: true
+		  	overlay: true,
+            closeConfirm: true
 		});
 	}
 }
@@ -582,7 +588,8 @@ function updateUser () {
 									accent: "#d94e2a",
 								  	message: "Contraseña no cumple política de mínimo de números.",
 								  	duration: 2,
-								  	overlay: true
+								  	overlay: true,
+                            		closeConfirm: true
 								});
 							}
 						} else{
@@ -592,7 +599,8 @@ function updateUser () {
 								accent: "#d94e2a",
 							  	message: "Contraseña no cumple política de mínimo de caracteres especiales.",
 							  	duration: 2,
-							  	overlay: true
+							  	overlay: true,
+                            	closeConfirm: true
 							});
 						}
 					} else{
@@ -602,7 +610,8 @@ function updateUser () {
 							accent: "#d94e2a",
 						  	message: "Contraseña no cumple política de letras minúsculas.",
 						  	duration: 2,
-						  	overlay: true
+						  	overlay: true,
+                            closeConfirm: true
 						});
 					}
 				} else{
@@ -612,7 +621,8 @@ function updateUser () {
 						accent: "#d94e2a",
 					  	message: "Contraseña no cumple política de letras mayúsculas.",
 					  	duration: 2,
-					  	overlay: true
+					  	overlay: true,
+                        closeConfirm: true
 					});
 				}
 			} else{
@@ -622,7 +632,8 @@ function updateUser () {
 					accent: "#d94e2a",
 				  	message: "Contraseña no cumple política de caracteres especiales.",
 				  	duration: 2,
-				  	overlay: true
+				  	overlay: true,
+                    closeConfirm: true
 				});
 			}
 		} else{
@@ -632,7 +643,8 @@ function updateUser () {
 				accent: "#d94e2a",
 			  	message: "Contraseña no cumple política de longitud.",
 			  	duration: 2,
-			  	overlay: true
+			  	overlay: true,
+                closeConfirm: true
 			});
 		}
 	} else{
@@ -1079,7 +1091,8 @@ function saveImages () {
 			accent: "#d94e2a",
 		  	message: "Ingrese por lo menos un logo.",
 		  	duration: 2,
-		  	overlay: true
+		  	overlay: true,
+            closeConfirm: true
 		});
 	}
 }
@@ -1169,7 +1182,8 @@ function modifyImages () {
 			accent: "#d94e2a",
 		  	message: "Ingrese por lo menos un logo.",
 		  	duration: 2,
-		  	overlay: true
+		  	overlay: true,
+            closeConfirm: true
 		});
 	}
 }
