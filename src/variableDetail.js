@@ -44,6 +44,7 @@ function loadText () {
 	$("#variableOfVariableDescription").css("white-space", "initial");
 	$("#variableOfVariableDescription").css("text-align", "justify");
 	$("#variableOfVariableFactor").text(factorHijo);
+	$("#factorText").text(factorHijo).append('<span style="height: 3vh;">%</span>');
 	$("#variableOfVariableFactor").css("white-space", "initial");
 	$("#variableOfVariableFactor").css("text-align", "justify");
 	variableDeVariableReglaID = variable;
@@ -68,11 +69,11 @@ var tablaDepositos = [
 	{valor: "tipoPersona",nombre: "Tipo de Persona"},
 	{valor: "tipoSubPersona",nombre: "Tipo de Sub-Persona"},
 	{valor: "saldo",nombre: "Saldo"},
-	{valor: "moneda",nombre: "Moneda"},
+	/*{valor: "moneda",nombre: "Moneda"},*/
 	{valor: "tipoCuenta",nombre: "Tipo de Cuenta"},
-	{valor: "sucursal",nombre: "Sucursal"},
+	/*{valor: "sucursal",nombre: "Sucursal"},
 	{valor: "columnaExtra1",nombre: "Columna Extra 1"},
-	{valor: "columnaExtra2",nombre: "Columna Extra 2"}
+	{valor: "columnaExtra2",nombre: "Columna Extra 2"}*/
 ];
 
 function loadSelectCampoObjetivo (tabla) {
@@ -290,10 +291,10 @@ function renderRules () {
 			        checkboxClass: 'icheckbox_flat-green',
 			        radioClass: 'iradio_flat-green'
 			    });
-			    if( $('#variablesCampoRadio').iCheck('update')[0].checked )
+			    /*if( $('#variablesCampoRadio').iCheck('update')[0].checked )
 		    		$("#variablesCampoUL :input").prop('disabled', false);
 		    	else
-		    		$("#variablesCampoUL :input").prop('disabled', true);
+		    		$("#variablesCampoUL :input").prop('disabled', true);*/
 		    	$("#resultadoDisable").on('ifChecked', function(event){
 					$("#resultadoGuardarVariable").attr('disabled',true);
 					$("#resultadoGuardarVariable").iCheck('uncheck');
@@ -358,10 +359,10 @@ function renderRules () {
 			        checkboxClass: 'icheckbox_flat-green',
 			        radioClass: 'iradio_flat-green'
 			    });
-			    if( $('#variableValorRadio').iCheck('update')[0].checked )
+			    /*if( $('#variableValorRadio').iCheck('update')[0].checked )
 		    		$("#variablesValorUL :input").prop('disabled', false);
 		    	else
-		    		$("#variablesValorUL :input").prop('disabled', true);
+		    		$("#variablesValorUL :input").prop('disabled', true);*/
 		    }
 		}
 	});
@@ -405,44 +406,7 @@ function loadLists () {
                     } else {
                     	arregloListas = [];
                     }
-                    renderListsSelect();
-                });
-            }
-        });
-    }); // fin transaction
-}
-
-function getElementsListsCamp (listaID) {
-	const transaction = new sql.Transaction( pool1 );
-    transaction.begin(err => {
-        var rolledBack = false
- 
-        transaction.on('rollback', aborted => {
-            // emited with aborted === true
-     
-            rolledBack = true
-        })
-        const request = new sql.Request(transaction);
-        request.query("select * from ListasVariables where idLista = "+listaID, (err, result) => {
-            if (err) {
-                if (!rolledBack) {
-                    console.log('error en rolledBack MainDB Variables');
-                    transaction.rollback(err => {
-                        console.log('error en rolledBack');
-                        console.log(err);
-                    });
-                }
-            }  else {
-                transaction.commit(err => {
-                    // ... error checks
-                    console.log("Transaction committed MainDB Variables");
-                    console.log(result);
-                    if(result.recordset.length > 0){
-                    	arregloElementosDeListasCampo = result.recordset;
-                    } else {
-                    	arregloElementosDeListasCampo = [];
-                    }
-                    renderElementsListsCampSelect();
+                    renderListsSelect(3);
                 });
             }
         });
@@ -486,20 +450,18 @@ function getElementsListsValue (listaID) {
     }); // fin transaction
 }
 
-function renderListsSelect () {
+function renderListsSelect (tipo) {
 	var selectHTML = '';
-	for (var i = 0; i < arregloListas.length; i++) {
-		selectHTML+='<option value='+arregloListas[i].ID+'>'+arregloListas[i].nombre+'</option>';
+	var listaTemp = arregloListas.filter(function( object ) {
+						return object.tipo == tipo;
+					});
+	for (var i = 0; i < listaTemp.length; i++) {
+		selectHTML+='<option value='+listaTemp[i].ID+'>'+listaTemp[i].nombre+'</option>';
 	};
-	$("#listaCampoSelect").empty();
-	$("#listaCampoSelect").append(selectHTML);
-	//$("#listaValorSelect").empty();
-	//$("#listaValorSelect").append(selectHTML);
 	$("#elementoValorSelect").empty();
 	$("#elementoValorSelect").append(selectHTML);
-	if(arregloListas.length > 0) {
-		getElementsListsCamp(arregloListas[0].ID);
-		getElementsListsValue(arregloListas[0].ID);
+	if(listaTemp.length > 0) {
+		getElementsListsValue(listaTemp[0].ID);
 	}
 }
 
@@ -547,138 +509,130 @@ $("#listaCampoOptionsSelect").prop('disabled', true);
 $("input#resultadoDisable").prop('disabled', true);
 $("input[name='campoRadio']").on('ifClicked', function(event){
 	if(event.currentTarget.id == "campoCampoRadio"){
-		$("#campoCampoInput").prop('disabled', false);
-		$("#listaCampoSelect").prop('disabled', true);
-		$("#listaCampoOptionsSelect").prop('disabled', true);
-		$("#listaCampoOptionsSelect option").prop("selected", false);
-		$("#variablesCampoUL :input").prop('disabled', true);
-		$("#variablesCampoUL :input").iCheck('uncheck');
-		$("input#resultadoDisable").prop('disabled', true);
-		$("input#resultadoDisable").iCheck('uncheck');
-		$("input#resultadoGuardarVariable").prop('disabled', false);
-		$("input#resultadoGuardarVariable").iCheck('uncheck');
-	} else if(event.currentTarget.id == "listaCampoRadio") {
-		$("#campoCampoInput").prop('disabled', true);
-		$("#listaCampoSelect").prop('disabled', false);
-		$("#listaCampoOptionsSelect").prop('disabled', false);
-		$("#variablesCampoUL :input").prop('disabled', true);
-		$("#variablesCampoUL :input").iCheck('uncheck');
+		$( "#campoField" ).fadeIn( "slow", function() {
+		});
+		$('#variableField').hide();
+		$('#fosedeField').hide();
+		$( "#cuentasOperativasField" ).hide();
+		$("#fosedeField :input").iCheck('uncheck');
+		$('#asiOperadorRadio').show();
+		mostrarFieldsCampoSelect();
 	} else if(event.currentTarget.id == "variablesCampoRadio"){
-		$("#campoCampoInput").prop('disabled', true);
-		$("#listaCampoSelect").prop('disabled', true);
-		$("#listaCampoOptionsSelect").prop('disabled', true);
-		$("#listaCampoOptionsSelect option").prop("selected", false);
-		$("#variablesCampoUL :input").prop('disabled', false);
-		$("#variablesCampoUL :input").iCheck({
-	        checkboxClass: 'icheckbox_flat-green',
-	        radioClass: 'iradio_flat-green'
-	    });
-	    $("input#resultadoDisable").prop('disabled', false);
-		$("input#resultadoDisable").iCheck('uncheck');
-		$("#resultadoDisable").on('ifChecked', function(event){
-			$("#resultadoGuardarVariable").attr('disabled',true);
-			$("#resultadoGuardarVariable").iCheck('uncheck');
+		$( "#variableField" ).fadeIn( "slow", function() {
 		});
-		$("#resultadoDisable").on('ifUnchecked', function(event){
-			$("#resultadoGuardarVariable").attr('disabled',false);
+		$('#campoField').hide();
+		$('#fosedeField').hide();
+		$('#asiOperadorRadio').show();
+	} else if(event.currentTarget.id == "fosedeCampoRadio"){
+		$( "#fosedeField" ).fadeIn( "slow", function() {
 		});
-	} else {
-		$("#campoCampoInput").prop('disabled', true);
-		$("#listaCampoSelect").prop('disabled', true);
-		$("#listaCampoOptionsSelect").prop('disabled', true);
-		$("#listaCampoOptionsSelect option").prop("selected", true);
-		$("#variablesCampoUL :input").prop('disabled', true);
-		$("#variablesCampoUL :input").iCheck('uncheck');
-		$("input#resultadoDisable").prop('disabled', true);
-		$("input#resultadoDisable").iCheck('uncheck');
-		$("input#resultadoGuardarVariable").prop('disabled', true);
-		$("input#resultadoGuardarVariable").iCheck('uncheck');
+		$("#hastaFOSEDECampoRadio").iCheck('check');
+		$('#campoField').hide();
+		$('#variableField').hide();
+		$( "#cuentasOperativasField" ).hide();
+		$('#relacionalesField').hide();
+		$('#asiOperadorRadio').hide();
+		$( "#ln_solidOPERACION" ).hide();
+		$( "#algebraicosField" ).fadeIn( "slow", function() {
+		});
+		$( "#manualValorRadioLabel" ).hide();
+		$( "#manualField" ).hide();
+		$( "#factorField" ).fadeIn( "slow", function() {
+		});
+		$( "#factorValorRadioLabel" ).show();
+		$("#factorValorRadio").iCheck('check');
+		$( "#elementoValorRadioLabel" ).hide();
+		$( "#listaValorField" ).hide();
+	} else if(event.currentTarget.id == "cuentasOperativasCampoRadio"){
+		$( "#cuentasOperativasField" ).fadeIn( "slow", function() {
+		});
+		$("#hastaFOSEDECuentasOpCampoRadio").iCheck('check');
+		$('#fosedeField').hide();
+		$('#campoField').hide();
+		$('#variableField').hide();
+		$('#relacionalesField').hide();
+		$('#asiOperadorRadio').hide();
+		$( "#ln_solidOPERACION" ).hide();
+		$( "#algebraicosField" ).fadeIn( "slow", function() {
+		});
+		$( "#manualValorRadioLabel" ).hide();
+		$( "#manualField" ).hide();
+		$( "#factorField" ).fadeIn( "slow", function() {
+		});
+		$( "#factorValorRadioLabel" ).show();
+		$("#factorValorRadio").iCheck('check');
+		$( "#elementoValorRadioLabel" ).hide();
+		$( "#listaValorField" ).hide();
 	}
 });
 
-$("#manualValorInput").prop('disabled', true);
-//$("#date_inline").datepicker().datepicker('disable');
-//$("#date_inline").prop('disabled', true);
+function mostrarFieldsCampoSelect () {
+	var campo = $("#campoCampoInput").val();
+	if(campo == 'saldo') {
+		$( "#relacionalesField" ).fadeIn( "slow", function() {
+		});
+		$( "#algebraicosField" ).fadeIn( "slow", function() {
+		});
+		$( "#ln_solidOPERACION" ).show();
+		$( "#elementoValorRadioLabel" ).hide();
+		$( "#listaValorField" ).hide();
+		$( "#manualValorRadioLabel" ).show();
+		$("#manualValorRadio").iCheck('check');
+		$( "#manualField" ).fadeIn( "slow", function() {
+		});
+		$( "#factorValorRadioLabel" ).show();
+		$( "#factorField" ).hide();
+	} else {
+		$( "#relacionalesField" ).fadeIn( "slow", function() {
+		});
+		$( "#algebraicosField" ).hide();
+		$( "#ln_solidOPERACION" ).hide();
+	}
+	if(campo == 'tipoPersona') {
+		renderListsSelect(4);
+		$( "#elementoValorRadioLabel" ).show();
+		$("#elementoValorRadioLabel").iCheck('check');
+		$( "#listaValorField" ).fadeIn( "slow", function() {
+		});
+		$( "#manualValorRadioLabel" ).hide();
+		$( "#manualField" ).hide();
+		$( "#factorValorRadioLabel" ).hide();
+		$( "#factorField" ).hide();
+	} else if(campo == 'tipoSubPersona') {
+		renderListsSelect(5);
+		$( "#elementoValorRadioLabel" ).show();
+		$("#elementoValorRadioLabel").iCheck('check');
+		$( "#listaValorField" ).fadeIn( "slow", function() {
+		});
+		$( "#manualValorRadioLabel" ).hide();
+		$( "#manualField" ).hide();
+		$( "#factorValorRadioLabel" ).hide();
+		$( "#factorField" ).hide();
+	}else if(campo == 'idCliente' || campo == 'nombreCliente') {
+		renderListsSelect(3);
+		$( "#elementoValorRadioLabel" ).show();
+		$("#elementoValorRadioLabel").iCheck('check');
+		$( "#listaValorField" ).fadeIn( "slow", function() {
+		});
+		$( "#manualValorRadioLabel" ).hide();
+		$( "#manualField" ).hide();
+		$( "#factorValorRadioLabel" ).hide();
+		$( "#factorField" ).hide();
+	}
+}
+
 $("#date_inline").css('pointer-events', 'none');
-$("#elementoValorSelect").prop('disabled', true);
-$("#elementoValorOptionSelect").prop('disabled', true);
-$("#variablesValorUL :input").prop('disabled', true);
 $("#diaValorInput").prop('disabled', true);
 $("#mesValorInput").prop('disabled', true);
 $("input[name='valorRadio']").on('ifClicked', function(event){
-	/*if(event.currentTarget.id == "listaValorRadio") {
-		$("#listaValorSelect").prop('disabled', false);
-		$("#manualValorInput").prop('disabled', true);
-		$("#date_inline").css('pointer-events', 'none');
-		$('#date_inline').datepicker('setDate', null);
-		$("#elementoValorSelect").prop('disabled', true);
-		$("#elementoValorOptionSelect").prop('disabled', true);
-		$("#elementoValorOptionSelect option").prop("selected", false);
-		$("#variablesValorUL :input").prop('disabled', true);
-		$("#variablesValorUL :input").iCheck('uncheck');
-		$("#diaValorInput").prop('disabled', true);
-		$("#mesValorInput").prop('disabled', true);
-	} else*/ if(event.currentTarget.id == "manualValorRadio") {
-		//$("#listaValorSelect").prop('disabled', true);
-		$("#manualValorInput").prop('disabled', false);
-		/*$("#date_inline").css('pointer-events', 'none');
-		$('#date_inline').datepicker('setDate', null);*/
-		$("#elementoValorSelect").prop('disabled', true);
-		$("#elementoValorOptionSelect").prop('disabled', true);
-		$("#elementoValorOptionSelect option").prop("selected", false);
-		$("#variablesValorUL :input").prop('disabled', true);
-		$("#variablesValorUL :input").iCheck('uncheck');
-		$("#diaValorInput").prop('disabled', true);
-		$("#mesValorInput").prop('disabled', true);
-	} else if(event.currentTarget.id == "fechaValorRadio") {
-		//$("#listaValorSelect").prop('disabled', true);
-		$("#manualValorInput").prop('disabled', true);
-		//$("#date_inline").css('pointer-events', '');
-		$("#elementoValorSelect").prop('disabled', true);
-		$("#elementoValorOptionSelect").prop('disabled', true);
-		$("#elementoValorOptionSelect option").prop("selected", false);
-		$("#variablesValorUL :input").prop('disabled', true);
-		$("#variablesValorUL :input").iCheck('uncheck');
-		$("#diaValorInput").prop('disabled', false);
-		$("#mesValorInput").prop('disabled', false);
-	} else if(event.currentTarget.id == "elementoValorRadio") {
-		//$("#listaValorSelect").prop('disabled', true);
-		$("#manualValorInput").prop('disabled', true);
-		/*$("#date_inline").css('pointer-events', 'none');
-		$('#date_inline').datepicker('setDate', null);*/
-		$("#elementoValorSelect").prop('disabled', false);
-		$("#elementoValorOptionSelect").prop('disabled', false);
-		$("#variablesValorUL :input").prop('disabled', true);
-		$("#variablesValorUL :input").iCheck('uncheck');
-		$("#diaValorInput").prop('disabled', true);
-		$("#mesValorInput").prop('disabled', true);
-	} else if(event.currentTarget.id == "variableValorRadio") {
-		//$("#listaValorSelect").prop('disabled', true);
-		$("#manualValorInput").prop('disabled', true);
-		/*$("#date_inline").css('pointer-events', 'none');
-		$('#date_inline').datepicker('setDate', null);*/
-		$("#elementoValorSelect").prop('disabled', true);
-		$("#elementoValorOptionSelect").prop('disabled', true);
-		$("#elementoValorOptionSelect option").prop("selected", false);
-		$("#variablesValorUL :input").prop('disabled', false);
-		$("#variablesValorUL :input").iCheck({
-	        checkboxClass: 'icheckbox_flat-green',
-	        radioClass: 'iradio_flat-green'
-	    });
-	    $("#diaValorInput").prop('disabled', true);
-		$("#mesValorInput").prop('disabled', true);
-	} else {
-		//$("#listaValorSelect").prop('disabled', true);
-		$("#manualValorInput").prop('disabled', true);
-		/*$("#date_inline").css('pointer-events', 'none');
-		$('#date_inline').datepicker('setDate', null);*/
-		$("#elementoValorSelect").prop('disabled', true);
-		$("#elementoValorOptionSelect").prop('disabled', true);
-		$("#elementoValorOptionSelect option").prop("selected", false);
-		$("#variablesValorUL :input").prop('disabled', true);
-		$("#variablesValorUL :input").iCheck('uncheck');
-		$("#diaValorInput").prop('disabled', true);
-		$("#mesValorInput").prop('disabled', true);
+	if(event.currentTarget.id == "manualValorRadio") {
+		$( "#manualField" ).fadeIn( "slow", function() {
+		});
+		$( "#factorField" ).hide();
+	} else if(event.currentTarget.id == "factorValorRadio") {
+		$( "#factorField" ).fadeIn( "slow", function() {
+		});
+		$( "#manualField" ).hide();
 	}
 });
 /* *************	Fin Radios	************* */
@@ -717,6 +671,16 @@ function saveRule () {
 		} else {
 			campoObjetivo = 'LISTA='+getSelectOptions(arregloElementosDeListasCampo, aplicarNombre);
 		}
+	} else if( $('#fosedeCampoRadio').is(':checked') ) {
+		if( $('#hastaFOSEDECampoRadio').is(':checked') )
+			campoObjetivo = 'hastaFOSEDE';
+		else
+			campoObjetivo = 'mayorFOSEDE';
+	} else if( $('#cuentasOperativasCampoRadio').is(':checked') ) { 
+		if( $('#hastaFOSEDECuentasOpCampoRadio').is(':checked') )
+			campoObjetivo = 'CUENTAS=hastaFOSEDE';
+		else
+			campoObjetivo = 'CUENTAS=mayorFOSEDE';
 	} else {
 		var valorVariables = $("input[name='variablesCampo']:checked").val();
 		//listaValorVariableRadio

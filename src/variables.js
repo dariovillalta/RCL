@@ -1450,394 +1450,6 @@ function deleteVariableOfVariable (index) {
 	  	}
 	});
 }
-
-/*function loadVariablesofVariableTable () {
-	var id;
-	if(arregloVariableDeVariables.length > 0)
-		id = arregloVariableDeVariables[arregloVariableDeVariables.length-1].ID+1;
-	else
-		id = 1;
-	if(arregloVariables.length > 0){
-		for (var i = 0; i < arregloVariableDeVariables.length; i++) {
-			console.log(arregloVariableDeVariables[i]);
-			var varia = arregloVariables.filter(function(object) {
-				console.log(object);
-				if(!isNaN(arregloVariableDeVariables[i].idVariable))
-		        	return (arregloVariableDeVariables[i].idVariable == object.ID );
-		        return;
-		    });
-		    console.log(varia);
-		    if(!isNaN(arregloVariableDeVariables[i].idVariable))
-		    	arregloVariableDeVariables[i].idVariable = varia[0].nombre;
-		};
-	}
-	if ( $.fn.dataTable.isDataTable( '#datatable_variablesOfVariables' ) )
-		$("#datatable_variablesOfVariables").dataTable().fnDestroy();
-	$( "#datatable_variablesOfVariables tbody").unbind( "click" );
-	var table = $('#datatable_variablesOfVariables').DataTable({
-		"data": arregloVariableDeVariables,
-		dom: "Bflrtip",
-	  	buttons: [
-			{
-			  	extend: "copyHtml5",
-			  	className: "btn-sm"
-			},
-			{
-			  	extend: "csvHtml5",
-			  	className: "btn-sm"
-			},
-			{
-			  	extend: "excelHtml5",
-			  	className: "btn-sm"
-			},
-			{
-			  	extend: "pdfHtml5",
-			  	className: "btn-sm"
-			}
-		],
-		"language": {
-			"lengthMenu": '_MENU_ entradas por página',
-			"search": '<i class="fa fa-search"></i>',
-			"paginate": {
-				"previous": '<i class="fa fa-angle-left"></i>',
-				"next": '<i class="fa fa-angle-right"></i>'
-			},
-			"loadingRecords": "Cargando...",
-			"processing":     "Procesando...",
-			"emptyTable":     "No hay información en la tabla",
-		    "info":           "Mostrando _START_ a _END_ de un total _TOTAL_ de entradas",
-		    "infoEmpty":      "Mostrando 0 a 0 de 0 entradas",
-		    "infoFiltered":   "(filtrado de un total de _MAX_ entradas)"
-		},
-		"columns": [
-			{ "data": "ID" },
-			{ "data": "idVariable" },
-	        { "data": "nombre" },
-	        { "data": "descripcion" },
-	        { "data": "cuenta" },
-	        { "data": "Guardar" },
-	        { "data": "Eliminar" }
-	    ],
-	    "columnDefs": [ {
-	        "targets": -2,
-	        "defaultContent": '<a class="btn btn-app updateVariableOfVariable"> <i class="fa fa-save"></i> Guardar </a>',
-	        "className": "text-center"
-	    },
-	    {
-	        "targets": -1,
-	        "defaultContent": '<a class="btn btn-app deleteVariableOfVariable"> <i class="fa fa-eraser"></i> Eliminar </a>',
-	        "className": "text-center"
-	    },
-	    {
-		      "targets": 0,
-		      "className": "text-center"
-		},
-	    {
-		      "targets": 1,
-		      "className": "text-center"
-		},
-	    {
-		      "targets": 2,
-		      "className": "text-center"
-		},
-	    {
-		      "targets": 3,
-		      "className": "text-center"
-		},
-	    {
-		      "targets": 4,
-		      "className": "text-center"
-		}]
-	});
-	if ( $.fn.dataTable.isDataTable( '#datatable_variablesOfVariables' ) )
-		table.MakeCellsEditable("destroy");
-
-	var opcionesVarPadre = '';
-	opcionesVarPadre+='<select id="padreVarofVarN">';
-	for (var i = 0; i < arregloVariables.length; i++) {
-		opcionesVarPadre+='<option value="'+arregloVariables[i].ID+'">'+arregloVariables[i].nombre+'</option>';
-	};
-	opcionesVarPadre+='</select>';
-
-	table.row.add( {
-        "ID": id,
-        "idVariable": opcionesVarPadre,
-        "nombre": "<input type='text' id='nombreVarofVarN"+id+"' required='required' class='form-control col-md-7 col-xs-12'>",
-        "descripcion": "<input type='text' id='descripcionVarofVarN"+id+"' required='required' class='form-control col-md-7 col-xs-12'>",
-        "cuenta": "<input type='text' id='cuentaVarofVarN"+id+"' required='required' class='form-control col-md-7 col-xs-12'>",
-        "Guardar": "<a class='btn btn-app' onclick='saveNewVariableVarofVarN("+id+")'> <i class='fa fa-save'></i> Guardar </a>",
-        "Eliminar": ""
-    } ).draw();
-
-	var opciones = [];
-    for (var i = 0; i < arregloVariables.length; i++) {
-    	opciones.push({ "value": arregloVariables[i].ID, "display": arregloVariables[i].nombre });
-    };
-
-    table.MakeCellsEditable({
-    	"onUpdate": function() { return; },
-        "columns": [1,2,3,4],
-        "confirmationButton": false,
-		"inputTypes": [
-			{
-				"column":1,
-				"type": "list",
-                "options": opciones
-			},
-			{
-                "column":2, 
-                "type": "text",
-                "options":null
-            },
-            {
-                "column":3, 
-                "type": "text",
-                "options":null
-            }
-			,{
-                "column": 4,
-                "type":"text",
-                "options":null
-            }
-        ]
-    });
-
-	$('#datatable_variablesOfVariables tbody').on( 'click', 'tr a.updateVariableOfVariable', function () {
-        var data = table.row( $(this).parents('tr') ).data();
-		if(data.nombre.length > 0 && data.nombre.length < 41){
-			if(data.cuenta.length > 0 && data.cuenta.length < 41){
-				if(data.descripcion.length < 701){
-					$("body").overhang({
-					  	type: "confirm",
-					  	primary: "#f5a433",
-					  	accent: "#dc9430",
-					  	yesColor: "#3498DB",
-					  	message: 'Esta seguro que desea guardar los cambios?',
-					  	overlay: true,
-					  	yesMessage: "Modificar",
-					  	noMessage: "Cancelar",
-					  	callback: function (value) {
-					    	if(value)
-					    		modifyVariableofVarN(data);
-					  	}
-					});
-				} else {
-					$("body").overhang({
-					  	type: "error",
-					  	primary: "#f84a1d",
-						accent: "#d94e2a",
-					  	message: "La descripción de la variable debe tener una longitud menor a 701.",
-					  	duration: 3,
-					  	overlay: true
-					});
-				}
-			} else {
-				$("body").overhang({
-				  	type: "error",
-				  	primary: "#f84a1d",
-					accent: "#d94e2a",
-				  	message: "La cuenta de la variable debe tener más de una letra y menos de 41.",
-				  	duration: 3,
-				  	overlay: true
-				});
-			}
-		} else {
-			$("body").overhang({
-			  	type: "error",
-			  	primary: "#f84a1d",
-				accent: "#d94e2a",
-			  	message: "El nombre de la variable debe tener una longitud mayor a 0 y menor a 41.",
-			  	duration: 3,
-			  	overlay: true
-			});
-		}
-    } );
-
-	$('#datatable_variablesOfVariables tbody').on( 'click', 'tr a.deleteVariableOfVariable', function () {
-        var data = table.row( $(this).parents('tr') ).data();
-		$("body").overhang({
-		  	type: "confirm",
-		  	primary: "#f5a433",
-		  	accent: "#dc9430",
-		  	yesColor: "#3498DB",
-		  	message: 'Esta seguro que desea eliminar '+data.nombre+'?',
-		  	overlay: true,
-		  	yesMessage: "Eliminar",
-		  	noMessage: "Cancelar",
-		  	callback: function (value) {
-		    	if(value)
-		    		deleteVariableofVarN(data);
-		  	}
-		});
-	} );
-}
-
-function saveNewVariableVarofVarN (id) {
-	var nombre = $("#nombreVarofVarN"+id).val();
-	var cuenta = $("#cuentaVarofVarN"+id).val();
-	var descripcion = $("#descripcionVarofVarN"+id).val();
-	var padre = $("#padreVarofVarN").val();
-	if(nombre.length > 0 && nombre.length < 41){
-		if(cuenta.length > 0 && cuenta.length < 41){
-			if(descripcion.length < 701){
-				if(padre.length > 0){
-					const transaction = new sql.Transaction( pool1 );
-				    transaction.begin(err => {
-				        var rolledBack = false
-				 
-				        transaction.on('rollback', aborted => {
-				            // emited with aborted === true
-				     
-				            rolledBack = true
-				        })
-				        const request = new sql.Request(transaction);
-				        request.query("insert into VariablesdeVariablesFormula (idVariable, nombre, descripcion, cuenta) values ("+padre+", '"+nombre+"', '"+descripcion+"','"+cuenta+"')", (err, result) => {
-				            if (err) {
-				                if (!rolledBack) {
-				                    console.log('error en rolledBack Insert VariablesdeVariables');
-				                    transaction.rollback(err => {
-				                        console.log('error en rolledBack');
-				                        console.log(err);
-				                    });
-				                }
-				            }  else {
-				                transaction.commit(err => {
-				                    // ... error checks
-				                    console.log("Transaction committed Insert VariablesdeVariables");
-				                    $("body").overhang({
-									  	type: "success",
-									  	primary: "#40D47E",
-						  				accent: "#27AE60",
-									  	message: "Variable creada con exito.",
-									  	duration: 2,
-									  	overlay: true
-									});
-				                    loadVariableVariables();
-				                });
-				            }
-				        });
-				    }); // fin transaction
-				} else {
-					$("body").overhang({
-					  	type: "error",
-					  	primary: "#f84a1d",
-						accent: "#d94e2a",
-					  	message: "Seleccione una variable padre asociada a la nueva variable.",
-					  	duration: 3,
-					  	overlay: true
-					});
-				}
-			} else {
-				$("body").overhang({
-				  	type: "error",
-				  	primary: "#f84a1d",
-					accent: "#d94e2a",
-				  	message: "La descripción de la variable debe tener una longitud menor a 701.",
-				  	duration: 3,
-				  	overlay: true
-				});
-			}
-		} else {
-			$("body").overhang({
-			  	type: "error",
-			  	primary: "#f84a1d",
-				accent: "#d94e2a",
-			  	message: "La cuenta de la variable debe tener más de una letra y menos de 41.",
-			  	duration: 3,
-			  	overlay: true
-			});
-		}
-	} else {
-		$("body").overhang({
-		  	type: "error",
-		  	primary: "#f84a1d",
-			accent: "#d94e2a",
-		  	message: "El nombre de la variable debe tener longitud mayor a 0 y menor a 41.",
-		  	duration: 3,
-		  	overlay: true
-		});
-	}
-}
-
-function modifyVariableofVarN (data) {
-	const transaction = new sql.Transaction( pool1 );
-    transaction.begin(err => {
-        var rolledBack = false
- 
-        transaction.on('rollback', aborted => {
-            // emited with aborted === true
-     
-            rolledBack = true
-        })
-        const request = new sql.Request(transaction);
-        request.query("update VariablesdeVariablesFormula set idVariable = "+data.idVariable+", nombre = '"+data.nombre+"', descripcion = '"+data.descripcion+"', cuenta = '"+data.cuenta+"' where ID = "+data.ID+" ", (err, result) => {
-            if (err) {
-                if (!rolledBack) {
-                    console.log('error en rolledBack Update VariablesdeVariables');
-                    transaction.rollback(err => {
-                        console.log('error en rolledBack');
-                        console.log(err);
-                    });
-                }
-            }  else {
-                transaction.commit(err => {
-                    // ... error checks
-                    console.log("Transaction committed Update VariablesdeVariables");
-                    $("body").overhang({
-					  	type: "success",
-					  	primary: "#40D47E",
-		  				accent: "#27AE60",
-					  	message: "Variable modificada con exito.",
-					  	duration: 2,
-					  	overlay: true
-					});
-                    loadVariableVariables();
-                });
-            }
-        });
-    }); // fin transaction
-}
-
-function deleteVariableofVarN (data) {
-	const transaction = new sql.Transaction( pool1 );
-    transaction.begin(err => {
-        var rolledBack = false
- 
-        transaction.on('rollback', aborted => {
-            // emited with aborted === true
-     
-            rolledBack = true
-        })
-        const request = new sql.Request(transaction);
-        request.query("delete from FormulaVariables where ID = '"+data.ID+"' ", (err, result) => {
-            if (err) {
-                if (!rolledBack) {
-                    console.log('error en rolledBack Delete Variables');
-                    transaction.rollback(err => {
-                        console.log('error en rolledBack');
-                        console.log(err);
-                    });
-                }
-            }  else {
-                transaction.commit(err => {
-                    // ... error checks
-                    console.log("Transaction committed Delete Variables");
-                    console.log(result);
-                    loadVariables();
-                    $("body").overhang({
-					  	type: "success",
-					  	primary: "#40D47E",
-		  				accent: "#27AE60",
-					  	message: "Variable eliminada con exito.",
-					  	duration: 2,
-					  	overlay: true
-					});
-                });
-            }
-        });
-    }); // fin transaction
-}*/
-
 //	**********		Fin Variables		**********
 
 
@@ -1900,6 +1512,39 @@ function renderListsCreateVariableSelect () {
 	if(arregloListas[0] != null)
 		$("#elementoNombreEdit").val(arregloListas[0].nombre);
 	loadListLists();
+}
+
+//$("#elementoSaldo").val("0");//para que no tire error al crear sin mover de dropdown
+function showListsFields (idLista) {
+    var tipoLista = arregloListas.filter(function(object) {
+                        return object.tipo == idLista;
+                    });
+    if(tipoLista[0].tipo == 1) { //Manual Contable
+        $("#elementoNombre").attr("placeholder", "Ingrese nombre de cuenta");
+        $("#elementoValor").attr("placeholder", "Ingrese número de cuenta");
+        $("#elementoSaldo").attr("placeholder", "Ingrese años de vigencia");
+        $("#elementoValor").show();
+        $("#saldoCuenOpField").show();
+        $("#elementoNombre").val("");
+        $("#elementoValor").val("");
+        $("#elementoSaldo").val("");
+    } else if(tipoLista[0].tipo == 2) { //Cuentas Operativas
+        $("#elementoNombre").attr("placeholder", "Ingrese nombre de cuenta");
+        $("#elementoValor").attr("placeholder", "Ingrese ID de cliente");
+        $("#elementoSaldo").attr("placeholder", "Ingrese saldo de cuenta");
+        $("#elementoValor").show();
+        $("#saldoCuenOpField").show();
+        $("#elementoNombre").val("");
+        $("#elementoValor").val("");
+        $("#elementoSaldo").val("");
+    } else if(tipoLista[0].tipo == 3) { //Exclusiones FOSEDE
+        $("#elementoNombre").attr("placeholder", "Ingrese ID de persona");
+        $("#elementoValor").hide();
+        $("#saldoCuenOpField").hide();
+        $("#elementoNombre").val("");
+        $("#elementoValor").val("1");
+        $("#elementoSaldo").val("0");
+    }
 }
 
 function loadListLists () {
@@ -2176,49 +1821,75 @@ function createElementList () {
 	var idLista = $("#elementosDeLista").val();
 	var nombre = $("#elementoNombre").val();
 	var valor = $("#elementoValor").val();
+    var saldo = parseFloat($("#elementoSaldo").val());
+    /*if(saldo.length == 0)
+        saldo = 0;*/
 	if(idLista != null) {
 		if(idLista.length > 0) {
 			if(nombre.length > 0 && nombre.length < 121){
 				if(valor.length > 0 && valor.length < 51){
-					const transaction = new sql.Transaction( pool1 );
-				    transaction.begin(err => {
-				        var rolledBack = false
-				 
-				        transaction.on('rollback', aborted => {
-				            // emited with aborted === true
-				     
-				            rolledBack = true
-				        })
-				        const request = new sql.Request(transaction);
-				        request.query("insert into ListasVariables (idLista, nombre, valor) values ("+idLista+",'"+nombre+"','"+valor+"')", (err, result) => {
-				            if (err) {
-				                if (!rolledBack) {
-				                    console.log('error en rolledBack Listas Variables');
-				                    transaction.rollback(err => {
-				                        console.log('error en rolledBack');
-				                        console.log(err);
-				                    });
-				                }
-				            }  else {
-				                transaction.commit(err => {
-				                    // ... error checks
-				                    console.log("Transaction committed Listas Variables");
-				                    console.log(result);
-				                    $("body").overhang({
-									  	type: "success",
-									  	primary: "#40D47E",
-						  				accent: "#27AE60",
-									  	message: "Elemento de lista creada con éxito.",
-									  	duration: 2,
-									  	overlay: true
-									});
-									$("#elementoNombre").val('');
-									$("#elementoValor").val('');
-									loadListLists();
-				                });
-				            }
-				        });
-				    }); // fin transaction
+                    if(saldo.toString().length > 0){
+                        if(!isNaN(saldo)){
+        					const transaction = new sql.Transaction( pool1 );
+        				    transaction.begin(err => {
+        				        var rolledBack = false
+        				 
+        				        transaction.on('rollback', aborted => {
+        				            // emited with aborted === true
+        				     
+        				            rolledBack = true
+        				        })
+        				        const request = new sql.Request(transaction);
+        				        request.query("insert into ListasVariables (idLista, nombre, valor, saldo) values ("+idLista+",'"+nombre+"','"+valor+"',"+saldo+")", (err, result) => {
+        				            if (err) {
+        				                if (!rolledBack) {
+        				                    console.log('error en rolledBack Listas Variables');
+        				                    transaction.rollback(err => {
+        				                        console.log('error en rolledBack');
+        				                        console.log(err);
+        				                    });
+        				                }
+        				            }  else {
+        				                transaction.commit(err => {
+        				                    // ... error checks
+        				                    console.log("Transaction committed Listas Variables");
+        				                    console.log(result);
+        				                    $("body").overhang({
+        									  	type: "success",
+        									  	primary: "#40D47E",
+        						  				accent: "#27AE60",
+        									  	message: "Elemento de lista creada con éxito.",
+        									  	duration: 2,
+        									  	overlay: true
+        									});
+        									$("#elementoNombre").val('');
+        									$("#elementoValor").val('');
+                                            $("#elementoSaldo").val('');
+        									loadListLists();
+        				                });
+        				            }
+        				        });
+        				    }); // fin transaction
+                        } else {
+                            $("body").overhang({
+                                type: "error",
+                                primary: "#f84a1d",
+                                accent: "#d94e2a",
+                                message: "Ingrese un número válido para el saldo.",
+                                overlay: true,
+                                closeConfirm: true
+                            });
+                        }
+                    } else {
+                        $("body").overhang({
+                            type: "error",
+                            primary: "#f84a1d",
+                            accent: "#d94e2a",
+                            message: "Ingrese un valor para el saldo.",
+                            overlay: true,
+                            closeConfirm: true
+                        });
+                    }
 				} else {
 					$("body").overhang({
 					  	type: "error",
@@ -2419,183 +2090,240 @@ function showModalEditListVariable (index) {
 	$('#modalElement').modal('toggle');
 }
 
+$("input[name='listaRadio']").on('ifChanged', function(event){
+    var valor = $("input[name='listaRadio']:checked").val();
+    if (valor != undefined) {
+        if(valor == 1) {
+            $('#labelModalExcel').text(" Columna de Años de vigencia de Elemento");
+            $("#saldoCuenta").attr("placeholder", "Años de vigencia");
+            $('#saldoModalField').show();
+            $('#cuentaModalField').show();
+            $('#filaFinalModalField').show();
+        } else if(valor == 2) {
+            $('#labelModalExcel').text(" Columna de Saldo de Elemento");
+            $("#saldoCuenta").attr("placeholder", "Saldo de cuenta");
+            $('#saldoModalField').show();
+            $('#cuentaModalField').show();
+            $('#filaFinalModalField').show();
+        } else if(valor == 3) {
+            $('#saldoModalField').hide();
+            $('#cuentaModalField').hide();
+            $('#filaFinalModalField').hide();
+        }
+    }
+});
+
 var dialog = remote.dialog;
 
 function importExcel () {
 	var nombre = $('#hojaNombre').val();
 	var columnaNumero = $('#numeroCuenta').val();
 	var columnaNombre = $('#nombreCuenta').val();
+    var columnaSaldo = $('#saldoCuenta').val();
 	var filaInicial = $('#filaInicial').val();
 	var filaFinal = $('#filaFinal').val();
+    var valorTipoLista = $("input[name='listaRadio']:checked").val();
+    var textoTipoLista = '';
+    if(valorTipoLista == 1)
+        textoTipoLista = 'los años de vigencia';
+    else if(valorTipoLista == 2)
+        textoTipoLista = 'el saldo de cuenta';
 	if(nombre.length > 0) {
 		//if(columnaNumero.length > 0) {
 			if( columnaNumero.length == 0 || isNaN(columnaNumero) ) {
 				if(columnaNombre.length > 0) {
 					if( isNaN(columnaNombre) ) {
-						if(filaInicial.length > 0) {
-							if( !isNaN(filaInicial) ) {
-								if(filaFinal.length == 0)
-									filaFinal = 0;
-								if( !isNaN(filaFinal) ) {
-									var file = dialog.showOpenDialog({
-										title: 'Seleccione un archivo',
-										filters: [{
-											name: "Spreadsheets",
-											extensions: "xls|xlsx|xlsm|xlsb|xml|xlw|xlc|csv|txt|dif|sylk|slk|prn|ods|fods|uos|dbf|wks|123|wq1|qpw".split("|")
-										}],
-										properties: ['openFile']
-									});
-									var workbook;
-									if(file.length > 0) {
-										workbook = XLSX.readFile(file[0]);
-										var sheet = workbook.Sheets[nombre];
-										if(sheet != null) {
-                                            var nombreLista;
-                                            var tipo;
-                                            if( $("#createListManual").is(':checked') ) {
-                                                nombreLista = 'Manual Contable';
-                                                tipo = 1;
-                                            } else if( $("#createListCuentas").is(':checked') ) {
-                                                nombreLista = 'Cuentas Operativas';
-                                                tipo = 2;
-                                            } else {
-                                                nombreLista = 'Exclusiones FOSEDE';
-                                                tipo = 3;
-                                            }
-											var arregloDeElementos = [];
-											var idLista = arregloListas.length+1;
-                                            if(columnaNumero.length>0)
-											    columnaNumero = columnaNumero.toUpperCase();
-											columnaNombre = columnaNombre.toUpperCase();
-											filaInicial = parseInt(filaInicial);
-											filaFinal = parseInt(filaFinal);
-											if(filaFinal != 0){
-												for (var i = filaInicial; i <= filaFinal; i++) {
-                                                    if(sheet[columnaNombre+i] != undefined && sheet[columnaNombre+i].v.length > 0) {
-    													var numeroCuenta = '';
-                                                        if(columnaNumero.length>0)
-                                                            numeroCuenta = sheet[columnaNumero+i].v;
-    													var nombreCuenta = sheet[columnaNombre+i].v;
-                                                        if(columnaNumero.length>0)
-    													   numeroCuenta = numeroCuenta.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
-    													nombreCuenta = nombreCuenta.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
-    													nombreCuenta = nombreCuenta.toLowerCase();
-    													nombreCuenta = UpperCasefirst(nombreCuenta);
-    													if(nombreCuenta.length>0)
-    														arregloDeElementos.push({idLista: idLista, nombre: nombreCuenta, valor: numeroCuenta});
-                                                    }
-												};
-											} else {
-												var finalRow = sheet["!ref"].split(":")[1].replace(/[A-Z]/g, "");
-												finalRow = parseInt(finalRow);
-												for (var i = filaInicial; i <= finalRow; i++) {
-                                                    if(sheet[columnaNombre+i] != undefined && sheet[columnaNombre+i].v.length > 0) {
-                                                        console.log('i = '+i);
-                                                        console.log('sheet[columnaNombre+i].v');
-                                                        console.log(sheet[columnaNombre+i].v);
-    													var numeroCuenta = '';
-                                                        if(columnaNumero.length>0)
-                                                            numeroCuenta = sheet[columnaNumero+i].v;
-    													var nombreCuenta = sheet[columnaNombre+i].v;
-                                                        if(columnaNumero.length>0)
-    													   numeroCuenta = numeroCuenta.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
-    													nombreCuenta = nombreCuenta.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
-    													nombreCuenta = nombreCuenta.toLowerCase();
-    													nombreCuenta = UpperCasefirst(nombreCuenta);
-    													if(nombreCuenta.length>0)
-    														arregloDeElementos.push({idLista: idLista, nombre: nombreCuenta, valor: numeroCuenta});
-                                                    }
-												};
-											}
-											modifyListExcel(tipo, function(ID) {
-                                                var nombreError = '', tieneNombreError = false, valorError = '', tieneValorError = false;
-												for (var i = 0; i < arregloDeElementos.length; i++) {
-                                                    if(arregloDeElementos[i].nombre.length < 121) {
-                                                        if(arregloDeElementos[i].valor.length < 51) {
-                                                            createElementListExcel(ID, arregloDeElementos[i].nombre, arregloDeElementos[i].valor);
-                                                        } else {
-                                                            valorError = arregloDeElementos[i].valor;
-                                                            tieneValorError = true;
-                                                            break;
-                                                        }
+                        if( (valorTipoLista == 1 && columnaSaldo.length > 0) || (valorTipoLista == 2 && columnaSaldo.length > 0) || (valorTipoLista == 3) ) {
+                            if( (valorTipoLista == 1 && isNaN(columnaSaldo)) || (valorTipoLista == 2 && isNaN(columnaSaldo)) || (valorTipoLista == 3) ) {
+        						if(filaInicial.length > 0) {
+        							if( !isNaN(filaInicial) ) {
+        								if(filaFinal.length == 0)
+        									filaFinal = 0;
+        								if( !isNaN(filaFinal) ) {
+        									var file = dialog.showOpenDialog({
+        										title: 'Seleccione un archivo',
+        										filters: [{
+        											name: "Spreadsheets",
+        											extensions: "xls|xlsx|xlsm|xlsb|xml|xlw|xlc|csv|txt|dif|sylk|slk|prn|ods|fods|uos|dbf|wks|123|wq1|qpw".split("|")
+        										}],
+        										properties: ['openFile']
+        									});
+        									var workbook;
+        									if(file.length > 0) {
+        										workbook = XLSX.readFile(file[0]);
+        										var sheet = workbook.Sheets[nombre];
+        										if(sheet != null) {
+                                                    var nombreLista;
+                                                    var tipo;
+                                                    if( $("#createListManual").is(':checked') ) {
+                                                        nombreLista = 'Manual Contable';
+                                                        tipo = 1;
+                                                    } else if( $("#createListCuentas").is(':checked') ) {
+                                                        nombreLista = 'Cuentas Operativas';
+                                                        tipo = 2;
                                                     } else {
-                                                        nombreError = arregloDeElementos[i].nombre;
-                                                        tieneNombreError = true;
-                                                        break;
+                                                        nombreLista = 'Exclusiones FOSEDE';
+                                                        tipo = 3;
                                                     }
-												}
-                                                if(tieneNombreError) {
-                                                    $("body").overhang({
-                                                        type: "error",
-                                                        primary: "#f84a1d",
-                                                        accent: "#d94e2a",
-                                                        message: "Error, la longitud debe ser menor a 121 carácteres para: "+nombreError+".",
-                                                        overlay: true,
+        											var arregloDeElementos = [];
+        											var idLista = arregloListas.length+1;
+                                                    if(columnaNumero.length>0)
+        											    columnaNumero = columnaNumero.toUpperCase();
+                                                    if(columnaSaldo.length>0)
+                                                        columnaSaldo = columnaSaldo.toUpperCase();
+        											columnaNombre = columnaNombre.toUpperCase();
+        											filaInicial = parseInt(filaInicial);
+        											filaFinal = parseInt(filaFinal);
+        											if(filaFinal != 0){
+        												for (var i = filaInicial; i <= filaFinal; i++) {
+                                                            if(sheet[columnaNombre+i] != undefined && sheet[columnaNombre+i].v.length > 0) {
+            													var numeroCuenta = '';
+                                                                if(columnaNumero.length>0)
+                                                                    numeroCuenta = sheet[columnaNumero+i].v;
+            													var nombreCuenta = sheet[columnaNombre+i].v;
+                                                                if(columnaNumero.length>0)
+            													   numeroCuenta = numeroCuenta.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
+            													nombreCuenta = nombreCuenta.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
+            													nombreCuenta = nombreCuenta.toLowerCase();
+            													nombreCuenta = UpperCasefirst(nombreCuenta);
+                                                                var saldoCuenta = 0;
+                                                                if(columnaSaldo.length>0 && !isNaN(sheet[columnaSaldo+i].v))
+                                                                    saldoCuenta = sheet[columnaSaldo+i].v;
+            													if(nombreCuenta.length>0)
+            														arregloDeElementos.push({idLista: idLista, nombre: nombreCuenta, valor: numeroCuenta, saldo: saldoCuenta});
+                                                            }
+        												};
+        											} else {
+        												var finalRow = sheet["!ref"].split(":")[1].replace(/[A-Z]/g, "");
+        												finalRow = parseInt(finalRow);
+        												for (var i = filaInicial; i <= finalRow; i++) {
+                                                            if(sheet[columnaNombre+i] != undefined && sheet[columnaNombre+i].v.length > 0) {
+            													var numeroCuenta = '';
+                                                                if(columnaNumero.length>0)
+                                                                    numeroCuenta = sheet[columnaNumero+i].v;
+            													var nombreCuenta = sheet[columnaNombre+i].v;
+                                                                if(columnaNumero.length>0)
+            													   numeroCuenta = numeroCuenta.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
+            													nombreCuenta = nombreCuenta.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
+            													nombreCuenta = nombreCuenta.toLowerCase();
+            													nombreCuenta = UpperCasefirst(nombreCuenta);
+                                                                var saldoCuenta = 0;
+                                                                if(columnaSaldo.length>0 && !isNaN(sheet[columnaSaldo+i].v))
+                                                                    saldoCuenta = sheet[columnaSaldo+i].v;
+            													if(nombreCuenta.length>0)
+            														arregloDeElementos.push({idLista: idLista, nombre: nombreCuenta, valor: numeroCuenta, saldo: saldoCuenta});
+                                                            }
+        												};
+        											}
+        											modifyListExcel(tipo, function(ID) {
+                                                        var nombreError = '', tieneNombreError = false, valorError = '', tieneValorError = false;
+        												for (var i = 0; i < arregloDeElementos.length; i++) {
+                                                            if(arregloDeElementos[i].nombre.length < 121) {
+                                                                if(arregloDeElementos[i].valor.length < 51) {
+                                                                    createElementListExcel(ID, arregloDeElementos[i].nombre, arregloDeElementos[i].valor, arregloDeElementos[i].saldo);
+                                                                } else {
+                                                                    valorError = arregloDeElementos[i].valor;
+                                                                    tieneValorError = true;
+                                                                    break;
+                                                                }
+                                                            } else {
+                                                                nombreError = arregloDeElementos[i].nombre;
+                                                                tieneNombreError = true;
+                                                                break;
+                                                            }
+        												}
+                                                        if(tieneNombreError) {
+                                                            $("body").overhang({
+                                                                type: "error",
+                                                                primary: "#f84a1d",
+                                                                accent: "#d94e2a",
+                                                                message: "Error, la longitud debe ser menor a 121 carácteres para: "+nombreError+".",
+                                                                overlay: true,
+                                                                closeConfirm: true
+                                                            });
+                                                        }
+                                                        if(tieneValorError) {
+                                                            $("body").overhang({
+                                                                type: "error",
+                                                                primary: "#f84a1d",
+                                                                accent: "#d94e2a",
+                                                                message: "Error, la longitud debe ser menor a 51 carácteres para: "+valorError+".",
+                                                                overlay: true,
+                                                                closeConfirm: true
+                                                            });
+                                                        }
+        											}); /*Balance General*/
+        											$("body").overhang({
+        											  	type: "success",
+        											  	primary: "#40D47E",
+        								  				accent: "#27AE60",
+        											  	message: nombreLista+" importado con éxito.",
+        											  	duration: 2,
+        											  	overlay: true
+        											});
+        											$('#modalManual').modal('toggle');
+                                                    loadLists();
+        										} else {
+        											$("body").overhang({
+        											  	type: "error",
+        											  	primary: "#f84a1d",
+        												accent: "#d94e2a",
+        											  	message: "Error al abrir hoja de excel.",
+        											  	overlay: true,
                                                         closeConfirm: true
-                                                    });
-                                                }
-                                                if(tieneValorError) {
-                                                    $("body").overhang({
-                                                        type: "error",
-                                                        primary: "#f84a1d",
-                                                        accent: "#d94e2a",
-                                                        message: "Error, la longitud debe ser menor a 51 carácteres para: "+valorError+".",
-                                                        overlay: true,
-                                                        closeConfirm: true
-                                                    });
-                                                }
-											}); /*Balance General*/
-											$("body").overhang({
-											  	type: "success",
-											  	primary: "#40D47E",
-								  				accent: "#27AE60",
-											  	message: nombreLista+" importado con éxito.",
-											  	duration: 2,
-											  	overlay: true
-											});
-											$('#modalManual').modal('toggle');
-                                            loadLists();
-										} else {
-											$("body").overhang({
-											  	type: "error",
-											  	primary: "#f84a1d",
-												accent: "#d94e2a",
-											  	message: "Error al abrir hoja de excel.",
-											  	overlay: true,
+        											});
+        										}
+        									}
+        								} else {
+        									$("body").overhang({
+        									  	type: "error",
+        									  	primary: "#f84a1d",
+        										accent: "#d94e2a",
+        									  	message: "Ingrese un número de fila válido donde terminar de tomar las cuentas.",
+        									  	overlay: true,
                                                 closeConfirm: true
-											});
-										}
-									}
-								} else {
-									$("body").overhang({
-									  	type: "error",
-									  	primary: "#f84a1d",
-										accent: "#d94e2a",
-									  	message: "Ingrese un número de fila válido donde terminar de tomar las cuentas.",
-									  	overlay: true,
+        									});
+        								}
+        							} else {
+        								$("body").overhang({
+        								  	type: "error",
+        								  	primary: "#f84a1d",
+        									accent: "#d94e2a",
+        								  	message: "Ingrese un número de fila válido donde iniciar a tomar las cuentas.",
+        								  	overlay: true,
+                                            closeConfirm: true
+        								});
+        							}
+        						} else {
+        							$("body").overhang({
+        							  	type: "error",
+        							  	primary: "#f84a1d",
+        								accent: "#d94e2a",
+        							  	message: "Ingrese el número de fila donde iniciar a tomar las cuentas.",
+        							  	overlay: true,
                                         closeConfirm: true
-									});
-								}
-							} else {
-								$("body").overhang({
-								  	type: "error",
-								  	primary: "#f84a1d",
-									accent: "#d94e2a",
-								  	message: "Ingrese un número de fila válido donde iniciar a tomar las cuentas.",
-								  	overlay: true,
+        							});
+        						}
+                            } else {
+                                $("body").overhang({
+                                    type: "error",
+                                    primary: "#f84a1d",
+                                    accent: "#d94e2a",
+                                    message: "Ingrese una letra válida para "+textoTipoLista+" del elemento.",
+                                    overlay: true,
                                     closeConfirm: true
-								});
-							}
-						} else {
-							$("body").overhang({
-							  	type: "error",
-							  	primary: "#f84a1d",
-								accent: "#d94e2a",
-							  	message: "Ingrese el número de fila donde iniciar a tomar las cuentas.",
-							  	overlay: true,
+                                });
+                            }
+                        } else {
+                            $("body").overhang({
+                                type: "error",
+                                primary: "#f84a1d",
+                                accent: "#d94e2a",
+                                message: "Ingrese la columna para "+textoTipoLista+" del elemento.",
+                                overlay: true,
                                 closeConfirm: true
-							});
-						}
+                            });
+                        }
 					} else {
 						$("body").overhang({
 						  	type: "error",
@@ -2621,7 +2349,7 @@ function importExcel () {
 				  	type: "error",
 				  	primary: "#f84a1d",
 					accent: "#d94e2a",
-				  	message: "Ingrese una letra válida para la columna del valor del elemento.",
+				  	message: "Ingrese una letra válida para la columna de la cuenta del elemento.",
 				  	overlay: true,
                     closeConfirm: true
 				});
@@ -2709,7 +2437,7 @@ function modifyListExcel (tipo, callback) {
     }); // fin transaction
 }
 
-function createElementListExcel (idLista, nombre, valor) {
+function createElementListExcel (idLista, nombre, valor, saldo) {
 	const transaction = new sql.Transaction( pool1 );
     transaction.begin(err => {
         var rolledBack = false
@@ -2720,7 +2448,7 @@ function createElementListExcel (idLista, nombre, valor) {
             rolledBack = true
         })
         const request = new sql.Request(transaction);
-        request.query("insert into ListasVariables (idLista, nombre, valor) values ("+idLista+",'"+nombre+"','"+valor+"')", (err, result) => {
+        request.query("insert into ListasVariables (idLista, nombre, valor, saldo) values ("+idLista+",'"+nombre+"','"+valor+"',"+saldo+")", (err, result) => {
             if (err) {
                 if (!rolledBack) {
                     console.log('error en rolledBack Listas Variables');
@@ -3041,8 +2769,6 @@ function saveActivosDB (indexTabla) {
         var moneda = $("#monedaConexionActivos").val();
         var tipoCuenta = $("#tipoCuentaConexionActivos").val();
         var sucursal = $("#sucursalConexionActivos").val();
-        var columnaExtra1 = $("#columnaExtra1ConexionActivos").val();
-        var columnaExtra2 = $("#columnaExtra2ConexionActivos").val();
         var nombreHoja = $("#activosTableExcel").val();
         var filaInicial = $("#activosExcelInicio").val();
         var filaFinal = $("#activosExcelFinal").val();
@@ -3082,8 +2808,6 @@ function saveActivosDB (indexTabla) {
                                                                         moneda = moneda.toUpperCase();
                                                                         tipoCuenta = tipoCuenta.toUpperCase();
                                                                         sucursal = sucursal.toUpperCase();
-                                                                        columnaExtra1 = columnaExtra1.toUpperCase();
-                                                                        columnaExtra2 = columnaExtra2.toUpperCase();
                                                                         filaInicial = parseInt(filaInicial);
                                                                         filaFinal = parseInt(filaFinal);
                                                                         if(filaFinal != 0) {
@@ -3095,12 +2819,6 @@ function saveActivosDB (indexTabla) {
                                                                                     var activoMoneda = sheet[moneda+i].v;
                                                                                     var activoTipoCuenta = sheet[tipoCuenta+i].v;
                                                                                     var activoSucursal = sheet[sucursal+i].v;
-                                                                                    var activoColumnaExtra1 = '';
-                                                                                    if(columnaExtra1.length > 0)
-                                                                                        activoColumnaExtra1 = sheet[columnaExtra1+i].v;
-                                                                                    var activoColumnaExtra2 = '';
-                                                                                    if(columnaExtra2.length > 0)
-                                                                                        activoColumnaExtra2 = sheet[columnaExtra2+i].v;
                                                                                     activoCuenta = activoCuenta.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
                                                                                     activoNombre = activoNombre.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
                                                                                     activoMoneda = activoMoneda.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
@@ -3115,7 +2833,7 @@ function saveActivosDB (indexTabla) {
                                                                                     activoTipoCuenta = UpperCasefirst(activoTipoCuenta);
                                                                                     activoSucursal = activoSucursal.toLowerCase();
                                                                                     activoSucursal = UpperCasefirst(activoSucursal);
-                                                                                    arregloDeActivos.push({cuenta: activoCuenta, nombre: activoNombre, saldo: activoSaldo, moneda: activoMoneda, tipoCuenta: activoTipoCuenta, sucursal: activoSucursal, columnaExtra1: activoColumnaExtra1, columnaExtra2: activoColumnaExtra2});
+                                                                                    arregloDeActivos.push({cuenta: activoCuenta, nombre: activoNombre, saldo: activoSaldo, moneda: activoMoneda, tipoCuenta: activoTipoCuenta, sucursal: activoSucursal});
                                                                                 }
                                                                             };
                                                                         } else {
@@ -3129,12 +2847,6 @@ function saveActivosDB (indexTabla) {
                                                                                     var activoMoneda = sheet[moneda+i].v;
                                                                                     var activoTipoCuenta = sheet[tipoCuenta+i].v;
                                                                                     var activoSucursal = sheet[sucursal+i].v;
-                                                                                    var activoColumnaExtra1 = '';
-                                                                                    if(columnaExtra1.length > 0)
-                                                                                        activoColumnaExtra1 = sheet[columnaExtra1+i].v;
-                                                                                    var activoColumnaExtra2 = '';
-                                                                                    if(columnaExtra2.length > 0)
-                                                                                        activoColumnaExtra2 = sheet[columnaExtra2+i].v;
                                                                                     activoCuenta = activoCuenta.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
                                                                                     activoNombre = activoNombre.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
                                                                                     //activoMonto = activoMonto.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
@@ -3147,7 +2859,7 @@ function saveActivosDB (indexTabla) {
                                                                                     activoTipoCuenta = UpperCasefirst(activoTipoCuenta);
                                                                                     activoSucursal = activoSucursal.toLowerCase();
                                                                                     activoSucursal = UpperCasefirst(activoSucursal);
-                                                                                    arregloDeActivos.push({cuenta: activoCuenta, nombre: activoNombre, saldo: activoSaldo, moneda: activoMoneda, tipoCuenta: activoTipoCuenta, sucursal: activoSucursal, columnaExtra1: activoColumnaExtra1, columnaExtra2: activoColumnaExtra2});
+                                                                                    arregloDeActivos.push({cuenta: activoCuenta, nombre: activoNombre, saldo: activoSaldo, moneda: activoMoneda, tipoCuenta: activoTipoCuenta, sucursal: activoSucursal});
                                                                                 }
                                                                             };
                                                                         }
@@ -3662,8 +3374,6 @@ function importAssets(arreglo, usuario, constrasena, server, basedatos, tabla, t
         var moneda = $("#monedaConexionActivos").val();
         var tipoCuenta = $("#tipoCuentaConexionActivos").val();
         var sucursal = $("#sucursalConexionActivos").val();
-        var columnaExtra1 = $("#columnaExtra1ConexionActivos").val();
-        var columnaExtra2 = $("#columnaExtra2ConexionActivos").val();
         if(cuenta.length > 0) {
             if(nombre.length > 0) {
                 if(saldo.length > 0) {
@@ -3687,12 +3397,6 @@ function importAssets(arreglo, usuario, constrasena, server, basedatos, tabla, t
                                             console.log(result);
                                             for (var i = 0; i < result.recordset.length; i++) {
                                                 var valorArreglo = result.recordset[i];
-                                                var valorColumnaExtra1 = '';
-                                                var valorColumnaExtra2 = '';
-                                                if(valorArreglo[columnaExtra1].length > 0)
-                                                    valorColumnaExtra1 = valorArreglo[columnaExtra1];
-                                                if(valorArreglo[columnaExtra2].length > 0)
-                                                    valorColumnaExtra2 = valorArreglo[columnaExtra2];
                                                 const transaction = new sql.Transaction( pool1 );
                                                 transaction.begin(err => {
                                                     var rolledBack = false;
@@ -3700,7 +3404,7 @@ function importAssets(arreglo, usuario, constrasena, server, basedatos, tabla, t
                                                         rolledBack = true;
                                                     });
                                                     const request = new sql.Request(transaction);
-                                                    request.query("insert into Activos (cuenta, nombre, saldo, moneda, tipoCuenta, sucursal, columnaExtra1, columnaExtra2) values ('"+valorArreglo[cuenta]+"','"+valorArreglo[nombre]+"',"+valorArreglo[saldo]+",'"+valorArreglo[moneda]+"','"+valorArreglo[tipoCuenta]+"','"+valorArreglo[sucursal]+"','"+valorColumnaExtra1+"','"+valorColumnaExtra2+"')", (err, result) => {
+                                                    request.query("insert into Activos (cuenta, nombre, saldo, moneda, tipoCuenta, sucursal) values ('"+valorArreglo[cuenta]+"','"+valorArreglo[nombre]+"',"+valorArreglo[saldo]+",'"+valorArreglo[moneda]+"','"+valorArreglo[tipoCuenta]+"','"+valorArreglo[sucursal]+"')", (err, result) => {
                                                         if (err) {
                                                             if (!rolledBack) {
                                                                 console.log('error en rolledBack MainDB Variables');
@@ -3791,8 +3495,6 @@ function importAssets(arreglo, usuario, constrasena, server, basedatos, tabla, t
         var moneda = $("#monedaConexionDepositos").val();
         var tipoCuenta = $("#tipoCuentaConexionDepositos").val();
         var sucursal = $("#sucursalConexionActivos").val();
-        var columnaExtra1 = $("#columnaExtra1ConexionDepositos").val();
-        var columnaExtra2 = $("#columnaExtra2ConexionDepositos").val();
         if(idcliente.length > 0) {
             if(nombrecliente.length > 0) {
                 if(tipoPersona.length > 0) {
@@ -3818,12 +3520,6 @@ function importAssets(arreglo, usuario, constrasena, server, basedatos, tabla, t
                                                     console.log(result);
                                                     for (var i = 0; i < result.recordset.length; i++) {
                                                         var valorDepositos = result.recordset[i];
-                                                        var valorColumnaExtra1 = '';
-                                                        var valorColumnaExtra2 = '';
-                                                        if(valorArreglo[columnaExtra1].length > 0)
-                                                            valorColumnaExtra1 = valorArreglo[columnaExtra1];
-                                                        if(valorArreglo[columnaExtra2].length > 0)
-                                                            valorColumnaExtra2 = valorArreglo[columnaExtra2];
                                                         const transaction = new sql.Transaction( pool1 );
                                                         transaction.begin(err => {
                                                             var rolledBack = false;
@@ -3831,7 +3527,7 @@ function importAssets(arreglo, usuario, constrasena, server, basedatos, tabla, t
                                                                 rolledBack = true;
                                                             });
                                                             const request = new sql.Request(transaction);
-                                                            request.query("insert into Depositos (idCLiente, nombreCliente, tipoPersona, tipoSubPersona, saldo, moneda, tipoCuenta, sucursal, columnaExtra1, columnaExtra2) values ('"+valorDepositos[idcliente]+"','"+valorDepositos[nombrecliente]+"','"+valorDepositos[tipoPersona]+"','"+valorDepositos[tipoSubPersona]+"',"+valorDepositos[saldo]+",'"+valorDepositos[moneda]+"','"+valorDepositos[tipoCuenta]+"','"+valorDepositos[sucursal]+"','"+valorColumnaExtra1+"','"+valorColumnaExtra2+"')", (err, result) => {
+                                                            request.query("insert into Depositos (idCLiente, nombreCliente, tipoPersona, tipoSubPersona, saldo, moneda, tipoCuenta, sucursal) values ('"+valorDepositos[idcliente]+"','"+valorDepositos[nombrecliente]+"','"+valorDepositos[tipoPersona]+"','"+valorDepositos[tipoSubPersona]+"',"+valorDepositos[saldo]+",'"+valorDepositos[moneda]+"','"+valorDepositos[tipoCuenta]+"','"+valorDepositos[sucursal]+"')", (err, result) => {
                                                                 if (err) {
                                                                     if (!rolledBack) {
                                                                         console.log('error en rolledBack MainDB Variables');
@@ -3986,8 +3682,6 @@ function saveDepositosDB (indexTabla) {
         var moneda = $("#monedaConexionDepositos").val();
         var tipoCuenta = $("#tipoCuentaConexionDepositos").val();
         var sucursal = $("#sucursalConexionDepositos").val();
-        var columnaExtra1 = $("#columnaExtra1ConexionDepositos").val();
-        var columnaExtra2 = $("#columnaExtra2ConexionDepositos").val();
         var nombreHoja = $("#depositosTableExcel").val();
         var filaInicial = $("#depositosExcelInicio").val();
         var filaFinal = $("#depositosExcelFinal").val();
@@ -4033,8 +3727,6 @@ function saveDepositosDB (indexTabla) {
                                                                                         moneda = moneda.toUpperCase();
                                                                                         tipoCuenta = tipoCuenta.toUpperCase();
                                                                                         sucursal = sucursal.toUpperCase();
-                                                                                        columnaExtra1 = columnaExtra1.toUpperCase();
-                                                                                        columnaExtra2 = columnaExtra2.toUpperCase();
                                                                                         filaInicial = parseInt(filaInicial);
                                                                                         filaFinal = parseInt(filaFinal);
                                                                                         if(filaFinal != 0) {
@@ -4048,12 +3740,6 @@ function saveDepositosDB (indexTabla) {
                                                                                                     var depositoMoneda = sheet[moneda+i].v;
                                                                                                     var depositoTipoCuenta = sheet[tipoCuenta+i].v;
                                                                                                     var depositoSucursal = sheet[sucursal+i].v;
-                                                                                                    var activoColumnaExtra1 = '';
-                                                                                                    if(columnaExtra1.length > 0)
-                                                                                                        activoColumnaExtra1 = sheet[columnaExtra1+i].v;
-                                                                                                    var activoColumnaExtra2 = '';
-                                                                                                    if(columnaExtra2.length > 0)
-                                                                                                        activoColumnaExtra2 = sheet[columnaExtra2+i].v;
                                                                                                     //depositoIDCLiente = depositoIDCLiente.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
                                                                                                     depositoNombreCliente = depositoNombreCliente.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
                                                                                                     depositoTipoCuenta = depositoTipoCuenta.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
@@ -4065,7 +3751,7 @@ function saveDepositosDB (indexTabla) {
                                                                                                     depositoTipoCuenta = UpperCasefirst(depositoTipoCuenta);
                                                                                                     depositoSucursal = depositoSucursal.toLowerCase();
                                                                                                     depositoSucursal = UpperCasefirst(depositoSucursal);
-                                                                                                    arregloDeDepositos.push({idCLiente: depositoIDCLiente, nombreCliente: depositoNombreCliente, tipoPersona: depositoTipoPersona, tipoSubPersona: depositoTipoSubPersona, saldo: depositoTotalDepositos, moneda: depositoMoneda, tipoCuenta: depositoTipoCuenta, sucursal: depositoSucursal, columnaExtra1: activoColumnaExtra1, columnaExtra2: activoColumnaExtra2});
+                                                                                                    arregloDeDepositos.push({idCLiente: depositoIDCLiente, nombreCliente: depositoNombreCliente, tipoPersona: depositoTipoPersona, tipoSubPersona: depositoTipoSubPersona, saldo: depositoTotalDepositos, moneda: depositoMoneda, tipoCuenta: depositoTipoCuenta, sucursal: depositoSucursal});
                                                                                                 }
                                                                                             };
                                                                                         } else {
@@ -4081,12 +3767,6 @@ function saveDepositosDB (indexTabla) {
                                                                                                     var depositoMoneda = sheet[moneda+i].v;
                                                                                                     var depositoTipoCuenta = sheet[tipoCuenta+i].v;
                                                                                                     var depositoSucursal = sheet[sucursal+i].v;
-                                                                                                    var activoColumnaExtra1 = '';
-                                                                                                    if(columnaExtra1.length > 0)
-                                                                                                        activoColumnaExtra1 = sheet[columnaExtra1+i].v;
-                                                                                                    var activoColumnaExtra2 = '';
-                                                                                                    if(columnaExtra2.length > 0)
-                                                                                                        activoColumnaExtra2 = sheet[columnaExtra2+i].v;
                                                                                                     //depositoIDCLiente = depositoIDCLiente.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
                                                                                                     depositoNombreCliente = depositoNombreCliente.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
                                                                                                     depositoTipoCuenta = depositoTipoCuenta.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
@@ -4098,7 +3778,7 @@ function saveDepositosDB (indexTabla) {
                                                                                                     depositoTipoCuenta = UpperCasefirst(depositoTipoCuenta);
                                                                                                     depositoSucursal = depositoSucursal.toLowerCase();
                                                                                                     depositoSucursal = UpperCasefirst(depositoSucursal);
-                                                                                                    arregloDeDepositos.push({idCLiente: depositoIDCLiente, nombreCliente: depositoNombreCliente, tipoPersona: depositoTipoPersona, tipoSubPersona: depositoTipoSubPersona, saldo: depositoTotalDepositos, moneda: depositoMoneda, tipoCuenta: depositoTipoCuenta, sucursal: depositoSucursal, columnaExtra1: activoColumnaExtra1, columnaExtra2: activoColumnaExtra2});
+                                                                                                    arregloDeDepositos.push({idCLiente: depositoIDCLiente, nombreCliente: depositoNombreCliente, tipoPersona: depositoTipoPersona, tipoSubPersona: depositoTipoSubPersona, saldo: depositoTotalDepositos, moneda: depositoMoneda, tipoCuenta: depositoTipoCuenta, sucursal: depositoSucursal});
                                                                                                 }
                                                                                             };
                                                                                         }

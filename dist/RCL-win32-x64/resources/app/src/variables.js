@@ -19,7 +19,7 @@ const config = {
 const pool1 = new sql.ConnectionPool(config, err => {
 	if(err)
 		console.log(err);
-	else{
+	else {
 		console.log('pool loaded');
 		loadVariables();
 		loadVariableVariables();
@@ -49,6 +49,15 @@ session.defaultSession.cookies.get({}, (error, cookies) => {
 		}
 	};
 });
+
+
+/*****************TIPO DE LISTAS*****************
+*   1)Manual Contable                           *
+*   2)Cuentas Operativas                        *
+*   3)Exclusiones FOSEDE                        *
+*   4)Tipo de Personas                          *
+*   5)Tipo de Sub-Personas                      *
+************************************************/
 
 /* ******************       SEARCH     ********* */
 function filterDiv () {
@@ -225,7 +234,6 @@ function verifyAndSaveFormula (equacion, formulaMATHLIVE) {
 			  	primary: "#f84a1d",
 				accent: "#d94e2a",
 			  	message: "No existen variables creadas en el sistema, por favor cree una en la tabla de abajo.",
-			  	duration: 3,
 			  	overlay: true,
                 closeConfirm: true
 			});
@@ -235,7 +243,6 @@ function verifyAndSaveFormula (equacion, formulaMATHLIVE) {
 			  	primary: "#f84a1d",
 				accent: "#d94e2a",
 			  	message: "Las variables ingresadas en la formula no concuerdan con las variables de la base de datos.",
-			  	duration: 3,
 			  	overlay: true,
                 closeConfirm: true
 			});
@@ -245,7 +252,6 @@ function verifyAndSaveFormula (equacion, formulaMATHLIVE) {
                 primary: "#f84a1d",
                 accent: "#d94e2a",
                 message: "La formula no tiene un simbolo de asignación.",
-                duration: 3,
                 overlay: true,
                 closeConfirm: true
             });
@@ -255,7 +261,6 @@ function verifyAndSaveFormula (equacion, formulaMATHLIVE) {
                 primary: "#f84a1d",
                 accent: "#d94e2a",
                 message: "La formula tiene más de un simbolo de asignación.",
-                duration: 3,
                 overlay: true,
                 closeConfirm: true
             });
@@ -265,7 +270,6 @@ function verifyAndSaveFormula (equacion, formulaMATHLIVE) {
                 primary: "#f84a1d",
                 accent: "#d94e2a",
                 message: "Solo se puede asignar a una sola variable.",
-                duration: 3,
                 overlay: true,
                 closeConfirm: true
             });
@@ -275,7 +279,6 @@ function verifyAndSaveFormula (equacion, formulaMATHLIVE) {
                 primary: "#f84a1d",
                 accent: "#d94e2a",
                 message: "Solo se puede asignar a variables.",
-                duration: 3,
                 overlay: true,
                 closeConfirm: true
             });
@@ -305,7 +308,6 @@ function verifyAndSaveFormula (equacion, formulaMATHLIVE) {
 		  	primary: "#f84a1d",
 			accent: "#d94e2a",
 		  	message: "La equación debe tener una longitud mayor a 0 y menor a 101.",
-		  	duration: 3,
 		  	overlay: true,
             closeConfirm: true
 		});
@@ -764,7 +766,6 @@ function loadVariablesTable () {
 					  	primary: "#f84a1d",
 						accent: "#d94e2a",
 					  	message: "La descripción de la variable debe tener una longitud menor a 701.",
-					  	duration: 3,
 					  	overlay: true,
                         closeConfirm: true
 					});
@@ -775,7 +776,6 @@ function loadVariablesTable () {
 				  	primary: "#f84a1d",
 					accent: "#d94e2a",
 				  	message: "La representación de la variable en la formula debe tener más de una letra y menos de 11.",
-				  	duration: 3,
 				  	overlay: true,
                     closeConfirm: true
 				});
@@ -786,7 +786,6 @@ function loadVariablesTable () {
 			  	primary: "#f84a1d",
 				accent: "#d94e2a",
 			  	message: "El nombre de la variable debe tener una longitud mayor a 0 y menor a 61.",
-			  	duration: 3,
 			  	overlay: true,
                 closeConfirm: true
 			});
@@ -905,24 +904,26 @@ function format ( rowdata ) {
 		tabla+='<td> <input type="text" id="variablesdeVariablesDescripcion'+rowdata.ID+''+i+'" required="required" class="form-control" value="'+arregloVariablesAsociadas[i].descripcion+'"> </td>';
 		tabla+='<td> <input type="text" id="variablesdeVariablesFactor'+rowdata.ID+''+i+'" required="required" class="form-control" value="'+arregloVariablesAsociadas[i].factor+'"> </td>';
         if(arregloVariablesAsociadas[i].tablaAplicar == 1)
-            tabla+='<td> <div class="select-style" style="width:10em;"><select id="variablesdeVariablesTabla'+rowdata.ID+''+i+'" required="required"> <option value="1" selected="selected">Balance General/Manual Contable</option> <option value="2">Depósitos/Captaciones</option> <option value="3">Prestamos/Crédito</option> <option value="4">Cartera de Crédito/Linea de Crédito</option> </select></div> </td>';
+            tabla+='<td> <div class="select-style" style="width:10em;"><select id="variablesdeVariablesTabla'+rowdata.ID+''+i+'" required="required"> <option value="1" selected="selected">Balance General</option> <option value="2">Captaciones</option> <option value="3">Prestamos</option> <option value="4">Cartera de Crédito</option> </select></div> </td>';
         else if(arregloVariablesAsociadas[i].tablaAplicar == 2)
-            tabla+='<td> <div class="select-style" style="width:10em;"><select id="variablesdeVariablesTabla'+rowdata.ID+''+i+'" required="required"> <option value="1">Balance General/Manual Contable</option> <option value="2" selected="selected">Depósitos/Captaciones</option> <option value="3">Prestamos/Crédito</option> <option value="4">Cartera de Crédito/Linea de Crédito</option> </select></div> </td>';
+            tabla+='<td> <div class="select-style" style="width:10em;"><select id="variablesdeVariablesTabla'+rowdata.ID+''+i+'" required="required"> <option value="1">Balance General</option> <option value="2" selected="selected">Captaciones</option> <option value="3">Prestamos</option> <option value="4">Cartera de Crédito</option> </select></div> </td>';
         else if(arregloVariablesAsociadas[i].tablaAplicar == 3)
-            tabla+='<td> <div class="select-style" style="width:10em;"><select id="variablesdeVariablesTabla'+rowdata.ID+''+i+'" required="required"> <option value="1">Balance General/Manual Contable</option> <option value="2">Depósitos/Captaciones</option> <option value="3" selected="selected">Prestamos/Crédito</option> <option value="4">Cartera de Crédito/Linea de Crédito</option> </select></div> </td>';
+            tabla+='<td> <div class="select-style" style="width:10em;"><select id="variablesdeVariablesTabla'+rowdata.ID+''+i+'" required="required"> <option value="1">Balance General</option> <option value="2">Captaciones</option> <option value="3" selected="selected">Prestamos</option> <option value="4">Cartera de Crédito</option> </select></div> </td>';
         else if(arregloVariablesAsociadas[i].tablaAplicar == 4)
-            tabla+='<td> <div class="select-style" style="width:10em;"><select id="variablesdeVariablesTabla'+rowdata.ID+''+i+'" required="required"> <option value="1">Balance General/Manual Contable</option> <option value="2">Depósitos/Captaciones</option> <option value="3">Prestamos/Crédito</option> <option value="4" selected="selected">Cartera de Crédito/Linea de Crédito</option> </select></div> </td>';
+            tabla+='<td> <div class="select-style" style="width:10em;"><select id="variablesdeVariablesTabla'+rowdata.ID+''+i+'" required="required"> <option value="1">Balance General</option> <option value="2">Captaciones</option> <option value="3">Prestamos</option> <option value="4" selected="selected">Cartera de Crédito</option> </select></div> </td>';
         /*else
             tabla+='<td> <div class="select-style" style="width:10em;"><select id="variablesdeVariablesTabla'+rowdata.ID+''+i+'" required="required"> <option value="1">Activos</option> <option value="2">Depósitos</option> <option value="0" selected="selected">Ninguna Tabla</option> </select></div> </td>';*/
 		tabla+='<td><a class="btn btn-app" onclick="updateVariableDeVariable('+arregloVariablesAsociadas[i].ID+','+i+','+rowdata.ID+')"> <i class="fa fa-save"></i> Guardar </a></td>';
 		tabla+='<td><a class="btn btn-app" onclick="deleteVariableDeVariable('+arregloVariablesAsociadas[i].ID+','+arregloVariablesAsociadas[i].Nombre+')"> <i class="fa fa-eraser"></i> Eliminar </a></td></tr>';
 	};
+    //Nombres Originales
+    //tabla+='<td> <div class="select-style" style="width:10em;"><select id="variablesdeVariablesTabla'+rowdata.ID+''+i+'" required="required"> <option value="1" selected="selected">Balance General/Manual Contable</option> <option value="2">Depósitos/Captaciones</option> <option value="3">Prestamos/Crédito</option> <option value="4">Cartera de Crédito/Linea de Crédito</option> </select></div> </td>';
 
 	//Add new
 	tabla+= '<tr><td></td><td> <input type="text" id="variablesdeVariablesNombre'+rowdata.ID+'" required="required" class="form-control"> </td>';
 	tabla+='<td> <input type="text" id="variablesdeVariablesDescripcion'+rowdata.ID+'" required="required" class="form-control"> </td>';
 	tabla+='<td> <input type="text" id="variablesdeVariablesFactor'+rowdata.ID+'" required="required" class="form-control"> </td>';
-    tabla+='<td> <div class="select-style" style="width:10em;"><select id="variablesdeVariablesTabla'+rowdata.ID+'" required="required"> <option value="1" selected="selected">Activos</option> <option value="2">Depósitos</option> <option value="3">Prestamos/Crédito</option> <option value="4">Cartera de Crédito/Linea de Crédito</option> </select></div> </td>';
+    tabla+='<td> <div class="select-style" style="width:10em;"><select id="variablesdeVariablesTabla'+rowdata.ID+'" required="required"> <option value="1" selected="selected">Balance General</option> <option value="2">Captaciones</option> <option value="3">Prestamos/Crédito</option> <option value="4">Cartera de Crédito</option> </select></div> </td>';
 	tabla+='<td><a class="btn btn-app" onclick="createVariableDeVariable('+rowdata.ID+')"> <i class="fa fa-save"></i> Guardar </a></td>';
 	tabla+='<td></td></tr>';
 	tabla+='</tbody>'+
@@ -982,7 +983,6 @@ function saveNewVariable (index) {
 				  	primary: "#f84a1d",
 					accent: "#d94e2a",
 				  	message: "La descripción de la variable debe tener una longitud menor a 701.",
-				  	duration: 3,
 				  	overlay: true,
                     closeConfirm: true
 				});
@@ -993,7 +993,6 @@ function saveNewVariable (index) {
 			  	primary: "#f84a1d",
 				accent: "#d94e2a",
 			  	message: "La representación de la variable en la formula debe tener más de una letra y menos de 11.",
-			  	duration: 3,
 			  	overlay: true,
                 closeConfirm: true
 			});
@@ -1004,7 +1003,6 @@ function saveNewVariable (index) {
 		  	primary: "#f84a1d",
 			accent: "#d94e2a",
 		  	message: "El nombre de la variable debe tener longitud mayor a 0 y menor a 61.",
-		  	duration: 3,
 		  	overlay: true,
             closeConfirm: true
 		});
@@ -1184,9 +1182,7 @@ function createVariableDeVariable (rowdataID) {
                             primary: "#f84a1d",
                             accent: "#d94e2a",
                             message: "Ingrese un número válido para la tabla.",
-                            duration: 3,
                             overlay: true,
-                            closeConfirm: true,
                             closeConfirm: true
                         });
                     }
@@ -1196,9 +1192,7 @@ function createVariableDeVariable (rowdataID) {
 					  	primary: "#f84a1d",
 						accent: "#d94e2a",
 					  	message: "Ingrese un número válido para el factor.",
-					  	duration: 3,
 					  	overlay: true,
-                        closeConfirm: true,
                         closeConfirm: true
 					});
 				}
@@ -1208,9 +1202,7 @@ function createVariableDeVariable (rowdataID) {
 				  	primary: "#f84a1d",
 					accent: "#d94e2a",
 				  	message: "Ingrese un valor numérico para el factor.",
-				  	duration: 3,
 				  	overlay: true,
-                    closeConfirm: true,
                     closeConfirm: true
 				});
 			}
@@ -1220,9 +1212,7 @@ function createVariableDeVariable (rowdataID) {
 			  	primary: "#f84a1d",
 				accent: "#d94e2a",
 			  	message: "La descripción de la variable debe tener longitud menor a 701.",
-			  	duration: 3,
 			  	overlay: true,
-                closeConfirm: true,
                 closeConfirm: true
 			});
 		}
@@ -1232,9 +1222,7 @@ function createVariableDeVariable (rowdataID) {
 		  	primary: "#f84a1d",
 			accent: "#d94e2a",
 		  	message: "El nombre de la variable debe tener longitud mayor a 0 y menor a 41.",
-		  	duration: 3,
 		  	overlay: true,
-            closeConfirm: true,
             closeConfirm: true
 		});
 	}
@@ -1307,9 +1295,7 @@ function updateVariableDeVariable (variableID, index, parentVariableId) {
 					  	primary: "#f84a1d",
 						accent: "#d94e2a",
 					  	message: "Ingrese un número válido para el factor.",
-					  	duration: 3,
 					  	overlay: true,
-                        closeConfirm: true,
                         closeConfirm: true
 					});
 				}
@@ -1319,9 +1305,7 @@ function updateVariableDeVariable (variableID, index, parentVariableId) {
 				  	primary: "#f84a1d",
 					accent: "#d94e2a",
 				  	message: "Ingrese un valor numérico para el factor.",
-				  	duration: 3,
 				  	overlay: true,
-                    closeConfirm: true,
                     closeConfirm: true
 				});
 			}
@@ -1331,9 +1315,7 @@ function updateVariableDeVariable (variableID, index, parentVariableId) {
 			  	primary: "#f84a1d",
 				accent: "#d94e2a",
 			  	message: "La descripción de la variable debe tener longitud menor a 701.",
-			  	duration: 3,
 			  	overlay: true,
-                closeConfirm: true,
                 closeConfirm: true
 			});
 		}
@@ -1343,9 +1325,7 @@ function updateVariableDeVariable (variableID, index, parentVariableId) {
 		  	primary: "#f84a1d",
 			accent: "#d94e2a",
 		  	message: "El nombre de la variable debe tener longitud mayor a 0 y menor a 41.",
-		  	duration: 3,
 		  	overlay: true,
-            closeConfirm: true,
             closeConfirm: true
 		});
 	}
@@ -1470,394 +1450,6 @@ function deleteVariableOfVariable (index) {
 	  	}
 	});
 }
-
-/*function loadVariablesofVariableTable () {
-	var id;
-	if(arregloVariableDeVariables.length > 0)
-		id = arregloVariableDeVariables[arregloVariableDeVariables.length-1].ID+1;
-	else
-		id = 1;
-	if(arregloVariables.length > 0){
-		for (var i = 0; i < arregloVariableDeVariables.length; i++) {
-			console.log(arregloVariableDeVariables[i]);
-			var varia = arregloVariables.filter(function(object) {
-				console.log(object);
-				if(!isNaN(arregloVariableDeVariables[i].idVariable))
-		        	return (arregloVariableDeVariables[i].idVariable == object.ID );
-		        return;
-		    });
-		    console.log(varia);
-		    if(!isNaN(arregloVariableDeVariables[i].idVariable))
-		    	arregloVariableDeVariables[i].idVariable = varia[0].nombre;
-		};
-	}
-	if ( $.fn.dataTable.isDataTable( '#datatable_variablesOfVariables' ) )
-		$("#datatable_variablesOfVariables").dataTable().fnDestroy();
-	$( "#datatable_variablesOfVariables tbody").unbind( "click" );
-	var table = $('#datatable_variablesOfVariables').DataTable({
-		"data": arregloVariableDeVariables,
-		dom: "Bflrtip",
-	  	buttons: [
-			{
-			  	extend: "copyHtml5",
-			  	className: "btn-sm"
-			},
-			{
-			  	extend: "csvHtml5",
-			  	className: "btn-sm"
-			},
-			{
-			  	extend: "excelHtml5",
-			  	className: "btn-sm"
-			},
-			{
-			  	extend: "pdfHtml5",
-			  	className: "btn-sm"
-			}
-		],
-		"language": {
-			"lengthMenu": '_MENU_ entradas por página',
-			"search": '<i class="fa fa-search"></i>',
-			"paginate": {
-				"previous": '<i class="fa fa-angle-left"></i>',
-				"next": '<i class="fa fa-angle-right"></i>'
-			},
-			"loadingRecords": "Cargando...",
-			"processing":     "Procesando...",
-			"emptyTable":     "No hay información en la tabla",
-		    "info":           "Mostrando _START_ a _END_ de un total _TOTAL_ de entradas",
-		    "infoEmpty":      "Mostrando 0 a 0 de 0 entradas",
-		    "infoFiltered":   "(filtrado de un total de _MAX_ entradas)"
-		},
-		"columns": [
-			{ "data": "ID" },
-			{ "data": "idVariable" },
-	        { "data": "nombre" },
-	        { "data": "descripcion" },
-	        { "data": "cuenta" },
-	        { "data": "Guardar" },
-	        { "data": "Eliminar" }
-	    ],
-	    "columnDefs": [ {
-	        "targets": -2,
-	        "defaultContent": '<a class="btn btn-app updateVariableOfVariable"> <i class="fa fa-save"></i> Guardar </a>',
-	        "className": "text-center"
-	    },
-	    {
-	        "targets": -1,
-	        "defaultContent": '<a class="btn btn-app deleteVariableOfVariable"> <i class="fa fa-eraser"></i> Eliminar </a>',
-	        "className": "text-center"
-	    },
-	    {
-		      "targets": 0,
-		      "className": "text-center"
-		},
-	    {
-		      "targets": 1,
-		      "className": "text-center"
-		},
-	    {
-		      "targets": 2,
-		      "className": "text-center"
-		},
-	    {
-		      "targets": 3,
-		      "className": "text-center"
-		},
-	    {
-		      "targets": 4,
-		      "className": "text-center"
-		}]
-	});
-	if ( $.fn.dataTable.isDataTable( '#datatable_variablesOfVariables' ) )
-		table.MakeCellsEditable("destroy");
-
-	var opcionesVarPadre = '';
-	opcionesVarPadre+='<select id="padreVarofVarN">';
-	for (var i = 0; i < arregloVariables.length; i++) {
-		opcionesVarPadre+='<option value="'+arregloVariables[i].ID+'">'+arregloVariables[i].nombre+'</option>';
-	};
-	opcionesVarPadre+='</select>';
-
-	table.row.add( {
-        "ID": id,
-        "idVariable": opcionesVarPadre,
-        "nombre": "<input type='text' id='nombreVarofVarN"+id+"' required='required' class='form-control col-md-7 col-xs-12'>",
-        "descripcion": "<input type='text' id='descripcionVarofVarN"+id+"' required='required' class='form-control col-md-7 col-xs-12'>",
-        "cuenta": "<input type='text' id='cuentaVarofVarN"+id+"' required='required' class='form-control col-md-7 col-xs-12'>",
-        "Guardar": "<a class='btn btn-app' onclick='saveNewVariableVarofVarN("+id+")'> <i class='fa fa-save'></i> Guardar </a>",
-        "Eliminar": ""
-    } ).draw();
-
-	var opciones = [];
-    for (var i = 0; i < arregloVariables.length; i++) {
-    	opciones.push({ "value": arregloVariables[i].ID, "display": arregloVariables[i].nombre });
-    };
-
-    table.MakeCellsEditable({
-    	"onUpdate": function() { return; },
-        "columns": [1,2,3,4],
-        "confirmationButton": false,
-		"inputTypes": [
-			{
-				"column":1,
-				"type": "list",
-                "options": opciones
-			},
-			{
-                "column":2, 
-                "type": "text",
-                "options":null
-            },
-            {
-                "column":3, 
-                "type": "text",
-                "options":null
-            }
-			,{
-                "column": 4,
-                "type":"text",
-                "options":null
-            }
-        ]
-    });
-
-	$('#datatable_variablesOfVariables tbody').on( 'click', 'tr a.updateVariableOfVariable', function () {
-        var data = table.row( $(this).parents('tr') ).data();
-		if(data.nombre.length > 0 && data.nombre.length < 41){
-			if(data.cuenta.length > 0 && data.cuenta.length < 41){
-				if(data.descripcion.length < 701){
-					$("body").overhang({
-					  	type: "confirm",
-					  	primary: "#f5a433",
-					  	accent: "#dc9430",
-					  	yesColor: "#3498DB",
-					  	message: 'Esta seguro que desea guardar los cambios?',
-					  	overlay: true,
-					  	yesMessage: "Modificar",
-					  	noMessage: "Cancelar",
-					  	callback: function (value) {
-					    	if(value)
-					    		modifyVariableofVarN(data);
-					  	}
-					});
-				} else {
-					$("body").overhang({
-					  	type: "error",
-					  	primary: "#f84a1d",
-						accent: "#d94e2a",
-					  	message: "La descripción de la variable debe tener una longitud menor a 701.",
-					  	duration: 3,
-					  	overlay: true
-					});
-				}
-			} else {
-				$("body").overhang({
-				  	type: "error",
-				  	primary: "#f84a1d",
-					accent: "#d94e2a",
-				  	message: "La cuenta de la variable debe tener más de una letra y menos de 41.",
-				  	duration: 3,
-				  	overlay: true
-				});
-			}
-		} else {
-			$("body").overhang({
-			  	type: "error",
-			  	primary: "#f84a1d",
-				accent: "#d94e2a",
-			  	message: "El nombre de la variable debe tener una longitud mayor a 0 y menor a 41.",
-			  	duration: 3,
-			  	overlay: true
-			});
-		}
-    } );
-
-	$('#datatable_variablesOfVariables tbody').on( 'click', 'tr a.deleteVariableOfVariable', function () {
-        var data = table.row( $(this).parents('tr') ).data();
-		$("body").overhang({
-		  	type: "confirm",
-		  	primary: "#f5a433",
-		  	accent: "#dc9430",
-		  	yesColor: "#3498DB",
-		  	message: 'Esta seguro que desea eliminar '+data.nombre+'?',
-		  	overlay: true,
-		  	yesMessage: "Eliminar",
-		  	noMessage: "Cancelar",
-		  	callback: function (value) {
-		    	if(value)
-		    		deleteVariableofVarN(data);
-		  	}
-		});
-	} );
-}
-
-function saveNewVariableVarofVarN (id) {
-	var nombre = $("#nombreVarofVarN"+id).val();
-	var cuenta = $("#cuentaVarofVarN"+id).val();
-	var descripcion = $("#descripcionVarofVarN"+id).val();
-	var padre = $("#padreVarofVarN").val();
-	if(nombre.length > 0 && nombre.length < 41){
-		if(cuenta.length > 0 && cuenta.length < 41){
-			if(descripcion.length < 701){
-				if(padre.length > 0){
-					const transaction = new sql.Transaction( pool1 );
-				    transaction.begin(err => {
-				        var rolledBack = false
-				 
-				        transaction.on('rollback', aborted => {
-				            // emited with aborted === true
-				     
-				            rolledBack = true
-				        })
-				        const request = new sql.Request(transaction);
-				        request.query("insert into VariablesdeVariablesFormula (idVariable, nombre, descripcion, cuenta) values ("+padre+", '"+nombre+"', '"+descripcion+"','"+cuenta+"')", (err, result) => {
-				            if (err) {
-				                if (!rolledBack) {
-				                    console.log('error en rolledBack Insert VariablesdeVariables');
-				                    transaction.rollback(err => {
-				                        console.log('error en rolledBack');
-				                        console.log(err);
-				                    });
-				                }
-				            }  else {
-				                transaction.commit(err => {
-				                    // ... error checks
-				                    console.log("Transaction committed Insert VariablesdeVariables");
-				                    $("body").overhang({
-									  	type: "success",
-									  	primary: "#40D47E",
-						  				accent: "#27AE60",
-									  	message: "Variable creada con exito.",
-									  	duration: 2,
-									  	overlay: true
-									});
-				                    loadVariableVariables();
-				                });
-				            }
-				        });
-				    }); // fin transaction
-				} else {
-					$("body").overhang({
-					  	type: "error",
-					  	primary: "#f84a1d",
-						accent: "#d94e2a",
-					  	message: "Seleccione una variable padre asociada a la nueva variable.",
-					  	duration: 3,
-					  	overlay: true
-					});
-				}
-			} else {
-				$("body").overhang({
-				  	type: "error",
-				  	primary: "#f84a1d",
-					accent: "#d94e2a",
-				  	message: "La descripción de la variable debe tener una longitud menor a 701.",
-				  	duration: 3,
-				  	overlay: true
-				});
-			}
-		} else {
-			$("body").overhang({
-			  	type: "error",
-			  	primary: "#f84a1d",
-				accent: "#d94e2a",
-			  	message: "La cuenta de la variable debe tener más de una letra y menos de 41.",
-			  	duration: 3,
-			  	overlay: true
-			});
-		}
-	} else {
-		$("body").overhang({
-		  	type: "error",
-		  	primary: "#f84a1d",
-			accent: "#d94e2a",
-		  	message: "El nombre de la variable debe tener longitud mayor a 0 y menor a 41.",
-		  	duration: 3,
-		  	overlay: true
-		});
-	}
-}
-
-function modifyVariableofVarN (data) {
-	const transaction = new sql.Transaction( pool1 );
-    transaction.begin(err => {
-        var rolledBack = false
- 
-        transaction.on('rollback', aborted => {
-            // emited with aborted === true
-     
-            rolledBack = true
-        })
-        const request = new sql.Request(transaction);
-        request.query("update VariablesdeVariablesFormula set idVariable = "+data.idVariable+", nombre = '"+data.nombre+"', descripcion = '"+data.descripcion+"', cuenta = '"+data.cuenta+"' where ID = "+data.ID+" ", (err, result) => {
-            if (err) {
-                if (!rolledBack) {
-                    console.log('error en rolledBack Update VariablesdeVariables');
-                    transaction.rollback(err => {
-                        console.log('error en rolledBack');
-                        console.log(err);
-                    });
-                }
-            }  else {
-                transaction.commit(err => {
-                    // ... error checks
-                    console.log("Transaction committed Update VariablesdeVariables");
-                    $("body").overhang({
-					  	type: "success",
-					  	primary: "#40D47E",
-		  				accent: "#27AE60",
-					  	message: "Variable modificada con exito.",
-					  	duration: 2,
-					  	overlay: true
-					});
-                    loadVariableVariables();
-                });
-            }
-        });
-    }); // fin transaction
-}
-
-function deleteVariableofVarN (data) {
-	const transaction = new sql.Transaction( pool1 );
-    transaction.begin(err => {
-        var rolledBack = false
- 
-        transaction.on('rollback', aborted => {
-            // emited with aborted === true
-     
-            rolledBack = true
-        })
-        const request = new sql.Request(transaction);
-        request.query("delete from FormulaVariables where ID = '"+data.ID+"' ", (err, result) => {
-            if (err) {
-                if (!rolledBack) {
-                    console.log('error en rolledBack Delete Variables');
-                    transaction.rollback(err => {
-                        console.log('error en rolledBack');
-                        console.log(err);
-                    });
-                }
-            }  else {
-                transaction.commit(err => {
-                    // ... error checks
-                    console.log("Transaction committed Delete Variables");
-                    console.log(result);
-                    loadVariables();
-                    $("body").overhang({
-					  	type: "success",
-					  	primary: "#40D47E",
-		  				accent: "#27AE60",
-					  	message: "Variable eliminada con exito.",
-					  	duration: 2,
-					  	overlay: true
-					});
-                });
-            }
-        });
-    }); // fin transaction
-}*/
-
 //	**********		Fin Variables		**********
 
 
@@ -1872,15 +1464,13 @@ var listasVariablesSeleccionada = null;
 function loadLists () {
 	const transaction = new sql.Transaction( pool1 );
     transaction.begin(err => {
-        var rolledBack = false
- 
+        var rolledBack = false;
         transaction.on('rollback', aborted => {
             // emited with aborted === true
-     
-            rolledBack = true
-        })
+            rolledBack = true;
+        });
         const request = new sql.Request(transaction);
-        request.query("select * from Listas", (err, result) => {
+        request.query("select * from Listas where tipo <> 4 and tipo <> 5", (err, result) => {
             if (err) {
                 if (!rolledBack) {
                     console.log('error en rolledBack Listas');
@@ -1922,6 +1512,37 @@ function renderListsCreateVariableSelect () {
 	if(arregloListas[0] != null)
 		$("#elementoNombreEdit").val(arregloListas[0].nombre);
 	loadListLists();
+}
+
+$("#elementoSaldo").val("0");//para que no tire error al crear sin mover de dropdown
+function showListsFields (idLista) {
+    var tipoLista = arregloListas.filter(function(object) {
+                        return object.tipo == idLista;
+                    });
+    if(tipoLista[0].tipo == 1) { //Manual Contable
+        $("#elementoNombre").attr("placeholder", "Ingrese nombre de cuenta");
+        $("#elementoValor").attr("placeholder", "Ingrese número de cuenta");
+        $("#elementoValor").show();
+        $("#saldoCuenOpField").hide();
+        $("#elementoNombre").val("");
+        $("#elementoValor").val("");
+        $("#elementoSaldo").val("0");
+    } else if(tipoLista[0].tipo == 2) { //Cuentas Operativas
+        $("#elementoNombre").attr("placeholder", "Ingrese nombre de cuenta");
+        $("#elementoValor").attr("placeholder", "Ingrese ID de cliente");
+        $("#elementoValor").show();
+        $("#saldoCuenOpField").show();
+        $("#elementoNombre").val("");
+        $("#elementoValor").val("");
+        $("#elementoSaldo").val("");
+    } else if(tipoLista[0].tipo == 3) { //Exclusiones FOSEDE
+        $("#elementoNombre").attr("placeholder", "Ingrese ID de persona");
+        $("#elementoValor").hide();
+        $("#saldoCuenOpField").hide();
+        $("#elementoNombre").val("");
+        $("#elementoValor").val("1");
+        $("#elementoSaldo").val("0");
+    }
 }
 
 function loadListLists () {
@@ -2042,7 +1663,6 @@ function createList () {
 		  	primary: "#f84a1d",
 			accent: "#d94e2a",
 		  	message: "El nombre de la lista debe tener longitud mayor a 0 y menor a 61.",
-		  	duration: 2,
 		  	overlay: true,
             closeConfirm: true
 		});
@@ -2113,7 +1733,6 @@ function updateList () {
 				  	primary: "#f84a1d",
 					accent: "#d94e2a",
 				  	message: "El nombre de la lista debe tener longitud mayor a 0 y menor a 61.",
-				  	duration: 2,
 				  	overlay: true,
                     closeConfirm: true
 				});
@@ -2124,7 +1743,6 @@ function updateList () {
 			  	primary: "#f84a1d",
 				accent: "#d94e2a",
 			  	message: "Seleccione una lista primero.",
-			  	duration: 2,
 			  	overlay: true,
                 closeConfirm: true
 			});
@@ -2135,7 +1753,6 @@ function updateList () {
 		  	primary: "#f84a1d",
 			accent: "#d94e2a",
 		  	message: "Cree una lista primero.",
-		  	duration: 2,
 		  	overlay: true,
             closeConfirm: true
 		});
@@ -2202,56 +1819,81 @@ function createElementList () {
 	var idLista = $("#elementosDeLista").val();
 	var nombre = $("#elementoNombre").val();
 	var valor = $("#elementoValor").val();
+    var saldo = parseFloat($("#elementoSaldo").val());
+    /*if(saldo.length == 0)
+        saldo = 0;*/
 	if(idLista != null) {
 		if(idLista.length > 0) {
 			if(nombre.length > 0 && nombre.length < 121){
 				if(valor.length > 0 && valor.length < 51){
-					const transaction = new sql.Transaction( pool1 );
-				    transaction.begin(err => {
-				        var rolledBack = false
-				 
-				        transaction.on('rollback', aborted => {
-				            // emited with aborted === true
-				     
-				            rolledBack = true
-				        })
-				        const request = new sql.Request(transaction);
-				        request.query("insert into ListasVariables (idLista, nombre, valor) values ("+idLista+",'"+nombre+"','"+valor+"')", (err, result) => {
-				            if (err) {
-				                if (!rolledBack) {
-				                    console.log('error en rolledBack Listas Variables');
-				                    transaction.rollback(err => {
-				                        console.log('error en rolledBack');
-				                        console.log(err);
-				                    });
-				                }
-				            }  else {
-				                transaction.commit(err => {
-				                    // ... error checks
-				                    console.log("Transaction committed Listas Variables");
-				                    console.log(result);
-				                    $("body").overhang({
-									  	type: "success",
-									  	primary: "#40D47E",
-						  				accent: "#27AE60",
-									  	message: "Elemento de lista creada con éxito.",
-									  	duration: 2,
-									  	overlay: true
-									});
-									$("#elementoNombre").val('');
-									$("#elementoValor").val('');
-									loadListLists();
-				                });
-				            }
-				        });
-				    }); // fin transaction
+                    if(saldo.toString().length > 0){
+                        if(!isNaN(saldo)){
+        					const transaction = new sql.Transaction( pool1 );
+        				    transaction.begin(err => {
+        				        var rolledBack = false
+        				 
+        				        transaction.on('rollback', aborted => {
+        				            // emited with aborted === true
+        				     
+        				            rolledBack = true
+        				        })
+        				        const request = new sql.Request(transaction);
+        				        request.query("insert into ListasVariables (idLista, nombre, valor, saldo) values ("+idLista+",'"+nombre+"','"+valor+"',"+saldo+")", (err, result) => {
+        				            if (err) {
+        				                if (!rolledBack) {
+        				                    console.log('error en rolledBack Listas Variables');
+        				                    transaction.rollback(err => {
+        				                        console.log('error en rolledBack');
+        				                        console.log(err);
+        				                    });
+        				                }
+        				            }  else {
+        				                transaction.commit(err => {
+        				                    // ... error checks
+        				                    console.log("Transaction committed Listas Variables");
+        				                    console.log(result);
+        				                    $("body").overhang({
+        									  	type: "success",
+        									  	primary: "#40D47E",
+        						  				accent: "#27AE60",
+        									  	message: "Elemento de lista creada con éxito.",
+        									  	duration: 2,
+        									  	overlay: true
+        									});
+        									$("#elementoNombre").val('');
+        									$("#elementoValor").val('');
+                                            $("#elementoSaldo").val('');
+        									loadListLists();
+        				                });
+        				            }
+        				        });
+        				    }); // fin transaction
+                        } else {
+                            $("body").overhang({
+                                type: "error",
+                                primary: "#f84a1d",
+                                accent: "#d94e2a",
+                                message: "Ingrese un número válido para el saldo.",
+                                overlay: true,
+                                closeConfirm: true
+                            });
+                        }
+                    } else {
+                        $("body").overhang({
+                            type: "error",
+                            primary: "#f84a1d",
+                            accent: "#d94e2a",
+                            message: "Ingrese un valor para el saldo.",
+                            overlay: true,
+                            closeConfirm: true
+                        });
+                    }
 				} else {
 					$("body").overhang({
 					  	type: "error",
 					  	primary: "#f84a1d",
 						accent: "#d94e2a",
 					  	message: "El valor del elemento de la lista debe tener una longitud mayor a 0 y menor a 51.",
-					  	duration: 2,
 					  	overlay: true,
                         closeConfirm: true
 					});
@@ -2262,7 +1904,6 @@ function createElementList () {
 				  	primary: "#f84a1d",
 					accent: "#d94e2a",
 				  	message: "El nombre del elemento de la lista debe tener una longitud mayor a 0 y menor a 121.",
-				  	duration: 2,
 				  	overlay: true,
                     closeConfirm: true
 				});
@@ -2273,7 +1914,6 @@ function createElementList () {
 			  	primary: "#f84a1d",
 				accent: "#d94e2a",
 			  	message: "Seleccione una lista.",
-			  	duration: 2,
 			  	overlay: true,
                 closeConfirm: true
 			});
@@ -2284,7 +1924,6 @@ function createElementList () {
 		  	primary: "#f84a1d",
 			accent: "#d94e2a",
 		  	message: "Cree una lista primero para agregar un elemento.",
-		  	duration: 2,
 		  	overlay: true,
             closeConfirm: true
 		});
@@ -2358,7 +1997,6 @@ function updateElementList () {
 				  	primary: "#f84a1d",
 					accent: "#d94e2a",
 				  	message: "El valor del elemento de la lista debe tener una longitud mayor a 0 y menor a 51.",
-				  	duration: 2,
 				  	overlay: true,
                     closeConfirm: true
 				});
@@ -2369,7 +2007,6 @@ function updateElementList () {
 			  	primary: "#f84a1d",
 				accent: "#d94e2a",
 			  	message: "El nombre del elemento de la lista debe tener una longitud mayor a 0 y menor a 121.",
-			  	duration: 2,
 			  	overlay: true,
                 closeConfirm: true
 			});
@@ -2380,7 +2017,6 @@ function updateElementList () {
 		  	primary: "#f84a1d",
 			accent: "#d94e2a",
 		  	message: "Seleccione una lista.",
-		  	duration: 2,
 		  	overlay: true,
             closeConfirm: true
 		});
@@ -2504,7 +2140,7 @@ function importExcel () {
 											filaFinal = parseInt(filaFinal);
 											if(filaFinal != 0){
 												for (var i = filaInicial; i <= filaFinal; i++) {
-                                                    if(sheet[columnaNombre+i] != undefined) {
+                                                    if(sheet[columnaNombre+i] != undefined && sheet[columnaNombre+i].v.length > 0) {
     													var numeroCuenta = '';
                                                         if(columnaNumero.length>0)
                                                             numeroCuenta = sheet[columnaNumero+i].v;
@@ -2521,10 +2157,11 @@ function importExcel () {
 											} else {
 												var finalRow = sheet["!ref"].split(":")[1].replace(/[A-Z]/g, "");
 												finalRow = parseInt(finalRow);
-                                                console.log('finalRow');
-                                                console.log(finalRow);
 												for (var i = filaInicial; i <= finalRow; i++) {
-                                                    if(sheet[columnaNombre+i] != undefined) {
+                                                    if(sheet[columnaNombre+i] != undefined && sheet[columnaNombre+i].v.length > 0) {
+                                                        console.log('i = '+i);
+                                                        console.log('sheet[columnaNombre+i].v');
+                                                        console.log(sheet[columnaNombre+i].v);
     													var numeroCuenta = '';
                                                         if(columnaNumero.length>0)
                                                             numeroCuenta = sheet[columnaNumero+i].v;
@@ -2539,10 +2176,43 @@ function importExcel () {
                                                     }
 												};
 											}
-											createListExcel(nombreLista, function() {
+											modifyListExcel(tipo, function(ID) {
+                                                var nombreError = '', tieneNombreError = false, valorError = '', tieneValorError = false;
 												for (var i = 0; i < arregloDeElementos.length; i++) {
-													createElementListExcel(arregloDeElementos[i].idLista, arregloDeElementos[i].nombre, arregloDeElementos[i].valor);
+                                                    if(arregloDeElementos[i].nombre.length < 121) {
+                                                        if(arregloDeElementos[i].valor.length < 51) {
+                                                            createElementListExcel(ID, arregloDeElementos[i].nombre, arregloDeElementos[i].valor);
+                                                        } else {
+                                                            valorError = arregloDeElementos[i].valor;
+                                                            tieneValorError = true;
+                                                            break;
+                                                        }
+                                                    } else {
+                                                        nombreError = arregloDeElementos[i].nombre;
+                                                        tieneNombreError = true;
+                                                        break;
+                                                    }
 												}
+                                                if(tieneNombreError) {
+                                                    $("body").overhang({
+                                                        type: "error",
+                                                        primary: "#f84a1d",
+                                                        accent: "#d94e2a",
+                                                        message: "Error, la longitud debe ser menor a 121 carácteres para: "+nombreError+".",
+                                                        overlay: true,
+                                                        closeConfirm: true
+                                                    });
+                                                }
+                                                if(tieneValorError) {
+                                                    $("body").overhang({
+                                                        type: "error",
+                                                        primary: "#f84a1d",
+                                                        accent: "#d94e2a",
+                                                        message: "Error, la longitud debe ser menor a 51 carácteres para: "+valorError+".",
+                                                        overlay: true,
+                                                        closeConfirm: true
+                                                    });
+                                                }
 											}); /*Balance General*/
 											$("body").overhang({
 											  	type: "success",
@@ -2560,7 +2230,6 @@ function importExcel () {
 											  	primary: "#f84a1d",
 												accent: "#d94e2a",
 											  	message: "Error al abrir hoja de excel.",
-											  	duration: 2,
 											  	overlay: true,
                                                 closeConfirm: true
 											});
@@ -2572,7 +2241,6 @@ function importExcel () {
 									  	primary: "#f84a1d",
 										accent: "#d94e2a",
 									  	message: "Ingrese un número de fila válido donde terminar de tomar las cuentas.",
-									  	duration: 2,
 									  	overlay: true,
                                         closeConfirm: true
 									});
@@ -2583,7 +2251,6 @@ function importExcel () {
 								  	primary: "#f84a1d",
 									accent: "#d94e2a",
 								  	message: "Ingrese un número de fila válido donde iniciar a tomar las cuentas.",
-								  	duration: 2,
 								  	overlay: true,
                                     closeConfirm: true
 								});
@@ -2594,7 +2261,6 @@ function importExcel () {
 							  	primary: "#f84a1d",
 								accent: "#d94e2a",
 							  	message: "Ingrese el número de fila donde iniciar a tomar las cuentas.",
-							  	duration: 2,
 							  	overlay: true,
                                 closeConfirm: true
 							});
@@ -2605,7 +2271,6 @@ function importExcel () {
 						  	primary: "#f84a1d",
 							accent: "#d94e2a",
 						  	message: "Ingrese una letra válida para la columna del nombre del elemento.",
-						  	duration: 2,
 						  	overlay: true,
                             closeConfirm: true
 						});
@@ -2616,7 +2281,6 @@ function importExcel () {
 					  	primary: "#f84a1d",
 						accent: "#d94e2a",
 					  	message: "Ingrese la columna para el nombre del elemento.",
-					  	duration: 2,
 					  	overlay: true,
                         closeConfirm: true
 					});
@@ -2627,7 +2291,6 @@ function importExcel () {
 				  	primary: "#f84a1d",
 					accent: "#d94e2a",
 				  	message: "Ingrese una letra válida para la columna del valor del elemento.",
-				  	duration: 2,
 				  	overlay: true,
                     closeConfirm: true
 				});
@@ -2648,14 +2311,13 @@ function importExcel () {
 		  	primary: "#f84a1d",
 			accent: "#d94e2a",
 		  	message: "Ingrese un nombre de hoja del archivo de excel.",
-		  	duration: 2,
 		  	overlay: true,
             closeConfirm: true
 		});
 	}
 }
 
-function createListExcel (nombre, callback) {
+function createListExcel (nombre, tipo, callback) {
 	const transaction = new sql.Transaction( pool1 );
     transaction.begin(err => {
         var rolledBack = false
@@ -2666,7 +2328,7 @@ function createListExcel (nombre, callback) {
             rolledBack = true
         })
         const request = new sql.Request(transaction);
-        request.query("insert into Listas (nombre) values ('"+nombre+"')", (err, result) => {
+        request.query("insert into Listas (nombre, tipo) values ('"+nombre+"',"+tipo+")", (err, result) => {
             if (err) {
                 if (!rolledBack) {
                     console.log('error en rolledBack Listas creation');
@@ -2679,6 +2341,37 @@ function createListExcel (nombre, callback) {
                 transaction.commit(err => {
                     // ... error checks
                     callback();
+                });
+            }
+        });
+    }); // fin transaction
+}
+
+function modifyListExcel (tipo, callback) {
+    const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false
+ 
+        transaction.on('rollback', aborted => {
+            // emited with aborted === true
+     
+            rolledBack = true
+        })
+        const request = new sql.Request(transaction);
+        request.query("select ID from Listas where tipo = "+tipo, (err, result) => {
+            if (err) {
+                if (!rolledBack) {
+                    console.log('error en rolledBack Listas creation');
+                    transaction.rollback(err => {
+                        console.log('error en rolledBack');
+                        console.log(err);
+                    });
+                }
+            }  else {
+                transaction.commit(err => {
+                    // ... error checks
+                    console.log(result);
+                    callback(result.recordset[0].ID);
                 });
             }
         });
@@ -2778,7 +2471,6 @@ function calculateRateChange () {
 			  	primary: "#f84a1d",
 				accent: "#d94e2a",
 			  	message: "Ingrese un valor en el campo ingresar monto.",
-			  	duration: 2,
 			  	overlay: true,
                 closeConfirm: true
 			});
@@ -2834,7 +2526,6 @@ function verifyAndSaveFOSEDE () {
 			  	primary: "#f84a1d",
 				accent: "#d94e2a",
 			  	message: "El monto FOSEDE no puede ser igual a 0.",
-			  	duration: 2,
 			  	overlay: true,
                 closeConfirm: true
 			});
@@ -2845,7 +2536,6 @@ function verifyAndSaveFOSEDE () {
 		  	primary: "#f84a1d",
 			accent: "#d94e2a",
 		  	message: "Ingrese un valor en el campo ingresar monto.",
-		  	duration: 2,
 		  	overlay: true,
             closeConfirm: true
 		});
@@ -3147,7 +2837,6 @@ function saveActivosDB (indexTabla) {
                                                                             primary: "#f84a1d",
                                                                             accent: "#d94e2a",
                                                                             message: "Error al abrir hoja de excel.",
-                                                                            duration: 2,
                                                                             overlay: true,
                                                                             closeConfirm: true
                                                                         });
@@ -3159,7 +2848,6 @@ function saveActivosDB (indexTabla) {
                                                                     primary: "#f84a1d",
                                                                     accent: "#d94e2a",
                                                                     message: "Ingrese un valor para la fila inicial de la hoja de excel.",
-                                                                    duration: 2,
                                                                     overlay: true,
                                                                     closeConfirm: true
                                                                 });
@@ -3170,7 +2858,6 @@ function saveActivosDB (indexTabla) {
                                                                 primary: "#f84a1d",
                                                                 accent: "#d94e2a",
                                                                 message: "Ingrese un valor para el nombre de la hoja de excel.",
-                                                                duration: 2,
                                                                 overlay: true,
                                                                 closeConfirm: true
                                                             });
@@ -3181,7 +2868,6 @@ function saveActivosDB (indexTabla) {
                                                             primary: "#f84a1d",
                                                             accent: "#d94e2a",
                                                             message: "Ingrese una letra para la columna del campo de sucursal válida.",
-                                                            duration: 2,
                                                             overlay: true,
                                                             closeConfirm: true
                                                         });
@@ -3192,7 +2878,6 @@ function saveActivosDB (indexTabla) {
                                                         primary: "#f84a1d",
                                                         accent: "#d94e2a",
                                                         message: "Ingrese un valor para la columna del campo de sucursal.",
-                                                        duration: 2,
                                                         overlay: true,
                                                         closeConfirm: true
                                                     });
@@ -3203,7 +2888,6 @@ function saveActivosDB (indexTabla) {
                                                     primary: "#f84a1d",
                                                     accent: "#d94e2a",
                                                     message: "Ingrese una letra para la columna del campo de tipo de cuenta válida.",
-                                                    duration: 2,
                                                     overlay: true,
                                                     closeConfirm: true
                                                 });
@@ -3214,7 +2898,6 @@ function saveActivosDB (indexTabla) {
                                                 primary: "#f84a1d",
                                                 accent: "#d94e2a",
                                                 message: "Ingrese un valor para la columna del campo de tipo de cuenta.",
-                                                duration: 2,
                                                 overlay: true,
                                                 closeConfirm: true
                                             });
@@ -3225,7 +2908,6 @@ function saveActivosDB (indexTabla) {
                                             primary: "#f84a1d",
                                             accent: "#d94e2a",
                                             message: "Ingrese una letra para la columna del campo de saldo válida.",
-                                            duration: 2,
                                             overlay: true,
                                             closeConfirm: true
                                         });
@@ -3236,7 +2918,6 @@ function saveActivosDB (indexTabla) {
                                         primary: "#f84a1d",
                                         accent: "#d94e2a",
                                         message: "Ingrese un valor para la columna del campo de saldo.",
-                                        duration: 2,
                                         overlay: true,
                                         closeConfirm: true
                                     });
@@ -3247,7 +2928,6 @@ function saveActivosDB (indexTabla) {
                                     primary: "#f84a1d",
                                     accent: "#d94e2a",
                                     message: "Ingrese una letra para la columna del campo de moneda válida.",
-                                    duration: 2,
                                     overlay: true,
                                     closeConfirm: true
                                 });
@@ -3258,7 +2938,6 @@ function saveActivosDB (indexTabla) {
                                 primary: "#f84a1d",
                                 accent: "#d94e2a",
                                 message: "Ingrese un valor para la columna del campo de moneda.",
-                                duration: 2,
                                 overlay: true,
                                 closeConfirm: true
                             });
@@ -3269,7 +2948,6 @@ function saveActivosDB (indexTabla) {
                             primary: "#f84a1d",
                             accent: "#d94e2a",
                             message: "Ingrese una letra para la columna del campo de nombre válida.",
-                            duration: 2,
                             overlay: true,
                             closeConfirm: true
                         });
@@ -3280,7 +2958,6 @@ function saveActivosDB (indexTabla) {
                         primary: "#f84a1d",
                         accent: "#d94e2a",
                         message: "Ingrese un valor para la columna del campo de nombre.",
-                        duration: 2,
                         overlay: true,
                         closeConfirm: true
                     });
@@ -3291,7 +2968,6 @@ function saveActivosDB (indexTabla) {
                     primary: "#f84a1d",
                     accent: "#d94e2a",
                     message: "Ingrese una letra para la columna del campo de cuenta válida.",
-                    duration: 2,
                     overlay: true,
                     closeConfirm: true
                 });
@@ -3302,7 +2978,6 @@ function saveActivosDB (indexTabla) {
                 primary: "#f84a1d",
                 accent: "#d94e2a",
                 message: "Ingrese un valor para la columna del campo de cuenta.",
-                duration: 2,
                 overlay: true,
                 closeConfirm: true
             });
@@ -3333,8 +3008,8 @@ function createAsset (activo) {
                             primary: "#40D47E",
                             accent: "#27AE60",
                             message: "Error al crear activo.",
-                            duration: 2,
-                            overlay: true
+                            overlay: true,
+                            closeConfirm: true
                         });
                     });
                 }
@@ -3428,7 +3103,6 @@ function createConnection (indexTipo, indexTabla) {
                                     primary: "#f84a1d",
                                     accent: "#d94e2a",
                                     message: "El tamaño del tipo de la db no puede ser igual 0 ó mayor a 10.",
-                                    duration: 2,
                                     overlay: true,
                                     closeConfirm: true
                                 });
@@ -3439,7 +3113,6 @@ function createConnection (indexTipo, indexTabla) {
                                 primary: "#f84a1d",
                                 accent: "#d94e2a",
                                 message: "El tamaño del nombre de la tabla de la db no puede ser igual 0 ó mayor a 100.",
-                                duration: 2,
                                 overlay: true,
                                 closeConfirm: true
                             });
@@ -3450,7 +3123,6 @@ function createConnection (indexTipo, indexTabla) {
                             primary: "#f84a1d",
                             accent: "#d94e2a",
                             message: "El tamaño del nombre de la base de datos no puede ser igual 0 ó mayor a 100.",
-                            duration: 2,
                             overlay: true,
                             closeConfirm: true
                         });
@@ -3461,7 +3133,6 @@ function createConnection (indexTipo, indexTabla) {
                         primary: "#f84a1d",
                         accent: "#d94e2a",
                         message: "El tamaño del nombre del servidor de la db no puede ser igual 0 ó mayor a 100.",
-                        duration: 2,
                         overlay: true,
                         closeConfirm: true
                     });
@@ -3472,7 +3143,6 @@ function createConnection (indexTipo, indexTabla) {
                     primary: "#f84a1d",
                     accent: "#d94e2a",
                     message: "El tamaño de la constraseña de la db no puede ser igual 0 ó mayor a 100.",
-                    duration: 2,
                     overlay: true,
                     closeConfirm: true
                 });
@@ -3483,7 +3153,6 @@ function createConnection (indexTipo, indexTabla) {
                 primary: "#f84a1d",
                 accent: "#d94e2a",
                 message: "El tamaño del nombre de usuario de la db no puede ser igual 0 ó mayor a 100.",
-                duration: 2,
                 overlay: true,
                 closeConfirm: true
             });
@@ -3494,7 +3163,6 @@ function createConnection (indexTipo, indexTabla) {
             primary: "#f84a1d",
             accent: "#d94e2a",
             message: "El tamaño del nombre del arreglo no puede ser igual 0 ó mayor a 11.",
-            duration: 2,
             overlay: true,
             closeConfirm: true
         });
@@ -3578,7 +3246,6 @@ function modifyConnection (id, indexTabla) {
                                 primary: "#f84a1d",
                                 accent: "#d94e2a",
                                 message: "El tamaño del nombre de la tabla de la db no puede ser igual 0 ó mayor a 100.",
-                                duration: 2,
                                 overlay: true,
                                 closeConfirm: true
                             });
@@ -3589,7 +3256,6 @@ function modifyConnection (id, indexTabla) {
                             primary: "#f84a1d",
                             accent: "#d94e2a",
                             message: "El tamaño del nombre de la base de datos no puede ser igual 0 ó mayor a 100.",
-                            duration: 2,
                             overlay: true,
                             closeConfirm: true
                         });
@@ -3600,7 +3266,6 @@ function modifyConnection (id, indexTabla) {
                         primary: "#f84a1d",
                         accent: "#d94e2a",
                         message: "El tamaño del nombre del servidor de la db no puede ser igual 0 ó mayor a 100.",
-                        duration: 2,
                         overlay: true,
                         closeConfirm: true
                     });
@@ -3611,7 +3276,6 @@ function modifyConnection (id, indexTabla) {
                     primary: "#f84a1d",
                     accent: "#d94e2a",
                     message: "El tamaño de la constraseña de la db no puede ser igual 0 ó mayor a 100.",
-                    duration: 2,
                     overlay: true,
                     closeConfirm: true
                 });
@@ -3622,7 +3286,6 @@ function modifyConnection (id, indexTabla) {
                 primary: "#f84a1d",
                 accent: "#d94e2a",
                 message: "El tamaño del nombre de usuario de la db no puede ser igual 0 ó mayor a 100.",
-                duration: 2,
                 overlay: true,
                 closeConfirm: true
             });
@@ -3633,7 +3296,6 @@ function modifyConnection (id, indexTabla) {
             primary: "#f84a1d",
             accent: "#d94e2a",
             message: "El tamaño del nombre del arreglo no puede ser igual 0 ó mayor a 11.",
-            duration: 2,
             overlay: true,
             closeConfirm: true
         });
@@ -3735,7 +3397,6 @@ function importAssets(arreglo, usuario, constrasena, server, basedatos, tabla, t
                                     primary: "#f84a1d",
                                     accent: "#d94e2a",
                                     message: "Ingrese un valor para el nombre de la columna de sucursal.",
-                                    duration: 2,
                                     overlay: true,
                                     closeConfirm: true
                                 });
@@ -3746,7 +3407,6 @@ function importAssets(arreglo, usuario, constrasena, server, basedatos, tabla, t
                                 primary: "#f84a1d",
                                 accent: "#d94e2a",
                                 message: "Ingrese un valor para el nombre de la columna de el tipo de cuenta.",
-                                duration: 2,
                                 overlay: true,
                                 closeConfirm: true
                             });
@@ -3757,7 +3417,6 @@ function importAssets(arreglo, usuario, constrasena, server, basedatos, tabla, t
                             primary: "#f84a1d",
                             accent: "#d94e2a",
                             message: "Ingrese un valor para el nombre de la columna de el nombre de la moneda.",
-                            duration: 2,
                             overlay: true,
                             closeConfirm: true
                         });
@@ -3768,7 +3427,6 @@ function importAssets(arreglo, usuario, constrasena, server, basedatos, tabla, t
                         primary: "#f84a1d",
                         accent: "#d94e2a",
                         message: "Ingrese un valor para el nombre de la columna de el saldo del activo.",
-                        duration: 2,
                         overlay: true,
                         closeConfirm: true
                     });
@@ -3779,7 +3437,6 @@ function importAssets(arreglo, usuario, constrasena, server, basedatos, tabla, t
                     primary: "#f84a1d",
                     accent: "#d94e2a",
                     message: "Ingrese un valor para el nombre de la columna de el nombre del activo.",
-                    duration: 2,
                     overlay: true,
                     closeConfirm: true
                 });
@@ -3790,7 +3447,6 @@ function importAssets(arreglo, usuario, constrasena, server, basedatos, tabla, t
                 primary: "#f84a1d",
                 accent: "#d94e2a",
                 message: "Ingrese un valor para el nombre de la columna de la cuenta del activo.",
-                duration: 2,
                 overlay: true,
                 closeConfirm: true
             });
@@ -3872,7 +3528,6 @@ function importAssets(arreglo, usuario, constrasena, server, basedatos, tabla, t
                                             primary: "#f84a1d",
                                             accent: "#d94e2a",
                                             message: "Ingrese un valor para el nombre de la sucursal del depósito.",
-                                            duration: 2,
                                             overlay: true,
                                             closeConfirm: true
                                         });
@@ -3883,7 +3538,6 @@ function importAssets(arreglo, usuario, constrasena, server, basedatos, tabla, t
                                         primary: "#f84a1d",
                                         accent: "#d94e2a",
                                         message: "Ingrese un valor para el tipo de la cuenta del depósito.",
-                                        duration: 2,
                                         overlay: true,
                                         closeConfirm: true
                                     });
@@ -3894,7 +3548,6 @@ function importAssets(arreglo, usuario, constrasena, server, basedatos, tabla, t
                                     primary: "#f84a1d",
                                     accent: "#d94e2a",
                                     message: "Ingrese un valor para el nombre de la moneda del depósito.",
-                                    duration: 2,
                                     overlay: true,
                                     closeConfirm: true
                                 });
@@ -3905,7 +3558,6 @@ function importAssets(arreglo, usuario, constrasena, server, basedatos, tabla, t
                                 primary: "#f84a1d",
                                 accent: "#d94e2a",
                                 message: "Ingrese un valor para el saldo del depósito.",
-                                duration: 2,
                                 overlay: true,
                                 closeConfirm: true
                             });
@@ -3916,7 +3568,6 @@ function importAssets(arreglo, usuario, constrasena, server, basedatos, tabla, t
                             primary: "#f84a1d",
                             accent: "#d94e2a",
                             message: "Ingrese un valor para el tipo de sub-persona del depósito.",
-                            duration: 2,
                             overlay: true,
                             closeConfirm: true
                         });
@@ -3927,7 +3578,6 @@ function importAssets(arreglo, usuario, constrasena, server, basedatos, tabla, t
                         primary: "#f84a1d",
                         accent: "#d94e2a",
                         message: "Ingrese un valor para el tipo de persona del depósito.",
-                        duration: 2,
                         overlay: true,
                         closeConfirm: true
                     });
@@ -3938,7 +3588,6 @@ function importAssets(arreglo, usuario, constrasena, server, basedatos, tabla, t
                     primary: "#f84a1d",
                     accent: "#d94e2a",
                     message: "Ingrese un valor para el nombre del cliente del depósito.",
-                    duration: 2,
                     overlay: true,
                     closeConfirm: true
                 });
@@ -3949,7 +3598,6 @@ function importAssets(arreglo, usuario, constrasena, server, basedatos, tabla, t
                 primary: "#f84a1d",
                 accent: "#d94e2a",
                 message: "Ingrese un valor para el id del cliente del depósito.",
-                duration: 2,
                 overlay: true,
                 closeConfirm: true
             });
@@ -4123,9 +3771,6 @@ function saveDepositosDB (indexTabla) {
                                                                                                 }
                                                                                             };
                                                                                         }
-                                                                                        console.log("==========");
-                                                                                        console.log(arregloDeDepositos);
-                                                                                        console.log("==========");
                                                                                         for (var i = 0; i < arregloDeDepositos.length; i++) {
                                                                                             createDeposit( arregloDeDepositos[i] );
                                                                                         };
@@ -4134,7 +3779,6 @@ function saveDepositosDB (indexTabla) {
                                                                                             primary: "#40D47E",
                                                                                             accent: "#27AE60",
                                                                                             message: "Depositos importados con éxito.",
-                                                                                            duration: 2,
                                                                                             overlay: true
                                                                                         });
                                                                                     } else {
@@ -4143,7 +3787,6 @@ function saveDepositosDB (indexTabla) {
                                                                                             primary: "#f84a1d",
                                                                                             accent: "#d94e2a",
                                                                                             message: "Error al abrir hoja de excel.",
-                                                                                            duration: 2,
                                                                                             overlay: true,
                                                                                             closeConfirm: true
                                                                                         });
@@ -4155,7 +3798,6 @@ function saveDepositosDB (indexTabla) {
                                                                                     primary: "#f84a1d",
                                                                                     accent: "#d94e2a",
                                                                                     message: "Ingrese un valor para la fila inicial de la hoja de excel.",
-                                                                                    duration: 2,
                                                                                     overlay: true,
                                                                                     closeConfirm: true
                                                                                 });
@@ -4166,7 +3808,6 @@ function saveDepositosDB (indexTabla) {
                                                                                 primary: "#f84a1d",
                                                                                 accent: "#d94e2a",
                                                                                 message: "Ingrese un valor para el nombre de la hoja de excel.",
-                                                                                duration: 2,
                                                                                 overlay: true,
                                                                                 closeConfirm: true
                                                                             });
@@ -4177,7 +3818,6 @@ function saveDepositosDB (indexTabla) {
                                                                             primary: "#f84a1d",
                                                                             accent: "#d94e2a",
                                                                             message: "Ingrese una letra para la columna del campo de sucursal.",
-                                                                            duration: 2,
                                                                             overlay: true,
                                                                             closeConfirm: true
                                                                         });
@@ -4188,7 +3828,6 @@ function saveDepositosDB (indexTabla) {
                                                                         primary: "#f84a1d",
                                                                         accent: "#d94e2a",
                                                                         message: "Ingrese un valor para la columna del campo de sucursal.",
-                                                                        duration: 2,
                                                                         overlay: true,
                                                                         closeConfirm: true
                                                                     });
@@ -4199,7 +3838,6 @@ function saveDepositosDB (indexTabla) {
                                                                     primary: "#f84a1d",
                                                                     accent: "#d94e2a",
                                                                     message: "Ingrese una letra para la columna del campo de tipode cuenta.",
-                                                                    duration: 2,
                                                                     overlay: true,
                                                                     closeConfirm: true
                                                                 });
@@ -4210,7 +3848,6 @@ function saveDepositosDB (indexTabla) {
                                                                 primary: "#f84a1d",
                                                                 accent: "#d94e2a",
                                                                 message: "Ingrese un valor para la columna del campo de tipo de cuenta.",
-                                                                duration: 2,
                                                                 overlay: true,
                                                                 closeConfirm: true
                                                             });
@@ -4221,7 +3858,6 @@ function saveDepositosDB (indexTabla) {
                                                             primary: "#f84a1d",
                                                             accent: "#d94e2a",
                                                             message: "Ingrese una letra para la columna del campo de moneda.",
-                                                            duration: 2,
                                                             overlay: true,
                                                             closeConfirm: true
                                                         });
@@ -4232,7 +3868,6 @@ function saveDepositosDB (indexTabla) {
                                                         primary: "#f84a1d",
                                                         accent: "#d94e2a",
                                                         message: "Ingrese un valor para la columna del campo de moneda.",
-                                                        duration: 2,
                                                         overlay: true,
                                                         closeConfirm: true
                                                     });
@@ -4243,7 +3878,6 @@ function saveDepositosDB (indexTabla) {
                                                     primary: "#f84a1d",
                                                     accent: "#d94e2a",
                                                     message: "Ingrese una letra para la columna de saldo de deposito válida.",
-                                                    duration: 2,
                                                     overlay: true,
                                                     closeConfirm: true
                                                 });
@@ -4254,18 +3888,16 @@ function saveDepositosDB (indexTabla) {
                                                 primary: "#f84a1d",
                                                 accent: "#d94e2a",
                                                 message: "Ingrese un valor para la columna de saldo de deposito.",
-                                                duration: 2,
                                                 overlay: true,
                                                 closeConfirm: true
                                             });
                                         }
-                                    } else {/////
+                                    } else {
                                         $("body").overhang({
                                             type: "error",
                                             primary: "#f84a1d",
                                             accent: "#d94e2a",
                                             message: "Ingrese una letra para la columna de saldo de deposito válida.",
-                                            duration: 2,
                                             overlay: true,
                                             closeConfirm: true
                                         });
@@ -4276,18 +3908,16 @@ function saveDepositosDB (indexTabla) {
                                         primary: "#f84a1d",
                                         accent: "#d94e2a",
                                         message: "Ingrese un valor para la columna de saldo de deposito.",
-                                        duration: 2,
                                         overlay: true,
                                         closeConfirm: true
                                     });
-                                }/////
+                                }
                             } else {
                                 $("body").overhang({
                                     type: "error",
                                     primary: "#f84a1d",
                                     accent: "#d94e2a",
                                     message: "Ingrese una letra para la columna de tipo de persona válida.",
-                                    duration: 2,
                                     overlay: true,
                                     closeConfirm: true
                                 });
@@ -4298,7 +3928,6 @@ function saveDepositosDB (indexTabla) {
                                 primary: "#f84a1d",
                                 accent: "#d94e2a",
                                 message: "Ingrese un valor para la columna de tipo de persona.",
-                                duration: 2,
                                 overlay: true,
                                 closeConfirm: true
                             });
@@ -4309,7 +3938,6 @@ function saveDepositosDB (indexTabla) {
                             primary: "#f84a1d",
                             accent: "#d94e2a",
                             message: "Ingrese una letra para la columna del campo de nombre válida.",
-                            duration: 2,
                             overlay: true,
                             closeConfirm: true
                         });
@@ -4320,7 +3948,6 @@ function saveDepositosDB (indexTabla) {
                         primary: "#f84a1d",
                         accent: "#d94e2a",
                         message: "Ingrese un valor para la columna del campo de nombre.",
-                        duration: 2,
                         overlay: true,
                         closeConfirm: true
                     });
@@ -4331,7 +3958,6 @@ function saveDepositosDB (indexTabla) {
                     primary: "#f84a1d",
                     accent: "#d94e2a",
                     message: "Ingrese una letra para la columna del campo de id del cliente válida.",
-                    duration: 2,
                     overlay: true,
                     closeConfirm: true
                 });
@@ -4342,7 +3968,6 @@ function saveDepositosDB (indexTabla) {
                 primary: "#f84a1d",
                 accent: "#d94e2a",
                 message: "Ingrese un valor para la columna del campo de id del cliente.",
-                duration: 2,
                 overlay: true,
                 closeConfirm: true
             });
@@ -4373,8 +3998,8 @@ function createDeposit (deposito) {
                             primary: "#40D47E",
                             accent: "#27AE60",
                             message: "Error al crear depositos.",
-                            duration: 2,
-                            overlay: true
+                            overlay: true,
+                            closeConfirm: true
                         });
                     });
                 }
@@ -4916,7 +4541,6 @@ function connectionTest (indexTabla) {
 									  	primary: "#f84a1d",
 										accent: "#d94e2a",
 									  	message: "Intento de conexión fallido.",
-									  	duration: 2,
 									  	overlay: true
 									});
 						    	} else {
@@ -4925,7 +4549,6 @@ function connectionTest (indexTabla) {
 									  	primary: "#40D47E",
 						  				accent: "#27AE60",
 									  	message: "Conexión realizada con exito.",
-									  	duration: 2,
 									  	overlay: true
 									});
 						    	}
@@ -4937,7 +4560,6 @@ function connectionTest (indexTabla) {
 						  	primary: "#f84a1d",
 							accent: "#d94e2a",
 						  	message: "Ingrese un valor en el campo de ingresar el nombre de la tabla.",
-						  	duration: 2,
 						  	overlay: true,
                             closeConfirm: true
 						});
@@ -4948,7 +4570,6 @@ function connectionTest (indexTabla) {
 					  	primary: "#f84a1d",
 						accent: "#d94e2a",
 					  	message: "Ingrese un valor en el campo de ingresar el nombre de la base de datos.",
-					  	duration: 2,
 					  	overlay: true,
                         closeConfirm: true
 					});
@@ -4958,7 +4579,6 @@ function connectionTest (indexTabla) {
 				  	type: "error",
 				  	primary: "#f84a1d",
 					accent: "#Ingrese un valor en el campo de ingresar dirección del servidor.",
-				  	duration: 2,
 				  	overlay: true,
                     closeConfirm: true
 				});
@@ -4969,7 +4589,6 @@ function connectionTest (indexTabla) {
 			  	primary: "#f84a1d",
 				accent: "#d94e2a",
 			  	message: "Ingrese un valor en el campo de ingresar contraseña.",
-			  	duration: 2,
 			  	overlay: true,
                 closeConfirm: true
 			});
@@ -4980,7 +4599,6 @@ function connectionTest (indexTabla) {
 		  	primary: "#f84a1d",
 			accent: "#d94e2a",
 		  	message: "Ingrese un valor en el campo de ingresar nombre de usuario.",
-		  	duration: 2,
 		  	overlay: true,
             closeConfirm: true
 		});
@@ -5012,42 +4630,48 @@ function logout () {
 }
 
 function goRules (index) {
-    var encontro = arregloListas.filter(function(object) {
-                        return (object.tipo == 1 );
-                    });
-    if(encontro.length > 0 ) { 
-        $("#app_root").empty();
-        var variableID = arregloVariableDeVariables[index].ID;
-        var nombrePadre = arregloVariables[(arregloVariableDeVariables[index].idVariable-1)].nombre;
-        var nombreHijo = arregloVariableDeVariables[index].nombre;
-        var descripcionHijo = arregloVariableDeVariables[index].descripcion;
-        var factorHijo = arregloVariableDeVariables[index].factor;
-        var tablaHijo = arregloVariableDeVariables[index].tablaAplicar;
-        setVariableDeVariableID(variableID);
-        setNombrePadre(nombrePadre);
-        setNombreHijo(nombreHijo);
-        setDescripcionHijo(descripcionHijo);
-        setFactorHijo(factorHijo);
-        setTablaHijo(tablaHijo);
-        if(tablaHijo == 1)
+    var variableID = arregloVariableDeVariables[index].ID;
+    var nombrePadre = arregloVariables[(arregloVariableDeVariables[index].idVariable-1)].nombre;
+    var nombreHijo = arregloVariableDeVariables[index].nombre;
+    var descripcionHijo = arregloVariableDeVariables[index].descripcion;
+    var factorHijo = arregloVariableDeVariables[index].factor;
+    var tablaHijo = arregloVariableDeVariables[index].tablaAplicar;
+    setVariableDeVariableID(variableID);
+    setNombrePadre(nombrePadre);
+    setNombreHijo(nombreHijo);
+    setDescripcionHijo(descripcionHijo);
+    setFactorHijo(factorHijo);
+    setTablaHijo(tablaHijo);
+    if(tablaHijo == 1) {
+        var encontroLista = arregloListas.filter(function(object) {
+                    return (object.tipo == 1 );
+                });
+        var encontroElementoDeLista = arregloListasVariables.filter(function(object) {
+                    if(encontroLista.length == 0)
+                        return false;
+                    return (encontroLista[0].ID == object.idLista);
+                });
+        if(encontroElementoDeLista.length > 0 ) {
+            $("#app_root").empty();
             $("#app_root").load("src/variableDetailALAC.html");
-        else
-            $("#app_root").load("src/variableDetail.html");
-        /*$.getScript("src/variableDetail.js").done(function( script, textStatus ) {
-        	loadText(nombrePadre, nombreHijo, descripcionHijo, arregloVariableDeVariables[index]);
-        	});*/
-      	//html.find('script[src="src/variables.js"]').remove();
+        } else {
+            $("body").overhang({
+                type: "error",
+                primary: "#f84a1d",
+                accent: "#d94e2a",
+                message: "Cree una elemento de la lista de Manual Contable primero.",
+                overlay: true,
+                closeConfirm: true
+            });
+        }
     } else {
-        $("body").overhang({
-            type: "error",
-            primary: "#f84a1d",
-            accent: "#d94e2a",
-            message: "Cree una lista de Manual Contable primero.",
-            duration: 2,
-            overlay: true,
-            closeConfirm: true
-        });
+        $("#app_root").empty();
+        $("#app_root").load("src/variableDetail.html");
     }
+    /*$.getScript("src/variableDetail.js").done(function( script, textStatus ) {
+    	loadText(nombrePadre, nombreHijo, descripcionHijo, arregloVariableDeVariables[index]);
+    	});*/
+  	//html.find('script[src="src/variables.js"]').remove();
 }
 
 function goRCL () {

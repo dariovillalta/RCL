@@ -258,7 +258,7 @@
                         </div>
                         <hr class="style11">
 
-                        <div class="row" style="margin: 0% 5%;">
+                        <!-- <div class="row" style="margin: 0% 5%;">
                           <h2>Guardar Variables <small>Se guardan las variables de una regla por si una regla siguiente ocupa acceder a un valor de esta regla.</small></h2>
                           <ul id="listRules" class="to_do text-center" style="display: flex; justify-content: center;">
                             <li style="float: right; margin: 0% 1%;">
@@ -272,226 +272,193 @@
                             </li>
                           </ul>
                         </div>
-                        <hr class="style11">
+                        <hr class="style11"> -->
 
                         <div class="row">
                           <h2 style="padding-left: 5%;">Campo Objetivo <small>Campo al cual se le va a asignar y aplicar una operaci&oacute;n.</small></h2>
                           <div id="wrapper" class="row">
                             <label>
-                              <input id="campoCampoRadio" type="radio" class="flat" onclick="setCampoRadio(true)" checked name="campoRadio"> Campo
+                              <input id="campoCampoRadio" type="radio" class="flat" checked name="campoRadio"> Campo
                             </label>
                             <!-- <label>
-                              <input id="listaCampoRadio" type="radio" class="flat" onclick="setCampoRadio(false)" name="campoRadio"> Lista
+                              <input id="variablesCampoRadio" type="radio" class="flat" onclick="setCampoRadio(false)" name="campoRadio"> Variables
                             </label> -->
                             <label>
-                              <input id="variablesCampoRadio" type="radio" class="flat" onclick="setCampoRadio(false)" name="campoRadio"> Variables
+                              <input id="fosedeCampoRadio" type="radio" class="flat" name="campoRadio"> FOSEDE
                             </label>
                             <label>
-                              <input id="fosedeCampoRadio" type="radio" class="flat" onclick="setCampoRadio(false)" name="campoRadio"> FOSEDE
+                              <input id="cuentasOperativasCampoRadio" type="radio" class="flat" name="campoRadio"> Cuentas Operativas
                             </label>
                           </div>
                           <br/>
-                          <div class="col-xs-5 col-xs-offset-1">
-                            <!-- <br/><br/> -->
+                        </div>
+                        <div id="campoField" class="row">
+                          <div class="col-xs-6 col-xs-offset-3">
                             <form class="form-horizontal form-label-left">
                               <div class="form-group">
                                 <label>Ingrese Campo</label>
                                 <div class="select-style">
-                                  <select name="campoCampoInput" id="campoCampoInput"></select>
+                                  <select name="campoCampoInput" id="campoCampoInput" onchange="mostrarFieldsCampoSelect()"></select>
                                 </div>
                               </div>
                             </form>
                           </div>
-                          <!-- <div class="col-xs-3 col-xs-offset-1">
-                            <div class="row">
-                              <form class="form-horizontal form-label-left col-xs-12">
-                                <div class="form-group">
-                                  <label>Seleccionar Lista</label>
-                                  <div class="select-style">
-                                    <select id="listaCampoSelect" onchange="getElementsListsCamp($('#listaCampoSelect').val())">
-                                    </select>
-                                  </div>
-                                </div>
-                              </form>
-                            </div>
-                            <div class="row">
-                              <form class="form-horizontal form-label-left col-xs-12">
-                                <div class="form-group">
-                                  <label>Seleccionar Elemento (Opcional)</label>
-                                  <select id="listaCampoOptionsSelect" class="select2_multiple form-control" size="3" multiple="multiple">
-                                  </select>
-                                </div>
-                              </form>
-                            </div>
-                            <br/>
-                            <div class="row">
-                              <div id="wrapper">
-                                <label>Valor a aplicar de Elemento de Lista</label>
-                              </div>
-                            </div>
-                            <div class="row">
-                              <div id="wrapper">
-                                <label>
-                                  <input id="nombreElementoListaCampoRadio" type="radio" class="flat" name="listaCampoRadio" checked> Campo Nombre de Elemento
-                                </label>
-                                <label>
-                                  <input id="valorElementoListaCampoRadio" type="radio" class="flat" name="listaCampoRadio"> Campo Valor de Elemento
-                                </label>
-                              </div>
-                            </div>
-                          </div> -->
-                          <div class="col-xs-5 col-xs-offset-1">
+                          <br/><br/><br/><br/>
+                        </div>
+                        <div id="variableField" class="row" style="display: none;">
+                          <div class="col-xs-6 col-xs-offset-3">
                             <label>Seleccionar Variables</label>
                             <ul id="variablesCampoUL" class="to_do">
                               <li> <p><input id="resultadoDisable" type="radio" name="variablesCampo" class="flat" value="1"> Nueva Variable </p> </li>
                             </ul>
                           </div>
-                          <div class="col-xs-11 col-xs-offset-1">
-                            <div id="wrapper">
-                              <label>FOSEDE</label>
-                            </div>
-                            <div id="wrapper">
-                              <label>
-                                <input id="hastaFOSEDECampoRadio" type="radio" class="flat" name="fosedeRadio">HASTA FOSEDE
-                              </label>
-                              <label>
-                                <input id="mayorFOSEDECCampoRadio" type="radio" class="flat" name="fosedeRadio">MAYOR FOSEDE
-                              </label>
-                            </div>
+                          <br/><br/><br/><br/>
+                        </div>
+                        <div id="fosedeField" class="row" style="display: none;">
+                          <div id="wrapper">
+                            <label>FOSEDE</label>
+                          </div>
+                          <div id="wrapper">
+                            <label>
+                              <input id="hastaFOSEDECampoRadio" type="radio" class="flat" name="fosedeRadio">HASTA FOSEDE
+                            </label>
+                            <label>
+                              <input id="mayorFOSEDECCampoRadio" type="radio" class="flat" name="fosedeRadio">MAYOR FOSEDE
+                            </label>
+                          </div>
+                        </div>
+                        <div id="cuentasOperativasField" class="row" style="display: none;">
+                          <div id="wrapper">
+                            <label>Cuentas Operativas</label>
+                          </div>
+                          <div id="wrapper">
+                            <label>
+                              <input id="hastaFOSEDECuentasOpCampoRadio" type="radio" class="flat" name="fosedeRadio">HASTA FOSEDE
+                            </label>
+                            <label>
+                              <input id="mayorFOSEDECuentasOpCampoRadio" type="radio" class="flat" name="fosedeRadio">MAYOR FOSEDE
+                            </label>
+                            <label>
+                              <input id="hastaFOSEDENoCuentasOpCampoRadio" type="radio" class="flat" name="fosedeRadio">SIN CUENTAS OPERATIVAS MAYOR FOSEDE
+                            </label>
+                            <label>
+                              <input id="mayorFOSEDENoCuentasOpCampoRadio" type="radio" class="flat" name="fosedeRadio">CON CUENTAS OPERATIVAS MAYOR FOSEDE
+                            </label>
                           </div>
                         </div>
                         <hr class="style11">
 
-                        <div class="row">
+                        <div id="relacionalesField" class="row">
                           <h2 style="padding-left: 5%;">Operaci&oacute;n a Aplicar</h2>
-                          <div class="col-xs-6" style="border-right: 1px solid #4c4c4c;">
-                            <div id="wrapper" class="row">
-                              <h5>Relacionales</h5>
+                          <div id="wrapper" class="row">
+                            <h5>Relacionales</h5>
+                          </div>
+                          <br/>
+                          <div class="row">
+                            <div class="col-xs-2 col-xs-offset-1">
+                              <label>
+                                <input id="meOperadorRadio" type="radio" class="flat" checked name="operadorRadio"> &#60;
+                              </label>
                             </div>
-                            <br/>
-                            <div class="row">
-                              <div class="col-xs-2 col-xs-offset-1">
-                                <label>
-                                  <input id="meOperadorRadio" type="radio" class="flat" checked name="operadorRadio"> &#60;
-                                </label>
-                              </div>
-                              <div class="col-xs-2 col-xs-offset-1">
-                                <label>
-                                  <input id="meigOperadorRadio" type="radio" class="flat" name="operadorRadio"> &le;
-                                </label>
-                              </div>
-                              <div class="col-xs-2 col-xs-offset-1">
-                                <label>
-                                  <input id="maOperadorRadio" type="radio" class="flat" name="operadorRadio"> &#62;
-                                </label>
-                              </div>
-                              <div class="col-xs-2 col-xs-offset-1">
-                                <label>
-                                  <input id="maigOperadorRadio" type="radio" class="flat" name="operadorRadio"> &ge;
-                                </label>
-                              </div>
+                            <div class="col-xs-2 col-xs-offset-1">
+                              <label>
+                                <input id="meigOperadorRadio" type="radio" class="flat" name="operadorRadio"> &le;
+                              </label>
                             </div>
-                            <br/>
-                            <div class="row">
-                              <div class="col-xs-3 col-xs-offset-3">
-                                <label>
-                                  <input id="igOperadorRadio" type="radio" class="flat" name="operadorRadio"> =
-                                </label>
-                              </div>
-                              <div class="col-xs-3 col-xs-offset-3">
-                                <label>
-                                  <input id="noigOperadorRadio" type="radio" class="flat" name="operadorRadio"> &#8800;
-                                </label>
-                              </div>
+                            <div class="col-xs-2 col-xs-offset-1">
+                              <label>
+                                <input id="maOperadorRadio" type="radio" class="flat" name="operadorRadio"> &#62;
+                              </label>
+                            </div>
+                            <div class="col-xs-2 col-xs-offset-1">
+                              <label>
+                                <input id="maigOperadorRadio" type="radio" class="flat" name="operadorRadio"> &ge;
+                              </label>
                             </div>
                           </div>
-
-                          <div class="col-xs-6">
-                            <div id="wrapper" class="row">
-                              <h5>Algebraicos</h5>
+                          <br/>
+                          <div class="row">
+                            <div class="col-xs-3 col-xs-offset-3">
+                              <label>
+                                <input id="igOperadorRadio" type="radio" class="flat" name="operadorRadio"> =
+                              </label>
                             </div>
-                            <br/>
-                            <div class="row">
-                              <div class="col-xs-2 col-xs-offset-1">
-                                <label>
-                                  <input id="masOperadorRadio" type="radio" class="flat" name="operadorRadio"> +
-                                </label>
-                              </div>
-                              <div class="col-xs-2 col-xs-offset-1">
-                                <label>
-                                  <input id="porOperadorRadio" type="radio" class="flat" name="operadorRadio"> x
-                                </label>
-                              </div>
-                              <div class="col-xs-2 col-xs-offset-1">
-                                <label>
-                                  <input id="menOperadorRadio" type="radio" class="flat" name="operadorRadio"> -
-                                </label>
-                              </div>
-                              <div class="col-xs-2 col-xs-offset-1">
-                                <label>
-                                  <input id="entOperadorRadio" type="radio" class="flat" name="operadorRadio"> /
-                                </label>
-                              </div>
-                            </div>
-                            <br/>
-                            <div class="row">
-                              <div class="col-xs-2 col-xs-offset-5">
-                                <label>
-                                  <input id="asiOperadorRadio" type="radio" class="flat" name="operadorRadio"> =
-                                </label>
-                              </div>
+                            <div class="col-xs-3 col-xs-offset-3">
+                              <label>
+                                <input id="noigOperadorRadio" type="radio" class="flat" name="operadorRadio"> &#8800;
+                              </label>
                             </div>
                           </div>
                         </div>
+
+                        <div id="ln_solidOPERACION" class="ln_solid" style="display: none;"></div>
+                        
+                        <div id="algebraicosField" class="row" style="display: none;">
+                          <div id="wrapper" class="row">
+                            <h5>Algebraicos</h5>
+                          </div>
+                          <br/>
+                          <div class="row">
+                            <div class="col-xs-2 col-xs-offset-1">
+                              <label>
+                                <input id="masOperadorRadio" type="radio" class="flat" name="operadorRadio"> +
+                              </label>
+                            </div>
+                            <div class="col-xs-2 col-xs-offset-1">
+                              <label>
+                                <input id="porOperadorRadio" type="radio" class="flat" name="operadorRadio"> x
+                              </label>
+                            </div>
+                            <div class="col-xs-2 col-xs-offset-1">
+                              <label>
+                                <input id="menOperadorRadio" type="radio" class="flat" name="operadorRadio"> -
+                              </label>
+                            </div>
+                            <div class="col-xs-2 col-xs-offset-1">
+                              <label>
+                                <input id="entOperadorRadio" type="radio" class="flat" name="operadorRadio"> /
+                              </label>
+                            </div>
+                          </div>
+                          <!-- <br/>
+                          <div class="row">
+                            <div id="wrapper">
+                              <label>
+                                <input id="asiOperadorRadio" type="radio" class="flat" name="operadorRadio"> =
+                              </label>
+                            </div>
+                          </div> -->
+                        </div>
+                        <br/>
                         <hr class="style11">
 
                         <div class="row">
                           <h2 style="padding-left: 5%;">Valor a Aplicar <small>Valor a aplicar a un Campo Objetivo.</small></h2>
                           <div id="wrapper" class="row">
+                            <label id="elementoValorRadioLabel">
+                              <input id="elementoValorRadio" type="radio" class="flat" name="valorRadio" checked> Elemento de Lista o Lista
+                            </label>
+                            <label id="manualValorRadioLabel" style="display: none;">
+                              <input id="manualValorRadio" type="radio" class="flat" name="valorRadio"> N&uacute;mero
+                            </label>
                             <!-- <label>
-                              <input id="listaValorRadio" type="radio" class="flat" checked name="valorRadio"> Lista
-                            </label> -->
-                            <label>
-                              <input id="elementoValorRadio" type="radio" class="flat" name="valorRadio"> Elemento de Lista o Lista
-                            </label>
-                            <label>
-                              <input id="manualValorRadio" type="radio" class="flat" name="valorRadio"> Manual
-                            </label>
-                            <label>
                               <input id="fechaValorRadio" type="radio" class="flat" name="valorRadio"> Fecha
-                            </label>
-                            <label>
+                            </label> -->
+                            <!-- <label>
                               <input id="variableValorRadio" type="radio" class="flat" name="valorRadio"> Variable
-                            </label>
-                            <label>
+                            </label> -->
+                            <label id="factorValorRadioLabel" style="display: none;">
                               <input id="factorValorRadio" type="radio" class="flat" name="valorRadio"> Factor
                             </label>
+                            <br/>
                           </div>
-                          <br/>
-                          <div class="row">
-                            <!-- <div class="col-xs-6" style="border-right: 1px solid #4c4c4c; padding: 0% 5%;">
-                              <div id="wrapper" class="row">
-                                <h5>Listas</h5>
-                              </div>
-                              <br/>
-                              <div class="row">
-                                <form class="form-horizontal form-label-left">
-                                  <div class="form-group">
-                                    <label>Seleccionar Lista</label>
-                                    <div class="select-style">
-                                      <select id="listaValorSelect">
-                                      </select>
-                                    </div>
-                                  </div>
-                                </form>
-                              </div>
-                            </div> -->
 
-                            <div class="col-xs-6" style="padding: 0% 5%; border-right: 1px solid #4c4c4c;">
+                          <div id="listaValorField" class="row">
+                            <br/>
+                            <div class="col-xs-6 col-xs-offset-3">
                               <div id="wrapper" class="row">
                                 <h5>Elemento de Listas</h5>
                               </div>
-                              <br/>
                               <div class="row">
                                 <form class="form-horizontal form-label-left">
                                   <div class="form-group">
@@ -527,14 +494,17 @@
                                   </label>
                                 </div>
                               </div>
-
                             </div>
+                          </div>
 
-                            <div class="col-xs-6" style="padding: 0% 5%;">
+                          <div id="ln_solidValor1" class="ln_solid" style="display: none;"></div>
+
+                          <div id="manualField" class="row" style="display: none;">
+                            <br/>
+                            <div class="col-xs-6 col-xs-offset-3">
                               <div id="wrapper" class="row">
                                 <h5>Manual</h5>
                               </div>
-                              <br/>
                               <div class="row">
                                 <form class="form-horizontal form-label-left">
                                   <div class="form-group">
@@ -544,38 +514,53 @@
                                 </form>
                               </div>
                             </div>
+                            <br/>
                           </div>
-                          <br/>
+
+                          <div id="ln_solidValor2" class="ln_solid" style="display: none;"></div>
+
+                          <div id="factorField" class="row" style="display: none;">
+                            <br/>
+                            <div class="col-xs-6 col-xs-offset-3">
+                              <div id="wrapper" class="row">
+                                <h5>Factor</h5>
+                              </div>
+                              <div class="row">
+                                <div class="row tile_count">
+                                  <div class="tile_stats_count">
+                                    <div id="factorText" class="count text-center"></div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <br/>
+                          </div>
                           
-                          <div class="row">
-                            <div class="col-xs-6">
+                          <!-- <div class="row">
+                            <br/>
+                            <div class="col-xs-6 col-xs-offset-3">
                               <div id="wrapper" class="row">
                                 <h5>Fecha</h5>
                               </div>
-                              <!-- <br/><br/> -->
                               <div class="row">
                                 <div class="form-group col-sm-8 col-sm-offset-2">
-                                  <!-- <div id="date_inline"></div> -->
                                   <input type="text" class="form-control" id="diaValorInput" placeholder="D&iacute;a" data-inputmask="'mask': '9[9][9]'" data-inputmask-clearmaskonlostfocus="true">
                                   <span class="fa fa-calendar-o form-control-feedback right" aria-hidden="true"></span>
                                 </div>
                               </div>
-                              <!-- <div class="row">
-                                <div class="form-group col-sm-8 col-sm-offset-2">
-                                  <input type="text" class="form-control" id="mesValorInput" placeholder="Mes" data-inputmask="'mask': '9[9]'" data-inputmask-clearmaskonlostfocus="true">
-                                  <span class="fa fa-calendar form-control-feedback right" aria-hidden="true"></span>
-                                </div>
-                              </div> -->
                             </div>
-
-                            <div class="col-xs-6" style="padding: 0% 5%; border-left: 1px solid #4c4c4c;">
+                            <br/>
+                          </div> -->
+  
+                          <!-- <div class="row">
+                            <div class="col-xs-6 col-xs-offset-3">
                               <div id="wrapper" class="row">
                                 <label>Seleccionar Variables</label>
                               </div>
                               <ul id="variablesValorUL" class="to_do text-center">
                               </ul>
                             </div>
-                          </div>
+                          </div> -->
 
                           <!-- <div class="row">
                             <br/>

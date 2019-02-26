@@ -23,3 +23,14 @@ tr.details td.details-control {
 .addTopPadding{
 	margin-top: 5%;
 }
+
+#listaActivosSelect{
+	border-radius: 20px;
+	width: 80%;
+	display: block;
+	margin: 0 auto;
+}
+
+#listaActivosSelect option{
+	border-bottom-style: double;
+}

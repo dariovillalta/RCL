@@ -453,7 +453,7 @@
                   <button data-toggle="modal" href="#modalManual" type="button" class="col-xs-10 col-xs-offset-1 btn btn-primary" style="margin-top:1.6em;">Seleccionar Archivo</button>
                 </div>
                 <hr class="style11">
-                <h4>Crear listas de forma manual:</h4>
+                <!-- <h4>Crear listas de forma manual:</h4>
                 <div class="row">
                   <label class="control-label col-sm-2 col-sm-offset-1 col-xs-6" for="nameList">Nombre Lista: </label>
                   <div class="col-sm-3 col-xs-6">
@@ -467,10 +467,13 @@
                     <input id="listaManualContable" type="radio" class="flat" name="listaValorRadioALAC" value="1" checked/> Manual Contable
                   </label>
                   <label>
-                    <input id="lista" type="radio" class="flat" name="listaValorRadioALAC" value="3"/> Exclusiones FOSEDE
+                    <input id="cuentasContable" type="radio" class="flat" name="listaValorRadioALAC" value="2"/> Cuentas Operativas
                   </label>
                   <label>
-                    <input id="lista" type="radio" class="flat" name="listaValorRadioALAC" value="4"/> Otro
+                    <input id="exclusionesFosede" type="radio" class="flat" name="listaValorRadioALAC" value="3"/> Exclusiones FOSEDE
+                  </label>
+                  <label>
+                    <input id="otroFosede" type="radio" class="flat" name="listaValorRadioALAC" value="4"/> Otro
                   </label>
                 </div>
                 <br/>
@@ -490,20 +493,29 @@
                   <button type="button" onclick="deleteList()" class="btn btn-danger col-sm-1 col-xs-12"><span class="glyphicon glyphicon-trash"></span></button>
                 </div>
                 <br/>
-                <div class="ln_solid"></div>
+                <div class="ln_solid"></div> -->
+                <h4>Mantenimiento de listas:</h4>
+                <div class="row" style="padding-left:5%;">
+                  <label class="control-label" for="elementosLista">Agregar Elemento a Lista: </label>
+                </div>
                 <div class="row">
-                  <label class="control-label col-sm-2 col-sm-offset-1 col-xs-6" for="elementosLista">Agregar Elemento a Lista: </label>
-                  <div class="col-sm-3 col-xs-12">
+                  <div class="col-sm-4 col-sm-offset-1 col-xs-12">
                     <div class="select-style">
-                      <select id="elementosDeLista">
+                      <select id="elementosDeLista" onchange="showListsFields($('#elementosDeLista').val())">
                       </select>
                     </div>
                   </div>
-                  <div class="col-sm-offset-1 col-sm-3 col-xs-12">
-                    <input id="elementoNombre" type="text" class="form-control" placeholder="Ingrese nombre de elemento">
+                  <div class="col-sm-4 col-xs-12">
+                    <input id="elementoNombre" type="text" class="form-control" placeholder="Ingrese nombre de cuenta">
                   </div>
-                  <div class="col-sm-2 col-xs-12">
-                    <input id="elementoValor" type="text" class="form-control" placeholder="Ingrese valor">
+                  <div class="col-sm-3 col-xs-12">
+                    <input id="elementoValor" type="text" class="form-control" placeholder="Ingrese n&uacute;mero de cuenta">
+                  </div>
+                </div>
+                <div id="saldoCuenOpField" class="row" style="display: none;">
+                  <br/>
+                  <div class="col-sm-offset-5 col-sm-7 col-xs-12">
+                    <input id="elementoSaldo" type="text" class="form-control" placeholder="Ingrese saldo de cuenta">
                   </div>
                 </div>
                 <div class="row" id="wrapper">
@@ -535,7 +547,7 @@
                       </div>
                     </div>
                   </div>
-                  <div class="col-sm-6 col-xs-12">
+                  <div class="col-sm-7 col-xs-12">
                     <ul id="listsElements" class="to_do" style="max-height:50vh;overflow-y:scroll;">
                     </ul>
                   </div>
@@ -641,7 +653,7 @@
         <div class="col-md-12">
           <div class="x_panel">
             <div class="x_title">
-              <h2>Importar Activos L&iacute;quidos de Alta Calidad</h2>
+              <h2>Importar Balance General</h2>
               <ul class="nav navbar-right panel_toolbox">
                 <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
                 </li>
@@ -820,7 +832,7 @@
         <div class="col-md-12">
           <div class="x_panel">
             <div class="x_title">
-              <h2>Importar Dep&oacute;sitos</h2>
+              <h2>Importar Captaciones</h2>
               <ul class="nav navbar-right panel_toolbox">
                 <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
                 </li>
@@ -1124,9 +1136,9 @@
             <label>
               <input id="createListManual" type="radio" class="flat" name="listaRadio" checked value="1"> Manual Contable
             </label>
-            <!-- <label>
+            <label>
               <input id="createListCuentas" type="radio" class="flat" name="listaRadio" value="2"> Cuentas Operativas
-            </label> -->
+            </label>
             <label>
               <input id="createListExclusiones" type="radio" class="flat" name="listaRadio" value="3"> Exclusiones FOSEDE
             </label>

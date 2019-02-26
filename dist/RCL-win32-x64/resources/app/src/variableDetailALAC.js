@@ -2,6 +2,7 @@ const electron = require('electron');
 const path = require('path');
 const remote = require('electron').remote;
 const sql = require('mssql');
+const Trip = require('trip.js');
 
 const config = {
     user: 'admin',
@@ -48,22 +49,42 @@ function loadText () {
 	variableDeVariableReglaID = variable;
 	loadRules();
 	loadVariableObject();
+	showHints();
 }
 
-var listaID = 0;
+function showHints () {
+	var tripToChangePosition = new Trip([
+	  { sel : $("#listRules"), content : "Esta es la lista de reglas asociadas a esta variable", position : "n", expose : true },
+	  { sel : $("#listRules"), content : "Las operaciones se ejecutan en el orden que se ve en la lista, de arriba para abajo", position : "n", expose : true },
+	  { sel : $("#operadoresReglasALAC"), content : "Seleccione un operador para aplicarlo sobre una nueva variable", position : "n", expose : true },
+	  { sel : $("#operadoresReglasALAC"), content : "Se podrá seleccionar un operador si existe una variable con anterioridad", position : "n", expose : true },
+	  { sel : $("#agrupacionReglasALAC"), content : "Seleccione uno ó más elementos para crear una nueva variable", position : "n", expose : true },
+	  { sel : $("#agrupacionReglasALAC"), content : "Seleccione haciendo click, presionando SHIFT + click para seleccionar varios seguidos ó CONTROL + click para seleccionar varios", position : "n", expose : true }
+	], {
+		showNavigation : true,
+		showCloseBox : true,
+		delay : -1,
+		prevLabel: "Anterior",
+		nextLabel: "Siguiente",
+		skipLabel: "Saltar",
+		finishLabel: "Terminar"
+	});
+	tripToChangePosition.start();
+}
+
 var arregloActivos = [];
 var arregloReglas = [];
+var arregloListas = [];
+var ordenGlobal = 0;
 
 function loadRules () {
 	const transaction = new sql.Transaction( pool1 );
     transaction.begin(err => {
-        var rolledBack = false
- 
+        var rolledBack = false;
         transaction.on('rollback', aborted => {
             // emited with aborted === true
-     
-            rolledBack = true
-        })
+            rolledBack = true;
+        });
         const request = new sql.Request(transaction);
         request.query("select * from Reglas where variablePadre = "+variableDeVariableReglaID, (err, result) => {
             if (err) {
@@ -84,6 +105,15 @@ function loadRules () {
                     } else {
                     	arregloReglas = [];
                     }
+                    arregloReglas.sort(function(a, b){
+			            if(a.orden < b.orden) { return -1; }
+			            if(a.orden > b.orden) { return 1; }
+			            return 0;
+			        });
+                    for (var i = 0; i < arregloReglas.length; i++) {
+                    	if(ordenGlobal < arregloReglas[i])
+                    		ordenGlobal = arregloReglas[i].orden;
+                    };
                     renderRules();
                     permissionOpRadio();
                 });
@@ -95,13 +125,11 @@ function loadRules () {
 function loadVariableObject () {
 	const transaction = new sql.Transaction( pool1 );
     transaction.begin(err => {
-        var rolledBack = false
- 
+        var rolledBack = false;
         transaction.on('rollback', aborted => {
             // emited with aborted === true
-     
-            rolledBack = true
-        })
+            rolledBack = true;
+        });
         const request = new sql.Request(transaction);
         request.query("select * from VariablesdeVariablesFormula where ID = "+variableDeVariableReglaID, (err, result) => {
             if (err) {
@@ -153,15 +181,13 @@ function renderRules () {
 function loadManualContableID () {
 	const transaction = new sql.Transaction( pool1 );
     transaction.begin(err => {
-        var rolledBack = false
- 
+        var rolledBack = false;
         transaction.on('rollback', aborted => {
             // emited with aborted === true
-     
-            rolledBack = true
-        })
+            rolledBack = true;
+        });
         const request = new sql.Request(transaction);
-        request.query("select * from Listas where tipo = 1", (err, result) => {
+        request.query("select * from Listas where tipo = 1 or tipo = 2", (err, result) => {
             if (err) {
                 if (!rolledBack) {
                     console.log('error en rolledBack MainDB Variables');
@@ -175,19 +201,32 @@ function loadManualContableID () {
                     // ... error checks
                     console.log("Transaction committed MainDB Variables");
                     console.log(result);
+                    var listaID = 0;
                     if(result.recordset.length > 0){
+                    	arregloListas = result.recordset;
                     	listaID = result.recordset[0].ID;
                     } else {
+                    	arregloListas = [];
                     	listaID = 0;
                     }
-                    loadManualContable();
+                    loadManualContable(listaID);
+                    renderListsDropdown();
                 });
             }
         });
     }); // fin transaction
 }
 
-function loadManualContable () {
+function renderListsDropdown () {
+	$("#listaSelectReglasALAC").empty();
+	var content = '';
+	for (var i = 0; i < arregloListas.length; i++) {
+		content+='<option value="'+arregloListas[i].ID+'">'+arregloListas[i].nombre+'</option>';
+	};
+	$("#listaSelectReglasALAC").append(content);
+}
+
+function loadManualContable (listaID) {
 	const transaction = new sql.Transaction( pool1 );
     transaction.begin(err => {
         var rolledBack = false
@@ -268,15 +307,16 @@ function permissionOpRadio () {
 function saveRule () {
 	var reglaPadre = 0;
 	var esFiltro = '0';
+	ordenGlobal;
 	/*if(arregloReglas.length > 0) {
 		//
 	} else {*/
-		var campoObjetivo = '', arregloCuentas = [], campoValor = '', operacion = '', variables = '';
+		var campoObjetivo = 'AGRUPACION', arregloCuentas = [], campoValor = '', operacion = '', variables = '';
 		var posicionesDeActivos = $('#listaActivosSelect').val();
 		for (var i = 0; i < posicionesDeActivos.length; i++) {
 			arregloCuentas.push(arregloActivos[posicionesDeActivos[i]]);
 		};
-		campoValor = 'LISTA='+getSelectOptions(arregloCuentas, 0);
+		campoValor = 'AGRUPACIONLISTA='+getSelectOptions(arregloCuentas, 0);
 		const transaction = new sql.Transaction( pool1 );
 	    transaction.begin(err => {
 	        var rolledBack = false
@@ -287,7 +327,7 @@ function saveRule () {
 	            rolledBack = true
 	        })
 	        const request = new sql.Request(transaction);
-	        request.query("insert into Reglas (variablePadre, reglaPadre, campoObjetivo, operacion, valor, variables, esFiltro) values ("+variableDeVariableReglaID+","+reglaPadre+",'"+campoObjetivo+"','"+operacion+"','"+campoValor+"','"+variables+"','"+esFiltro+"')", (err, result) => {
+	        request.query("insert into Reglas (variablePadre, reglaPadre, campoObjetivo, operacion, valor, variables, esFiltro, orden) values ("+variableDeVariableReglaID+","+reglaPadre+",'"+campoObjetivo+"','"+operacion+"','"+campoValor+"','"+variables+"','"+esFiltro+"',"+(ordenGlobal+1)+")", (err, result) => {
 	            if (err) {
 	                if (!rolledBack) {
 	                    console.log('error en rolledBack New Variables');
