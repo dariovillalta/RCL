@@ -4,7 +4,7 @@ const remote = require('electron').remote;
 const sql = require('mssql');
 
 const config = {
-    user: 'admin',
+    user: 'SA',
     password: 'password111!',
     server: 'localhost',
     database: 'RCL_Dev',
@@ -22,6 +22,7 @@ const pool1 = new sql.ConnectionPool(config, err => {
 		console.log('pool loaded');
 		loadLists();
 		loadText();
+		loadVariablesMainDB();
 	}
 });
 
@@ -29,14 +30,12 @@ var variableDeVariableReglaID = null;
 var variableDeVariableObject = null;
 
 function loadText () {
-	var nombrePadre = getNombrePadre();
 	var nombreHijo = getNombreHijo();
 	var descripcionHijo = getDescripcionHijo();
 	var factorHijo = getFactornHijo();
 	var variable = getVariableDeVariableID();
 	var tabla = getTablaHijo();
 	loadSelectCampoObjetivo(tabla);
-	$("#variableName").text(nombrePadre);
 	$("#variableOfVariableName").text(nombreHijo);
 	$("#variableOfVariableName").css("white-space", "initial");
 	$("#variableOfVariableName").css("text-align", "justify");
@@ -94,6 +93,7 @@ function loadSelectCampoObjetivo (tabla) {
 var arregloListas = [];
 var arregloElementosDeListas = [];
 var arregloReglas = [];
+var ordenGlobal = 0;
 
 function loadRules () {
 	const transaction = new sql.Transaction( pool1 );
@@ -125,6 +125,15 @@ function loadRules () {
                     } else {
                     	arregloReglas = [];
                     }
+                    arregloReglas.sort(function(a, b){
+			            if(a.orden < b.orden) { return -1; }
+			            if(a.orden > b.orden) { return 1; }
+			            return 0;
+			        });
+                    for (var i = 0; i < arregloReglas.length; i++) {
+                    	if(ordenGlobal < arregloReglas[i].orden)
+                    		ordenGlobal = arregloReglas[i].orden;
+                    };
                     renderRules();
                 });
             }
@@ -168,22 +177,46 @@ function loadVariableObject () {
     }); // fin transaction
 }
 
-/*$("#resultadoDisable").on('ifChecked', function(event){
-	$("#resultadoGuardarVariable").attr('disabled',true);
-	$("#resultadoGuardarVariable").iCheck('uncheck');
-	alert("!");
-});*/
-/*$("#resultadoDisable").on('ifClicked', function(event){
-	alert("!");
-	console.log('event');
-	console.log(event);
-});
-$("#resultadoDisable").on( "click", function() {
-  console.log( $( this ).text() );
-});*/
-/*$("#resultadoDisable").on('ifUnchecked', function(event){
-	$("#resultadoGuardarVariable").attr('disabled',false);
-});*/
+var montoFosedeGlobal = null;
+
+function loadVariablesMainDB () {
+	const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false
+ 
+        transaction.on('rollback', aborted => {
+            // emited with aborted === true
+     
+            rolledBack = true
+        })
+        const request = new sql.Request(transaction);
+        request.query("select * from Variables", (err, result) => {
+            if (err) {
+                if (!rolledBack) {
+                    console.log('error en rolledBack MainDB Variables');
+                    transaction.rollback(err => {
+                        console.log('error en rolledBack');
+                        console.log(err);
+                    });
+                }
+            }  else {
+                transaction.commit(err => {
+                    // ... error checks
+                    console.log("Transaction committed MainDB Variables");
+                    console.log(result);
+                    if(result.recordset.length > 0){
+                    	if(result.recordset[0].montoFosede > 1)
+                    		montoFosedeGlobal = result.recordset[0].montoFosede;
+                    	else
+                    		montoFosedeGlobal = 0.00;
+                    } else {
+                    	montoFosedeGlobal = null;
+                    }
+                });
+            }
+        });
+    }); // fin transaction
+}
 
 
 function renderRules () {
@@ -291,10 +324,10 @@ function renderRules () {
 			        checkboxClass: 'icheckbox_flat-green',
 			        radioClass: 'iradio_flat-green'
 			    });
-			    if( $('#variablesCampoRadio').iCheck('update')[0].checked )
+			    /*if( $('#variablesCampoRadio').iCheck('update')[0].checked )
 		    		$("#variablesCampoUL :input").prop('disabled', false);
 		    	else
-		    		$("#variablesCampoUL :input").prop('disabled', true);
+		    		$("#variablesCampoUL :input").prop('disabled', true);*/
 		    	$("#resultadoDisable").on('ifChecked', function(event){
 					$("#resultadoGuardarVariable").attr('disabled',true);
 					$("#resultadoGuardarVariable").iCheck('uncheck');
@@ -359,10 +392,10 @@ function renderRules () {
 			        checkboxClass: 'icheckbox_flat-green',
 			        radioClass: 'iradio_flat-green'
 			    });
-			    if( $('#variableValorRadio').iCheck('update')[0].checked )
+			    /*if( $('#variableValorRadio').iCheck('update')[0].checked )
 		    		$("#variablesValorUL :input").prop('disabled', false);
 		    	else
-		    		$("#variablesValorUL :input").prop('disabled', true);
+		    		$("#variablesValorUL :input").prop('disabled', true);*/
 		    }
 		}
 	});
@@ -496,13 +529,6 @@ function renderElementsListsValueSelect () {
 	$("#elementoValorOptionSelect").append(selectHTML);
 }
 
-/*$('#date_inline').datepicker({
-	todayHighlight: true,
-	format: "dd-mm-yyyy",
-    viewMode: "days",
-    language: 'es'
-});*/
-
 /* *************	Radios	************* */
 $("#listaCampoSelect").prop('disabled', true);
 $("#listaCampoOptionsSelect").prop('disabled', true);
@@ -514,15 +540,15 @@ $("input[name='campoRadio']").on('ifClicked', function(event){
 		$('#variableField').hide();
 		$('#fosedeField').hide();
 		$( "#cuentasOperativasField" ).hide();
+		$( "#multField" ).hide();
 		$("#fosedeField :input").iCheck('uncheck');
-		$('#asiOperadorRadio').show();
 		mostrarFieldsCampoSelect();
 	} else if(event.currentTarget.id == "variablesCampoRadio"){
 		$( "#variableField" ).fadeIn( "slow", function() {
 		});
 		$('#campoField').hide();
 		$('#fosedeField').hide();
-		$('#asiOperadorRadio').show();
+		$( "#multField" ).hide();
 	} else if(event.currentTarget.id == "fosedeCampoRadio"){
 		$( "#fosedeField" ).fadeIn( "slow", function() {
 		});
@@ -531,10 +557,8 @@ $("input[name='campoRadio']").on('ifClicked', function(event){
 		$('#variableField').hide();
 		$( "#cuentasOperativasField" ).hide();
 		$('#relacionalesField').hide();
-		$('#asiOperadorRadio').hide();
 		$( "#ln_solidOPERACION" ).hide();
-		$( "#algebraicosField" ).fadeIn( "slow", function() {
-		});
+		$( "#algebraicosField" ).hide();
 		$( "#manualValorRadioLabel" ).hide();
 		$( "#manualField" ).hide();
 		$( "#factorField" ).fadeIn( "slow", function() {
@@ -543,6 +567,10 @@ $("input[name='campoRadio']").on('ifClicked', function(event){
 		$("#factorValorRadio").iCheck('check');
 		$( "#elementoValorRadioLabel" ).hide();
 		$( "#listaValorField" ).hide();
+		$( "#sumarSiField" ).hide();
+		$("#multOperadorRadio").iCheck('check');
+		$( "#multField" ).fadeIn( "slow", function() {
+		});
 	} else if(event.currentTarget.id == "cuentasOperativasCampoRadio"){
 		$( "#cuentasOperativasField" ).fadeIn( "slow", function() {
 		});
@@ -551,10 +579,8 @@ $("input[name='campoRadio']").on('ifClicked', function(event){
 		$('#campoField').hide();
 		$('#variableField').hide();
 		$('#relacionalesField').hide();
-		$('#asiOperadorRadio').hide();
 		$( "#ln_solidOPERACION" ).hide();
-		$( "#algebraicosField" ).fadeIn( "slow", function() {
-		});
+		$( "#algebraicosField" ).hide();
 		$( "#manualValorRadioLabel" ).hide();
 		$( "#manualField" ).hide();
 		$( "#factorField" ).fadeIn( "slow", function() {
@@ -563,6 +589,10 @@ $("input[name='campoRadio']").on('ifClicked', function(event){
 		$("#factorValorRadio").iCheck('check');
 		$( "#elementoValorRadioLabel" ).hide();
 		$( "#listaValorField" ).hide();
+		$( "#sumarSiField" ).hide();
+		$("#multOperadorRadio").iCheck('check');
+		$( "#multField" ).fadeIn( "slow", function() {
+		});
 	}
 });
 
@@ -582,11 +612,15 @@ function mostrarFieldsCampoSelect () {
 		});
 		$( "#factorValorRadioLabel" ).show();
 		$( "#factorField" ).hide();
+		$( "#sumarSiField" ).hide();
+		$("#meOperadorRadio").iCheck('check');
 	} else {
-		$( "#relacionalesField" ).fadeIn( "slow", function() {
+		$( "#sumarSiField" ).fadeIn( "slow", function() {
 		});
+		$( "#relacionalesField" ).hide();
 		$( "#algebraicosField" ).hide();
 		$( "#ln_solidOPERACION" ).hide();
+		$("#sumarSiOperadorRadio").iCheck('check');
 	}
 	if(campo == 'tipoPersona') {
 		renderListsSelect(4);
@@ -654,65 +688,20 @@ function saveRule () {
 	var esFiltro = '0';
 	if( $('#campoCampoRadio').is(':checked') )
 		campoObjetivo = 'COLUMNA='+$("#campoCampoInput").val();
-	else if( $('#listaCampoRadio').is(':checked') ){
-		var aplicarNombre = "1";
-		if($('#valorElementoListaCampoRadio').is(':checked'))
-			aplicarNombre = "0";
-		if( $('#listaCampoOptionsSelect').val() != null ){
-			var idCamposSeleccionas = $('#listaCampoOptionsSelect').val();
-			var valoresCamposSeleccionas =  arregloElementosDeListasCampo.filter(function( object ) {
-												for (var i = 0; i < idCamposSeleccionas.length; i++) {
-													if(idCamposSeleccionas[i] == object.ID)
-														return true;
-												};
-											    return false;
-											});
-			campoObjetivo = 'LISTA='+getSelectOptions(valoresCamposSeleccionas, aplicarNombre);
-		} else {
-			campoObjetivo = 'LISTA='+getSelectOptions(arregloElementosDeListasCampo, aplicarNombre);
-		}
-	} else if( $('#fosedeCampoRadio').is(':checked') ) {
+	else if( $('#fosedeCampoRadio').is(':checked') ) {
 		if( $('#hastaFOSEDECampoRadio').is(':checked') )
 			campoObjetivo = 'hastaFOSEDE';
 		else
 			campoObjetivo = 'mayorFOSEDE';
 	} else if( $('#cuentasOperativasCampoRadio').is(':checked') ) { 
 		if( $('#hastaFOSEDECuentasOpCampoRadio').is(':checked') )
-			campoObjetivo = 'CUENTAS=hastaFOSEDE';
+			campoObjetivo = 'CONCUENTAS=hastaFOSEDE';
+		else if( $('#mayorFOSEDECuentasOpCampoRadio').is(':checked') )
+			campoObjetivo = 'CONCUENTAS=mayorFOSEDE';
+		else if( $('#hastaFOSEDENoCuentasOpCampoRadio').is(':checked') )
+			campoObjetivo = 'SINCUENTAS=hastaFOSEDE';
 		else
-			campoObjetivo = 'CUENTAS=mayorFOSEDE';
-	} else {
-		var valorVariables = $("input[name='variablesCampo']:checked").val();
-		//listaValorVariableRadio
-		if(valorVariables == 1)
-			campoObjetivo = "VARIABLE=RESULTADO";
-		else if(valorVariables == 2) {
-			var valorListaVariable = $("input[name='listaCampoVariableRadioCAMPOOBJETIVO']:checked").val();
-			if(valorListaVariable != null){
-				if(campoObjetivo.length > 0)
-					campoObjetivo += ",OBJETIVO$"+valorListaVariable;
-				else
-					campoObjetivo = "VARIABLE=OBJETIVO$"+valorListaVariable;
-			} else {
-				if(campoObjetivo.length > 0)
-					campoObjetivo += ",OBJETIVO"
-				else
-					campoObjetivo = "VARIABLE=OBJETIVO";
-			}
-		} else {
-			var	valorListaVariable = $("input[name='listaCampoVariableRadioVALOR']:checked").val();
-			if(valorListaVariable != null){
-				if(campoObjetivo.length > 0)
-					campoObjetivo += ",VALOR$"+valorListaVariable;
-				else
-					campoObjetivo = "VARIABLE=VALOR$"+valorListaVariable;
-			} else {
-				if(campoObjetivo.length > 0)
-					campoObjetivo += ",VALOR"
-				else
-					campoObjetivo = "VARIABLE=VALOR";
-			}
-		}
+			campoObjetivo = 'SINCUENTAS=mayorFOSEDE';
 	}
 	if( $('#meOperadorRadio').is(':checked') )
 		operacion = '<';
@@ -734,17 +723,15 @@ function saveRule () {
 		operacion = '-';
 	else if( $('#entOperadorRadio').is(':checked') )
 		operacion = '/';
-	else
-		operacion = '=';
-	/*if( $('#listaValorRadio').is(':checked') )
-		valor = getSelectOptions(arregloElementosDeListasCampo);
-	else*/ if( $('#manualValorRadio').is(':checked') )
-		valor = "COLUMNA="+$("#manualValorInput").val().toLowerCase();
-	else if( $('#fechaValorRadio').is(':checked') ) {
-		//valor = $("#date_inline").datepicker( 'getDate' );
-		valor = 'DIA='+$("#diaValorInput").val();
-		//valor += ',MES='+$("#mesValorInput").val();
-	} else if( $('#elementoValorRadio').is(':checked') ) {
+	else if( $('#sumarSiOperadorRadio').is(':checked') )
+		operacion = 'en';
+	else if( $('#sumarSiNoOperadorRadio').is(':checked') )
+		operacion = 'no';
+	else if( $('#multOperadorRadio').is(':checked') )
+		operacion = '*';
+	if( $('#manualValorRadio').is(':checked') )
+		valor = "COLUMNA="+$("#manualValorInput").val().split(" ")[1];
+	else if( $('#elementoValorRadio').is(':checked') ) {
 		var elementosSelect = $("#elementoValorOptionSelect").val();
 		var elementos = '';
 		var aplicarNombre = "1";
@@ -752,62 +739,18 @@ function saveRule () {
 			aplicarNombre = "0";
 		if(elementosSelect != null) {
 			for (var i = 0; i < elementosSelect.length; i++) {
-				elementos+=arregloElementosDeListasValor[parseInt(elementosSelect[i])].nombre + "-" + arregloElementosDeListasValor[parseInt(elementosSelect[i])].valor + '$' +aplicarNombre;
+				if(aplicarNombre == "1")
+					elementos+=arregloElementosDeListasValor[parseInt(elementosSelect[i])].nombre;
+				else
+					elementos+=arregloElementosDeListasValor[parseInt(elementosSelect[i])].valor;
 				if( (i+1) < elementosSelect.length )
 					elementos+=',';
 			};
 			valor = 'LISTA=' + elementos;
 		} else 
 			valor = 'LISTA=' + getSelectOptions(arregloElementosDeListasValor, aplicarNombre);
-	} else if( $('#variableValorRadio').is(':checked') ) {
-		var valorVariables = $("input[name='variablesValor']:checked").val();
-		console.log('valorVariables');
-		console.log(valorVariables);
-		if(valorVariables == 1)
-			valor = "VARIABLE=RESULTADO";
-		else if(valorVariables == 2) {
-			var valorListaVariable = $("input[name='listaValorVariableRadioCAMPOOBJETIVO']:checked").val();
-			if(valorListaVariable != null) {
-				if(valor.length > 0)
-					valor += ",OBJETIVO$"+valorListaVariable;
-				else
-					valor = "VARIABLE=OBJETIVO$"+valorListaVariable;
-			} else {
-				if(valor.length > 0)
-					valor += ",OBJETIVO";
-				else
-					valor = "VARIABLE=OBJETIVO";
-			}
-		} else {
-			var	valorListaVariable = $("input[name='listaValorVariableRadioVALOR']:checked").val();
-			if(valorListaVariable != null) {
-				if(valor.length > 0)
-					valor += ",VALOR$"+valorListaVariable;
-				else
-					valor = "VARIABLE=VALOR$"+valorListaVariable;
-			} else {
-				if(valor.length > 0)
-					valor += ",VALOR";
-				else
-					valor = "VARIABLE=VALOR";
-			}
-		}
-	} else
+	} else if( $('#factorValorRadio').is(':checked') )
 		valor = "FACTOR="+variableDeVariableObject.factor;
-	if( $('#resultadoGuardarVariable').is(':checked') )
-		variables = 'VARIABLES//RESULTADO';
-	if( $('#campoGuardarVariable').is(':checked') ){
-		if(variables.length == 0)
-			variables = 'VARIABLES//CAMPOOBJETIVO('+campoObjetivo+')';
-		else
-			variables += '#CAMPOOBJETIVO('+campoObjetivo+')';
-	}
-	if( $('#valorGuardarVariable').is(':checked') ){
-		if(variables.length == 0)
-			variables = 'VARIABLES//VALOR('+valor+')';
-		else
-			variables += '#VALOR('+valor+')';
-	}
 	console.log("-_------___----");
 	console.log(reglaPadre);
 	console.log(campoObjetivo);
@@ -815,6 +758,8 @@ function saveRule () {
 	console.log(valor);
 	console.log(variables);
 	console.log(variableDeVariableReglaID);
+	console.log(ordenGlobal);
+	console.log(ordenGlobal+1);
 	console.log("-_------___----");
 	if(campoObjetivo.length > 0 && campoObjetivo.length < 1001) {
 		if(operacion.length > 0 && operacion.length < 3) {
@@ -829,7 +774,7 @@ function saveRule () {
 			            rolledBack = true
 			        })
 			        const request = new sql.Request(transaction);
-			        request.query("insert into Reglas (variablePadre, reglaPadre, campoObjetivo, operacion, valor, variables, esFiltro) values ("+variableDeVariableReglaID+","+reglaPadre+",'"+campoObjetivo+"','"+operacion+"','"+valor+"','"+variables+"','"+esFiltro+"')", (err, result) => {
+			        request.query("insert into Reglas (variablePadre, reglaPadre, campoObjetivo, operacion, valor, variables, esFiltro, orden) values ("+variableDeVariableReglaID+","+reglaPadre+",'"+campoObjetivo+"','"+operacion+"','"+valor+"','"+variables+"','"+esFiltro+"',"+(ordenGlobal+1)+")", (err, result) => {
 			            if (err) {
 			                if (!rolledBack) {
 			                    console.log('error en rolledBack New Variables');
@@ -906,7 +851,10 @@ function saveRule () {
 function getSelectOptions (array, aplicarNombre) {
 	var textoOption = '';
 	for (var i = 0; i < array.length; i++) {
-		textoOption+=array[i].nombre + "-" + array[i].valor + '$' + aplicarNombre;
+		if(aplicarNombre == "1")
+			textoOption+=array[i].nombre;
+		else
+			textoOption+=array[i].valor;
 		if( (i+1) < array.length )
 			textoOption+=',';
 	};
@@ -933,6 +881,11 @@ function goHome () {
 function goUsers () {
 	$("#app_root").empty();
     $("#app_root").load("src/users.html");
+}
+
+function goConnections () {
+    $("#app_root").empty();
+    $("#app_root").load("src/importaciones.html");
 }
 
 function logout () {
@@ -974,25 +927,9 @@ function showRules () {
 		output+=rulesArray[i];
 	}
 	$("#descr1").val(output);
-	/*var output = '';
-	for (var i = 0; i < arregloReglas.length; i++) {
-		var objetivo = '';
-		if(arregloReglas[i].campoObjetivo.indexOf('COLUMNA') == 0)
-			objetivo = 'arreglo[i].'+arregloReglas[i].campoObjetivo;
-		else if(arregloReglas[i].campoObjetivo.indexOf('LISTA') == 0) {
-			objetivo = 'arreglo[i].'+arregloReglas[i].campoObjetivo;
-		}
-		if(arregloReglas[i].operacion=="-" || arregloReglas[i].operacion=="+" || arregloReglas[i].operacion=="*" || arregloReglas[i].operacion=="/")
-			output+=arregloReglas[i].campoObjetivo +" "+ arregloReglas[i].operacion +" "+ arregloReglas[i].valor+"\n";
-		else
-			output+="if ( "+arregloReglas[i].campoObjetivo +" "+ arregloReglas[i].operacion +" "+ arregloReglas[i].valor +" )";
-		arregloReglas[i]
-	};
-	$("#descr1").val(output);*/
 }
 
 function campoObjetivo (regla, arreglo, tabs) {
-	console.log('yeahhhhh');
 	var esCondicion = false;
 	if(regla.operacion=="-" || regla.operacion=="+" || regla.operacion=="*" || regla.operacion=="/" || regla.operacion=="=")
 		esCondicion = false;
@@ -1002,8 +939,6 @@ function campoObjetivo (regla, arreglo, tabs) {
 	var textVariables = [];
 	if(regla.variables.length > 0)
 		hasVariables = true;
-	console.log('regla');
-	console.log(regla);
 	var tabsText = '';
 	for (var i = 0; i < tabs; i++) {
 		tabsText+='\t';
@@ -1014,526 +949,98 @@ function campoObjetivo (regla, arreglo, tabs) {
 			var campo = regla.campoObjetivo.split("=")[1];
 
 			// Agregando campo Operacion
-			arreglo.push(tabsText+"if ( "+campo+" "+regla.operacion);
+			if(regla.operacion=="en" || regla.operacion=="no")
+				arreglo.push(tabsText+"if ( "+campo+".localeCompare('");
+			else
+				arreglo.push(tabsText+"if ( "+campo+" "+regla.operacion);
 			//posicionesIF.push(arreglo.length-1);
 			posicionesIF.push(arreglo.length);
 		} else {
 			var campo = regla.campoObjetivo.split("=")[1];
 
 			// Agregando campo Operacion
-			if(regla.operacion=="=")
-				arreglo.push(tabsText+campo+" "+regla.operacion);
-			else
-				arreglo.push(tabsText+campo+" = "+campo+" "+regla.operacion);
+			arreglo.push(tabsText+campo+" = "+campo+" "+regla.operacion);
 		}
-		if(hasVariables)
-			textVariables.push(campo + " " + regla.operacion);
-	} else if(regla.campoObjetivo.indexOf('LISTA') == 0) {
-		var arregloLista = regla.campoObjetivo.split("=")[1].split(",");
-		if(esCondicion) {
-			// Agregando campo Operacion
-			if(regla.operacion == "!=") {
-				for (var i = 0; i < arregloLista.length; i++) {
-					var opcionAMostrar = arregloLista[i].split("$");
-					var valorElemento = arregloLista[i];
-					if(opcionAMostrar.length > 1) {
-						if(opcionAMostrar[1] == "1")
-							valorElemento = opcionAMostrar[0].split("-")[0];
-						else
-							valorElemento = opcionAMostrar[0].split("-")[1];
-					}
-					arreglo.push("\n"+tabsText+"if ( "+valorElemento+" "+regla.operacion);
-					if(posicionesIF.length>0)
-						posicionesIF.push(posicionesIF[posicionesIF.length-1]+2);
-					else
-						posicionesIF.push(1);
-					if(hasVariables)
-						textVariables.push(valorElemento + " " + regla.operacion);
-				};
-			} else {
-				for (var i = 0; i < arregloLista.length; i++) {
-					var opcionAMostrar = arregloLista[i].split("$");
-					var valorElemento = arregloLista[i];
-					if(opcionAMostrar.length > 1){
-						if(opcionAMostrar[1] == "1")
-							valorElemento = opcionAMostrar[0].split("-")[0];
-						else
-							valorElemento = opcionAMostrar[0].split("-")[1];
-					}
-					arreglo.push("\n"+tabsText+"if ( "+valorElemento+" "+regla.operacion);
-					if(posicionesIF.length>0)
-						posicionesIF.push(posicionesIF[posicionesIF.length-1]+2);
-					else
-						posicionesIF.push(1);
-					if(hasVariables)
-						textVariables.push(valorElemento + " " + regla.operacion);
-				};
-			}
-		} else {
-			// Agregando campo Operacion
-			for (var i = 0; i < arregloLista.length; i++) {
-				var opcionAMostrar = arregloLista[i].split("$");
-				var valorElemento = arregloLista[i];
-				if(opcionAMostrar.length > 1){
-					if(opcionAMostrar[1] == "1")
-						valorElemento = opcionAMostrar[0].split("-")[0];
-					else
-						valorElemento = opcionAMostrar[0].split("-")[1];
-				}
-				if(regla.operacion=="=")
-					arreglo.push("\n"+tabsText+valorElemento+" "+regla.operacion);
-				else
-					arreglo.push("\n"+tabsText+valorElemento+" = "+valorElemento+" "+regla.operacion);
-				if(hasVariables)
-					textVariables.push(valorElemento + " " + regla.operacion);
-			};
-		}
-	} else if(regla.campoObjetivo.indexOf('VARIABLE') == 0) {
-		var arregloVariable = regla.campoObjetivo.split("=")[1].split(",");
-		if(esCondicion) {
-			// Agregando campo Operacion
-			for (var i = 0; i < arregloVariable.length; i++) {
-				var textCreatedVariables = '';
-				if(arregloVariable[i].indexOf("RESULTADO") == 0 )
-					textCreatedVariables = 'variableResultado'+regla.reglaPadre;
-				else if(arregloVariable[i].indexOf("OBJETIVO") == 0 )
-					textCreatedVariables = 'variableObjetivo'+regla.reglaPadre;
-				else if(arregloVariable[i].indexOf("VALOR") == 0 )
-					textCreatedVariables = 'variableValor'+regla.reglaPadre;
-				var valorLista = '';
-				if(arregloVariable[i].indexOf("$") > 0 ) {
-					if(arregloVariable[i].split("$")[1] == "1")
-						valorLista = ".nombre";
-					else
-						valorLista = ".valor";
-				}
-				arreglo.push(tabsText+"if ( "+textCreatedVariables+valorLista+" "+regla.operacion);
-				posicionesIF.push(arreglo.length);
-				if(hasVariables)
-					textVariables.push(textCreatedVariables+valorLista + " " + regla.operacion);
-			};
-		} else {
-			// Agregando campo Operacion
-			for (var i = 0; i < arregloVariable.length; i++) {
-				var textCreatedVariables = '';
-				if(arregloVariable[i].indexOf("RESULTADO") == 0 )
-					textCreatedVariables = 'variableResultado'+regla.reglaPadre;
-				else if(arregloVariable[i].indexOf("OBJETIVO") == 0 )
-					textCreatedVariables = 'variableObjetivo'+regla.reglaPadre;
-				else if(arregloVariable[i].indexOf("VALOR") == 0 )
-					textCreatedVariables = 'variableValor'+regla.reglaPadre;
-				var valorLista = '';
-				if(arregloVariable[i].indexOf("$") > 0 ) {
-					if(arregloVariable[i].split("$")[1] == "1")
-						valorLista = ".nombre";
-					else
-						valorLista = ".valor";
-				}
-				if(regla.operacion=="=")
-					arreglo.push(tabsText+textCreatedVariables+valorLista+" "+regla.operacion);
-				else
-					arreglo.push(tabsText+textCreatedVariables+valorLista+" = "+textCreatedVariables+valorLista+" "+regla.operacion);
-				if(hasVariables)
-					textVariables.push(textCreatedVariables+valorLista + " " + regla.operacion);
-			};
-		}
+	} else if(regla.campoObjetivo.indexOf('hastaFOSEDE') == 0) {
+		arreglo.push(tabsText+"if ( arreglo.saldo > "+montoFosedeGlobal+" )");
+		arreglo.push("\n\t"+tabsText+variableDeVariableObject.nombre+" = arreglo.saldo - "+montoFosedeGlobal);
+		arreglo.push("\n"+tabsText+"total"+variableDeVariableObject.nombre+" = "+variableDeVariableObject.nombre+" * "+(montoFosedeGlobal/100));
+	} else if(regla.campoObjetivo.indexOf('mayorFOSEDE') == 0) {
+		arreglo.push(tabsText+"if ( arreglo.saldo > "+montoFosedeGlobal+" )");
+		arreglo.push("\n\t"+tabsText+variableDeVariableObject.nombre+" = arreglo.saldo - "+montoFosedeGlobal);
+		arreglo.push("\n"+tabsText+"total"+variableDeVariableObject.nombre+" = "+variableDeVariableObject.nombre+" * "+(montoFosedeGlobal/100));
 	}
+
 	console.log('arreglo Campo');
 	console.log(arreglo);
 	for (var i = 0; i < arreglo.length; i++) {
 		console.log(arreglo[i]);
 	};
 
-	if(regla.valor.indexOf('COLUMNA') == 0) {
-		if(esCondicion) {
-			var valor = regla.valor.split("=")[1];
-			for (var i = 0; i < arreglo.length; i++) {
-				arreglo[i] += " "+valor+" )  {";
-				textVariables[i] += " " + valor;
-			};
-			/*arreglo[arreglo.length-1] += " "+valor+" )  {";
-			textVariables[textVariables.length-1] += " " + valor;*/
-		} else {
-			var valor = regla.valor.split("=")[1];
-			for (var i = 0; i < arreglo.length; i++) {
-				arreglo[i] += " "+valor+" )  {";
-				textVariables[i] += " " + valor;
-			};
-		}
-	} else if(regla.valor.indexOf('LISTA') == 0) {
+	if(regla.valor.indexOf('LISTA') == 0) {
 		if(esCondicion) {
 			var arregloLista = regla.valor.split("=")[1].split(",");
 			var copiaRegla = arreglo.slice();
-			var copiaTextVariable = textVariables.slice();
 			var tamArreglo = arreglo.length;
-			if(regla.operacion == "!=") {
+			if(regla.operacion == "no") {
 				for (var j = 0; j < tamArreglo; j++) {
 					for (var i = 0; i < arregloLista.length; i++) {
-						var opcionAMostrar = arregloLista[i].split("$");
-						var valorElemento = arregloLista[i];
-						if(opcionAMostrar.length > 1){
-							if(opcionAMostrar[1] == "1")
-								valorElemento = opcionAMostrar[0].split("-")[0];
-							else
-								valorElemento = opcionAMostrar[0].split("-")[1];
-						}
 						if(i==0) {
 							var textoFinal = '';
 							if(i+1 == arregloLista.length)
 								textoFinal = " ) {";
-							arreglo[j] += " "+valorElemento + textoFinal;
-							textVariables[j] += " " + valorElemento;
+							arreglo[j] +=arregloLista[i] + "')" + textoFinal;
 						} else {
 							var textoFinal = '';
 							if(i+1 == arregloLista.length)
 								textoFinal = " ) {";
-							arreglo[j] += " && "+copiaRegla[j].split(" ( ")[1]+" "+valorElemento+textoFinal;
-							textVariables[j] += " && " + valorElemento;
+							arreglo[j] += " && "+copiaRegla[j].split(" ( ")[1]+arregloLista[i]+"')"+textoFinal;
 						}
 					}
 				};
 			} else {
 				for (var i = 0; i < arregloLista.length; i++) {
-					var opcionAMostrar = arregloLista[i].split("$");
-					var valorElemento = arregloLista[i];
-					if(opcionAMostrar.length > 1){
-						if(opcionAMostrar[1] == "1")
-							valorElemento = opcionAMostrar[0].split("-")[0];
-						else
-							valorElemento = opcionAMostrar[0].split("-")[1];
-					}
 					for (var j = 0; j < tamArreglo; j++) {
 						if(i==0) {
-							arreglo[j] += " "+valorElemento + " ) {";
-							textVariables[j] += " " + valorElemento;
+							arreglo[j] +=arregloLista[i] + "')" + " ) {";
 						} else {
-							arreglo.push("\n"+copiaRegla[j]+" "+valorElemento+" ) {");
+							arreglo.push("\n"+copiaRegla[j]+arregloLista[i]+"')"+" ) {");
 							posicionesIF.push(posicionesIF[posicionesIF.length-1]+2);
-							textVariables.push(copiaTextVariable[j] + " " + valorElemento);
 						}
 					};
 				};
 			}
-		} else {
-			var arregloLista = regla.valor.split("=")[1].split(",");
-			var copiaRegla = arreglo[arreglo.length-1];
-			var copiaTextVariable = textVariables[textVariables.length-1];
-			var tamArreglo = arreglo.length;
-			for (var i = 0; i < arregloLista.length; i++) {
-				for (var j = 0; j < tamArreglo; j++) {
-					var opcionAMostrar = arregloLista[i].split("$");
-					var valorElemento = arregloLista[i];
-					if(opcionAMostrar.length > 1){
-						if(opcionAMostrar[1] == "1")
-							valorElemento = opcionAMostrar[0].split("-")[0];
-						else
-							valorElemento = opcionAMostrar[0].split("-")[1];
-					}
-					if(i==0) {
-						arreglo[j] += " "+valorElemento + ";";
-						textVariables[j] += " " + valorElemento;
-					} else {
-						arreglo.push("\n"+copiaRegla+" "+valorElemento + ";");
-						textVariables.push(copiaTextVariable + " " + valorElemento);
-					}
-				};
-			};
 		}
 	} else if(regla.valor.indexOf('FACTOR') == 0) {
 		if(esCondicion) {
 			var factorValor = regla.valor.split("=")[1];
 			for (var i = 0; i < arreglo.length; i++) {
 				arreglo[i] += " "+factorValor + " ) {";
-				textVariables[i] += " " + factorValor;
 			};
 		} else {
 			var factorValor = regla.valor.split("=")[1];
 			for (var i = 0; i < arreglo.length; i++) {
 				arreglo[i] += " "+factorValor + ";";
-				textVariables[i] += " " + factorValor;
 			};
 		}
-	} else if(regla.valor.indexOf('DIA') == 0) {
+	} else if(regla.valor.indexOf('COLUMNA') == 0) {
 		if(esCondicion) {
-			var diaValor = regla.valor.split("=")[1];
+			var columnaValor = regla.valor.split("=")[1];
 			for (var i = 0; i < arreglo.length; i++) {
-				arreglo[i] += " "+diaValor + " ) {";
-				textVariables[i] += " " + diaValor;
+				arreglo[i] += " "+columnaValor + " ) {";
 			};
 		} else {
-			var diaValor = regla.valor.split("=")[1];
+			var columnaValor = regla.valor.split("=")[1];
 			for (var i = 0; i < arreglo.length; i++) {
-				arreglo[i] += " "+diaValor + ";";
-				textVariables[i] += " " + diaValor;
-			};
-		}
-	} else if(regla.valor.indexOf('VARIABLE') == 0) {
-		var arregloVariable = regla.valor.split("=")[1].split(",");
-		if(esCondicion) {
-			// Agregando campo Operacion
-			for (var i = 0; i < arregloVariable.length; i++) {
-				var textCreatedVariables = '';
-				if(arregloVariable[i].indexOf("RESULTADO") == 0 )
-					textCreatedVariables = 'variableResultado'+regla.reglaPadre;
-				else if(arregloVariable[i].indexOf("OBJETIVO") == 0 )
-					textCreatedVariables = 'variableObjetivo'+regla.reglaPadre;
-				else if(arregloVariable[i].indexOf("VALOR") == 0 )
-					textCreatedVariables = 'variableValor'+regla.reglaPadre;
-				var valorLista = '';
-				if(arregloVariable[i].indexOf("$") > 0 ) {
-					if(arregloVariable[i].split("$")[1] == "1")
-						valorLista = ".nombre";
-					else
-						valorLista = ".valor";
-				}
-				for (var k = 0; k < arreglo.length; k++) {
-					arreglo[k] += " "+textCreatedVariables + valorLista + " ) {";
-				};
-			};
-		} else {
-			// Agregando campo Operacion
-			for (var i = 0; i < arregloVariable.length; i++) {
-				var textCreatedVariables = '';
-				if(arregloVariable[i].indexOf("RESULTADO") == 0 )
-					textCreatedVariables = 'variableResultado'+regla.reglaPadre;
-				else if(arregloVariable[i].indexOf("OBJETIVO") == 0 )
-					textCreatedVariables = 'variableObjetivo'+regla.reglaPadre;
-				else if(arregloVariable[i].indexOf("VALOR") == 0 )
-					textCreatedVariables = 'variableValor'+regla.reglaPadre;
-				var valorLista = '';
-				if(arregloVariable[i].indexOf("$") > 0 ) {
-					if(arregloVariable[i].split("$")[1] == "1")
-						valorLista = ".nombre";
-					else
-						valorLista = ".valor";
-				}
-				for (var k = 0; k < arreglo.length; k++) {
-					arreglo[k] += " "+textCreatedVariables + valorLista + ";";
-				};
-			};
-		}
-		if(hasVariables) {
-			for (var i = 0; i < arregloVariable.length; i++) {
-				textVariables.push(arregloVariable[i] + " " + regla.operacion);
+				arreglo[i] += " "+columnaValor + ";";
 			};
 		}
 	}
-	console.log('arreglo Valor');
-	console.log(arreglo);
-	for (var i = 0; i < arreglo.length; i++) {
-		console.log(arreglo[i]);
-	};
-
-	console.log('arreglo posicionesIF');
-	console.log(posicionesIF);
-	for (var i = 0; i < posicionesIF.length; i++) {
-		console.log(posicionesIF[i]);
-	};
 
 	var cuerpo = arregloReglas.filter(function( object ) {
 	    return object.reglaPadre == regla.ID;
 	});
-	if(regla.variables.length > 0){
-		var variables = regla.variables.split("//")[1].split("#");
-		var tamArreglo = arreglo.length;
-		var contador = 0;
-		for (var j = 0; j < tamArreglo; j++) {
-			for (var i = 0; i < variables.length; i++) {
-				if(j == 0)
-					contador = 1;
-				else 
-					contador = 0;
-				if(variables[i].indexOf('RESULTADO') == 0) {
-					var variablesText = '';
-					if(esCondicion) {
-						console.log('textVariables[j]');
-						console.log(textVariables[j]);
-						variablesText = textVariables[j];
-					} else {
-						if( textVariables[j].indexOf(">") > 0 ){
-							variablesText+=textVariables[j].split(">")[0];
-						} else if( textVariables[j].indexOf(">=") > 0 ) {
-							variablesText+=textVariables[j].split(">=")[0];
-						} else if( textVariables[j].indexOf("<") > 0 ) {
-							variablesText+=textVariables[j].split("<")[0];
-						} else if( textVariables[j].indexOf("<=") > 0 ) {
-							variablesText+=textVariables[j].split("<=")[0];
-						} else if( textVariables[j].indexOf("==") > 0 ) {
-							variablesText+=textVariables[j].split("==")[0];
-						} else if( textVariables[j].indexOf("=") > 0 ) {
-							variablesText+=textVariables[j].split("=")[0];
-						} else if( textVariables[j].indexOf("!=") > 0 ) {
-							variablesText+=textVariables[j].split("!=");
-						}  else if( textVariables[j].indexOf("*") > 0 ) {
-							variablesText+=textVariables[j].split("*")[0];
-						} else if( textVariables[j].indexOf("+") > 0 ) {
-							variablesText+=textVariables[j].split("+")[0];
-						} else if( textVariables[j].indexOf("-") > 0 ) {
-							variablesText+=textVariables[j].split("-")[0];
-						} else if( textVariables[j].indexOf("/") > 0) {
-							variablesText+=textVariables[j].split("/")[0];
-						}
-					}
-					variablesText+=";";
-					//arreglo.push("\n"+tabsText+"\t"+"variableResultado"+(regla.ID)+" = "+variablesText);
-					arreglo.splice(j+(j*variables.length)+1, 0, "\n"+tabsText+"var variableResultado"+(regla.ID)+" = "+variablesText);
-					for (var k = j; k < posicionesIF.length; k++) {
-						posicionesIF[k]++;
-					};
-				} else if(variables[i].indexOf('CAMPOOBJETIVO') == 0) {
-					var variablesText = '';
-					for (var k = j; k < j+1; k++) {
-						variablesText = "var variableObjetivo"+(regla.ID)+" = ";
-						if(variables[i].indexOf("$") == -1) {
-							if( textVariables[k].indexOf(">") > 0 ){
-								variablesText+=textVariables[k].split(">")[0];
-							} else if( textVariables[k].indexOf(">=") > 0 ) {
-								variablesText+=textVariables[k].split(">=")[0];
-							} else if( textVariables[k].indexOf("<") > 0 ) {
-								variablesText+=textVariables[k].split("<")[0];
-							} else if( textVariables[k].indexOf("<=") > 0 ) {
-								variablesText+=textVariables[k].split("<=")[0];
-							} else if( textVariables[k].indexOf("==") > 0 ) {
-								variablesText+=textVariables[k].split("==")[0];
-							} else if( textVariables[k].indexOf("=") > 0 ) {
-								variablesText+=textVariables[k].split("=")[0];
-							} else if( textVariables[k].indexOf("!=") > 0 ) {
-								variablesText+=textVariables[k].split("!=");
-							}  else if( textVariables[k].indexOf("*") > 0 ) {
-								variablesText+=textVariables[k].split("*")[0];
-							} else if( textVariables[k].indexOf("+") > 0 ) {
-								variablesText+=textVariables[k].split("+")[0];
-							} else if( textVariables[k].indexOf("-") > 0 ) {
-								variablesText+=textVariables[k].split("-")[0];
-							} else if( textVariables[k].indexOf("/") > 0) {
-								variablesText+=textVariables[k].split("/")[0];
-							}
-						} else {
-							var nombre = '';
-							if( textVariables[k].indexOf(">") > 0 ){
-								nombre+=textVariables[k].split(">")[0];
-							} else if( textVariables[k].indexOf(">=") > 0 ) {
-								nombre+=textVariables[k].split(">=")[0];
-							} else if( textVariables[k].indexOf("<") > 0 ) {
-								nombre+=textVariables[k].split("<")[0];
-							} else if( textVariables[k].indexOf("<=") > 0 ) {
-								nombre+=textVariables[k].split("<=")[0];
-							} else if( textVariables[k].indexOf("==") > 0 ) {
-								nombre+=textVariables[k].split("==")[0];
-							} else if( textVariables[k].indexOf("=") > 0 ) {
-								nombre+=textVariables[k].split("=")[0];
-							} else if( textVariables[k].indexOf("!=") > 0 ) {
-								nombre+=textVariables[k].split("!=");
-								//
-							}  else if( textVariables[k].indexOf("*") > 0 ) {
-								nombre+=textVariables[k].split("*")[0];
-							} else if( textVariables[k].indexOf("+") > 0 ) {
-								nombre+=textVariables[k].split("+")[0];
-							} else if( textVariables[k].indexOf("-") > 0 ) {
-								nombre+=textVariables[k].split("-")[0];
-							} else if( textVariables[k].indexOf("/") > 0) {
-								nombre+=textVariables[k].split("/")[0];
-							}
-							var arregloVariables = variables[i].split("-")[1].split(",");
-							for (var i = 0; i < arregloVariables.length; i++) {
-								if(arregloVariables[i].replace(" ", "").indexOf(nombre).replace(" ", "") > -1){
-									var tipo = arregloVariables[i].split("-")[1].split("$")[1];
-									/*if(tipo == "1")
-										variablesText+=arregloVariables[i].split("-")[0];
-									else
-										variablesText+=arregloVariables[i].split("-")[1].split("$")[0];*/
-									var nombre = arregloVariables[i].split("-")[0], valor = arregloVariables[i].split("-")[1].split("$")[0];
-									variablesText+="{nombre: '"+nombre+"', valor: '"+valor+"'}"
-								}
-							};
-						}
-						variablesText+=";";
-						//arreglo.push("\n"+tabsText+"\t"+variablesText);
-						arreglo.splice(j+(j*variables.length)+1, 0, "\n"+tabsText+"\t"+variablesText);
-						for (var l = j; l < posicionesIF.length; l++) {
-							posicionesIF[l]++;
-						};
-					};
-				} else if(variables[i].indexOf('VALOR') == 0) {
-					var variablesText = '';
-					for (var k = j; k < j+1; k++) {
-						variablesText = "var variableValor"+(regla.ID)+" = ";
-						if(variables[i].indexOf("$") == -1) {
-							if( textVariables[k].indexOf(">") > 0 ){
-								variablesText+=textVariables[k].split(">")[1];
-							} else if( textVariables[k].indexOf(">=") > 0 ) {
-								variablesText+=textVariables[k].split(">=")[1];
-							} else if( textVariables[k].indexOf("<") > 0 ) {
-								variablesText+=textVariables[k].split("<")[1];
-							} else if( textVariables[k].indexOf("<=") > 0 ) {
-								variablesText+=textVariables[k].split("<=")[1];
-							} else if( textVariables[k].indexOf("==") > 0 ) {
-								variablesText+=textVariables[k].split("==")[1];
-							} else if( textVariables[k].indexOf("=") > 0 ) {
-								variablesText+=textVariables[k].split("=")[1];
-							} else if( textVariables[k].indexOf("!=") > 0 ) {
-								variablesText+=textVariables[k].split("!=");
-								//
-							}  else if( textVariables[k].indexOf("*") > 0 ) {
-								variablesText+=textVariables[k].split("*")[1];
-							} else if( textVariables[k].indexOf("+") > 0 ) {
-								variablesText+=textVariables[k].split("+")[1];
-							} else if( textVariables[k].indexOf("-") > 0 ) {
-								variablesText+=textVariables[k].split("-")[1];
-							} else if( textVariables[k].indexOf("/") > 0) {
-								variablesText+=textVariables[k].split("/")[1];
-							}
-						} else {
-							var nombre = '';
-							if( textVariables[k].indexOf(">") > 0 ){
-								nombre+=textVariables[k].split(">")[1];
-							} else if( textVariables[k].indexOf(">=") > 0 ) {
-								nombre+=textVariables[k].split(">=")[1];
-							} else if( textVariables[k].indexOf("<") > 0 ) {
-								nombre+=textVariables[k].split("<")[1];
-							} else if( textVariables[k].indexOf("<=") > 0 ) {
-								nombre+=textVariables[k].split("<=")[1];
-							} else if( textVariables[k].indexOf("==") > 0 ) {
-								nombre+=textVariables[k].split("==")[1];
-							} else if( textVariables[k].indexOf("=") > 0 ) {
-								nombre+=textVariables[k].split("=")[1];
-							} else if( textVariables[k].indexOf("!=") > 0 ) {
-								nombre+=textVariables[k].split("!=");
-								//
-							}  else if( textVariables[k].indexOf("*") > 0 ) {
-								nombre+=textVariables[k].split("*")[1];
-							} else if( textVariables[k].indexOf("+") > 0 ) {
-								nombre+=textVariables[k].split("+")[1];
-							} else if( textVariables[k].indexOf("-") > 0 ) {
-								nombre+=textVariables[k].split("-")[1];
-							} else if( textVariables[k].indexOf("/") > 0) {
-								nombre+=textVariables[k].split("/")[1];
-							}
-							var arregloVariables = variables[i].split("=")[1].split(",");
-							for (var i = 0; i < arregloVariables.length; i++) {
-								if(arregloVariables[i].replace(/( *)/, "").indexOf(nombre.replace(/( *)/, "")) > -1){
-									var tipo = arregloVariables[i].split("-")[1].split("$")[1].replace(")", "");
-									/*if(tipo == "1")
-										variablesText+=arregloVariables[i].split("-")[0];
-									else
-										variablesText+=arregloVariables[i].split("-")[1].split("$")[0];*/
-									var nombre = arregloVariables[i].split("-")[0], valor = arregloVariables[i].split("-")[1].split("$")[0];
-									variablesText+="{nombre: '"+nombre+"', valor: '"+valor+"'}"
-								}
-							};
-						}
-						variablesText+=";";
-						//arreglo.push("\n"+tabsText+"\t"+variablesText);
-						arreglo.splice(j+(j*variables.length)+1, 0, "\n"+tabsText+"\t"+variablesText);
-						for (var l = j; l < posicionesIF.length; l++) {
-							posicionesIF[l]++;
-						};
-					};
-				}
-			};
-		};
-	}
-	if(cuerpo.length > 0){
+	if(cuerpo.length > 0) {
 		var arregloCuerpo = [];
 		for (var i = 0; i < cuerpo.length; i++) {
 			var cuantasTabs = tabs;
@@ -1544,30 +1051,10 @@ function campoObjetivo (regla, arreglo, tabs) {
 			console.log('retorno');
 			console.log(retorno);
 			$.merge( arregloCuerpo, retorno );
-			/*for (var j = i; j < posicionesIF.length; j++) {
-				console.log("//////////");
-				console.log(arreglo);
-				console.log(retorno);
-				console.log("antes = "+posicionesIF[j]);
-				//posicionesIF[j]+=retorno.length;
-				console.log(arregloCuerpo);
-				console.log("despues = "+posicionesIF[j]);
-			};*/
 		};
 		//arreglo.concat(arregloCuerpo);
 		for (var i = 0; i < posicionesIF.length; i++) {
-			/*console.log("IFF -- "+i);
-			console.log(posicionesIF[i]);
-			console.log("BEFORE -- ");
-			for (var j = 0; j < arreglo.length; j++) {
-				console.log(arreglo[j]);
-			};
-			console.log(arregloCuerpo);*/
 			arreglo.splice(posicionesIF[i], 0, ...arregloCuerpo);
-			/*console.log("AFTER -- ");
-			for (var j = 0; j < arreglo.length; j++) {
-				console.log(arreglo[j]);
-			};*/
 			if(esCondicion)
 				arreglo.splice(posicionesIF[i]+arregloCuerpo.length, 0, "\n"+tabsText+"}");
 			for (var j = i; j < posicionesIF.length; j++) {
@@ -1586,16 +1073,10 @@ function campoObjetivo (regla, arreglo, tabs) {
 				};
 			};
 		}*/
-		console.log('1');
-		console.log(arreglo);
 		return arreglo;
 	} else {
 		if(esCondicion){
 			for (var i = 0; i < posicionesIF.length; i++) {
-				/*console.log('tabsText');
-				console.log(tabsText);
-				console.log(tabs);
-				console.log('tabsText');*/
 				arreglo.splice(posicionesIF[i], 0, "\n"+tabsText+"}")
 				/*for (var j = i; j < posicionesIF.length; j++) {
 					posicionesIF[j]++;

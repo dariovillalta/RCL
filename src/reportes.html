@@ -1,13 +1,13 @@
-<link rel="stylesheet" href="src/variablesStyles.css">
-<link rel="stylesheet" href="src/libs/mathlive-master/dist/mathlive.core.css">
-<link rel="stylesheet" href="src/libs/mathlive-master/dist/mathlive.css">
+<link href="src/libs/iCheck/skins/flat/green.css" rel="stylesheet">
 <link href="src/libs/overhang/overhang.min.css" rel="stylesheet">
+<link rel="stylesheet" href="src/variablesStyles.css">
+<link href="src/reportes.css" rel="stylesheet">
 <div class="container body">
   <div class="main_container">
     <div class="col-md-3 left_col">
       <div class="left_col scroll-view">
         <div class="navbar nav_title" style="border: 0;" id="wrapper">
-          <a onclick="goHome()" class="site_title cursorHand"><img src="src/img/full-logo-example.png" alt="Financiera Finca Honduras" class="logo_company"> <img src="src/img/small-logo-example.png" alt="Financiera Finca Honduras" class="logo_company_solo"></a>
+          <a onclick="goHome()" class="site_title cursorHand"><img src="src/img/full-logo-example.png" alt="" class="logo_company"> <img src="src/img/small-logo-example.png" alt="Financiera Finca Honduras" class="logo_company_solo"></a>
         </div>
 
         <div class="clearfix"></div>
@@ -31,6 +31,8 @@
               <li><a onclick="goHome()"><i class="fa fa-home"></i> Home </a>
               </li>
               <li><a onclick="goRCL()"><i class="fa fa-bar-chart"></i> C&aacute;lculo Diario de RCL </a>
+              </li>
+              <li class="active"><a onclick="goReports()"><i class="fa fa-list-alt"></i> Reporter&iacute;a </a>
               </li>
             </ul>
           </div>
@@ -139,34 +141,84 @@
 
       <div id="variables_div" class="row">
         <div class="col-md-12">
-          <div class="x_panel">
-            <div class="x_title">
-              <h2>C&aacute;lculo del Ratio de Cobertura de Liquidez</h2>
-              <div class="clearfix"></div>
-            </div>
 
-            <div class="x_content">
-
-              <div class="col-md-12 col-sm-12 col-xs-12">
-                <div class="row" id="wrapper">
-                  <h3 for="">Formula</h3>
+          <div id="variables_div" class="row filtrarRow">
+            <div class="col-md-12">
+              <div class="x_panel">
+                <div class="x_title">
+                  <h2>Reporter&iacute;a</h2>
+                  <ul class="nav navbar-right panel_toolbox">
+                    <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                    </li>
+                  </ul>
+                  <div class="clearfix"></div>
                 </div>
-                <br/>
-                <div class="row" id="wrapper">
-                  <div id="formulas" style="font-size: 1.5em;">
+
+                <div class="x_content">
+
+                  <div class="col-md-12 col-sm-12 col-xs-12">
+
+                    <div class="row">
+                      <div class="col-xs-12" style="border-collapse: separate; border-spacing: 0; min-width: 350px; border: 1px solid #bbb; border-radius: 6px; text-align: center;">
+                        <br/>
+                        <h7>Variables</h7>
+                        <div id="variablesUL" style="margin: 2% 0%;">
+                        </div>
+                      </div>
+                    </div>
+
+                    <br/>
+
+                    <div class="row">
+                      <div class="col-xs-12" style="border-collapse: separate; border-spacing: 0; min-width: 350px; border: 1px solid #bbb; border-radius: 6px; text-align: center;">
+                        <br/>
+                        <h7>Sub-Variables</h7>
+                        <div id="subvariablesUL" style="margin: 2% 0%;">
+                        </div>
+                      </div>
+                    </div>
+
+                    <br/>
+                    
+                    <div class="row">
+                      <div id="wrapper">
+                        <button id="filter" onclick="filterReport()" type="button" class="btn btn-warning">Filtrar</button>
+                      </div>
+                    </div>
+
+                    <br/>
+
+                    <div class="card-box table-responsive">
+                      <table id="datatable_report" class="table table-striped table-bordered">
+                        <thead>
+                          <tr>
+                            <th>Estado</th>
+                            <th>Variable</th>
+                            <th>Fecha</th>
+                            <th>Tipo de Proyecci&oacute;n</th>
+                            <th>Volumen en F&oacute;rmula</th>
+                            <th>Peso en F&oacute;rmula</th>
+                            <th>Total</th>
+                          </tr>
+                        </thead>
+
+                        <tbody>
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <br/>
+
                   </div>
-                </div>
-                <br/>
-                <div class="row">
-                  <button type="button" onclick="calculateRCL()" class="btn btn-success col-xs-10 col-xs-offset-1" style="height: 2.5em; font-size: 2em;">Calcular</button>
-                </div>
-                <br/>
-              </div>
 
+                </div>
+              </div>
             </div>
-          </div>
+          </div> <!-- /end VARIABLES -->
+
+
         </div>
-      </div>
+      </div> <!-- /end VARIABLES -->
 
     </div>
     <!-- /page content -->
@@ -174,19 +226,15 @@
   </div>
 </div>
 
-<script src="src/libs/mathjs/math.js"></script>
-
-<script src="src/rcl.js"></script>
+<script src="src/libs/jquery.inputmask/dist/min/jquery.inputmask.bundle.min.js"></script>
 
 <script src="src/libs/jquery-ui/jquery-ui.min.js"></script>
 
 <script src="src/libs/overhang/overhang.min.js"></script>
 
-<script src="src/libs/mathlive-master/dist/mathlive.js"></script>
-<script>
-  //MathLive.renderMathInElement('formulas');
-  MathLive.renderMathInDocument();
-</script>
+<script src="src/libs/iCheck/icheck.min.js"></script>
+
+<script src="src/reportes.js"></script>
 
 <!-- Custom Theme Scripts -->
 <script src="src/libs/custom.min.js"></script>

@@ -34,6 +34,8 @@
               </li>
               <li><a onclick="goRCL()"><i class="fa fa-bar-chart"></i> C&aacute;lculo Diario de RCL </a>
               </li>
+              <li><a onclick="goReports()"><i class="fa fa-list-alt"></i> Reporter&iacute;a </a>
+              </li>
             </ul>
           </div>
 
@@ -248,46 +250,15 @@
                         <div class="row" style="margin: 0% 5%;">
                           <h2>Condici&oacute;n <small>Si una regla ocupa cumplir una condici&oacute;n anterior para aplicar la regla o si se ocupa acceder al valor de una regla anterior.</small> </h2>
                           <ul id="listRules" class="to_do text-center">
-                            <!-- <li>
-                              <p><input type="radio" name="rules" class="flat"> Schedule meeting with new client </p>
-                            </li>
-                            <li>
-                              <p><input type="radio" name="rules" class="flat"> Schedule meeting with new client </p>
-                            </li> -->
                           </ul>
                         </div>
                         <hr class="style11">
-
-                        <!-- <div class="row" style="margin: 0% 5%;">
-                          <h2>Guardar Variables <small>Se guardan las variables de una regla por si una regla siguiente ocupa acceder a un valor de esta regla.</small></h2>
-                          <ul id="listRules" class="to_do text-center" style="display: flex; justify-content: center;">
-                            <li style="float: right; margin: 0% 1%;">
-                              <p><input id="resultadoGuardarVariable" type="checkbox" name="variables" class="flat"> Resultado de Operaci&oacute;n </p>
-                            </li>
-                            <li style="float: right; margin: 0% 1%;">
-                              <p><input id="campoGuardarVariable" type="checkbox" name="variables" class="flat"> Campo Objetivo </p>
-                            </li>
-                            <li style="float: right; margin: 0% 1%;">
-                              <p><input id="valorGuardarVariable" type="checkbox" name="variables" class="flat"> Valor a Aplicar </p>
-                            </li>
-                          </ul>
-                        </div>
-                        <hr class="style11"> -->
 
                         <div class="row">
                           <h2 style="padding-left: 5%;">Campo Objetivo <small>Campo al cual se le va a asignar y aplicar una operaci&oacute;n.</small></h2>
                           <div id="wrapper" class="row">
                             <label>
                               <input id="campoCampoRadio" type="radio" class="flat" checked name="campoRadio"> Campo
-                            </label>
-                            <!-- <label>
-                              <input id="variablesCampoRadio" type="radio" class="flat" onclick="setCampoRadio(false)" name="campoRadio"> Variables
-                            </label> -->
-                            <label>
-                              <input id="fosedeCampoRadio" type="radio" class="flat" name="campoRadio"> FOSEDE
-                            </label>
-                            <label>
-                              <input id="cuentasOperativasCampoRadio" type="radio" class="flat" name="campoRadio"> Cuentas Operativas
                             </label>
                           </div>
                           <br/>
@@ -304,47 +275,6 @@
                             </form>
                           </div>
                           <br/><br/><br/><br/>
-                        </div>
-                        <div id="variableField" class="row" style="display: none;">
-                          <div class="col-xs-6 col-xs-offset-3">
-                            <label>Seleccionar Variables</label>
-                            <ul id="variablesCampoUL" class="to_do">
-                              <li> <p><input id="resultadoDisable" type="radio" name="variablesCampo" class="flat" value="1"> Nueva Variable </p> </li>
-                            </ul>
-                          </div>
-                          <br/><br/><br/><br/>
-                        </div>
-                        <div id="fosedeField" class="row" style="display: none;">
-                          <div id="wrapper">
-                            <label>FOSEDE</label>
-                          </div>
-                          <div id="wrapper">
-                            <label>
-                              <input id="hastaFOSEDECampoRadio" type="radio" class="flat" name="fosedeRadio">HASTA FOSEDE
-                            </label>
-                            <label>
-                              <input id="mayorFOSEDECCampoRadio" type="radio" class="flat" name="fosedeRadio">MAYOR FOSEDE
-                            </label>
-                          </div>
-                        </div>
-                        <div id="cuentasOperativasField" class="row" style="display: none;">
-                          <div id="wrapper">
-                            <label>Cuentas Operativas</label>
-                          </div>
-                          <div id="wrapper">
-                            <label style="display: block; margin-left: auto; margin-right: auto;">
-                              <input id="hastaFOSEDECuentasOpCampoRadio" type="radio" class="flat" name="fosedeRadio">&nbsp;HASTA FOSEDE A CUENTAS OPERATIVAS
-                            </label>
-                            <label style="display: block; margin-left: auto; margin-right: auto;">
-                              <input id="mayorFOSEDECuentasOpCampoRadio" type="radio" class="flat" name="fosedeRadio">&nbsp;SOBRE FOSEDE A CUENTAS OPERATIVAS
-                            </label>
-                            <label style="display: block; margin-left: auto; margin-right: auto;">
-                              <input id="hastaFOSEDENoCuentasOpCampoRadio" type="radio" class="flat" name="fosedeRadio">&nbsp;HASTA FOSEDE A LAS CUENTAS NO OPERATIVAS
-                            </label>
-                            <label style="display: block; margin-left: auto; margin-right: auto;">
-                              <input id="mayorFOSEDENoCuentasOpCampoRadio" type="radio" class="flat" name="fosedeRadio">&nbsp;SOBRE FOSEDE A LAS CUENTAS NO OPERATIVAS
-                            </label>
-                          </div>
                         </div>
                         <hr class="style11">
                         
@@ -420,14 +350,6 @@
                               </label>
                             </div>
                           </div>
-                          <!-- <br/>
-                          <div class="row">
-                            <div id="wrapper">
-                              <label>
-                                <input id="asiOperadorRadio" type="radio" class="flat" name="operadorRadio"> =
-                              </label>
-                            </div>
-                          </div> -->
                         </div>
 
                         <div id="sumarSiField" class="row">
@@ -446,6 +368,18 @@
                                 <input id="sumarSiNoOperadorRadio" type="radio" class="flat" name="operadorRadio"> Sumar si NO se encuentra en
                               </label>
                             </div>
+                          </div>
+                        </div>
+
+                        <div id="igualBoolField" class="row" style="display: none;">
+                          <div id="wrapper" class="row">
+                            <h5>Igual</h5>
+                          </div>
+                          <br/>
+                          <div class="row" id="wrapper">
+                            <label>
+                              <input id="IgBoolOperadorRadio" type="radio" class="flat" name="operadorRadio"> =
+                            </label>
                           </div>
                         </div>
 
@@ -473,19 +407,16 @@
                           <h2 style="padding-left: 5%;">Valor a Aplicar <small>Valor a aplicar a un Campo Objetivo.</small></h2>
                           <div id="wrapper" class="row">
                             <label id="elementoValorRadioLabel">
-                              <input id="elementoValorRadio" type="radio" class="flat" name="valorRadio" checked> Elemento de Lista o Lista
+                              <input id="elementoValorRadio" type="radio" class="flat" name="valorRadio" checked> Agrupaci&oacute;n de una Lista
                             </label>
                             <label id="manualValorRadioLabel" style="display: none;">
                               <input id="manualValorRadio" type="radio" class="flat" name="valorRadio"> N&uacute;mero
                             </label>
-                            <!-- <label>
-                              <input id="fechaValorRadio" type="radio" class="flat" name="valorRadio"> Fecha
-                            </label> -->
-                            <!-- <label>
-                              <input id="variableValorRadio" type="radio" class="flat" name="valorRadio"> Variable
-                            </label> -->
                             <label id="factorValorRadioLabel" style="display: none;">
                               <input id="factorValorRadio" type="radio" class="flat" name="valorRadio"> Factor
+                            </label>
+                            <label id="fechaValorRadioLabel" style="display: none;">
+                              <input id="fechaValorRadio" type="radio" class="flat" name="valorRadio"> Fecha
                             </label>
                             <br/>
                           </div>
@@ -494,7 +425,7 @@
                             <br/>
                             <div class="col-xs-6 col-xs-offset-3">
                               <div id="wrapper" class="row">
-                                <h5>Elemento de Listas</h5>
+                                <h5>Agrupaci&oacute;n de Listas</h5>
                               </div>
                               <div class="row">
                                 <form class="form-horizontal form-label-left">
@@ -572,8 +503,8 @@
                             </div>
                             <br/>
                           </div>
-                          
-                          <!-- <div class="row">
+
+                          <div id="moraField" class="row" style="display: none;">
                             <br/>
                             <div class="col-xs-6 col-xs-offset-3">
                               <div id="wrapper" class="row">
@@ -587,26 +518,38 @@
                               </div>
                             </div>
                             <br/>
-                          </div> -->
-  
-                          <!-- <div class="row">
+                          </div>
+
+                          <div id="diasField" class="row" style="display: none;">
+                            <br/>
                             <div class="col-xs-6 col-xs-offset-3">
                               <div id="wrapper" class="row">
-                                <label>Seleccionar Variables</label>
+                                <h5>Fecha</h5>
                               </div>
-                              <ul id="variablesValorUL" class="to_do text-center">
-                              </ul>
+                              <div class="row">
+                                <div class="form-group col-sm-8 col-sm-offset-2">
+                                  <input type="text" class="form-control" id="diaValorInput" placeholder="D&iacute;a" value="D&iacute;as de Proyeccci&oacute;n" readonly>
+                                  <span class="fa fa-calendar-o form-control-feedback right" aria-hidden="true"></span>
+                                </div>
+                              </div>
                             </div>
-                          </div> -->
-
-                          <!-- <div class="row">
                             <br/>
-                            <div id="wrapper">
-                              <label>Seleccionar Variables</label>
+                          </div>
+
+                          <div id="booleansField" class="row" style="display: none;">
+                            <div id="wrapper" class="row">
+                              <h5>Booleano</h5>
                             </div>
-                            <ul id="variablesValorUL" class="to_do text-center" style="display: flex; justify-content: center;">
-                            </ul>
-                          </div> -->
+                            <br/>
+                            <div class="row" id="wrapper">
+                              <label>
+                                <input id="trueOperadorRadio" type="radio" class="flat" name="boolRadio"> Verdadero
+                              </label>
+                              <label>
+                                <input id="falseOperadorRadio" type="radio" class="flat" name="boolRadio"> Falso
+                              </label>
+                            </div>
+                          </div>
 
                         </div>
 
@@ -654,7 +597,7 @@
 
 <script src="src/libs/iCheck/icheck.min.js"></script>
 
-<script src="src/variableDetail.js"></script>
+<script src="src/variableDetailCredito.js"></script>
 
 <!-- Custom Theme Scripts -->
 <script src="src/libs/custom.min.js"></script>

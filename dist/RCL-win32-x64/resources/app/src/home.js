@@ -3,7 +3,7 @@ const remote = require('electron').remote;
 const sql = require('mssql');
 
 const config = {
-    user: 'admin',
+    user: 'SA',
     password: 'password111!',
     server: 'localhost',
     database: 'RCL_Dev',
@@ -356,26 +356,61 @@ function init_flot_chart2(){
 //	**********		Route Change		**********
 function goVariables () {
 	$("#app_root").empty();
+	cleanup();
     $("#app_root").load("src/variables.html");
 }
 
 function goHome () {
 	$("#app_root").empty();
+	cleanup();
     $("#app_root").load("src/home.html");
 }
 
 function goUsers () {
 	$("#app_root").empty();
+	cleanup();
     $("#app_root").load("src/users.html");
+}
+
+function goConnections () {
+    $("#app_root").empty();
+    cleanup();
+    $("#app_root").load("src/importaciones.html");
 }
 
 function logout () {
 	$("#app_root").empty();
+	cleanup();
     $("#app_root").load("src/login.html");
 	session.defaultSession.clearStorageData([], (data) => {});
 }
 
 function goRCL () {
 	$("#app_root").empty();
+	cleanup();
     $("#app_root").load("src/rcl.html");
 }
+
+var cleanup = function () {
+    delete window.electron;
+    delete window.remote;
+    delete window.path;
+    delete window.sql;
+    delete window.config;
+    delete window.pool1;
+    delete window.session;
+    delete window.filepathFullLogo;
+    delete window.filepathSmallLogo;
+    delete window.loadVariablesMainDB;
+    delete window.chart_plot_02_data;
+    delete window.loadRCL;
+    delete window.init_daterangepicker;
+    delete window.gd;
+    delete window.init_flot_chart2;
+    delete window.goVariables;
+    delete window.goHome;
+    delete window.goUsers;
+    delete window.goConnections;
+    delete window.logout;
+    delete window.goRCL;
+};

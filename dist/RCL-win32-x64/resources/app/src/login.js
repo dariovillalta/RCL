@@ -4,7 +4,7 @@ const path = require('path');
 const sql = require('mssql');
 
 const config = {
-    user: 'admin',
+    user: 'SA',
     password: 'password111!',
     server: 'localhost',
     database: 'RCL_Dev',
@@ -19,7 +19,7 @@ const pool1 = new sql.ConnectionPool(config, err => {
 	if(err)
 		console.log(err);
     else {
-        loadLists();
+        loadElementLists();
     }
 });
 
@@ -182,7 +182,7 @@ function loadLists () {
                         arregloListas = [];
                     }
                     var existeManContable = false, existeCuentOperativas = false, existeExcluFOSEDE = false,
-                    existePerNaturales = false, existeSubPersonas = false;
+                    existePerNaturales = false, existeSubPersonas = false, existeCuentOperativasExternas = false, existeAgencias = false;
                     for (var i = 0; i < arregloListas.length; i++) {
                         if(arregloListas[i].tipo == 1)
                             existeManContable = true;
@@ -194,8 +194,12 @@ function loadLists () {
                             existePerNaturales = true;
                         else if(arregloListas[i].tipo == 5)
                             existeSubPersonas = true;
+                        else if(arregloListas[i].tipo == 6)
+                            existeCuentOperativasExternas = true;
+                        else if(arregloListas[i].tipo == 7)
+                            existeAgencias = true;
                     };
-                    var listas = [{nombre: "Manual Contable", tipo: 1},{nombre: "Cuentas Operativas", tipo: 2},{nombre: "Exclusiones FOSEDE", tipo: 3},{nombre: "Tipo de Personas", tipo: 4},{nombre: "Tipo de Sub-Personas", tipo: 5}];
+                    var listas = [{nombre: "Manual Contable", tipo: 1},{nombre: "Cuentas Operativas Balance General", tipo: 2},{nombre: "Exclusiones FOSEDE", tipo: 3},{nombre: "Tipo de Personas", tipo: 4},{nombre: "Tipo de Sub-Personas", tipo: 5},{nombre: "Cuentas Operativas Clientes", tipo: 6},{nombre: "Agencias", tipo: 7}];
                     if(!existeManContable && arregloListas.length > 0){
                         createList(listas[0].nombre, listas[0].tipo);
                         contadorBandera++;
@@ -216,12 +220,22 @@ function loadLists () {
                         createList(listas[4].nombre, listas[4].tipo);
                         contadorBandera++;
                     }
+                    if(!existeCuentOperativasExternas && arregloListas.length > 0) {
+                        createList(listas[5].nombre, listas[5].tipo);
+                        contadorBandera++;
+                    }
+                    if(!existeAgencias && arregloListas.length > 0) {
+                        createList(listas[6].nombre, listas[6].tipo);
+                        contadorBandera++;
+                    }
                     if(arregloListas.length == 0) {
                         for (var i = 0; i < listas.length; i++) {
                             createList(listas[i].nombre, listas[i].tipo);
                             contadorBandera++;
                         };
                     }
+                    if(arregloListas.length == 7) //si ya existen las listas pero verificar si existen los elementos de la lista
+                        verifyElementLists();
                 });
             }
         });
@@ -326,15 +340,15 @@ function loadElementLists () {
                     } else {
                         arregloElementosDeListas = [];
                     }
-                    if(arregloListas.length == 5)
-                        verifyElementLists();
+                    loadLists();
                 });
             }
         });
     }); // fin transaction
 }
 function verifyElementLists () {
-    if(arregloListas.length == 5) {
+    if(arregloListas.length == 7) {
+        var hoy = formatDateCreation( new Date() );
         var idListaTipPer = arregloListas.filter(function(object) {
                                 return (object.tipo == 4 );
                             });
@@ -343,7 +357,6 @@ function verifyElementLists () {
                 var encontro1 = false, encontro2 = false;
                 for (var i = 0; i < arregloElementosDeListas.length; i++) {
                     if(arregloElementosDeListas[i].valor == 'PN' && j == 0) {
-                        alert(cont++);
                         encontro1 = true;
                         break;
                     }
@@ -353,12 +366,12 @@ function verifyElementLists () {
                     }
                 };
                 if(!encontro1 && j == 0) {
-                    createElementList(idListaTipPer[0].ID, "Persona Natural", "PN", 0);
-                    arregloElementosDeListas.push({idLista: idListaTipPer[0].ID, nombre: "Persona Natural", valor: "PN", saldo: 0});
+                    createElementList(idListaTipPer[0].ID, "Persona Natural", "PN", 0, hoy, '');
+                    arregloElementosDeListas.push({idLista: idListaTipPer[0].ID, nombre: "Persona Natural", valor: "PN", saldo: 0, fechaCreacion: hoy, fechaCaducidad: hoy, puesto: ''});
                 }
                 if(!encontro2 && j == 1) {
-                    createElementList(idListaTipPer[0].ID, "Persona Juridica", "PJ", 0);
-                    arregloElementosDeListas.push({idLista: idListaTipPer[0].ID, nombre: "Persona Juridica", valor: "PJ", saldo: 0});
+                    createElementList(idListaTipPer[0].ID, "Persona Juridica", "PJ", 0, hoy, '');
+                    arregloElementosDeListas.push({idLista: idListaTipPer[0].ID, nombre: "Persona Juridica", valor: "PJ", saldo: 0, fechaCreacion: hoy, fechaCaducidad: hoy, puesto: ''});
                 }
             }
         };
@@ -384,23 +397,23 @@ function verifyElementLists () {
                     }
                 };
                 if(!encontro1 && j == 0) {
-                    createElementList(idListaTipSubPer[0].ID, "Sector Financiero", "SF", 0);
-                    arregloElementosDeListas.push({idLista: idListaTipSubPer[0].ID, nombre: "Sector Financiero", valor: "SF", saldo: 0});
+                    createElementList(idListaTipSubPer[0].ID, "Sector Financiero", "SF", 0, hoy, '');
+                    arregloElementosDeListas.push({idLista: idListaTipSubPer[0].ID, nombre: "Sector Financiero", valor: "SF", saldo: 0, fechaCreacion: hoy, fechaCaducidad: hoy, puesto: ''});
                 }
                 if(!encontro2 && j == 1) {
-                    createElementList(idListaTipSubPer[0].ID, "No Sector Financiero", "NSF", 0);
-                    arregloElementosDeListas.push({idLista: idListaTipSubPer[0].ID, nombre: "No Sector Financiero", valor: "NSF", saldo: 0});
+                    createElementList(idListaTipSubPer[0].ID, "No Sector Financiero", "NSF", 0, hoy, '');
+                    arregloElementosDeListas.push({idLista: idListaTipSubPer[0].ID, nombre: "No Sector Financiero", valor: "NSF", saldo: 0, fechaCreacion: hoy, fechaCaducidad: hoy, puesto: ''});
                 }
                 if(!encontro3 && j == 2) {
-                    createElementList(idListaTipSubPer[0].ID, "Institución Pública", "ISP", 0);
-                    arregloElementosDeListas.push({idLista: idListaTipSubPer[0].ID, nombre: "Institución Pública", valor: "ISP", saldo: 0});
+                    createElementList(idListaTipSubPer[0].ID, "Institución Pública", "ISP", 0, hoy, '');
+                    arregloElementosDeListas.push({idLista: idListaTipSubPer[0].ID, nombre: "Institución Pública", valor: "ISP", saldo: 0, fechaCreacion: hoy, fechaCaducidad: hoy, puesto: ''});
                 }
             };
         }
     }
 }
 
-function createElementList (idLista, nombre, valor, saldo) {
+function createElementList (idLista, nombre, valor, saldo, fecha, puesto) {
     const transaction = new sql.Transaction( pool1 );
     transaction.begin(err => {
         var rolledBack = false;
@@ -409,7 +422,7 @@ function createElementList (idLista, nombre, valor, saldo) {
             rolledBack = true;
         });
         const request = new sql.Request(transaction);
-        request.query("insert into ListasVariables (idLista, nombre, valor, saldo) values ("+idLista+",'"+nombre+"','"+valor+"',"+saldo+")", (err, result) => {
+        request.query("insert into ListasVariables (idLista, nombre, valor, saldo, fechaCreacion, fechaCaducidad, puesto) values ("+idLista+",'"+nombre+"','"+valor+"',"+saldo+",'"+fecha+"','"+fecha+"','"+puesto+"')", (err, result) => {
             if (err) {
                 if (!rolledBack) {
                     console.log('error en rolledBack Listas Variables creation automatically');
@@ -428,6 +441,21 @@ function createElementList (idLista, nombre, valor, saldo) {
     }); // fin transaction
 }
 
+function formatDateCreation(date) {
+    var monthNames = [
+        "Ene", "Feb", "Mar",
+        "Abr", "May", "Jun", "Jul",
+        "Ago", "Sep", "Oct",
+        "Nov", "Dec"
+    ];
+
+    var day = date.getDate();
+    var monthIndex = date.getMonth();
+    var year = date.getFullYear();
+
+    return year + '-' + (monthIndex+1) + '-' + day;
+}
+
 var cleanup = function () {
     delete window.electron;
     delete window.remote;
@@ -435,6 +463,7 @@ var cleanup = function () {
     delete window.sql;
     delete window.config;
     delete window.pool1;
+    delete window.session;
     delete window.login;
     delete window.arregloListas;
     delete window.arregloElementosDeListas;

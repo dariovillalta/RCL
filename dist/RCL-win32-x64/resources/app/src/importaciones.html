@@ -1,0 +1,777 @@
+<link rel="stylesheet" href="src/variablesStyles.css">
+<link href="src/libs/iCheck/skins/flat/green.css" rel="stylesheet">
+<link href="src/libs/bootstrap-datepicker/datepicker3.css" rel="stylesheet">
+<link href="src/libs/overhang/overhang.min.css" rel="stylesheet">
+<div class="container body">
+  <div class="main_container">
+    <div class="col-md-3 left_col">
+      <div class="left_col scroll-view">
+        <div class="navbar nav_title" style="border: 0;" id="wrapper">
+          <a onclick="goHome()" class="site_title cursorHand"><img src="src/img/full-logo-example.png" alt="" class="logo_company"> <img src="src/img/small-logo-example.png" alt="" class="logo_company_solo"></a>
+        </div>
+
+        <div class="clearfix"></div>
+
+        <!-- menu profile quick info -->
+        <div class="profile clearfix">
+          <div class="profile_info">
+            <span>Bienvenido,</span>
+            <h2 id="nameUser"></h2>
+          </div>
+        </div>
+        <!-- /menu profile quick info -->
+
+        <br />
+
+        <!-- sidebar menu -->
+        <div id="sidebar-menu" class="main_menu_side hidden-print main_menu">
+          <div class="menu_section">
+            <h3>General</h3>
+            <ul class="nav side-menu">
+              <li><a onclick="goHome()"><i class="fa fa-home"></i> Home</a>
+              </li>
+              <li><a onclick="goRCL()"><i class="fa fa-bar-chart"></i> C&aacute;lculo Diario de RCL </a>
+              </li>
+            </ul>
+          </div>
+
+        </div>
+        <!-- /sidebar menu -->
+      </div>
+    </div>
+
+    <!-- top navigation -->
+    <div class="top_nav">
+      <div class="nav_menu">
+        <nav>
+          <div class="nav toggle">
+            <a id="menu_toggle"><i class="fa fa-bars"></i></a>
+          </div>
+
+          <ul class="nav navbar-nav navbar-right">
+            <li class="">
+              <a href="javascript:;" class="user-profile dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                <img src="" alt=""> <span id="navbar_name"></span>
+                <span class=" fa fa-angle-down"></span>
+              </a>
+              <ul class="dropdown-menu dropdown-usermenu pull-right">
+                <li id="varLabel"><a onclick="goVariables()"> Editar Variables </a></li>
+                <li id="userLabel"><a onclick="goUsers()"> Control de Usuarios </a></li>
+                <li id="importLabel"><a onclick="goConnections()"> Importar Tablas </a></li>
+                <li><a onclick="logout()"><i class="fa fa-sign-out pull-right"></i> Cerrar Sesi&oacute;n</a></li>
+              </ul>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+    <!-- /top navigation -->
+
+    <!-- page content -->
+    <div class="right_col" role="main">
+      <div class="page-title">
+        <div class="title_left">
+          <h3>Capturaci&oacute;n de Datos</h3>
+        </div>
+
+        <div class="title_right">
+          <div class="col-md-5 col-sm-5 col-xs-12 form-group pull-right top_search">
+            <div class="input-group">
+              <input id="buscarDiv" type="text" class="form-control" placeholder="Buscar...">
+              <span class="input-group-btn">
+                <button class="btn btn-default" type="button" onclick="filterDiv()">Filtrar</button>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="clearfix"></div>
+
+      <div id="alac_div" class="row filtrarRow">
+        <div class="col-md-12">
+          <div class="x_panel">
+            <div class="x_title">
+              <h2>Conecciones Guardadas</h2>
+              <ul class="nav navbar-right panel_toolbox">
+                <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                </li>
+              </ul>
+              <div class="clearfix"></div>
+            </div>
+
+            <div class="x_content">
+
+              <div class="col-md-12 col-sm-12 col-xs-12">
+                <div style="display: flex; align-items: center; justify-content: center; height: 25vh; text-align: center;">
+                  <div class="row">
+                    <h2>Importaci&oacute;n Diaria</h2>
+                    <label for="">Seleccionar Conecci&oacute;n:</label>
+                    <div class="select-style">
+                      <select id="selectDeConneciones">
+                        <option value="mssql">MSSQL</option>
+                      </select>
+                    </div>
+                    <br/>
+                    <div class="row" id="wrapper">
+                      <label>
+                        <input id="balanceGeneral" type="radio" class="flat" name="coneccionesRadio" checked value="1"> Balance General
+                      </label>
+                      <label>
+                        <input id="captaciones" type="radio" class="flat" name="coneccionesRadio" value="2"> Captaciones
+                      </label>
+                      <label>
+                        <input id="carteraCredito" type="radio" class="flat" name="coneccionesRadio" value="3"> Cartera de Cr&eacute;dito
+                      </label>
+                    </div>
+                    <br/>
+                    <button onclick="importFromConnection()" type="button" class="btn btn-success">Importar</button>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div> <!-- /end IMPORTACION DIARIA -->
+
+      <div id="alac_div" class="row filtrarRow">
+        <div class="col-md-12">
+          <div class="x_panel">
+            <div class="x_title">
+              <h2>Importar Balance General Diario</h2>
+              <ul class="nav navbar-right panel_toolbox">
+                <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                </li>
+              </ul>
+              <div class="clearfix"></div>
+            </div>
+
+            <div class="x_content">
+
+              <div class="col-md-12 col-sm-12 col-xs-12">
+
+                <div class="x_panel" role="tabpanel" data-example-id="togglable-tabs">
+                  <ul id="myTabActivos" class="nav nav-tabs bar_tabs" role="tablist">
+                    <li role="presentation" class="active" value="0"><a href="#tab_Activos_MSSQL" id="home-tab" role="tab" data-toggle="tab" aria-expanded="true">Conexi&oacute;n a una Base de Datos MSSQL</a>
+                    </li>
+                    <li role="presentation" class="" value="1"><a href="#tab_Activos_Excel" role="tab" id="profile-tab" data-toggle="tab" aria-expanded="false">Excel</a>
+                    </li>
+                  </ul>
+                  <div id="myTabContentActivos" class="tab-content">
+                    <div role="tabpanel" class="tab-pane fade active in" id="tab_Activos_MSSQL" aria-labelledby="home-tab">
+
+                      <div class="col-md-6">
+                        <div class="form-group">
+                          <label>Usuario</label>
+                          <input id="activosUserDB" type="text" class="form-control" placeholder="Ingrese el nombre de usuario de la base de datos">
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="form-group">
+                          <label>Contrase&ntilde;a</label>
+                          <input id="activosPasswordDB" type="password" class="form-control" placeholder="Ingrese la contrase&ntilde;a de la base de datos">
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="form-group">
+                          <label>Servidor</label>
+                          <input id="activosServerDB" type="text" class="form-control" placeholder="Ingrese la direcci&oacute;n del servidor de la base de datos">
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="form-group">
+                          <label>Base de Datos</label>
+                          <input id="activosDataBaseDB" type="text" class="form-control" placeholder="Ingrese el nombre de la base de datos">
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="form-group">
+                          <label>Tabla</label>
+                          <input id="activosTableDB" type="text" class="form-control" placeholder="Ingrese el nombre de la tabla">
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <br/>
+                        <button id="testConnection" onclick="connectionTest(0)" type="button" class="btn btn-primary" style="margin-top:1%;">Probar Conexi&oacute;n</button>
+                      </div>
+                      <div class="col-md-12">
+                        <h5>* Nota: Ingresar en los campos siguientes el nombre de la columna correspondiente a su tabla.</h5>
+                      </div>
+
+                    </div>
+                    <div role="tabpanel" class="tab-pane fade" id="tab_Activos_Excel" aria-labelledby="profile-tab">
+                      <div class="col-md-12">
+                        <div class="form-group">
+                          <label>Hoja</label>
+                          <input id="activosTableExcel" type="text" class="form-control" placeholder="Ingrese el nombre de la hoja de excel">
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="form-group">
+                          <i style="color:red;" class="fa fa-asterisk"></i><label>&nbsp;Fila Inicial&nbsp;</label><small>Fila donde se empezar&aacute;n a tomar las valores</small>
+                          <input id="activosExcelInicio" type="text" class="form-control" placeholder="Fila" data-inputmask="'mask': '9[9][9][9]'" data-inputmask-clearmaskonlostfocus="true">
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="form-group">
+                          <label>Fila Final </label> <small>(opcional: si vac&iacute;o se toma hasta el final del archivo)</small>
+                          <input id="activosExcelFinal" type="text" class="form-control" placeholder="Fila" data-inputmask="'mask': '9[9][9][9]'" data-inputmask-clearmaskonlostfocus="true">
+                        </div>
+                      </div>
+                      <div class="col-md-12">
+                        <h5>* Nota: Ingresar en los campos siguientes la letra de la columna de excel correspondiente al valor.</h5>
+                      </div>
+
+                    </div>
+                  </div>
+                </div>
+
+                <br/>
+                <h4 class="text-center">Mapeo de Campos</h4>
+                
+                <table class="table table-striped">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Campo</th>
+                      <th>Origen</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <th scope="row">1</th>
+                      <td>Cuenta</td>
+                      <td>
+                        <input type="text" id="cuentaConexionActivos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">2</th>
+                      <td>Nombre</td>
+                      <td>
+                        <input type="text" id="nombreConexionActivos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">3</th>
+                      <td>Saldo</td>
+                      <td>
+                        <input type="text" id="saldoConexionActivos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">4</th>
+                      <td>Moneda</td>
+                      <td>
+                        <input type="text" id="monedaConexionActivos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">5</th>
+                      <td>Agencia</td>
+                      <td>
+                        <input type="text" id="sucursalConexionActivos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <br/>
+                <div class="ln_solid"></div>
+                <div id="wrapper">
+                  <button id="mostrar" onclick="saveActivosDB(0)" type="button" class="btn btn-success">Guardar</button>
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div> <!-- /end CONEXION ACTIVOS -->
+
+      <div id="depositos_div" class="row filtrarRow">
+        <div class="col-md-12">
+          <div class="x_panel">
+            <div class="x_title">
+              <h2>Importar Captaciones Diario</h2>
+              <ul class="nav navbar-right panel_toolbox">
+                <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                </li>
+              </ul>
+              <div class="clearfix"></div>
+            </div>
+
+            <div class="x_content">
+
+              <div class="col-md-12 col-sm-12 col-xs-12">
+
+                <div class="x_panel" role="tabpanel" data-example-id="togglable-tabs">
+                  <ul id="myTabDepositos" class="nav nav-tabs bar_tabs" role="tablist">
+                    <li role="presentation" class="active" value="0"><a href="#tab_Depositos_MSSQL" id="home-tab" role="tab" data-toggle="tab" aria-expanded="true">Conexi&oacute;n a una Base de Datos MSSQL</a>
+                    </li>
+                    <li role="presentation" class="" value="1"><a href="#tab_Depositos_Excel" role="tab" id="profile-tab" data-toggle="tab" aria-expanded="false">Excel</a>
+                    </li>
+                  </ul>
+                  <div id="myTabContent" class="tab-content">
+                    <div role="tabpanel" class="tab-pane fade active in" id="tab_Depositos_MSSQL" aria-labelledby="home-tab">
+
+                      <div class="col-md-6">
+                        <div class="form-group">
+                          <label>Usuario</label>
+                          <input id="depositosUserDB" type="text" class="form-control" placeholder="Ingrese el nombre de usuario de la base de datos">
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="form-group">
+                          <label>Contrase&ntilde;a</label>
+                          <input id="depositosPasswordDB" type="password" class="form-control" placeholder="Ingrese la contrase&ntilde;a de la base de datos">
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="form-group">
+                          <label>Servidor</label>
+                          <input id="depositosServerDB" type="text" class="form-control" placeholder="Ingrese la direcci&oacute;n del servidor de la base de datos">
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="form-group">
+                          <label>Base de Datos</label>
+                          <input id="depositosDataBaseDB" type="text" class="form-control" placeholder="Ingrese el nombre de la base de datos">
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="form-group">
+                          <label>Tabla</label>
+                          <input id="depositosTableDB" type="text" class="form-control" placeholder="Ingrese el nombre de la tabla">
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <br/>
+                        <button id="testConnection" onclick="connectionTest(1)" type="button" class="btn btn-primary" style="margin-top:1%;">Probar Conexi&oacute;n</button>
+                      </div>
+                      <div class="col-md-12">
+                        <h5>* Nota: Ingresar en los campos siguientes el nombre de la columna correspondiente a su tabla.</h5>
+                      </div>
+
+                    </div>
+                    <div role="tabpanel" class="tab-pane fade" id="tab_Depositos_Excel" aria-labelledby="profile-tab">
+                      <div class="col-md-12">
+                        <div class="form-group">
+                          <label>Hoja</label>
+                          <input id="depositosTableExcel" type="text" class="form-control" placeholder="Ingrese el nombre de la hoja de excel">
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="form-group">
+                          <i style="color:red;" class="fa fa-asterisk"></i><label>&nbsp;Fila Inicial&nbsp;</label><small>Fila donde se empezar&aacute;n a tomar las valores</small>
+                          <input id="depositosExcelInicio" type="text" class="form-control" placeholder="Fila" data-inputmask="'mask': '9[9][9][9]'" data-inputmask-clearmaskonlostfocus="true">
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="form-group">
+                          <label>Fila Final </label> <small>(opcional: si vac&iacute;o se toma hasta el final del archivo)</small>
+                          <input id="depositosExcelFinal" type="text" class="form-control" placeholder="Fila" data-inputmask="'mask': '9[9][9][9]'" data-inputmask-clearmaskonlostfocus="true">
+                        </div>
+                      </div>
+                      <div class="col-md-12">
+                        <h5>* Nota: Ingresar en los campos siguientes la letra de la columna de excel correspondiente al valor.</h5>
+                      </div>
+
+                    </div>
+                  </div>
+                </div>
+
+                <br/>
+                <h4 class="text-center">Mapeo de Campos</h4>
+                
+                <table class="table table-striped">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Campo</th>
+                      <th>Origen</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <th scope="row">1</th>
+                      <td>Identificador Cliente</td>
+                      <td>
+                        <input type="text" id="idClienteConexionDepositos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">2</th>
+                      <td>Nombre Cliente</td>
+                      <td>
+                        <input type="text" id="nombreClienteConexionDepositos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">3</th>
+                      <td>Tipo de Persona</td>
+                      <td>
+                        <input type="text" id="tipoPersonaClienteConexionDepositos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">4</th>
+                      <td>Tipo de Sub-Persona</td>
+                      <td>
+                        <input type="text" id="tipoSubPersonaClienteConexionDepositos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">5</th>
+                      <td>Saldo</td>
+                      <td>
+                        <input type="text" id="saldoConexionDepositos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">6</th>
+                      <td>Moneda</td>
+                      <td>
+                        <input type="text" id="monedaConexionDepositos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">7</th>
+                      <td>Tipo de Cuenta</td>
+                      <td>
+                        <input type="text" id="tipoCuentaConexionDepositos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">8</th>
+                      <td>Agencia</td>
+                      <td>
+                        <input type="text" id="sucursalConexionDepositos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <br/>
+                <div class="ln_solid"></div>
+                <div id="wrapper">
+                  <button id="mostrar" onclick="saveDepositosDB(1)" type="button" class="btn btn-success">Guardar</button>
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div> <!-- /end CONEXION DEPOSITOS -->
+
+      <div id="depositos_div" class="row filtrarRow">
+        <div class="col-md-12">
+          <div class="x_panel">
+            <div class="x_title">
+              <h2>Importar Cartera de Cr&eacute;dito Diario</h2>
+              <ul class="nav navbar-right panel_toolbox">
+                <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                </li>
+              </ul>
+              <div class="clearfix"></div>
+            </div>
+
+            <div class="x_content">
+
+              <div class="col-md-12 col-sm-12 col-xs-12">
+
+                <div class="x_panel" role="tabpanel" data-example-id="togglable-tabs">
+                  <ul id="myTabPrestamos" class="nav nav-tabs bar_tabs" role="tablist">
+                    <li role="presentation" class="active" value="0"><a href="#tab_Prestamos_MSSQL" id="home-tab" role="tab" data-toggle="tab" aria-expanded="true">Conexi&oacute;n a una Base de Datos MSSQL</a>
+                    </li>
+                    <li role="presentation" class="" value="1"><a href="#tab_Prestamos_Excel" role="tab" id="profile-tab" data-toggle="tab" aria-expanded="false">Excel</a>
+                    </li>
+                  </ul>
+                  <div id="myTabContent" class="tab-content">
+                    <div role="tabpanel" class="tab-pane fade active in" id="tab_Prestamos_MSSQL" aria-labelledby="home-tab">
+
+                      <div class="col-md-6">
+                        <div class="form-group">
+                          <label>Usuario</label>
+                          <input id="prestamosUserDB" type="text" class="form-control" placeholder="Ingrese el nombre de usuario de la base de datos">
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="form-group">
+                          <label>Contrase&ntilde;a</label>
+                          <input id="prestamosPasswordDB" type="password" class="form-control" placeholder="Ingrese la contrase&ntilde;a de la base de datos">
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="form-group">
+                          <label>Servidor</label>
+                          <input id="prestamosServerDB" type="text" class="form-control" placeholder="Ingrese la direcci&oacute;n del servidor de la base de datos">
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="form-group">
+                          <label>Base de Datos</label>
+                          <input id="prestamosDataBaseDB" type="text" class="form-control" placeholder="Ingrese el nombre de la base de datos">
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="form-group">
+                          <label>Tabla</label>
+                          <input id="prestamosTableDB" type="text" class="form-control" placeholder="Ingrese el nombre de la tabla">
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <br/>
+                        <button id="testConnection" onclick="connectionTest(2)" type="button" class="btn btn-primary" style="margin-top:1%;">Probar Conexi&oacute;n</button>
+                      </div>
+                      <div class="col-md-12">
+                        <h5>* Nota: Ingresar en los campos siguientes el nombre de la columna correspondiente a su tabla.</h5>
+                      </div>
+
+                    </div>
+                    <div role="tabpanel" class="tab-pane fade" id="tab_Prestamos_Excel" aria-labelledby="profile-tab">
+                      <div class="col-md-12">
+                        <div class="form-group">
+                          <label>Hoja</label>
+                          <input id="prestamosTableExcel" type="text" class="form-control" placeholder="Ingrese el nombre de la hoja de excel">
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="form-group">
+                          <i style="color:red;" class="fa fa-asterisk"></i><label>&nbsp;Fila Inicial&nbsp;</label><small>Fila donde se empezar&aacute;n a tomar las valores</small>
+                          <input id="prestamosExcelInicio" type="text" class="form-control" placeholder="Fila" data-inputmask="'mask': '9[9][9][9]'" data-inputmask-clearmaskonlostfocus="true">
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="form-group">
+                          <label>Fila Final </label> <small>(opcional: si vac&iacute;o se toma hasta el final del archivo)</small>
+                          <input id="prestamosExcelFinal" type="text" class="form-control" placeholder="Fila" data-inputmask="'mask': '9[9][9][9]'" data-inputmask-clearmaskonlostfocus="true">
+                        </div>
+                      </div>
+                      <div class="col-md-12">
+                        <h5>* Nota: Ingresar en los campos siguientes la letra de la columna de excel correspondiente al valor.</h5>
+                      </div>
+
+                    </div>
+                  </div>
+                </div>
+
+                <br/>
+                <h4 class="text-center">Mapeo de Campos</h4>
+                
+                <table class="table table-striped">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Campo</th>
+                      <th>Origen</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <th scope="row">1</th>
+                      <td>Identificador Cliente</td>
+                      <td>
+                        <input type="text" id="idClienteConexionPrestamos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">2</th>
+                      <td>Nombre Cliente</td>
+                      <td>
+                        <input type="text" id="nombreClienteConexionPrestamos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">3</th>
+                      <td>Tipo de Persona</td>
+                      <td>
+                        <input type="text" id="tipoPersonaClienteConexionPrestamos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">4</th>
+                      <td>Tipo de Sub-Persona</td>
+                      <td>
+                        <input type="text" id="tipoSubPersonaClienteConexionPrestamos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">5</th>
+                      <td>N&uacute;mero de Pr&eacute;stamo</td>
+                      <td>
+                        <input type="text" id="numPrestamoConexionPrestamos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">6</th>
+                      <td>Saldo</td>
+                      <td>
+                        <input type="text" id="saldoConexionPrestamos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">7</th>
+                      <td>Moneda</td>
+                      <td>
+                        <input type="text" id="monedaConexionPrestamos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">8</th>
+                      <td>Tipo de Cuenta (TC)</td>
+                      <td>
+                        <input type="text" id="tipoCuentaConexionPrestamos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">9</th>
+                      <td>D&iacute;as de Mora</td>
+                      <td>
+                        <input type="text" id="moraConexionPrestamos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">10</th>
+                      <td>Amortizaciones</td>
+                      <td>
+                        <input type="text" id="amortizacionesConexionPrestamos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">11</th>
+                      <td>Sobregiros</td>
+                      <td>
+                        <input type="text" id="sobregirosConexionPrestamos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">12</th>
+                      <td>Contingente</td>
+                      <td>
+                        <input type="text" id="contingenteConexionPrestamos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">13</th>
+                      <td>Clasificaci&oacute;n de Cartera</td>
+                      <td>
+                        <input type="text" id="clasificacionCarteraConexionPrestamos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">14</th>
+                      <td>Tipo de Cr&eacute;dito</td>
+                      <td>
+                        <input type="text" id="tipoCreditoConexionPrestamos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">15</th>
+                      <td>Pago Esperado en 30 D&iacute;as</td>
+                      <td>
+                        <input type="text" id="esperado30ConexionPrestamos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">16</th>
+                      <td>Pago Esperado en 60 D&iacute;as</td>
+                      <td>
+                        <input type="text" id="esperado60ConexionPrestamos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">17</th>
+                      <td>Pago Esperado en 90 D&iacute;as</td>
+                      <td>
+                        <input type="text" id="esperado90ConexionPrestamos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">18</th>
+                      <td>Pago Esperado en 120 D&iacute;as</td>
+                      <td>
+                        <input type="text" id="esperado120ConexionPrestamos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">19</th>
+                      <td>Cr&eacute;ditos Refinanciados</td>
+                      <td>
+                        <input type="text" id="creditosRefinanciadosConexionPrestamos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">20</th>
+                      <td>Clausulas Restrictivas</td>
+                      <td>
+                        <input type="text" id="clausulasRestrictivasConexionPrestamos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">21</th>
+                      <td>Fecha de Inicio</td>
+                      <td>
+                        <input type="text" id="fechaInicioConexionPrestamos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">22</th>
+                      <td>Fecha de Expiraci&oacute;n</td>
+                      <td>
+                        <input type="text" id="fechaExpiracionConexionPrestamos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">23</th>
+                      <td>Monto Otorgado</td>
+                      <td>
+                        <input type="text" id="montoOtorgadoConexionPrestamos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">24</th>
+                      <td>Agencia</td>
+                      <td>
+                        <input type="text" id="sucursalConexionPrestamos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <br/>
+                <div class="ln_solid"></div>
+                <div id="wrapper">
+                  <button id="mostrar" onclick="savePrestamosDB(2)" type="button" class="btn btn-success">Guardar</button>
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div> <!-- /end CONEXION PRESTAMOS -->
+
+    </div>
+    <!-- /page content -->
+
+  </div>
+</div>
+
+<script src="src/libs/iCheck/icheck.min.js"></script>
+
+<script src="src/libs/jquery.inputmask/dist/min/jquery.inputmask.bundle.min.js"></script>
+
+<script src="src/libs/jquery-ui/jquery-ui.min.js"></script>
+
+<script src="src/libs/overhang/overhang.min.js"></script>
+
+<script src="src/libs/jquery.inputmask/dist/min/jquery.inputmask.bundle.min.js"></script>
+
+<script src="src/importaciones.js"></script>
+
+
+<!-- Custom Theme Scripts -->
+<script src="src/libs/custom.min.js"></script>

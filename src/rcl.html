@@ -2,6 +2,8 @@
 <link rel="stylesheet" href="src/libs/mathlive-master/dist/mathlive.core.css">
 <link rel="stylesheet" href="src/libs/mathlive-master/dist/mathlive.css">
 <link href="src/libs/overhang/overhang.min.css" rel="stylesheet">
+<link href="src/libs/iCheck/skins/flat/green.css" rel="stylesheet">
+<link href="src/libs/bootstrap-datepicker/datepicker3.css" rel="stylesheet">
 <div class="container body">
   <div class="main_container">
     <div class="col-md-3 left_col">
@@ -30,7 +32,9 @@
             <ul class="nav side-menu">
               <li><a onclick="goHome()"><i class="fa fa-home"></i> Home </a>
               </li>
-              <li><a onclick="goRCL()"><i class="fa fa-bar-chart"></i> C&aacute;lculo Diario de RCL </a>
+              <li class="active"><a onclick="goRCL()"><i class="fa fa-bar-chart"></i> C&aacute;lculo Diario de RCL </a>
+              </li>
+              <li><a onclick="goReports()"><i class="fa fa-list-alt"></i> Reporter&iacute;a </a>
               </li>
             </ul>
           </div>
@@ -57,74 +61,10 @@
               <ul class="dropdown-menu dropdown-usermenu pull-right">
                 <li id="varLabel"><a onclick="goVariables()"> Editar Variables </a></li>
                 <li id="userLabel"><a onclick="goUsers()"> Control de Usuarios </a></li>
+                <li id="importLabel"><a onclick="goConnections()"> Importar Tablas </a></li>
                 <li><a onclick="logout()"><i class="fa fa-sign-out pull-right"></i> Cerrar Sesi&oacute;n</a></li>
               </ul>
             </li>
-
-            <!-- <li role="presentation" class="dropdown">
-              <a href="javascript:;" class="dropdown-toggle info-number" data-toggle="dropdown" aria-expanded="false">
-                <i class="fa fa-envelope-o"></i>
-                <span class="badge bg-green">6</span>
-              </a>
-              <ul id="menu1" class="dropdown-menu list-unstyled msg_list" role="menu">
-                <li>
-                  <a>
-                    <span class="image"><img src="" alt="Profile Image" /></span>
-                    <span>
-                      <span>John Smith</span>
-                      <span class="time">3 mins ago</span>
-                    </span>
-                    <span class="message">
-                      Film festivals used to be do-or-die moments for movie makers. They were where...
-                    </span>
-                  </a>
-                </li>
-                <li>
-                  <a>
-                    <span class="image"><img src="" alt="Profile Image" /></span>
-                    <span>
-                      <span>John Smith</span>
-                      <span class="time">3 mins ago</span>
-                    </span>
-                    <span class="message">
-                      Film festivals used to be do-or-die moments for movie makers. They were where...
-                    </span>
-                  </a>
-                </li>
-                <li>
-                  <a>
-                    <span class="image"><img src="" alt="Profile Image" /></span>
-                    <span>
-                      <span>John Smith</span>
-                      <span class="time">3 mins ago</span>
-                    </span>
-                    <span class="message">
-                      Film festivals used to be do-or-die moments for movie makers. They were where...
-                    </span>
-                  </a>
-                </li>
-                <li>
-                  <a>
-                    <span class="image"><img src="" alt="Profile Image" /></span>
-                    <span>
-                      <span>John Smith</span>
-                      <span class="time">3 mins ago</span>
-                    </span>
-                    <span class="message">
-                      Film festivals used to be do-or-die moments for movie makers. They were where...
-                    </span>
-                  </a>
-                </li>
-                <li>
-                  <div class="text-center">
-                    <a>
-                      <strong>See All Alerts</strong>
-                      <i class="fa fa-angle-right"></i>
-                    </a>
-                  </div>
-                </li>
-              </ul>
-            </li> -->
           </ul>
         </nav>
       </div>
@@ -152,12 +92,31 @@
                 </div>
                 <br/>
                 <div class="row" id="wrapper">
-                  <div id="formulas" style="font-size: 1.5em;">
+                  <div id="formulas" style="font-size: 1.5em; border-radius: 10px; border: 1px solid #D3D3D3;">
                   </div>
+                </div>
+                <br/><br/>
+                <div class="row">
+                  <div id="wrapper">
+                    <label>Horizonte de D&iacute;as a Calcular</label>
+                  </div>
+                  <ul class="to_do text-center" style="display: flex; justify-content: center;">
+                    <li><p><input type="checkbox" name="dias" class="flat" checked value="30"> 30 d&iacute;as </p></li>
+                    <li><p><input type="checkbox" name="dias" class="flat" checked value="60"> 60 d&iacute;as </p></li>
+                    <li><p><input type="checkbox" name="dias" class="flat" checked value="90"> 90 d&iacute;as </p></li>
+                    <li><p><input type="checkbox" name="dias" class="flat" checked value="120"> 120 d&iacute;as </p></li>
+                  </ul>
+                </div>
+                <br/>
+                <div id="wrapper">
+                  <label>D&iacute;a a Calcular</label>
+                </div>
+                <div class="row" style="display: flex; justify-content: center;">
+                  <div id="fechaRCL" class="center-block"></div>
                 </div>
                 <br/>
                 <div class="row">
-                  <button type="button" onclick="calculateRCL()" class="btn btn-success col-xs-10 col-xs-offset-1" style="height: 2.5em; font-size: 2em;">Calcular</button>
+                  <button type="button" onclick="checkFormulaExists()" class="btn btn-success col-xs-10 col-xs-offset-1" style="height: 2.5em; font-size: 2em;">Calcular</button>
                 </div>
                 <br/>
               </div>
@@ -175,13 +134,20 @@
 
 <script src="src/libs/mathjs/math.js"></script>
 
-<script src="src/rcl.js"></script>
-
 <script src="src/libs/jquery-ui/jquery-ui.min.js"></script>
 
 <script src="src/libs/overhang/overhang.min.js"></script>
 
 <script src="src/libs/mathlive-master/dist/mathlive.js"></script>
+
+<script src="src/libs/iCheck/icheck.min.js"></script>
+
+<script src="src/libs/bootstrap-datepicker/bootstrap-datepicker.js"></script>
+
+<script src="src/libs/bootstrap-datepicker/locales/bootstrap-datepicker.es.js"></script>
+
+<script src="src/rcl.js"></script>
+
 <script>
   //MathLive.renderMathInElement('formulas');
   MathLive.renderMathInDocument();

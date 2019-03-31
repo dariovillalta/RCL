@@ -34,6 +34,8 @@
               </li>
               <li><a onclick="goRCL()"><i class="fa fa-bar-chart"></i> C&aacute;lculo Diario de RCL </a>
               </li>
+              <li><a onclick="goReports()"><i class="fa fa-list-alt"></i> Reporter&iacute;a </a>
+              </li>
             </ul>
           </div>
 
@@ -59,6 +61,7 @@
               <ul class="dropdown-menu dropdown-usermenu pull-right">
                 <li id="varLabel"><a onclick="goVariables()"> Editar Variables </a></li>
                 <li id="userLabel"><a onclick="goUsers()"> Control de Usuarios </a></li>
+                <li id="importLabel"><a onclick="goConnections()"> Importar Tablas </a></li>
                 <li><a onclick="logout()"><i class="fa fa-sign-out pull-right"></i> Cerrar Sesi&oacute;n</a></li>
               </ul>
             </li>
@@ -143,7 +146,6 @@
           <div class="x_panel">
             
             <div class="message_wrapper">
-              <small>Variable Padre: </small><h4 id="variableName" class="heading"></h4>
               <blockquote class="message">
                 <div class="row">
                   <div class="col-xs-12 tile_stats_count" id="wrapper">
@@ -332,24 +334,24 @@
                             <label>Cuentas Operativas</label>
                           </div>
                           <div id="wrapper">
-                            <label>
-                              <input id="hastaFOSEDECuentasOpCampoRadio" type="radio" class="flat" name="fosedeRadio">HASTA FOSEDE
+                            <label style="display: block; margin-left: auto; margin-right: auto;">
+                              <input id="hastaFOSEDECuentasOpCampoRadio" type="radio" class="flat" name="fosedeRadio">&nbsp;HASTA FOSEDE A CUENTAS OPERATIVAS
                             </label>
-                            <label>
-                              <input id="mayorFOSEDECuentasOpCampoRadio" type="radio" class="flat" name="fosedeRadio">MAYOR FOSEDE
+                            <label style="display: block; margin-left: auto; margin-right: auto;">
+                              <input id="mayorFOSEDECuentasOpCampoRadio" type="radio" class="flat" name="fosedeRadio">&nbsp;SOBRE FOSEDE A CUENTAS OPERATIVAS
                             </label>
-                            <label>
-                              <input id="hastaFOSEDENoCuentasOpCampoRadio" type="radio" class="flat" name="fosedeRadio">SIN CUENTAS OPERATIVAS MAYOR FOSEDE
+                            <label style="display: block; margin-left: auto; margin-right: auto;">
+                              <input id="hastaFOSEDENoCuentasOpCampoRadio" type="radio" class="flat" name="fosedeRadio">&nbsp;HASTA FOSEDE A LAS CUENTAS NO OPERATIVAS
                             </label>
-                            <label>
-                              <input id="mayorFOSEDENoCuentasOpCampoRadio" type="radio" class="flat" name="fosedeRadio">CON CUENTAS OPERATIVAS MAYOR FOSEDE
+                            <label style="display: block; margin-left: auto; margin-right: auto;">
+                              <input id="mayorFOSEDENoCuentasOpCampoRadio" type="radio" class="flat" name="fosedeRadio">&nbsp;SOBRE FOSEDE A LAS CUENTAS NO OPERATIVAS
                             </label>
                           </div>
                         </div>
                         <hr class="style11">
-
-                        <div id="relacionalesField" class="row">
-                          <h2 style="padding-left: 5%;">Operaci&oacute;n a Aplicar</h2>
+                        
+                        <h2 style="padding-left: 5%;">Operaci&oacute;n a Aplicar</h2>
+                        <div id="relacionalesField" class="row" style="display: none;">
                           <div id="wrapper" class="row">
                             <h5>Relacionales</h5>
                           </div>
@@ -357,7 +359,7 @@
                           <div class="row">
                             <div class="col-xs-2 col-xs-offset-1">
                               <label>
-                                <input id="meOperadorRadio" type="radio" class="flat" checked name="operadorRadio"> &#60;
+                                <input id="meOperadorRadio" type="radio" class="flat" name="operadorRadio"> &#60;
                               </label>
                             </div>
                             <div class="col-xs-2 col-xs-offset-1">
@@ -429,6 +431,43 @@
                             </div>
                           </div> -->
                         </div>
+
+                        <div id="sumarSiField" class="row">
+                          <div id="wrapper" class="row">
+                            <h5>Agrupaci&oacute;n</h5>
+                          </div>
+                          <br/>
+                          <div class="row">
+                            <div class="col-xs-4 col-xs-offset-2">
+                              <label>
+                                <input id="sumarSiOperadorRadio" type="radio" class="flat" name="operadorRadio" checked> Sumar si se encuentra en
+                              </label>
+                            </div>
+                            <div class="col-xs-4 col-xs-offset-2">
+                              <label>
+                                <input id="sumarSiNoOperadorRadio" type="radio" class="flat" name="operadorRadio"> Sumar si NO se encuentra en
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div id="multField" class="row" style="display: none;">
+                          <div id="wrapper" class="row">
+                            <h5>Multiplicaci&oacute;n</h5>
+                          </div>
+                          <br/>
+                          <div class="row">
+                            <div id="wrapper">
+                              <label>
+                                <input id="multOperadorRadio" type="radio" class="flat" name="operadorRadio"> x
+                              </label>
+                            </div>
+                          </div>
+                          <br/>
+                          <div class="row" id="wrapper">
+                            <img src="src/img/times.png" alt="" style="height: 8em;">
+                          </div>
+                        </div>
                         <br/>
                         <hr class="style11">
 
@@ -436,7 +475,7 @@
                           <h2 style="padding-left: 5%;">Valor a Aplicar <small>Valor a aplicar a un Campo Objetivo.</small></h2>
                           <div id="wrapper" class="row">
                             <label id="elementoValorRadioLabel">
-                              <input id="elementoValorRadio" type="radio" class="flat" name="valorRadio" checked> Elemento de Lista o Lista
+                              <input id="elementoValorRadio" type="radio" class="flat" name="valorRadio" checked> Agrupaci&oacute;n de una Lista
                             </label>
                             <label id="manualValorRadioLabel" style="display: none;">
                               <input id="manualValorRadio" type="radio" class="flat" name="valorRadio"> N&uacute;mero
@@ -450,6 +489,9 @@
                             <label id="factorValorRadioLabel" style="display: none;">
                               <input id="factorValorRadio" type="radio" class="flat" name="valorRadio"> Factor
                             </label>
+                            <label id="fechaValorRadioLabel" style="display: none;">
+                              <input id="fechaValorRadio" type="radio" class="flat" name="valorRadio"> Fecha
+                            </label>
                             <br/>
                           </div>
 
@@ -457,7 +499,7 @@
                             <br/>
                             <div class="col-xs-6 col-xs-offset-3">
                               <div id="wrapper" class="row">
-                                <h5>Elemento de Listas</h5>
+                                <h5>Agrupaci&oacute;n de Listas</h5>
                               </div>
                               <div class="row">
                                 <form class="form-horizontal form-label-left">
@@ -508,8 +550,8 @@
                               <div class="row">
                                 <form class="form-horizontal form-label-left">
                                   <div class="form-group">
-                                    <label>Ingrese Campo</label>
-                                    <input id="manualValorInput" type="text" class="form-control" placeholder="Campo">
+                                    <label>Ingrese un N&uacute;mero</label>
+                                    <input id="manualValorInput" type="text" class="form-control" placeholder="Campo" data-inputmask-alias="currency" data-inputmask-prefix="L " data-inputmask-clearmaskonlostfocus="true">
                                   </div>
                                 </form>
                               </div>
@@ -530,6 +572,22 @@
                                   <div class="tile_stats_count">
                                     <div id="factorText" class="count text-center"></div>
                                   </div>
+                                </div>
+                              </div>
+                            </div>
+                            <br/>
+                          </div>
+
+                          <div id="diasField" class="row" style="display: none;">
+                            <br/>
+                            <div class="col-xs-6 col-xs-offset-3">
+                              <div id="wrapper" class="row">
+                                <h5>Fecha</h5>
+                              </div>
+                              <div class="row">
+                                <div class="form-group col-sm-8 col-sm-offset-2">
+                                  <input type="text" class="form-control" id="diaValorInput" placeholder="D&iacute;a" value="D&iacute;as de Proyeccci&oacute;n" readonly>
+                                  <span class="fa fa-calendar-o form-control-feedback right" aria-hidden="true"></span>
                                 </div>
                               </div>
                             </div>

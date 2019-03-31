@@ -25,7 +25,7 @@ tr.details td.details-control {
 }
 
 #listaActivosSelect{
-	border-radius: 20px;
+	//border-radius: 20px;
 	width: 80%;
 	display: block;
 	margin: 0 auto;

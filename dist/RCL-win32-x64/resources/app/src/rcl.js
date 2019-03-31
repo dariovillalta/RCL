@@ -4,7 +4,7 @@ const remote = require('electron').remote;
 const sql = require('mssql');
 
 const config = {
-    user: 'admin',
+    user: 'SA',
     password: 'password111!',
     server: 'localhost',
     database: 'RCL_Dev',
@@ -1609,6 +1609,11 @@ function goHome () {
 function goUsers () {
 	$("#app_root").empty();
     $("#app_root").load("src/users.html");
+}
+
+function goConnections () {
+    $("#app_root").empty();
+    $("#app_root").load("src/importaciones.html");
 }
 
 function logout () {

@@ -7,9 +7,13 @@
 <link href="src/libs/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css" rel="stylesheet">
 <link href="src/libs/datatables.net-responsive-bs/css/responsive.bootstrap.min.css" rel="stylesheet">
 <link href="src/libs/datatables.net-scroller-bs/css/scroller.bootstrap.min.css" rel="stylesheet">
+<link href="src/libs/bootstrap-datepicker/datepicker3.css" rel="stylesheet">
 <link href="src/libs/overhang/overhang.min.css" rel="stylesheet">
 <div class="container body">
-  <div class="main_container">
+  <div class="loadingScreen" style="display: none;">
+    <p class="loadingScreenText">Espere un momento por favor <span class="dots"></span> </p>
+  </div>
+  <div class="main_container" style="z-index: -1;">
     <div class="col-md-3 left_col">
       <div class="left_col scroll-view">
         <div class="navbar nav_title" style="border: 0;" id="wrapper">
@@ -38,6 +42,8 @@
               </li>
               <li><a onclick="goRCL()"><i class="fa fa-bar-chart"></i> C&aacute;lculo Diario de RCL </a>
               </li>
+              <li><a onclick="goReports()"><i class="fa fa-list-alt"></i> Reporter&iacute;a </a>
+              </li>
             </ul>
           </div>
 
@@ -63,74 +69,10 @@
               <ul class="dropdown-menu dropdown-usermenu pull-right">
                 <li id="varLabel"><a onclick="goVariables()"> Editar Variables </a></li>
                 <li id="userLabel"><a onclick="goUsers()"> Control de Usuarios </a></li>
+                <li id="importLabel"><a onclick="goConnections()"> Importar Tablas </a></li>
                 <li><a onclick="logout()"><i class="fa fa-sign-out pull-right"></i> Cerrar Sesi&oacute;n</a></li>
               </ul>
             </li>
-
-            <!-- <li role="presentation" class="dropdown">
-              <a href="javascript:;" class="dropdown-toggle info-number" data-toggle="dropdown" aria-expanded="false">
-                <i class="fa fa-envelope-o"></i>
-                <span class="badge bg-green">6</span>
-              </a>
-              <ul id="menu1" class="dropdown-menu list-unstyled msg_list" role="menu">
-                <li>
-                  <a>
-                    <span class="image"><img src="" alt="Profile Image" /></span>
-                    <span>
-                      <span>John Smith</span>
-                      <span class="time">3 mins ago</span>
-                    </span>
-                    <span class="message">
-                      Film festivals used to be do-or-die moments for movie makers. They were where...
-                    </span>
-                  </a>
-                </li>
-                <li>
-                  <a>
-                    <span class="image"><img src="" alt="Profile Image" /></span>
-                    <span>
-                      <span>John Smith</span>
-                      <span class="time">3 mins ago</span>
-                    </span>
-                    <span class="message">
-                      Film festivals used to be do-or-die moments for movie makers. They were where...
-                    </span>
-                  </a>
-                </li>
-                <li>
-                  <a>
-                    <span class="image"><img src="" alt="Profile Image" /></span>
-                    <span>
-                      <span>John Smith</span>
-                      <span class="time">3 mins ago</span>
-                    </span>
-                    <span class="message">
-                      Film festivals used to be do-or-die moments for movie makers. They were where...
-                    </span>
-                  </a>
-                </li>
-                <li>
-                  <a>
-                    <span class="image"><img src="" alt="Profile Image" /></span>
-                    <span>
-                      <span>John Smith</span>
-                      <span class="time">3 mins ago</span>
-                    </span>
-                    <span class="message">
-                      Film festivals used to be do-or-die moments for movie makers. They were where...
-                    </span>
-                  </a>
-                </li>
-                <li>
-                  <div class="text-center">
-                    <a>
-                      <strong>See All Alerts</strong>
-                      <i class="fa fa-angle-right"></i>
-                    </a>
-                  </div>
-                </li>
-              </ul>
-            </li> -->
           </ul>
         </nav>
       </div>
@@ -308,7 +250,9 @@
 
               <div class="col-md-12 col-sm-12 col-xs-12">
                 <h5>Para editar el campo, haga click en la celda de la fila y columna que desea editar.</h5>
-                <h5>Para ver las variables asociadas con la variable de la formula, haga click en el bot&oacute;n verde de la primera fila.</h5>
+                <h5>Para ver las variables asociadas con la variable de la formula, haga click en el bot&oacute;n verde de la primera columna.</h5>
+                <h5>* Nota: Las variables son insensibles a may&uacute;sculas y min&uacute;sculas en la f&oacute;rmula.</h5>
+                <h5>* Nota: Las variables no deben empezar con un n&uacute;mero, pero pueden llevar uno en medio o al final.</h5>
                 <br/>
 
                 <div class="card-box table-responsive">
@@ -339,53 +283,6 @@
         </div>
       </div> <!-- /end VARIABLES -->
 
-      <!-- <div id="variablesDeVariables_div" class="row">
-        <div class="col-md-12">
-          <div class="x_panel">
-            <div class="x_title">
-              <h2>Variables de Formula del Ratio de Cobertura de Liquidez</h2>
-              <ul class="nav navbar-right panel_toolbox">
-                <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
-                </li>
-              </ul>
-              <div class="clearfix"></div>
-            </div>
-
-            <div class="x_content">
-
-              <div class="col-md-12 col-sm-12 col-xs-12">
-                <h5>Para editar el campo, haga click en la celda de la fila y columna que desea editar.</h5>
-                <h5>Para ver las variables asociadas con la variable de la formula, haga click en el bot&oacute;n verde de la primera fila.</h5>
-                <br/>
-
-                <div class="card-box table-responsive">
-                  <table id="datatable_variablesOfVariables" class="table table-striped table-bordered">
-                    <thead>
-                      <tr>
-                        <th>ID</th>
-                        <th>Variable Padre</th>
-                        <th>Nombre</th>
-                        <th>Descripci&oacute;n</th>
-                        <th>Cuenta</th>
-                        <th>Guardar</th>
-                        <th>Eliminar</th>
-                      </tr>
-                    </thead>
-
-                    <tbody>
-                    </tbody>
-                  </table>
-                </div>
-
-                <br/>
-
-              </div>
-
-            </div>
-          </div>
-        </div>
-      </div> --> <!-- /end VARIABLESDEVARIABLES -->
-
 
       <div id="variablesDeVariables_div" class="row filtrarRow">
         <div class="col-md-12">
@@ -403,24 +300,29 @@
 
               <div class="col-md-12 col-sm-12 col-xs-12">
                 <h5>Para editar el campo, haga click en la celda de la fila y columna que desea editar.</h5>
-                <h5>Para ver las variables asociadas con la variable de la formula, haga click en el bot&oacute;n verde de la primera fila.</h5>
+                <h5>* Nota: Las variables son insensibles a may&uacute;sculas y min&uacute;sculas en la f&oacute;rmula.</h5>
+                <h5>* Nota: Las sub-variables no deben empezar con un n&uacute;mero, pero pueden llevar uno en medio o al final.</h5>
                 <br/>
 
-                <table id="datatable_variablesOfVariables" class="table table-striped">
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>Variable Padre</th>
-                      <th>Nombre</th>
-                      <th>Descripci&oacute;n</th>
-                      <th>Editar</th>
-                      <th>Eliminar</th>
-                    </tr>
-                  </thead>
+                <div class="card-box table-responsive">
+                  <table id="datatable_variablesOfVariables" class="table table-striped table-bordered">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Descripci&oacute;n</th>
+                        <th>Factor</th>
+                        <th>Tabla a Aplicar</th>
+                        <th>Guardar</th>
+                        <th>Eliminar</th>
+                        <th>Editar Filtros</th>
+                      </tr>
+                    </thead>
 
-                  <tbody id="datatable_variablesOfVariables_body">
-                  </tbody>
-                </table>
+                    <tbody id="datatable_variablesOfVariables_body">
+                    </tbody>
+                  </table>
+                </div>
 
                 <br/>
 
@@ -450,9 +352,10 @@
                 <div class="row">
                   <h4>Importar Lista por archivo de excel:</h4>
                   <br/>
-                  <button data-toggle="modal" href="#modalManual" type="button" class="col-xs-10 col-xs-offset-1 btn btn-primary" style="margin-top:1.6em;">Seleccionar Archivo</button>
+                  <button onclick="selectFile()" type="button" class="col-xs-10 col-xs-offset-1 btn btn-primary" style="margin-top:1.6em;">Seleccionar Archivo</button>
                 </div>
                 <hr class="style11">
+                <h4>Mantenimiento manual de listas:</h4>
                 <!-- <h4>Crear listas de forma manual:</h4>
                 <div class="row">
                   <label class="control-label col-sm-2 col-sm-offset-1 col-xs-6" for="nameList">Nombre Lista: </label>
@@ -460,8 +363,8 @@
                     <input id="nameList" type="text" class="form-control" placeholder="Ingresar nombre de la lista">
                   </div>
                   <button type="button" onclick="createList()" class="btn btn-primary col-sm-offset-1 col-sm-3 col-xs-12">Crear Lista</button>
-                </div>
-                <br/>
+                </div> -->
+                <!-- <br/>
                 <div id="wrapper" class="row">
                   <label>
                     <input id="listaManualContable" type="radio" class="flat" name="listaValorRadioALAC" value="1" checked/> Manual Contable
@@ -475,9 +378,9 @@
                   <label>
                     <input id="otroFosede" type="radio" class="flat" name="listaValorRadioALAC" value="4"/> Otro
                   </label>
-                </div>
-                <br/>
-                <div class="ln_solid"></div>
+                </div> -->
+                <!-- <br/>
+                <div class="ln_solid"></div> -->
                 <div class="row">
                   <label class="control-label col-sm-2 col-sm-offset-1 col-xs-6" for="elementosLista">Editar nombre de Lista: </label>
                   <div class="col-sm-3 col-xs-12">
@@ -493,7 +396,7 @@
                   <button type="button" onclick="deleteList()" class="btn btn-danger col-sm-1 col-xs-12"><span class="glyphicon glyphicon-trash"></span></button>
                 </div>
                 <br/>
-                <div class="ln_solid"></div> -->
+                <div class="ln_solid"></div>
                 <h4>Mantenimiento de listas:</h4>
                 <div class="row" style="padding-left:5%;">
                   <label class="control-label" for="elementosLista">Agregar Elemento a Lista: </label>
@@ -512,10 +415,38 @@
                     <input id="elementoValor" type="text" class="form-control" placeholder="Ingrese n&uacute;mero de cuenta">
                   </div>
                 </div>
-                <div id="saldoCuenOpField" class="row">
+                <div id="puestoField" class="row" style="display: none;">
                   <br/>
                   <div class="col-sm-offset-5 col-sm-7 col-xs-12">
-                    <input id="elementoSaldo" type="text" class="form-control" placeholder="Ingrese a&ntilde;os de vigencia">
+                    <input id="elementoPuesto" type="text" class="form-control" placeholder="Ingrese puesto de la persona">
+                  </div>
+                </div>
+                <div id="saldosField" class="row" style="display: none;">
+                  <br/>
+                  <div class="col-sm-offset-5 col-sm-4 col-xs-12">
+                    <input id="idClienteCueOp" type="text" class="form-control" placeholder="Ingrese ID de cliente">
+                  </div>
+                  <div class="col-sm-3 col-xs-12">
+                    <input id="saldoCueOp" type="text" class="form-control" placeholder="Ingrese saldo de cuenta">
+                  </div>
+                </div>
+                <div id="fechasField" class="row">
+                  <br/>
+                  <div class="col-sm-offset-5 col-sm-4 col-xs-12">
+                    <div id="wrapper">
+                      <label for="fechaCreacionManCon">Columna de inicio de vigencia de Elemento</label>
+                    </div>
+                    <div class="row" style="display: flex; justify-content: center;">
+                      <div id="fechaCreacionManCon" class="center-block"></div>
+                    </div>
+                  </div>
+                  <div class="col-sm-3 col-xs-12">
+                    <div id="wrapper">
+                      <label for="fechaCaducidadManCon">Columna de fin de vigencia</label>
+                    </div>
+                    <div class="row" style="display: flex; justify-content: center;">
+                      <div id="fechaCaducidadManCon"></div>
+                    </div>
                   </div>
                 </div>
                 <div class="row" id="wrapper">
@@ -530,7 +461,7 @@
                   <div class="col-sm-4 col-xs-12 col-sm-offset-1">
                     <div class="row">
                       <div class="select-style">
-                        <select id="elementosDeListaUpdate" onchange="loadListLists()">
+                        <select id="elementosDeListaUpdate" onchange="loadListListsExcel()">
                         </select>
                       </div>
                     </div>
@@ -583,7 +514,8 @@
                   <div class="form-group">
                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="first-name">Ingresar Monto:</label>
                     <div class="col-md-3 col-sm-3 col-xs-12">
-                      <input type="text" id="lempiraInput" required="required" class="form-control col-md-7 col-xs-12" data-inputmask-alias="currency" data-inputmask-prefix="₿ " data-inputmask-clearmaskonlostfocus="true" style="display:none;">
+                      <input type="text" id="lempiraInput" required="required" class="form-control col-md-7 col-xs-12" data-inputmask-alias="currency" data-inputmask-prefix="L " data-inputmask-clearmaskonlostfocus="true" style="display:none;">
+                      <input type="text" id="euroInput" required="required" class="form-control col-md-7 col-xs-12" data-inputmask-alias="currency" data-inputmask-prefix="€ " data-inputmask-clearmaskonlostfocus="true" style="display:none;">
                       <input type="text" id="dollarInput" required="required" class="form-control col-md-7 col-xs-12" data-inputmask-alias="currency" data-inputmask-clearmaskonlostfocus="true" >
                     </div>
                     <div class="col-md-2 col-md-offset-1 col-sm-2 col-sm-offset-1 col-xs-3 col-xs-offset-3">
@@ -600,6 +532,11 @@
                           <input id="lempiraInputRadio" onclick="showLempira()" type="radio" name="moneda"> Lempira
                         </label>
                       </div>
+                      <div class="radio">
+                        <label>
+                          <input id="euroInputRadio" onclick="showEuro()" type="radio" name="moneda"> Euro
+                        </label>
+                      </div>
                     </div>
                   </div>
 
@@ -610,7 +547,7 @@
                       <!-- <input type="text" id="dollarInputCambio" required="required" class="form-control col-md-7 col-xs-12" data-inputmask-alias="currency" data-inputmask-clearmaskonlostfocus="true" data-inputmask-digits="3" style="display:none;"> -->
                     </div>
                     <div class="col-md-2 col-md-offset-1 col-sm-2 col-sm-offset-1 col-xs-3 col-xs-offset-3">
-                      <label class="control-label" for="first-name">Moneda:</label>
+                      <!-- <label class="control-label" for="first-name">Moneda:</label> -->
                     </div>
                     <div class="col-md-3 col-sm-3 col-xs-6">
                       <!-- <div class="radio">
@@ -618,11 +555,11 @@
                           <input id="dollarRadio" type="radio" name="cambio" disabled="disabled"> Dolar
                         </label>
                       </div> -->
-                      <div class="radio">
+                      <!-- <div class="radio">
                         <label>
                           <input id="lempiraRadio" type="radio" checked name="cambio" disabled="disabled"> Lempira
                         </label>
-                      </div>
+                      </div> -->
                     </div>
                   </div>
 
@@ -648,344 +585,6 @@
           </div>
         </div>
       </div> <!-- /end FOSEDE -->
-
-      <div id="alac_div" class="row filtrarRow">
-        <div class="col-md-12">
-          <div class="x_panel">
-            <div class="x_title">
-              <h2>Importar Balance General</h2>
-              <ul class="nav navbar-right panel_toolbox">
-                <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
-                </li>
-              </ul>
-              <div class="clearfix"></div>
-            </div>
-
-            <div class="x_content">
-
-              <div class="col-md-12 col-sm-12 col-xs-12">
-
-                <div class="x_panel" role="tabpanel" data-example-id="togglable-tabs">
-                  <ul id="myTabActivos" class="nav nav-tabs bar_tabs" role="tablist">
-                    <li role="presentation" class="active" value="0"><a href="#tab_Activos_MSSQL" id="home-tab" role="tab" data-toggle="tab" aria-expanded="true">Conexi&oacute;n a una Base de Datos MSSQL</a>
-                    </li>
-                    <li role="presentation" class="" value="1"><a href="#tab_Activos_Excel" role="tab" id="profile-tab" data-toggle="tab" aria-expanded="false">Excel</a>
-                    </li>
-                  </ul>
-                  <div id="myTabContentActivos" class="tab-content">
-                    <div role="tabpanel" class="tab-pane fade active in" id="tab_Activos_MSSQL" aria-labelledby="home-tab">
-
-                      <div class="col-md-6">
-                        <div class="form-group">
-                          <label>Usuario</label>
-                          <input id="activosUserDB" type="text" class="form-control" placeholder="Ingrese el nombre de usuario de la base de datos">
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <div class="form-group">
-                          <label>Contrase&ntilde;a</label>
-                          <input id="activosPasswordDB" type="password" class="form-control" placeholder="Ingrese la contrase&ntilde;a de la base de datos">
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <div class="form-group">
-                          <label>Servidor</label>
-                          <input id="activosServerDB" type="text" class="form-control" placeholder="Ingrese la direcci&oacute;n del servidor de la base de datos">
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <div class="form-group">
-                          <label>Base de Datos</label>
-                          <input id="activosDataBaseDB" type="text" class="form-control" placeholder="Ingrese el nombre de la base de datos">
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <div class="form-group">
-                          <label>Tabla</label>
-                          <input id="activosTableDB" type="text" class="form-control" placeholder="Ingrese el nombre de la tabla">
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <br/>
-                        <button id="testConnection" onclick="connectionTest(0)" type="button" class="btn btn-primary" style="margin-top:1%;">Probar Conexi&oacute;n</button>
-                      </div>
-                      <div class="col-md-12">
-                        <h5>* Nota: Ingresar en los campos siguientes el nombre de la columna correspondiente a su tabla.</h5>
-                      </div>
-
-                    </div>
-                    <div role="tabpanel" class="tab-pane fade" id="tab_Activos_Excel" aria-labelledby="profile-tab">
-                      <div class="col-md-12">
-                        <div class="form-group">
-                          <label>Hoja</label>
-                          <input id="activosTableExcel" type="text" class="form-control" placeholder="Ingrese el nombre de la hoja de excel">
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <div class="form-group">
-                          <i style="color:red;" class="fa fa-asterisk"></i><label>&nbsp;Fila Inicial&nbsp;</label><small>Fila donde se empezar&aacute;n a tomar las valores</small>
-                          <input id="activosExcelInicio" type="text" class="form-control" placeholder="Fila" data-inputmask="'mask': '9[9][9][9]'" data-inputmask-clearmaskonlostfocus="true">
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <div class="form-group">
-                          <label>Fila Final </label> <small>(opcional: si vac&iacute;o se toma hasta el final del archivo)</small>
-                          <input id="activosExcelFinal" type="text" class="form-control" placeholder="Fila" data-inputmask="'mask': '9[9][9][9]'" data-inputmask-clearmaskonlostfocus="true">
-                        </div>
-                      </div>
-                      <div class="col-md-12">
-                        <h5>* Nota: Ingresar en los campos siguientes la letra de la columna de excel correspondiente al valor.</h5>
-                      </div>
-
-                    </div>
-                  </div>
-                </div>
-
-                <br/>
-                <h4 class="text-center">Mapeo de Campos</h4>
-                
-                <table class="table table-striped">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Campo</th>
-                      <th>Origen</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <th scope="row">1</th>
-                      <td>Cuenta</td>
-                      <td>
-                        <input type="text" id="cuentaConexionActivos" required="required" class="form-control">
-                      </td>
-                    </tr>
-                    <tr>
-                      <th scope="row">2</th>
-                      <td>Nombre</td>
-                      <td>
-                        <input type="text" id="nombreConexionActivos" required="required" class="form-control">
-                      </td>
-                    </tr>
-                    <tr>
-                      <th scope="row">3</th>
-                      <td>Saldo</td>
-                      <td>
-                        <input type="text" id="saldoConexionActivos" required="required" class="form-control">
-                      </td>
-                    </tr>
-                    <tr>
-                      <th scope="row">4</th>
-                      <td>Moneda</td>
-                      <td>
-                        <input type="text" id="monedaConexionActivos" required="required" class="form-control">
-                      </td>
-                    </tr>
-                    <tr>
-                      <th scope="row">5</th>
-                      <td>Tipo de Cuenta</td>
-                      <td>
-                        <input type="text" id="tipoCuentaConexionActivos" required="required" class="form-control">
-                      </td>
-                    </tr>
-                    <tr>
-                      <th scope="row">6</th>
-                      <td>Sucursal</td>
-                      <td>
-                        <input type="text" id="sucursalConexionActivos" required="required" class="form-control">
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-
-                <br/>
-                <div class="ln_solid"></div>
-                <div id="wrapper">
-                  <button id="mostrar" onclick="saveActivosDB(0)" type="button" class="btn btn-success">Guardar</button>
-                </div>
-
-              </div>
-
-            </div>
-          </div>
-        </div>
-      </div> <!-- /end CONEXION ACTIVOS -->
-
-      <div id="depositos_div" class="row filtrarRow">
-        <div class="col-md-12">
-          <div class="x_panel">
-            <div class="x_title">
-              <h2>Importar Captaciones</h2>
-              <ul class="nav navbar-right panel_toolbox">
-                <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
-                </li>
-              </ul>
-              <div class="clearfix"></div>
-            </div>
-
-            <div class="x_content">
-
-              <div class="col-md-12 col-sm-12 col-xs-12">
-
-                <div class="x_panel" role="tabpanel" data-example-id="togglable-tabs">
-                  <ul id="myTabDepositos" class="nav nav-tabs bar_tabs" role="tablist">
-                    <li role="presentation" class="active" value="0"><a href="#tab_Depositos_MSSQL" id="home-tab" role="tab" data-toggle="tab" aria-expanded="true">Conexi&oacute;n a una Base de Datos MSSQL</a>
-                    </li>
-                    <li role="presentation" class="" value="1"><a href="#tab_Depositos_Excel" role="tab" id="profile-tab" data-toggle="tab" aria-expanded="false">Excel</a>
-                    </li>
-                  </ul>
-                  <div id="myTabContent" class="tab-content">
-                    <div role="tabpanel" class="tab-pane fade active in" id="tab_Depositos_MSSQL" aria-labelledby="home-tab">
-
-                      <div class="col-md-6">
-                        <div class="form-group">
-                          <label>Usuario</label>
-                          <input id="depositosUserDB" type="text" class="form-control" placeholder="Ingrese el nombre de usuario de la base de datos">
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <div class="form-group">
-                          <label>Contrase&ntilde;a</label>
-                          <input id="depositosPasswordDB" type="password" class="form-control" placeholder="Ingrese la contrase&ntilde;a de la base de datos">
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <div class="form-group">
-                          <label>Servidor</label>
-                          <input id="depositosServerDB" type="text" class="form-control" placeholder="Ingrese la direcci&oacute;n del servidor de la base de datos">
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <div class="form-group">
-                          <label>Base de Datos</label>
-                          <input id="depositosDataBaseDB" type="text" class="form-control" placeholder="Ingrese el nombre de la base de datos">
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <div class="form-group">
-                          <label>Tabla</label>
-                          <input id="depositosTableDB" type="text" class="form-control" placeholder="Ingrese el nombre de la tabla">
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <br/>
-                        <button id="testConnection" onclick="connectionTest(1)" type="button" class="btn btn-primary" style="margin-top:1%;">Probar Conexi&oacute;n</button>
-                      </div>
-                      <div class="col-md-12">
-                        <h5>* Nota: Ingresar en los campos siguientes el nombre de la columna correspondiente a su tabla.</h5>
-                      </div>
-
-                    </div>
-                    <div role="tabpanel" class="tab-pane fade" id="tab_Depositos_Excel" aria-labelledby="profile-tab">
-                      <div class="col-md-12">
-                        <div class="form-group">
-                          <label>Hoja</label>
-                          <input id="depositosTableExcel" type="text" class="form-control" placeholder="Ingrese el nombre de la hoja de excel">
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <div class="form-group">
-                          <i style="color:red;" class="fa fa-asterisk"></i><label>&nbsp;Fila Inicial&nbsp;</label><small>Fila donde se empezar&aacute;n a tomar las valores</small>
-                          <input id="depositosExcelInicio" type="text" class="form-control" placeholder="Fila" data-inputmask="'mask': '9[9][9][9]'" data-inputmask-clearmaskonlostfocus="true">
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <div class="form-group">
-                          <label>Fila Final </label> <small>(opcional: si vac&iacute;o se toma hasta el final del archivo)</small>
-                          <input id="depositosExcelFinal" type="text" class="form-control" placeholder="Fila" data-inputmask="'mask': '9[9][9][9]'" data-inputmask-clearmaskonlostfocus="true">
-                        </div>
-                      </div>
-                      <div class="col-md-12">
-                        <h5>* Nota: Ingresar en los campos siguientes la letra de la columna de excel correspondiente al valor.</h5>
-                      </div>
-
-                    </div>
-                  </div>
-                </div>
-
-                <br/>
-                <h4 class="text-center">Mapeo de Campos</h4>
-                
-                <table class="table table-striped">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Campo</th>
-                      <th>Origen</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <th scope="row">1</th>
-                      <td>Identificador Cliente</td>
-                      <td>
-                        <input type="text" id="idClienteConexionDepositos" required="required" class="form-control">
-                      </td>
-                    </tr>
-                    <tr>
-                      <th scope="row">2</th>
-                      <td>Nombre Cliente</td>
-                      <td>
-                        <input type="text" id="nombreClienteConexionDepositos" required="required" class="form-control">
-                      </td>
-                    </tr>
-                    <tr>
-                      <th scope="row">3</th>
-                      <td>Tipo de Persona</td>
-                      <td>
-                        <input type="text" id="tipoPersonaClienteConexionDepositos" required="required" class="form-control">
-                      </td>
-                    </tr>
-                    <tr>
-                      <th scope="row">4</th>
-                      <td>Tipo de Sub-Persona</td>
-                      <td>
-                        <input type="text" id="tipoSubPersonaClienteConexionDepositos" required="required" class="form-control">
-                      </td>
-                    </tr>
-                    <tr>
-                      <th scope="row">5</th>
-                      <td>Saldo</td>
-                      <td>
-                        <input type="text" id="saldoConexionDepositos" required="required" class="form-control">
-                      </td>
-                    </tr>
-                    <tr>
-                      <th scope="row">6</th>
-                      <td>Moneda</td>
-                      <td>
-                        <input type="text" id="monedaConexionDepositos" required="required" class="form-control">
-                      </td>
-                    </tr>
-                    <tr>
-                      <th scope="row">7</th>
-                      <td>Tipo de Cuenta</td>
-                      <td>
-                        <input type="text" id="tipoCuentaConexionDepositos" required="required" class="form-control">
-                      </td>
-                    </tr>
-                    <tr>
-                      <th scope="row">8</th>
-                      <td>Sucursal</td>
-                      <td>
-                        <input type="text" id="sucursalConexionDepositos" required="required" class="form-control">
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-
-                <br/>
-                <div class="ln_solid"></div>
-                <div id="wrapper">
-                  <button id="mostrar" onclick="saveDepositosDB(1)" type="button" class="btn btn-success">Guardar</button>
-                </div>
-
-              </div>
-
-            </div>
-          </div>
-        </div>
-      </div> <!-- /end CONEXION DEPOSITOS -->
 
     </div>
     <!-- /page content -->
@@ -1051,18 +650,17 @@
         <form id="" data-parsley-validate class="form-horizontal form-label-left">
           
           <div class="row">
-            <div class="form-group">
-              <label class="control-label col-md-4 col-sm-4 col-xs-12" for="hojaNombre"><i style="color:red;" class="fa fa-asterisk"></i>&nbsp;Nombre de Hoja de Excel</label>
-              <div class="col-md-7 col-sm-7 col-xs-12">
-                <input type="text" id="hojaNombre" required="required" class="form-control col-md-7 col-xs-12" placeholder="Ingrese el Nombre de la Hoja de Excel">
-              </div>
+            <div id="wrapper">
+              <label>Hojas de Excel del Archivo</label>
+            </div>
+            <div id="wrapper" class="nombreHojas" style="border-radius: 25px; border: 1px solid #D3D3D3; padding: 10px 0px; margin: 15px 0px;">
             </div>
           </div>
           <div class="row">
             <div class="col-xs-5 col-xs-offset-1">
               <form class="form-horizontal form-label-left">
                 <div class="form-group">
-                  <i style="color:red;" class="fa fa-asterisk"></i><label>&nbsp;Columna de Nombre de Elemento</label><br><small>Letra</small>
+                  <i style="color:red;" class="fa fa-asterisk"></i><label id="labelNombreExcel">Columna de Nombre de Elemento</label><br><small>Letra</small>
                   <input id="nombreCuenta" type="text" class="form-control" placeholder="Nombre de Elemento">
                 </div>
               </form>
@@ -1070,7 +668,7 @@
             <div id="cuentaModalField" class="col-xs-5">
               <form class="form-horizontal form-label-left">
                 <div class="form-group">
-                  <label>Columna de Cuenta de Elemento</label><br/><small>Letra</small>
+                  <i style="color:red;" class="fa fa-asterisk"></i><label id="labelCuentaExcel">Columna de Cuenta de Elemento</label><br/><small>Letra</small>
                   <input id="numeroCuenta" type="text" class="form-control" placeholder="Cuenta de Elemento">
                 </div>
               </form>
@@ -1080,8 +678,26 @@
             <div class="col-xs-10 col-xs-offset-1">
               <form class="form-horizontal form-label-left">
                 <div class="form-group">
-                  <i style="color:red;" class="fa fa-asterisk"></i><label id="labelModalExcel">&nbsp;Columna de A&ntilde;os de vigencia de Elemento</label><br><small>Letra</small>
+                  <i style="color:red;" class="fa fa-asterisk"></i><label id="labelModalExcel">Columna de Saldo de Elemento</label><br><small>Letra</small>
                   <input id="saldoCuenta" type="text" class="form-control" placeholder="A&ntilde;os de vigencia">
+                </div>
+              </form>
+            </div>
+          </div>
+          <div id="fechasModalField" class="row">
+            <div class="col-xs-5 col-xs-offset-1">
+              <form class="form-horizontal form-label-left">
+                <div class="form-group">
+                  <i style="color:red;" class="fa fa-asterisk"></i><label id="labelFechaCreacionExcel">Columna de inicio de vigencia de Elemento</label><br><small>Letra</small>
+                  <input id="fechaCreacionModal" type="text" class="form-control" placeholder="Fecha de Creaci&oacute;n">
+                </div>
+              </form>
+            </div>
+            <div class="col-xs-5">
+              <form class="form-horizontal form-label-left">
+                <div class="form-group">
+                  <i style="color:red;" class="fa fa-asterisk"></i><label id="labelFechaCaducidadExcel">Columna de fin de vigencia de Elemento</label><br><small>Letra</small>
+                  <input id="fechaCaducidadModal" type="text" class="form-control" placeholder="Fecha de Caducidad">
                 </div>
               </form>
             </div>
@@ -1090,7 +706,7 @@
             <div class="col-xs-5 col-xs-offset-1">
               <form class="form-horizontal form-label-left">
                 <div class="form-group">
-                  <i style="color:red;" class="fa fa-asterisk"></i><label>&nbsp;Fila Inicial&nbsp;</label><small>Fila donde se empezar&aacute;n a tomar las valores</small>
+                  <i style="color:red;" class="fa fa-asterisk"></i><label>Fila Inicial&nbsp;</label><small>Fila donde se empezar&aacute;n a tomar las valores</small>
                   <input id="filaInicial" type="text" class="form-control" placeholder="Fila" data-inputmask="'mask': '9[9][9][9]'" data-inputmask-clearmaskonlostfocus="true">
                 </div>
               </form>
@@ -1113,7 +729,7 @@
               <input id="createListManual" type="radio" class="flat" name="listaRadio" checked value="1"> Manual Contable
             </label>
             <label>
-              <input id="createListCuentas" type="radio" class="flat" name="listaRadio" value="2"> Cuentas Operativas
+              <input id="createListCuentas" type="radio" class="flat" name="listaRadio" value="2"> Cuentas Operativas Instituciones Externas
             </label>
             <label>
               <input id="createListExclusiones" type="radio" class="flat" name="listaRadio" value="3"> Exclusiones FOSEDE
@@ -1161,6 +777,10 @@
 <script src="src/libs/mathjs/math.js"></script>
 
 <script src="src/libs/jquery.inputmask/dist/min/jquery.inputmask.bundle.min.js"></script>
+
+<script src="src/libs/bootstrap-datepicker/bootstrap-datepicker.js"></script>
+
+<script src="src/libs/bootstrap-datepicker/locales/bootstrap-datepicker.es.js"></script>
 
 <script src="src/variables.js"></script>
 

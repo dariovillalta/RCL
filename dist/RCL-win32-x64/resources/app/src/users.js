@@ -3,7 +3,7 @@ const remote = require('electron').remote;
 const sql = require('mssql');
 
 const config = {
-    user: 'admin',
+    user: 'SA',
     password: 'password111!',
     server: 'localhost',
     database: 'RCL_Dev',

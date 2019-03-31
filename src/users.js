@@ -15,9 +15,16 @@ const config = {
 }
 
 const pool1 = new sql.ConnectionPool(config, err => {
-	if(err)
-		console.log(err);
-	else{
+	if(err) {
+		$("body").overhang({
+            type: "error",
+            primary: "#f84a1d",
+            accent: "#d94e2a",
+            message: "Error en conección con la base de datos.",
+            overlay: true,
+            closeConfirm: true
+        });
+	} else{
 		console.log('pool loaded');
 		loadUsers();
 		loadPolicies();
@@ -55,28 +62,29 @@ var filepathSmallLogo = '';
 function loadVariablesIMG () {
 	const transaction = new sql.Transaction( pool1 );
     transaction.begin(err => {
-        var rolledBack = false
- 
+        var rolledBack = false;
         transaction.on('rollback', aborted => {
             // emited with aborted === true
-     
-            rolledBack = true
-        })
+            rolledBack = true;
+        });
         const request = new sql.Request(transaction);
         request.query("select * from Variables", (err, result) => {
             if (err) {
                 if (!rolledBack) {
-                    console.log('error en rolledBack MainDB Variables');
                     transaction.rollback(err => {
-                        console.log('error en rolledBack');
-                        console.log(err);
+                        $("body").overhang({
+				            type: "error",
+				            primary: "#f84a1d",
+				            accent: "#d94e2a",
+				            message: "Error en conección con la tabla de Variables.",
+				            overlay: true,
+				            closeConfirm: true
+				        });
                     });
                 }
             }  else {
                 transaction.commit(err => {
                     // ... error checks
-                    console.log("Transaction committed MainDB Variables");
-                    console.log(result);
                     if(result.recordset.length > 0){
                     	objetoBandera = result.recordset[0];
                     	if(result.recordset[0].fullLogo.length > 0){
@@ -150,28 +158,29 @@ function createUser () {
 							//if( minNumberValidation(password) ){
 								const transaction = new sql.Transaction( pool1 );
 							    transaction.begin(err => {
-							        var rolledBack = false
-							 
+							        var rolledBack = false;
 							        transaction.on('rollback', aborted => {
 							            // emited with aborted === true
-							     
-							            rolledBack = true
-							        })
+							            rolledBack = true;
+							        });
 							        const request = new sql.Request(transaction);
 							        request.query("insert into Usuarios (Nombre, Apellido, Usuario, Contrasena, formulaPermiso, fosedePermiso, usuariosPermiso, cambioPass) values ('"+firstname+"','"+lastname+"','"+username+"','"+password+"','"+formulaPermiso+"','"+fosedePermiso+"','"+usuariosPermiso+"','"+fechaPass+"')", (err, result) => {
 							            if (err) {
 							                if (!rolledBack) {
-							                    console.log('error en rolledBack create Usuarios Control');
 							                    transaction.rollback(err => {
-							                        console.log('error en rolledBack');
-							                        console.log(err);
+							                        $("body").overhang({
+											            type: "error",
+											            primary: "#f84a1d",
+											            accent: "#d94e2a",
+											            message: "Error en inserción en la tabla de Usuarios.",
+											            overlay: true,
+											            closeConfirm: true
+											        });
 							                    });
 							                }
 							            }  else {
 							                transaction.commit(err => {
 							                    // ... error checks
-							                    console.log("Transaction committed create Usuarios Control");
-							                    console.log(result);
 							                    loadUsers();
 							                    $("body").overhang({
 												  	type: "success",
@@ -315,32 +324,31 @@ var userListClicked;
 function loadUsers () {
 	const transaction = new sql.Transaction( pool1 );
     transaction.begin(err => {
-        var rolledBack = false
- 
+        var rolledBack = false;
         transaction.on('rollback', aborted => {
             // emited with aborted === true
-     
-            rolledBack = true
-        })
+            rolledBack = true;
+        });
         const request = new sql.Request(transaction);
         request.query("select * from Usuarios", (err, result) => {
             if (err) {
                 if (!rolledBack) {
-                    console.log('error en rolledBack Usuarios Control');
                     transaction.rollback(err => {
-                        console.log('error en rolledBack');
-                        console.log(err);
+                        $("body").overhang({
+				            type: "error",
+				            primary: "#f84a1d",
+				            accent: "#d94e2a",
+				            message: "Error en conección con la tabla de Usuarios.",
+				            overlay: true,
+				            closeConfirm: true
+				        });
                     });
                 }
             }  else {
                 transaction.commit(err => {
                     // ... error checks
-                    console.log("Transaction committed Usuarios Control");
-                    console.log(result);
                     if(result.recordset.length > 0){
                     	arregloUsuarios = result.recordset;
-                    	console.log('arregloUsuarios');
-                    	console.log(arregloUsuarios);
                     	loadTable();
                     } else {
                     	arregloUsuarios = [];
@@ -535,28 +543,29 @@ function updateUser () {
 								//if( minNumberValidation(password) ){
 									const transaction = new sql.Transaction( pool1 );
 								    transaction.begin(err => {
-								        var rolledBack = false
-								 
+								        var rolledBack = false;
 								        transaction.on('rollback', aborted => {
 								            // emited with aborted === true
-								     
-								            rolledBack = true
-								        })
+								            rolledBack = true;
+								        });
 								        const request = new sql.Request(transaction);
 								        request.query("update Usuarios set Nombre = '"+firstname+"', Apellido = '"+lastname+"', Usuario = '"+username+"', Contrasena = '"+password+"', formulaPermiso = '"+formulaPermiso+"', fosedePermiso = '"+fosedePermiso+"', usuariosPermiso = '"+usuariosPermiso+"', cambioPass = '"+fechaPass+"' where ID = '"+userListClicked.ID+"' ", (err, result) => {
 								            if (err) {
 								                if (!rolledBack) {
-								                    console.log('error en rolledBack create Usuarios Control');
 								                    transaction.rollback(err => {
-								                        console.log('error en rolledBack');
-								                        console.log(err);
+								                        $("body").overhang({
+												            type: "error",
+												            primary: "#f84a1d",
+												            accent: "#d94e2a",
+												            message: "Error en modificación en la tabla de Usuarios.",
+												            overlay: true,
+												            closeConfirm: true
+												        });
 								                    });
 								                }
 								            }  else {
 								                transaction.commit(err => {
 								                    // ... error checks
-								                    console.log("Transaction committed create Usuarios Control");
-								                    console.log(result);
 								                    loadUsers();
 								                    $("body").overhang({
 													  	type: "success",
@@ -650,28 +659,29 @@ function updateUser () {
 	} else{
 		const transaction = new sql.Transaction( pool1 );
 	    transaction.begin(err => {
-	        var rolledBack = false
-	 
+	        var rolledBack = false;
 	        transaction.on('rollback', aborted => {
 	            // emited with aborted === true
-	     
-	            rolledBack = true
-	        })
+	            rolledBack = true;
+	        });
 	        const request = new sql.Request(transaction);
 	        request.query("update Usuarios set Nombre = '"+firstname+"', Apellido = '"+lastname+"', Usuario = '"+username+"', formulaPermiso = '"+formulaPermiso+"', fosedePermiso = '"+fosedePermiso+"', usuariosPermiso = '"+usuariosPermiso+"' where ID = '"+userListClicked.ID+"' ", (err, result) => {
 	            if (err) {
 	                if (!rolledBack) {
-	                    console.log('error en rolledBack create Usuarios Control');
 	                    transaction.rollback(err => {
-	                        console.log('error en rolledBack');
-	                        console.log(err);
+	                        $("body").overhang({
+					            type: "error",
+					            primary: "#f84a1d",
+					            accent: "#d94e2a",
+					            message: "Error en modificación en la tabla de Usuarios.",
+					            overlay: true,
+					            closeConfirm: true
+					        });
 	                    });
 	                }
 	            }  else {
 	                transaction.commit(err => {
 	                    // ... error checks
-	                    console.log("Transaction committed create Usuarios Control");
-	                    console.log(result);
 	                    loadUsers();
 	                    $("body").overhang({
 						  	type: "success",
@@ -692,27 +702,30 @@ function updateUser () {
 function deleteUser () {
 	const transaction = new sql.Transaction( pool1 );
 	transaction.begin(err => {
-		var rolledBack = false
- 
+		var rolledBack = false;
 	    transaction.on('rollback', aborted => {
 	        // emited with aborted === true
-	 
-	        rolledBack = true
-	    })
+	        rolledBack = true;
+	    });
 	    const request = new sql.Request(transaction);
 	    request.query("delete from Usuarios where ID = '"+userListClicked.ID+"'", (err, result) => {
 	    	if (err) {
 	    		if (!rolledBack) {
-	    			console.log('error en rolledBack');
-	    			console.log(err)
 	    			transaction.rollback(err => {
 	                    // ... error checks
+	                    $("body").overhang({
+				            type: "error",
+				            primary: "#f84a1d",
+				            accent: "#d94e2a",
+				            message: "Error en eliminación en la tabla de Usuarios.",
+				            overlay: true,
+				            closeConfirm: true
+				        });
 	                });
 	    		}
 	    	}  else {
 		        transaction.commit(err => {
 		        	// ... error checks
-		            console.log("Transaction delete Usuario committed.");
 		            $("body").overhang({
 					  	type: "success",
 					  	primary: "#40D47E",
@@ -735,32 +748,31 @@ var politicas;
 function loadPolicies () {
 	const transaction = new sql.Transaction( pool1 );
     transaction.begin(err => {
-        var rolledBack = false
- 
+        var rolledBack = false;
         transaction.on('rollback', aborted => {
             // emited with aborted === true
-     
-            rolledBack = true
-        })
+            rolledBack = true;
+        });
         const request = new sql.Request(transaction);
         request.query("select * from Contrasena", (err, result) => {
             if (err) {
                 if (!rolledBack) {
-                    console.log('error en rolledBack Usuarios Control');
                     transaction.rollback(err => {
-                        console.log('error en rolledBack');
-                        console.log(err);
+                        $("body").overhang({
+				            type: "error",
+				            primary: "#f84a1d",
+				            accent: "#d94e2a",
+				            message: "Error en conección con la tabla de políticas de contraseña.",
+				            overlay: true,
+				            closeConfirm: true
+				        });
                     });
                 }
             }  else {
                 transaction.commit(err => {
                     // ... error checks
-                    console.log("Transaction committed Usuarios Control");
-                    console.log(result);
                     if(result.recordset.length > 0){
                     	politicas = result.recordset[0];
-                    	console.log('politicas');
-                    	console.log(politicas);
                     	showPolicies();
                     } else
                     	createPolicies();
@@ -773,28 +785,29 @@ function loadPolicies () {
 function createPolicies () {
 	const transaction = new sql.Transaction( pool1 );
     transaction.begin(err => {
-        var rolledBack = false
- 
+        var rolledBack = false;
         transaction.on('rollback', aborted => {
             // emited with aborted === true
-     
-            rolledBack = true
-        })
+            rolledBack = true;
+        });
         const request = new sql.Request(transaction);
         request.query("insert into Contrasena (longitudMin, carEspeciales, minMay, minMin, minCarEspeciales, minNum, diasVigencia) values ("+0+", '"+1+"', "+0+", "+0+", "+0+", "+0+", "+0+")", (err, result) => {
             if (err) {
                 if (!rolledBack) {
-                    console.log('error en rolledBack insert Policies Control');
                     transaction.rollback(err => {
-                        console.log('error en rolledBack');
-                        console.log(err);
+                        $("body").overhang({
+				            type: "error",
+				            primary: "#f84a1d",
+				            accent: "#d94e2a",
+				            message: "Error en inserción en la tabla de Usuarios.",
+				            overlay: true,
+				            closeConfirm: true
+				        });
                     });
                 }
             }  else {
                 transaction.commit(err => {
                     // ... error checks
-                    console.log("Transaction committed insert Policies Control");
-                    console.log(result);
                     politicas = {
                     	longitudMin: 0,
                     	carEspeciales: '1',
@@ -804,8 +817,6 @@ function createPolicies () {
                     	minNum: 0,
                     	diasVigencia: 0
                     };
-                    console.log('politicas insert');
-                    console.log(politicas);
                     showPolicies();
                 });
             }
@@ -870,27 +881,29 @@ function savePolicies () {
 	var diasVigencia = parseInt($("#diaVige").val());
 	const transaction = new sql.Transaction( pool1 );
     transaction.begin(err => {
-        var rolledBack = false
- 
+        var rolledBack = false;
         transaction.on('rollback', aborted => {
             // emited with aborted === true
-     
-            rolledBack = true
-        })
+            rolledBack = true;
+        });
         const request = new sql.Request(transaction);
         request.query("update Contrasena set longitudMin = "+ longitudMininma +", carEspeciales = "+ caracteresEspeciales +", minMay = "+ minimoMayuscula +", minMin = "+ minimoMinuscula +", minCarEspeciales = "+ minCarEspeciales +", minNum = "+ minimoNumeros +", diasVigencia = "+ diasVigencia +" where ID = 1", (err, result) => {
             if (err) {
                 if (!rolledBack) {
-                    console.log('error en rolledBack insert Policies Control');
                     transaction.rollback(err => {
-                        console.log('error en rolledBack');
-                        console.log(err);
+                        $("body").overhang({
+				            type: "error",
+				            primary: "#f84a1d",
+				            accent: "#d94e2a",
+				            message: "Error en modificación en la tabla de políticas de contraseña.",
+				            overlay: true,
+				            closeConfirm: true
+				        });
                     });
                 }
             }  else {
                 transaction.commit(err => {
                     // ... error checks
-                    console.log("Transaction committed update Policies Control");
                     loadPolicies();
                     $("body").overhang({
 					  	type: "success",
@@ -985,28 +998,29 @@ function getBase64Image(img) {
 function loadVariablesMainDB () {
 	const transaction = new sql.Transaction( pool1 );
     transaction.begin(err => {
-        var rolledBack = false
- 
+        var rolledBack = false;
         transaction.on('rollback', aborted => {
             // emited with aborted === true
-     
-            rolledBack = true
-        })
+            rolledBack = true;
+        });
         const request = new sql.Request(transaction);
         request.query("select * from Variables", (err, result) => {
             if (err) {
                 if (!rolledBack) {
-                    console.log('error en rolledBack MainDB Variables');
                     transaction.rollback(err => {
-                        console.log('error en rolledBack');
-                        console.log(err);
+                        $("body").overhang({
+				            type: "error",
+				            primary: "#f84a1d",
+				            accent: "#d94e2a",
+				            message: "Error en conección de logo.",
+				            overlay: true,
+				            closeConfirm: true
+				        });
                     });
                 }
             }  else {
                 transaction.commit(err => {
                     // ... error checks
-                    console.log("Transaction committed MainDB Variables");
-                    console.log(result);
                     if(result.recordset.length > 0){
                     	objetoBandera = result.recordset[0];
                     	if(result.recordset[0].fullLogo.length > 0){
@@ -1049,34 +1063,35 @@ function saveImages () {
 	if(filepathFullLogo.length > 0 || filepathSmallLogo.length > 0) {
 		const transaction = new sql.Transaction( pool1 );
 	    transaction.begin(err => {
-	        var rolledBack = false
-	 
+	        var rolledBack = false;
 	        transaction.on('rollback', aborted => {
 	            // emited with aborted === true
-	     
-	            rolledBack = true
-	        })
+	            rolledBack = true;
+	        });
 	        const request = new sql.Request(transaction);
 	        request.query("insert into Variables (fullLogo, smallLogo, formula, formulaMATHLIVE, montoFosede) values ('"+filepathFullLogo+"','"+filepathSmallLogo+"','','', 0)", (err, result) => {
 	            if (err) {
 	                if (!rolledBack) {
-	                    console.log('error en rolledBack create Imagen');
 	                    transaction.rollback(err => {
-	                        console.log('error en rolledBack');
-	                        console.log(err);
+	                        $("body").overhang({
+					            type: "error",
+					            primary: "#f84a1d",
+					            accent: "#d94e2a",
+					            message: "Error en inserción de logo.",
+					            overlay: true,
+					            closeConfirm: true
+					        });
 	                    });
 	                }
 	            }  else {
 	                transaction.commit(err => {
 	                    // ... error checks
-	                    console.log("Transaction committed create Imagen");
-	                    console.log(result);
 	                    loadUsers();
 	                    $("body").overhang({
 						  	type: "success",
 						  	primary: "#40D47E",
 			  				accent: "#27AE60",
-						  	message: "Logos guardados con éxito.",
+						  	message: "Logo guardados con éxito.",
 						  	duration: 2,
 						  	overlay: true
 						});
@@ -1103,32 +1118,34 @@ function modifyImages () {
 		noEntro = false;
 		const transaction = new sql.Transaction( pool1 );
 	    transaction.begin(err => {
-	        var rolledBack = false
-	 
+	        var rolledBack = false;
 	        transaction.on('rollback', aborted => {
 	            // emited with aborted === true
-	     
-	            rolledBack = true
-	        })
+	            rolledBack = true;
+	        });
 	        const request = new sql.Request(transaction);
 	        request.query("update Variables set fullLogo = '"+filepathFullLogo+"' where ID = 1", (err, result) => {
 	            if (err) {
 	                if (!rolledBack) {
-	                    console.log('error en rolledBack update Imagen Variables');
 	                    transaction.rollback(err => {
-	                        console.log('error en rolledBack');
-	                        console.log(err);
+	                        $("body").overhang({
+					            type: "error",
+					            primary: "#f84a1d",
+					            accent: "#d94e2a",
+					            message: "Error en modificación de logo.",
+					            overlay: true,
+					            closeConfirm: true
+					        });
 	                    });
 	                }
 	            }  else {
 	                transaction.commit(err => {
 	                    // ... error checks
-	                    console.log("Transaction committed update Imagen Variables");
 	                    $("body").overhang({
 						  	type: "success",
 						  	primary: "#40D47E",
 			  				accent: "#27AE60",
-						  	message: "Logos modificados con éxito.",
+						  	message: "Logo modificados con éxito.",
 						  	duration: 2,
 						  	overlay: true
 						});
@@ -1141,32 +1158,34 @@ function modifyImages () {
 		noEntro = false;
 		const transaction = new sql.Transaction( pool1 );
 	    transaction.begin(err => {
-	        var rolledBack = false
-	 
+	        var rolledBack = false;
 	        transaction.on('rollback', aborted => {
 	            // emited with aborted === true
-	     
-	            rolledBack = true
-	        })
+	            rolledBack = true;
+	        });
 	        const request = new sql.Request(transaction);
 	        request.query("update Variables set smallLogo = '"+filepathSmallLogo+"' where ID = 1", (err, result) => {
 	            if (err) {
 	                if (!rolledBack) {
-	                    console.log('error en rolledBack update Imagen Variables');
 	                    transaction.rollback(err => {
-	                        console.log('error en rolledBack');
-	                        console.log(err);
+	                        $("body").overhang({
+					            type: "error",
+					            primary: "#f84a1d",
+					            accent: "#d94e2a",
+					            message: "Error en modificación de logo.",
+					            overlay: true,
+					            closeConfirm: true
+					        });
 	                    });
 	                }
 	            }  else {
 	                transaction.commit(err => {
 	                    // ... error checks
-	                    console.log("Transaction committed update Imagen Variables");
 	                    $("body").overhang({
 						  	type: "success",
 						  	primary: "#40D47E",
 			  				accent: "#27AE60",
-						  	message: "Logos modificados con éxito.",
+						  	message: "Logo modificados con éxito.",
 						  	duration: 2,
 						  	overlay: true
 						});
@@ -1216,4 +1235,9 @@ function logout () {
 function goRCL () {
 	$("#app_root").empty();
     $("#app_root").load("src/rcl.html");
+}
+
+function goReports () {
+	$("#app_root").empty();
+    $("#app_root").load("src/reportes.html");
 }

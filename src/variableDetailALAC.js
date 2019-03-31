@@ -17,12 +17,20 @@ const config = {
 }
 
 const pool1 = new sql.ConnectionPool(config, err => {
-	if(err)
-		console.log(err);
-	else{
+	if(err) {
+		$("body").overhang({
+            type: "error",
+            primary: "#f84a1d",
+            accent: "#d94e2a",
+            message: "Error en conección con la base de datos.",
+            overlay: true,
+            closeConfirm: true
+        });
+	} else {
 		console.log('pool loaded');
 		loadManualContableID();
 		loadText();
+		loadAllRules();
 	}
 });
 
@@ -30,13 +38,11 @@ var variableDeVariableReglaID = null;
 var variableDeVariableObject = null;
 
 function loadText () {
-	var nombrePadre = getNombrePadre();
 	var nombreHijo = getNombreHijo();
 	var descripcionHijo = getDescripcionHijo();
 	var factorHijo = getFactornHijo();
 	var variable = getVariableDeVariableID();
 	var tabla = getTablaHijo();
-	$("#variableName").text(nombrePadre);
 	$("#variableOfVariableName").text(nombreHijo);
 	$("#variableOfVariableName").css("white-space", "initial");
 	$("#variableOfVariableName").css("text-align", "justify");
@@ -49,7 +55,7 @@ function loadText () {
 	variableDeVariableReglaID = variable;
 	loadRules();
 	loadVariableObject();
-	showHints();
+	//showHints();
 }
 
 function showHints () {
@@ -74,8 +80,11 @@ function showHints () {
 
 var arregloActivos = [];
 var arregloReglas = [];
+var arregloTodasReglas = [];
 var arregloListas = [];
 var ordenGlobal = 0;
+var variable1Seleccionada = null;
+var variable2Seleccionada = null;
 
 function loadRules () {
 	const transaction = new sql.Transaction( pool1 );
@@ -89,17 +98,20 @@ function loadRules () {
         request.query("select * from Reglas where variablePadre = "+variableDeVariableReglaID, (err, result) => {
             if (err) {
                 if (!rolledBack) {
-                    console.log('error en rolledBack MainDB Variables');
                     transaction.rollback(err => {
-                        console.log('error en rolledBack');
-                        console.log(err);
+                        $("body").overhang({
+				            type: "error",
+				            primary: "#f84a1d",
+				            accent: "#d94e2a",
+				            message: "Error en conección con la tabla de variablePadre.",
+				            overlay: true,
+				            closeConfirm: true
+				        });
                     });
                 }
             } else {
                 transaction.commit(err => {
                     // ... error checks
-                    console.log("Transaction committed MainDB Variables");
-                    console.log(result);
                     if(result.recordset.length > 0){
                     	arregloReglas = result.recordset;
                     } else {
@@ -111,11 +123,48 @@ function loadRules () {
 			            return 0;
 			        });
                     for (var i = 0; i < arregloReglas.length; i++) {
-                    	if(ordenGlobal < arregloReglas[i])
+                    	if(ordenGlobal < arregloReglas[i].orden)
                     		ordenGlobal = arregloReglas[i].orden;
                     };
                     renderRules();
-                    permissionOpRadio();
+                    renderListVariables();
+                });
+            }
+        });
+    }); // fin transaction
+}
+
+function loadAllRules () {
+	const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false;
+        transaction.on('rollback', aborted => {
+            // emited with aborted === true
+            rolledBack = true;
+        });
+        const request = new sql.Request(transaction);
+        request.query("select * from Reglas ", (err, result) => {
+            if (err) {
+                if (!rolledBack) {
+                    transaction.rollback(err => {
+                        $("body").overhang({
+				            type: "error",
+				            primary: "#f84a1d",
+				            accent: "#d94e2a",
+				            message: "Error en conección con la tabla de variablePadre.",
+				            overlay: true,
+				            closeConfirm: true
+				        });
+                    });
+                }
+            } else {
+                transaction.commit(err => {
+                    // ... error checks
+                    if(result.recordset.length > 0){
+                    	arregloTodasReglas = result.recordset;
+                    } else {
+                    	arregloTodasReglas = [];
+                    }
                 });
             }
         });
@@ -134,17 +183,20 @@ function loadVariableObject () {
         request.query("select * from VariablesdeVariablesFormula where ID = "+variableDeVariableReglaID, (err, result) => {
             if (err) {
                 if (!rolledBack) {
-                    console.log('error en rolledBack MainDB Variables');
                     transaction.rollback(err => {
-                        console.log('error en rolledBack');
-                        console.log(err);
+                        $("body").overhang({
+				            type: "error",
+				            primary: "#f84a1d",
+				            accent: "#d94e2a",
+				            message: "Error en conección con la tabla de VariablesdeVariablesFormula.",
+				            overlay: true,
+				            closeConfirm: true
+				        });
                     });
                 }
             } else {
                 transaction.commit(err => {
                     // ... error checks
-                    console.log("Transaction committed MainDB Variables");
-                    console.log(result);
                     if(result.recordset.length > 0){
                     	variableDeVariableObject = result.recordset[0];
                     } else {
@@ -159,23 +211,214 @@ function loadVariableObject () {
 function renderRules () {
 	$("#listRules").empty();
 	var listContent = '';
-	for (var i = 0; i < arregloReglas.length; i++) {
+	for (var i = 0; i < arregloReglas.length-1; i++) {
 		var regla = '';
 		listContent = '';
 		if(arregloReglas[i].operacion=="-" || arregloReglas[i].operacion=="+" || arregloReglas[i].operacion=="*" || arregloReglas[i].operacion=="/")
-			regla+=arregloReglas[i].campoObjetivo +" "+ arregloReglas[i].operacion +" "+ arregloReglas[i].valor;
+			regla+=arregloReglas[i].campoObjetivo.split("=")[1] +" "+ arregloReglas[i].operacion +" "+ arregloReglas[i].valor.split("=")[1];
 		else
-			regla+="if ( "+arregloReglas[i].campoObjetivo +" "+ arregloReglas[i].operacion +" "+ arregloReglas[i].valor +" )";
+			regla+=arregloReglas[i].variables +" ( Cuentas = "+ arregloReglas[i].valor.split("=")[1] +" )";
 		var clase = '';
-		if(arregloReglas[i].reglaPadre != 0)
-			clase = 'style="padding-left:20%;"';
-		listContent+='<li '+clase+'><p>'+ regla +' </p></li>';
+		/*if(arregloReglas[i].reglaPadre != 0)
+			clase = 'style="padding-left:20%;"';*/
+		listContent+='<li '+clase+'><p>'+ regla +' </p><button style="position: absolute; right: 10px; margin: 0; position: absolute; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%);" onclick="deleteRule('+i+')">Eliminar</button></li>';
 		$("#listRules").append(listContent);
 	};
 	if(arregloReglas.length == 0 ){
-		listContent+='<li><p> No hay reglas creadas.</p></li>';
+		listContent+='<li><p> No hay agrupaciones creadas. </p></li>';
+		$("#listRules").append(listContent);
+	} else if(arregloReglas.length == 1 ){
+		listContent+='<li><p> Sólo hay una agrupación creada. </p></li>';
 		$("#listRules").append(listContent);
 	}
+	$("#formulaRule").empty();
+	if(arregloReglas.length > 0) {
+		var newListContent = '';
+		if(arregloReglas[arregloReglas.length-1].campoObjetivo == 'INSTANCIACION')
+			newListContent+='<li><p> '+arregloReglas[arregloReglas.length-1].variables+" ( Cuentas = "+arregloReglas[i].valor.split("=")[1]+" )"+'</p><button style="position: absolute; right: 10px; margin: 0; position: absolute; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%);" onclick="deleteRule('+(arregloReglas.length-1)+')">Eliminar</button></li>';
+		else
+			newListContent+='<li><p> '+arregloReglas[arregloReglas.length-1].campoObjetivo.split("=")[1]+' '+arregloReglas[arregloReglas.length-1].operacion+' '+arregloReglas[arregloReglas.length-1].valor.split("=")[1]+'</p><button style="position: absolute; right: 10px; margin: 0; position: absolute; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%);" onclick="deleteRule('+(arregloReglas.length-1)+')">Eliminar</button></li>';
+		$("#formulaRule").append(newListContent);
+	} else {
+		var newListContent = '<li><p> No hay agrupaciones creadas. </p></li>';
+		$("#formulaRule").append(newListContent);
+	}
+}
+
+function deleteRule (index) {
+	$("body").overhang({
+	  	type: "confirm",
+	  	primary: "#f5a433",
+	  	accent: "#dc9430",
+	  	yesColor: "#3498DB",
+	  	message: 'Esta seguro que desea eliminar la variable '+arregloReglas[index].variables+'?',
+	  	overlay: true,
+	  	yesMessage: "Eliminar",
+	  	noMessage: "Cancelar",
+	  	callback: function (value) {
+	    	if(value){
+	    		var nombreVar = arregloReglas[index].variables;
+	    		var nuevoArray = arregloReglas.slice();
+				for (var i = 0; i < nuevoArray.length; i++) {
+					if(nuevoArray[i].campoObjetivo.localeCompare("INSTANCIACION") != 0 && (nuevoArray[i].campoObjetivo.split("=")[1].localeCompare(nombreVar) == 0 || nuevoArray[i].valor.split("=")[1].localeCompare(nombreVar) == 0)){
+						var regla = nuevoArray[i];
+						const transaction = new sql.Transaction( pool1 );
+					    transaction.begin(err => {
+					        var rolledBack = false;
+					        transaction.on('rollback', aborted => {
+					            // emited with aborted === true
+					            rolledBack = true;
+					        });
+					        const request = new sql.Request(transaction);
+					        request.query("delete from Reglas where ID = "+regla.ID, (err, result) => {
+					            if (err) {
+					                if (!rolledBack) {
+					                    transaction.rollback(err => {
+					                        $("body").overhang({
+									            type: "error",
+									            primary: "#f84a1d",
+									            accent: "#d94e2a",
+									            message: "Error en eliminación en la tabla de Reglas.",
+									            overlay: true,
+									            closeConfirm: true
+									        });
+					                    });
+					                }
+					            } else {
+					                transaction.commit(err => {
+					                    // ... error checks
+					                    $("body").overhang({
+								            type: "success",
+										  	primary: "#40D47E",
+							  				accent: "#27AE60",
+								            message: "Variable eliminada con exito.",
+								            overlay: true,
+								            duration: 2
+								        });
+					                    loadRules();
+					                    loadAllRules();
+					                });
+					            }
+					        });
+					    }); // fin transaction
+					}
+				}
+				const transaction = new sql.Transaction( pool1 );
+			    transaction.begin(err => {
+			        var rolledBack = false;
+			        transaction.on('rollback', aborted => {
+			            // emited with aborted === true
+			            rolledBack = true;
+			        });
+			        const request = new sql.Request(transaction);
+			        request.query("delete from Reglas where ID = "+arregloReglas[index].ID, (err, result) => {
+			            if (err) {
+			                if (!rolledBack) {
+			                    transaction.rollback(err => {
+			                        $("body").overhang({
+							            type: "error",
+							            primary: "#f84a1d",
+							            accent: "#d94e2a",
+							            message: "Error en eliminación en la tabla de Reglas.",
+							            overlay: true,
+							            closeConfirm: true
+							        });
+			                    });
+			                }
+			            } else {
+			                transaction.commit(err => {
+			                    // ... error checks
+			                    $("body").overhang({
+						            type: "success",
+								  	primary: "#40D47E",
+					  				accent: "#27AE60",
+						            message: "Variable eliminada con exito.",
+						            overlay: true,
+						            duration: 2
+						        });
+			                    loadRules();
+			                    loadAllRules();
+			                });
+			            }
+			        });
+			    }); // fin transaction
+	    	}
+	  	}
+	});
+}
+
+function renderListVariables () {
+	$("#variables1List").empty();
+	$("#variables2List").empty();
+	var content1 = '';
+	var content2 = '';
+	for (var i = 0; i < arregloReglas.length; i++) {
+		if(arregloReglas[i].campoObjetivo == 'INSTANCIACION') {
+			content1+='<li><p> <input type="radio" name="variable1" class="flat" value="'+i+'"> Agrupación '+arregloReglas[i].variables+'</p></li>'
+			content2+='<li><p> <input type="radio" name="variable2" class="flat" value="'+i+'"> Agrupación '+arregloReglas[i].variables+'</p></li>'
+		} else if( arregloReglas[i].campoObjetivo.indexOf("AGRUPACION") == 0) {
+			content1+='<li><p> <input type="radio" name="variable1" class="flat" value="'+i+'"> '+arregloReglas[i].variables+'</p></li>'
+			content2+='<li><p> <input type="radio" name="variable2" class="flat" value="'+i+'"> '+arregloReglas[i].variables+'</p></li>'
+		}
+	};
+	if(arregloReglas.length == 0 ) {
+		content1+='<li><p> No hay agrupaciones creadas.</p></li>';
+		content2+='<li><p> No hay agrupaciones creadas.</p></li>';
+	}
+	$("#variables1List").append(content1);
+	$("#variables2List").append(content2);
+	$("input[name='variable1']").iCheck({
+        checkboxClass: 'icheckbox_flat-green',
+        radioClass: 'iradio_flat-green'
+    });
+    $("input[name='variable1']").on('ifChecked', function(event){
+    	var nombres = [];
+    	var index = $("input[name='variable1']:checked").val();
+    	variable1Seleccionada = arregloReglas[index];
+    	if(arregloReglas[index].campoObjetivo == 'INSTANCIACION') {
+	    	var listaSucia = arregloReglas[index].valor.split("=")[1];
+	    	var partesConDolar = listaSucia.split(",");
+	    	for (var i = 0; i < partesConDolar.length; i++) {
+	    		nombres.push(partesConDolar[i].split("-")[0]);
+	    	};
+	    } else if(arregloReglas[index].campoObjetivo.indexOf("AGRUPACION") == 0) {
+	    	nombres.push(arregloReglas[index].campoObjetivo.split("=")[1]);
+	    	nombres.push(arregloReglas[index].operacion);
+	    	nombres.push(arregloReglas[index].valor.split("=")[1]);
+	    }
+    	$("#listaSelectVariable1").empty();
+    	var contentSelect1 = '';
+    	for (var i = 0; i < nombres.length; i++) {
+    		contentSelect1+='<option>'+nombres[i]+'</option>';
+    	};
+    	$("#listaSelectVariable1").append(contentSelect1);
+    });
+    $("input[name='variable2']").iCheck({
+        checkboxClass: 'icheckbox_flat-green',
+        radioClass: 'iradio_flat-green'
+    });
+    $("input[name='variable2']").on('ifChecked', function(event){
+    	var nombres = [];
+    	var index = $("input[name='variable2']:checked").val();
+    	variable2Seleccionada = arregloReglas[index];
+    	if(arregloReglas[index].campoObjetivo == 'INSTANCIACION') {
+	    	var listaSucia = arregloReglas[index].valor.split("=")[1];
+	    	var partesConDolar = listaSucia.split(",");
+	    	for (var i = 0; i < partesConDolar.length; i++) {
+	    		nombres.push(partesConDolar[i].split("-")[0]);
+	    	};
+	    } else if(arregloReglas[index].campoObjetivo.indexOf("AGRUPACION") == 0) {
+	    	nombres.push(arregloReglas[index].campoObjetivo.split("=")[1]);
+	    	nombres.push(arregloReglas[index].operacion);
+	    	nombres.push(arregloReglas[index].valor.split("=")[1]);
+	    }
+    	$("#listaSelectVariable2").empty();
+    	var contentSelect1 = '';
+    	for (var i = 0; i < nombres.length; i++) {
+    		contentSelect1+='<option>'+nombres[i]+'</option>';
+    	};
+    	$("#listaSelectVariable2").append(contentSelect1);
+    });
 }
 
 function loadManualContableID () {
@@ -190,17 +433,20 @@ function loadManualContableID () {
         request.query("select * from Listas where tipo = 1 or tipo = 2", (err, result) => {
             if (err) {
                 if (!rolledBack) {
-                    console.log('error en rolledBack MainDB Variables');
                     transaction.rollback(err => {
-                        console.log('error en rolledBack');
-                        console.log(err);
+                        $("body").overhang({
+				            type: "error",
+				            primary: "#f84a1d",
+				            accent: "#d94e2a",
+				            message: "Error en conección con la tabla de Listas.",
+				            overlay: true,
+				            closeConfirm: true
+				        });
                     });
                 }
             } else {
                 transaction.commit(err => {
                     // ... error checks
-                    console.log("Transaction committed MainDB Variables");
-                    console.log(result);
                     var listaID = 0;
                     if(result.recordset.length > 0){
                     	arregloListas = result.recordset;
@@ -229,28 +475,29 @@ function renderListsDropdown () {
 function loadManualContable (listaID) {
 	const transaction = new sql.Transaction( pool1 );
     transaction.begin(err => {
-        var rolledBack = false
- 
+        var rolledBack = false;
         transaction.on('rollback', aborted => {
             // emited with aborted === true
-     
-            rolledBack = true
-        })
+            rolledBack = true;
+        });
         const request = new sql.Request(transaction);
         request.query("select * from ListasVariables where idLista = "+listaID, (err, result) => {
             if (err) {
                 if (!rolledBack) {
-                    console.log('error en rolledBack MainDB Variables');
                     transaction.rollback(err => {
-                        console.log('error en rolledBack');
-                        console.log(err);
+                        $("body").overhang({
+				            type: "error",
+				            primary: "#f84a1d",
+				            accent: "#d94e2a",
+				            message: "Error en conección con la tabla de ListasVariables.",
+				            overlay: true,
+				            closeConfirm: true
+				        });
                     });
                 }
             }  else {
                 transaction.commit(err => {
                     // ... error checks
-                    console.log("Transaction committed MainDB Variables");
-                    console.log(result);
                     if(result.recordset.length > 0){
                     	arregloActivos = result.recordset;
                     } else {
@@ -285,17 +532,6 @@ function renderListsSelect () {
 	$("#listaActivosSelect").append(content);
 }
 
-$("input[name='opRadio']").prop('disabled', true);
-
-function permissionOpRadio () {
-	if(arregloReglas.length > 0){
-		$("input[name='opRadio']").prop('disabled', false);
-		$("input[name='opRadio']").iCheck({
-	        checkboxClass: 'icheckbox_flat-green',
-	        radioClass: 'iradio_flat-green'
-	    });
-	}
-}
 /* *************	Fin Radios	************* */
 
 
@@ -304,246 +540,126 @@ function permissionOpRadio () {
 
 
 /* *************	Rules	************* */
+function saveNewRule () {
+	var nombre = $("#nombreVar").val();
+	var entrar = true;
+	for (var i = 0; i < arregloTodasReglas.length; i++) {
+		if(arregloTodasReglas[i].variables.toLowerCase().localeCompare(nombre.toLowerCase()) == 0)
+			entrar = false;
+	};
+	if(entrar) {
+		if(nombre.length > 0 && nombre.length < 51) {
+			var campoObjetivo = 'INSTANCIACION', operacion = '=', reglaPadre = 0, esFiltro = '0', variables = nombre, orden = 0;
+			var elementosSelect = $("#listaActivosSelect").val();
+			var elementos = '';
+			if(elementosSelect != null) {
+				for (var i = 0; i < elementosSelect.length; i++) {
+					elementos+=arregloActivos[parseInt(elementosSelect[i])].valor;
+					if( (i+1) < elementosSelect.length )
+						elementos+=',';
+				};
+				valor = 'LISTA=' + elementos;
+			} else 
+				valor = 'LISTA=' + getSelectOptions(arregloActivos);
+			const transaction = new sql.Transaction( pool1 );
+		    transaction.begin(err => {
+		        var rolledBack = false;
+		        transaction.on('rollback', aborted => {
+		            // emited with aborted === true
+		            rolledBack = true;
+		        });
+		        const request = new sql.Request(transaction);
+		        request.query("insert into Reglas (variablePadre, reglaPadre, campoObjetivo, operacion, valor, variables, esFiltro, orden) values ("+variableDeVariableReglaID+","+reglaPadre+",'"+campoObjetivo+"','"+operacion+"','"+valor+"','"+variables+"','"+esFiltro+"',"+(ordenGlobal+1)+")", (err, result) => {
+		            if (err) {
+		                if (!rolledBack) {
+		                    transaction.rollback(err => {
+		                        $("body").overhang({
+						            type: "error",
+						            primary: "#f84a1d",
+						            accent: "#d94e2a",
+						            message: "Error en inserción de variable.",
+						            overlay: true,
+						            closeConfirm: true
+						        });
+		                    });
+		                }
+		            }  else {
+		                transaction.commit(err => {
+		                    // ... error checks
+		                    $("body").overhang({
+							  	type: "success",
+							  	primary: "#40D47E",
+				  				accent: "#27AE60",
+							  	message: "Variable creada con exito.",
+							  	duration: 2,
+							  	overlay: true
+							});
+							loadRules();
+							loadAllRules();
+		                });
+		            }
+		        });
+		    }); // fin transaction
+		} else {
+			$("body").overhang({
+			  	type: "error",
+			  	primary: "#f84a1d",
+				accent: "#d94e2a",
+			  	message: "El nombre de la variable debe tener una longitud mayor a 0 y menor a 51.",
+			  	overlay: true,
+	            closeConfirm: true
+			});
+		}
+	} else {
+		$("body").overhang({
+		  	type: "error",
+		  	primary: "#f84a1d",
+			accent: "#d94e2a",
+		  	message: "El nombre de la variable ya existe, el nombre tiene que ser único en todas las variables.",
+		  	overlay: true,
+            closeConfirm: true
+		});
+	}
+}
+
 function saveRule () {
 	var reglaPadre = 0;
 	var esFiltro = '0';
-	ordenGlobal;
-	/*if(arregloReglas.length > 0) {
-		//
-	} else {*/
-		var campoObjetivo = 'AGRUPACION', arregloCuentas = [], campoValor = '', operacion = '', variables = '';
-		var posicionesDeActivos = $('#listaActivosSelect').val();
-		for (var i = 0; i < posicionesDeActivos.length; i++) {
-			arregloCuentas.push(arregloActivos[posicionesDeActivos[i]]);
-		};
-		campoValor = 'AGRUPACIONLISTA='+getSelectOptions(arregloCuentas, 0);
-		const transaction = new sql.Transaction( pool1 );
-	    transaction.begin(err => {
-	        var rolledBack = false
-	 
-	        transaction.on('rollback', aborted => {
-	            // emited with aborted === true
-	     
-	            rolledBack = true
-	        })
-	        const request = new sql.Request(transaction);
-	        request.query("insert into Reglas (variablePadre, reglaPadre, campoObjetivo, operacion, valor, variables, esFiltro, orden) values ("+variableDeVariableReglaID+","+reglaPadre+",'"+campoObjetivo+"','"+operacion+"','"+campoValor+"','"+variables+"','"+esFiltro+"',"+(ordenGlobal+1)+")", (err, result) => {
-	            if (err) {
-	                if (!rolledBack) {
-	                    console.log('error en rolledBack New Variables');
-	                    transaction.rollback(err => {
-	                        console.log('error en rolledBack');
-	                        console.log(err);
-	                    });
-	                }
-	            }  else {
-	                transaction.commit(err => {
-	                    // ... error checks
-	                    console.log("Transaction committed New Variables");
-	                    console.log(result);
-	                    $("body").overhang({
-						  	type: "success",
-						  	primary: "#40D47E",
-			  				accent: "#27AE60",
-						  	message: "Regla creada con exito.",
-						  	duration: 2,
-						  	overlay: true
-						});
-						loadRules();
-	                });
-	            }
-	        });
-	    }); // fin transaction
-	/*}*/
-	/*var reglaPadre = 0;
-	if($('input[name=rules]:checked').length > 0)
-		reglaPadre = $('input[name=rules]:checked').val();
-	var campoObjetivo = '';
-	var operacion = '';
-	var valor = '';
-	var variables = '';
-	var esFiltro = '0';
-	if( $('#campoCampoRadio').is(':checked') )
-		campoObjetivo = 'COLUMNA='+$("#campoCampoInput").val();
-	else if( $('#listaCampoRadio').is(':checked') ){
-		var aplicarNombre = "1";
-		if($('#valorElementoListaCampoRadio').is(':checked'))
-			aplicarNombre = "0";
-		if( $('#listaCampoOptionsSelect').val() != null ){
-			var idCamposSeleccionas = $('#listaCampoOptionsSelect').val();
-			var valoresCamposSeleccionas =  arregloElementosDeListasCampo.filter(function( object ) {
-												for (var i = 0; i < idCamposSeleccionas.length; i++) {
-													if(idCamposSeleccionas[i] == object.ID)
-														return true;
-												};
-											    return false;
-											});
-			campoObjetivo = 'LISTA='+getSelectOptions(valoresCamposSeleccionas, aplicarNombre);
-		} else {
-			campoObjetivo = 'LISTA='+getSelectOptions(arregloElementosDeListasCampo, aplicarNombre);
-		}
-	} else {
-		var valorVariables = $("input[name='variablesCampo']:checked").val();
-		//listaValorVariableRadio
-		if(valorVariables == 1)
-			campoObjetivo = "VARIABLE=RESULTADO";
-		else if(valorVariables == 2) {
-			var valorListaVariable = $("input[name='listaCampoVariableRadioCAMPOOBJETIVO']:checked").val();
-			if(valorListaVariable != null){
-				if(campoObjetivo.length > 0)
-					campoObjetivo += ",OBJETIVO$"+valorListaVariable;
-				else
-					campoObjetivo = "VARIABLE=OBJETIVO$"+valorListaVariable;
-			} else {
-				if(campoObjetivo.length > 0)
-					campoObjetivo += ",OBJETIVO"
-				else
-					campoObjetivo = "VARIABLE=OBJETIVO";
-			}
-		} else {
-			var	valorListaVariable = $("input[name='listaCampoVariableRadioVALOR']:checked").val();
-			if(valorListaVariable != null){
-				if(campoObjetivo.length > 0)
-					campoObjetivo += ",VALOR$"+valorListaVariable;
-				else
-					campoObjetivo = "VARIABLE=VALOR$"+valorListaVariable;
-			} else {
-				if(campoObjetivo.length > 0)
-					campoObjetivo += ",VALOR"
-				else
-					campoObjetivo = "VARIABLE=VALOR";
-			}
-		}
-	}
-	if( $('#meOperadorRadio').is(':checked') )
-		operacion = '<';
-	else if( $('#meigOperadorRadio').is(':checked') )
-		operacion = '<=';
-	else if( $('#maOperadorRadio').is(':checked') )
-		operacion = '>';
-	else if( $('#maigOperadorRadio').is(':checked') )
-		operacion = '>=';
-	else if( $('#igOperadorRadio').is(':checked') )
-		operacion = '==';
-	else if( $('#noigOperadorRadio').is(':checked') )
-		operacion = '!=';
-	else if( $('#masOperadorRadio').is(':checked') )
-		operacion = '+';
-	else if( $('#porOperadorRadio').is(':checked') )
-		operacion = '*';
-	else if( $('#menOperadorRadio').is(':checked') )
-		operacion = '-';
-	else if( $('#entOperadorRadio').is(':checked') )
-		operacion = '/';
-	else
-		operacion = '=';*/
-	/*if( $('#listaValorRadio').is(':checked') )
-		valor = getSelectOptions(arregloElementosDeListasCampo);
-	else*/ /*if( $('#manualValorRadio').is(':checked') )
-		valor = "COLUMNA="+$("#manualValorInput").val().toLowerCase();
-	else if( $('#fechaValorRadio').is(':checked') ) {
-		//valor = $("#date_inline").datepicker( 'getDate' );
-		valor = 'DIA='+$("#diaValorInput").val();
-		//valor += ',MES='+$("#mesValorInput").val();
-	} else if( $('#elementoValorRadio').is(':checked') ) {
-		var elementosSelect = $("#elementoValorOptionSelect").val();
-		var elementos = '';
-		var aplicarNombre = "1";
-		if($('#valorElementoListaValorRadio').is(':checked'))
-			aplicarNombre = "0";
-		if(elementosSelect != null) {
-			for (var i = 0; i < elementosSelect.length; i++) {
-				elementos+=arregloElementosDeListasValor[parseInt(elementosSelect[i])].nombre + "-" + arregloElementosDeListasValor[parseInt(elementosSelect[i])].valor + '$' +aplicarNombre;
-				if( (i+1) < elementosSelect.length )
-					elementos+=',';
-			};
-			valor = 'LISTA=' + elementos;
-		} else 
-			valor = 'LISTA=' + getSelectOptions(arregloElementosDeListasValor, aplicarNombre);
-	} else if( $('#variableValorRadio').is(':checked') ) {
-		var valorVariables = $("input[name='variablesValor']:checked").val();
-		console.log('valorVariables');
-		console.log(valorVariables);
-		if(valorVariables == 1)
-			valor = "VARIABLE=RESULTADO";
-		else if(valorVariables == 2) {
-			var valorListaVariable = $("input[name='listaValorVariableRadioCAMPOOBJETIVO']:checked").val();
-			if(valorListaVariable != null) {
-				if(valor.length > 0)
-					valor += ",OBJETIVO$"+valorListaVariable;
-				else
-					valor = "VARIABLE=OBJETIVO$"+valorListaVariable;
-			} else {
-				if(valor.length > 0)
-					valor += ",OBJETIVO";
-				else
-					valor = "VARIABLE=OBJETIVO";
-			}
-		} else {
-			var	valorListaVariable = $("input[name='listaValorVariableRadioVALOR']:checked").val();
-			if(valorListaVariable != null) {
-				if(valor.length > 0)
-					valor += ",VALOR$"+valorListaVariable;
-				else
-					valor = "VARIABLE=VALOR$"+valorListaVariable;
-			} else {
-				if(valor.length > 0)
-					valor += ",VALOR";
-				else
-					valor = "VARIABLE=VALOR";
-			}
-		}
-	} else
-		valor = "FACTOR="+variableDeVariableObject.factor;
-	if( $('#resultadoGuardarVariable').is(':checked') )
-		variables = 'VARIABLES//RESULTADO';
-	if( $('#campoGuardarVariable').is(':checked') ){
-		if(variables.length == 0)
-			variables = 'VARIABLES//CAMPOOBJETIVO('+campoObjetivo+')';
-		else
-			variables += '#CAMPOOBJETIVO('+campoObjetivo+')';
-	}
-	if( $('#valorGuardarVariable').is(':checked') ){
-		if(variables.length == 0)
-			variables = 'VARIABLES//VALOR('+valor+')';
-		else
-			variables += '#VALOR('+valor+')';
-	}
-	console.log("-_------___----");
-	console.log(reglaPadre);
-	console.log(campoObjetivo);
-	console.log(operacion);
-	console.log(valor);
-	console.log(variables);
-	console.log(variableDeVariableReglaID);
-	console.log("-_------___----");
-	if(campoObjetivo.length > 0 && campoObjetivo.length < 1001) {
-		if(operacion.length > 0 && operacion.length < 3) {
-			if(valor.toString().length > 0 && valor.toString().length < 1001) {
+	var operacion = $("input[name='opRadio']:checked").val();
+	var id = 1;
+	for (var i = 0; i < arregloTodasReglas.length; i++) {
+		if(arregloTodasReglas[i].ID > id)
+			id = arregloTodasReglas[i].ID;
+	};
+	if(operacion != undefined) {
+		if(variable1Seleccionada != null && variable1Seleccionada != undefined) {
+			if(variable2Seleccionada != null && variable2Seleccionada != undefined) {
+				var campoObjetivo = 'AGRUPACION='+variable1Seleccionada.variables, valor = 'AGRUPACION='+variable2Seleccionada.variables, variables = 'nuevaVariable'+(id+1);
 				const transaction = new sql.Transaction( pool1 );
 			    transaction.begin(err => {
-			        var rolledBack = false
-			 
+			        var rolledBack = false;
 			        transaction.on('rollback', aborted => {
 			            // emited with aborted === true
-			     
-			            rolledBack = true
-			        })
+			            rolledBack = true;
+			        });
 			        const request = new sql.Request(transaction);
-			        request.query("insert into Reglas (variablePadre, reglaPadre, campoObjetivo, operacion, valor, variables, esFiltro) values ("+variableDeVariableReglaID+","+reglaPadre+",'"+campoObjetivo+"','"+operacion+"','"+valor+"','"+variables+"','"+esFiltro+"')", (err, result) => {
+			        request.query("insert into Reglas (variablePadre, reglaPadre, campoObjetivo, operacion, valor, variables, esFiltro, orden) values ("+variableDeVariableReglaID+","+reglaPadre+",'"+campoObjetivo+"','"+operacion+"','"+valor+"','"+variables+"','"+esFiltro+"',"+(ordenGlobal+1)+")", (err, result) => {
 			            if (err) {
 			                if (!rolledBack) {
-			                    console.log('error en rolledBack New Variables');
 			                    transaction.rollback(err => {
-			                        console.log('error en rolledBack');
-			                        console.log(err);
+			                        $("body").overhang({
+							            type: "error",
+							            primary: "#f84a1d",
+							            accent: "#d94e2a",
+							            message: "Error en inserción de variable.",
+							            overlay: true,
+							            closeConfirm: true
+							        });
 			                    });
 			                }
 			            }  else {
 			                transaction.commit(err => {
 			                    // ... error checks
-			                    console.log("Transaction committed New Variables");
-			                    console.log(result);
 			                    $("body").overhang({
 								  	type: "success",
 								  	primary: "#40D47E",
@@ -553,6 +669,7 @@ function saveRule () {
 								  	overlay: true
 								});
 								loadRules();
+								loadAllRules();
 			                });
 			            }
 			        });
@@ -562,10 +679,9 @@ function saveRule () {
 				  	type: "error",
 				  	primary: "#f84a1d",
 					accent: "#d94e2a",
-				  	message: "El campo de valor a aplicar de la regla debe tener una longitud mayor a 0 y menor a 1001.",
-				  	duration: 3,
+				  	message: "Seleccione una variable 2.",
 				  	overlay: true,
-                    closeConfirm: true
+		            closeConfirm: true
 				});
 			}
 		} else {
@@ -573,10 +689,9 @@ function saveRule () {
 			  	type: "error",
 			  	primary: "#f84a1d",
 				accent: "#d94e2a",
-			  	message: "El campo de operacion de la regla debe tener una longitud mayor a 0 y menor a 3.",
-			  	duration: 3,
+			  	message: "Seleccione una variable 1.",
 			  	overlay: true,
-                closeConfirm: true
+	            closeConfirm: true
 			});
 		}
 	} else {
@@ -584,30 +699,26 @@ function saveRule () {
 		  	type: "error",
 		  	primary: "#f84a1d",
 			accent: "#d94e2a",
-		  	message: "El campo objetivo de la regla debe tener una longitud mayor a 0 y menor a 1001.",
-		  	duration: 3,
+		  	message: "Seleccione una operación.",
 		  	overlay: true,
             closeConfirm: true
 		});
-	}*/
+	}
 }
 
-/*function getSelectOptions (array, valorAplicar) {
+/*function getSelectOptions (array, aplicarNombre) {
 	var textoOption = '';
 	for (var i = 0; i < array.length; i++) {
-		if(valorAplicar)
-			textoOption+=array[i].nombre;
-		else
-			textoOption+=array[i].valor;
+		textoOption+=array[i].nombre + "-" + array[i].valor + '$' + aplicarNombre;
 		if( (i+1) < array.length )
 			textoOption+=',';
 	};
 	return textoOption;
 }*/
-function getSelectOptions (array, aplicarNombre) {
+function getSelectOptions (array) {
 	var textoOption = '';
 	for (var i = 0; i < array.length; i++) {
-		textoOption+=array[i].nombre + "-" + array[i].valor + '$' + aplicarNombre;
+		textoOption+=array[i].valor;
 		if( (i+1) < array.length )
 			textoOption+=',';
 	};
@@ -636,6 +747,11 @@ function goUsers () {
     $("#app_root").load("src/users.html");
 }
 
+function goConnections () {
+    $("#app_root").empty();
+    $("#app_root").load("src/importaciones.html");
+}
+
 function logout () {
 	$("#app_root").empty();
     $("#app_root").load("src/login.html");
@@ -647,13 +763,18 @@ function goRCL () {
     $("#app_root").load("src/rcl.html");
 }
 
+function goReports () {
+	$("#app_root").empty();
+    $("#app_root").load("src/reportes.html");
+}
+
 
 function showRules () {
 	var rulesArray = [];
 	for (var i = 0; i < arregloReglas.length; i++) {
 		if(arregloReglas[i].reglaPadre == 0) {
 			var arreglo = [];
-			var resultado = campoObjetivo(arregloReglas[i], arreglo, 0);
+			var resultado = createCode(arregloReglas[i], arreglo, 0);
 			resultado[0] = "\n"+resultado[0];
 			$.merge( rulesArray, resultado );
 		}
@@ -663,6 +784,31 @@ function showRules () {
 		output+=rulesArray[i];
 	}
 	$("#descr1").val(output);
+}
+
+function createCode (regla, arreglo, tabs) {
+	var tabsText = '';
+	for (var i = 0; i < tabs; i++) {
+		tabsText+='\t';
+	};
+	if(regla.campoObjetivo == 'INSTANCIACION') {
+		arreglo.push(tabsText+"var "+regla.variables+" = 0;");
+		var listaIDs = regla.valor.split("=")[1];
+		var ids = listaIDs.split(",");
+		for (var i = 0; i < arregloActivos.length; i++) {
+			for (var j = 0; j < ids.length; j++) {
+				if( parseInt(ids[j]) == arregloActivos[i].cuenta) {
+					arreglo.push("\n"+tabsText+"if ( arregloActivos[i].cuenta == "+ids[j]+" )");
+					arreglo.push("\n"+tabsText+"\t"+regla.variables+" += "+arregloActivos[i].saldo+";");
+				}
+			};
+		};
+		arreglo.push("\ntotalVar"+regla.variables+" = "+regla.variables+";");
+	} else if(regla.campoObjetivo.indexOf('AGRUPACION') == 0 ) {
+		arreglo.push(tabsText+regla.variables+" = "+regla.campoObjetivo.split("=")[1]+" "+regla.operacion+" "+regla.valor.split("=")[1]+";");
+		arreglo.push("\ntotal"+regla.variables+" = "+regla.variables+";");
+	}
+	return arreglo;
 }
 
 function campoObjetivo (regla, arreglo, tabs) {
