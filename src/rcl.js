@@ -1,9 +1,25 @@
 const electron = require('electron');
-const path = require('path');
 const remote = require('electron').remote;
 const sql = require('mssql');
 
+var user = getUser();
+var password = getPassword();
+var server = getServer();
+var database = getDataBase();
+
 const config = {
+    user: user,
+    password: password,
+    server: server,
+    database: database,
+    stream: true,
+    pool: {
+        max: 10,
+        min: 0,
+        idleTimeoutMillis: 30000
+    }
+}
+/*const config = {
     user: 'SA',
     password: 'password111!',
     server: 'localhost',
@@ -13,7 +29,7 @@ const config = {
         min: 0,
         idleTimeoutMillis: 30000
     }
-}
+}*/
 
 const pool1 = new sql.ConnectionPool(config, err => {
 	if(err) {
@@ -30,8 +46,9 @@ const pool1 = new sql.ConnectionPool(config, err => {
         loadVariablesMainDB();
         loadVariables();
         loadVariableVariables();
-        //loadAssets();
-        //loadDeposits();
+        loadAllRules();
+        //loadAllTotes();
+        loadFosede();
 	}
 });
 
@@ -82,26 +99,46 @@ var activosInstanciasSubVariables = [];   //arreglo de codigo de instanciacion d
 var activosInstanciasVarReglas = [];   //arreglo de arreglos de codigo de instanciaciones de las variables de las reglas de los incisos eje: [ [[a,b]][], [[a,b]][] ]
 var activosCuerpo = [];   //arreglo de codigo de instrucciones adentro de for
 var activosAlgebraica = [];   //arreglo de codigo de operaciones operaciones algebraicas algebraicas
-var activosAsignacionesIncisos = [];  //arreglo codigo de operaciones algebraicas
+var activosAsignacionesIncisos = [];  //arreglo codigo de asignaciones a variables. eje alac = alac1+alac2
+var activosAsignacionesSubVariables = [];   //arreglo codigo de asignaciones a sub-variables. eje alac1 = var1+var2
 var entroActivosGetRules = false;   //bandera para validar que fueron traidas las reglas de activos necesarias
 var entroDepositosGetRules = false;   //bandera para validar que fueron traidas las reglas de depositos necesarias
 var entroPrestamosGetRules = false;   //bandera para validar que fueron traidas las reglas de prestamos necesarias
-var totalesVariables = [];  //arreglo de arreglos con el total de cada variable (Variables, Subvariables, variables de alac) Eje: [[{ALAC,30DIAS},{ALAC,90DIAS}],[{SET,30DIAS},{SET,90DIAS}]]
 var proyecciones = [];  //tipo de proyecciones a calcular
 var entroActivosGetFromTable = false;   //bandera para validar que fueron traidas los valores de la tabla de activos
 var entroDepositosGetFromTable = false;   //bandera para validar que fueron traidas los valores de la tabla de depositos
 var entroPrestamosGetFromTable = false;   //bandera para validar que fueron traidas los valores de la tabla de prestamos
+var depositosInstanciasIncisos = [];   //arreglo de codigo de instanciacion de iniciso eje: [finmin30, finmin, rcl30, rcl60]
+var depositosInstanciasSubVariables = [];   //arreglo de codigo de instanciacion de iniciso eje: [[finmin130, finmin230][], [alac160, alac260][]]
+var depositosCuerpo = [];   //arreglo de codigo de instrucciones adentro de for
+var depositosAsignacionesIncisos = [];  //arreglo codigo de asignaciones a variables. eje finmin = finmin1+finmin2
+var arregloReglas = []; //arreglo que contiene todas las reglas
+var prestamosInstanciasIncisos = [];   //arreglo de codigo de instanciacion de iniciso eje: [eet30, eet60, rcl30, rcl60]
+var prestamosInstanciasSubVariables = [];   //arreglo de codigo de instanciacion de iniciso eje: [[eet130, eet230][], [alac160, alac260][]]
+var prestamosCuerpo = [];   //arreglo de codigo de instrucciones adentro de for
+var prestamosAsignacionesIncisos = [];  //arreglo codigo de asignaciones a variables. eje eet = eet1+eet2
+var arregloCuentas = [];    //arreglo de totales de cuentas
+var arregloMonedas = [];    //arreglo que contiene el nombre de las monedas
+var arregloAgencias = [];    //arreglo que contiene el nombre de las agencias
+var totalesClientes = [];    //arreglo que contiene el total por cliente
+var montoFosedeGlobal;
 var equacionVariables = '';
+var equacionSubVariablesConPadres = '';
 var equacionSubVariables = '';
+var equacionVarReglas = '';
+var equacionVarCuentas = '';
 var fechaSeleccionada;
 var arregloVarDeVarFormula = [];
 var arregloActivos = [];
 var arregloDepositos = [];
+var arregloPrestamos = [];
 var arregloDeFiltros = [];
 var arregloDeReglas = [];
+var arregloCuentaAlgebraica = [];   //arreglo de cuentas que son operaciones algebraicas. EJE: 113-11702
 var formulaGlobal = '';
 var contadorEntrarCreateFunctionsArray = 0;
 var contadorFuncionPrint = 0;
+var totalesRCL = [];    //arreglo que guarda el total por proyeccion
 
 $('#fechaRCL').datepicker({
     format: "dd-mm-yyyy",
@@ -111,111 +148,129 @@ $('#fechaRCL').datepicker({
     language: 'es'
 });
 
-/*function loadRules (id, idVariable) {
-	const transaction = new sql.Transaction( pool1 );
-    transaction.begin(err => {
-        var rolledBack = false
- 
-        transaction.on('rollback', aborted => {
-            // emited with aborted === true
-     
-            rolledBack = true
-        })
-        const request = new sql.Request(transaction);
-        request.query("select * from Reglas where variablePadre = "+id, (err, result) => {
-            if (err) {
-                if (!rolledBack) {
-                    console.log('error en rolledBack MainDB Variables');
-                    transaction.rollback(err => {
-                        console.log('error en rolledBack');
-                        console.log(err);
-                    });
-                }
-            } else {
-                transaction.commit(err => {
-                    // ... error checks
-                    console.log("Transaction committed MainDB Variables");
-                    console.log(result);
-                    if(result.recordset.length > 0) {
-                        var index = -1;
-                        for (var i = 0; i < arregloDeComprobacionDeReglas.length; i++) {
-                            if(arregloDeComprobacionDeReglas[i] == idVariable){
-                                index = i;
-                                break;
-                            }
-                        };
-                        if(index == -1) {
-                            console.log("11");
-                            console.log("Variables Regla Padre");
-                            console.log(id);
-                            console.log("Variables Padre");
-                            console.log(idVariable);
-                            arregloDeComprobacionDeReglas.push(idVariable);
-                            arregloDeReglas.push(result.recordset);
-                        } else {
-                            $.merge( arregloDeReglas[index], result.recordset );
-                            console.log("22");
-                            console.log("Variables Regla Padre");
-                            console.log(id);
-                            console.log("Variables Padre");
-                            console.log(idVariable);
-                        }
-                        //arregloDeReglas.push(result.recordset);
-                    }*//* else {
-                        arregloDeReglas.push(null);
-                        arregloDeComprobacionDeReglas.push(null);
-                    }*/
-                    /*contadorEntrarCreateFunctionsArray++;
-                    createFunctionsArray();
-                });
-            }
-        });
-    }); // fin transaction
-}*/
+var diaRCL = 0;
 
-/*function loadRules (id, idVariable) {
+function loadFosede () {
     const transaction = new sql.Transaction( pool1 );
     transaction.begin(err => {
         var rolledBack = false;
         transaction.on('rollback', aborted => {
+            // emited with aborted === true
+            rolledBack = true;
+        })
+        const request = new sql.Request(transaction);
+        request.query("select * from FOSEDE", (err, result) => {
+            if (err) {
+                if (!rolledBack) {
+                    transaction.rollback(err => {
+                        $("body").overhang({
+                            type: "error",
+                            primary: "#f84a1d",
+                            accent: "#d94e2a",
+                            message: "Error en conección con la tabla de FOSEDE.",
+                            overlay: true,
+                            closeConfirm: true
+                        });
+                    });
+                }
+            }  else {
+                transaction.commit(err => {
+                    // ... error checks
+                    if(result.recordset.length > 0){
+                        montoFosedeGlobal = result.recordset;
+                    } else {
+                        montoFosedeGlobal = [];
+                    }
+                });
+            }
+        });
+    }); // fin transaction
+}
+
+function loadAllTotes () {
+    const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false;
+        transaction.on('rollback', aborted => {
+            // emited with aborted === true
             rolledBack = true;
         });
         const request = new sql.Request(transaction);
-        request.query("select * from Reglas where variablePadre = "+id, (err, result) => {
+        request.query("select * from Totales ", (err, result) => {
             if (err) {
                 if (!rolledBack) {
-                    console.log('error en rolledBack MainDB Variables');
                     transaction.rollback(err => {
-                        console.log('error en rolledBack');
-                        console.log(err);
+                        $("body").overhang({
+                            type: "error",
+                            primary: "#f84a1d",
+                            accent: "#d94e2a",
+                            message: "Error en conección con la tabla de Totales.",
+                            overlay: true,
+                            closeConfirm: true
+                        });
                     });
                 }
             } else {
                 transaction.commit(err => {
                     // ... error checks
-                    console.log("Transaction committed loadRules");
-                    console.log(result);
-                    if(result.recordset.length > 0) {
-                        var arrReg = [], arrFil = [];
+                    if(result.recordset.length > 0){
+                        var fechaInicial, fechaFinal;
                         for (var i = 0; i < result.recordset.length; i++) {
-                            if(result.recordset[i].esFiltro == '0')
-                                arrReg.push(result.recordset[i]);
-                            else
-                                arrFil.push(result.recordset[i]);
+                            if(i == 0)
+                                fechaInicial = new Date(result.recordset[i].fecha.getUTCFullYear(), result.recordset[i].fecha.getUTCMonth(), result.recordset[i].fecha.getUTCDate());
+                            if(i == result.recordset.length-1)
+                                fechaFinal = new Date(result.recordset[i].fecha.getUTCFullYear(), result.recordset[i].fecha.getUTCMonth(), result.recordset[i].fecha.getUTCDate());
                         };
-                        arregloDeReglas.push(arrReg);
-                        arregloDeFiltros.push(arrFil);
+                        var diferencia = fechaFinal.getMonth() - fechaInicial.getMonth();
+                        diferencia = diferencia * 31;
+                        var fechasAdd = fechaFinal.getDate() - fechaInicial.getDate();
+                        diaRCL = diferencia + fechasAdd + 1;
+                        console.log(diaRCL);
                     } else {
-                        arregloDeReglas.push([]);
-                        arregloDeFiltros.push([]);
+                        diaRCL = 0;
                     }
-                    contadorEntrarCreateFunctionsArray++;
-                    createFunctionsArray();
                 });
             }
         });
     }); // fin transaction
-}*/
+}
+
+function loadAllRules () {
+    const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false;
+        transaction.on('rollback', aborted => {
+            // emited with aborted === true
+            rolledBack = true;
+        });
+        const request = new sql.Request(transaction);
+        request.query("select * from Reglas ", (err, result) => {
+            if (err) {
+                if (!rolledBack) {
+                    transaction.rollback(err => {
+                        $("body").overhang({
+                            type: "error",
+                            primary: "#f84a1d",
+                            accent: "#d94e2a",
+                            message: "Error en conección con la tabla de variablePadre.",
+                            overlay: true,
+                            closeConfirm: true
+                        });
+                    });
+                }
+            } else {
+                transaction.commit(err => {
+                    // ... error checks
+                    if(result.recordset.length > 0){
+                        arregloReglas = result.recordset;
+                    } else {
+                        arregloReglas = [];
+                    }
+                });
+            }
+        });
+    }); // fin transaction
+}
 
 function loadRules (id, i, j, k, tipo) {
     const transaction = new sql.Transaction( pool1 );
@@ -251,6 +306,22 @@ function loadRules (id, i, j, k, tipo) {
                             if(reglasActivos[i][j][k] == undefined)
                                 reglasActivos[i][j][k] = [];
                             reglasActivos[i][j][k] = result.recordset;
+                        } else if(tipo == 2) {
+                            if(reglasActivos[i] == undefined)
+                                reglasActivos[i] = [];
+                            if(reglasActivos[i][j] == undefined)
+                                reglasActivos[i][j] = [];
+                            if(reglasActivos[i][j][k] == undefined)
+                                reglasActivos[i][j][k] = [];
+                            reglasActivos[i][j][k] = result.recordset;
+                        } else if(tipo == 3) {
+                            if(reglasActivos[i] == undefined)
+                                reglasActivos[i] = [];
+                            if(reglasActivos[i][j] == undefined)
+                                reglasActivos[i][j] = [];
+                            if(reglasActivos[i][j][k] == undefined)
+                                reglasActivos[i][j][k] = [];
+                            reglasActivos[i][j][k] = result.recordset;
                         }
                     } else {
                         if(tipo == 1) {
@@ -261,12 +332,40 @@ function loadRules (id, i, j, k, tipo) {
                             if(reglasActivos[i][j][k] == undefined)
                                 reglasActivos[i][j][k] = [];
                             reglasActivos[i][j][k] = [];
+                        } else if(tipo == 2) {
+                            if(reglasActivos[i] == undefined)
+                                reglasActivos[i] = [];
+                            if(reglasActivos[i][j] == undefined)
+                                reglasActivos[i][j] = [];
+                            if(reglasActivos[i][j][k] == undefined)
+                                reglasActivos[i][j][k] = [];
+                            reglasActivos[i][j][k] = [];
+                        } else if(tipo == 3) {
+                            if(reglasActivos[i] == undefined)
+                                reglasActivos[i] = [];
+                            if(reglasActivos[i][j] == undefined)
+                                reglasActivos[i][j] = [];
+                            if(reglasActivos[i][j][k] == undefined)
+                                reglasActivos[i][j][k] = [];
+                            reglasActivos[i][j][k] = [];
                         }
                     }
                     if(tipo == 1) {
-                        entroActivosGetRules = true;
                         contadorActivosReglasDespues++;
+                    } else if(tipo == 2) {
+                        contadorDepositosReglasDespues++;
+                    } else if(tipo == 3) {
+                        contadorPrestamosReglasDespues++;
+                    }
+                    if(tipo == 1 && contadorActivosReglasDespues == contadorActivosReglasAntes) {
+                        entroActivosGetRules = true;
                         divideAssetsRules();
+                    } else if(tipo == 2 && contadorDepositosReglasDespues == contadorDepositosReglasAntes) {
+                        entroDepositosGetRules = true;
+                        divideDepositsRules();
+                    } else if(tipo == 3 && contadorPrestamosReglasDespues == contadorPrestamosReglasAntes) {
+                        entroPrestamosGetRules = true;
+                        divideCreditRules();
                     }
                 });
             }
@@ -313,9 +412,18 @@ function loadVariablesMainDB () {
                             $("#formulas").text("$$f(x)$$");
                         }
                         MathLive.renderMathInDocument();
+                        montoFosedeGlobal = result.recordset;
+
+                        if(result.recordset[0].fullLogo.length > 0){
+                            $("#fullLogo").attr("src",result.recordset[0].fullLogo);
+                        }
+                        if(result.recordset[0].smallLogo.length > 0){
+                            $("#smallLogo").attr("src",result.recordset[0].smallLogo);
+                        }
                     } else {
                         $("#formulas").text("$$f(x)$$");
                         MathLive.renderMathInDocument();
+                        montoFosedeGlobal = [];
                     }
                 });
             }
@@ -394,6 +502,7 @@ function loadVariableVariables () {
 }
 
 function loadAssets () {
+    var fechaSeleccionada = $("#fechaRCL").datepicker('getDate');
     const transaction = new sql.Transaction( pool1 );
     transaction.begin(err => {
         var rolledBack = false;
@@ -401,7 +510,7 @@ function loadAssets () {
             rolledBack = true
         });
         const request = new sql.Request(transaction);
-        request.query("select * from Activos", (err, result) => {
+        request.query("select * from Activos where fecha = '"+formatDateCreation(fechaSeleccionada)+"'", (err, result) => {
             if (err) {
                 if (!rolledBack) {
                     transaction.rollback(err => {
@@ -419,16 +528,17 @@ function loadAssets () {
                 transaction.commit(err => {
                     if(result.recordset.length > 0){
                         arregloActivos = result.recordset;
+                        for (var i = 0; i < arregloActivos.length; i++) {
+                            arregloActivos[i].fecha = new Date(arregloActivos[i].fecha.getUTCFullYear(), arregloActivos[i].fecha.getUTCMonth(), arregloActivos[i].fecha.getUTCDate());
+                        };
                     } else {
                         arregloActivos = [];
                     }
-                    console.log('arregloActivos');
-                    console.log(arregloActivos);
                     entroActivosGetFromTable = true;
                     if(variablesAgrupadas[1].length > 0)
                         loadDeposits();
-                    /*else if(variablesAgrupadas[2].length > 0)
-                        loadCredit();*/
+                    else if(variablesAgrupadas[2].length > 0)
+                        loadCredit();
                     else
                         createMethods();
                 });
@@ -438,6 +548,7 @@ function loadAssets () {
 }
 
 function loadDeposits () {
+    var fechaSeleccionada = $("#fechaRCL").datepicker('getDate');
     const transaction = new sql.Transaction( pool1 );
     transaction.begin(err => {
         var rolledBack = false;
@@ -445,35 +556,79 @@ function loadDeposits () {
             rolledBack = true
         });
         const request = new sql.Request(transaction);
-        request.query("select * from Depositos", (err, result) => {
+        request.query("select * from Depositos where fecha = '"+formatDateCreation(fechaSeleccionada)+"'", (err, result) => {
             if (err) {
                 if (!rolledBack) {
-                    console.log('error en rolledBack Depositos');
                     transaction.rollback(err => {
-                        console.log('error en rolledBack');
-                        console.log(err);
+                        $("body").overhang({
+                            type: "error",
+                            primary: "#f84a1d",
+                            accent: "#d94e2a",
+                            message: "Error al conectarse con la tabla de Depósitos.",
+                            overlay: true,
+                            closeConfirm: true
+                        });
                     });
                 }
             } else {
                 transaction.commit(err => {
-                    console.log("Transaction committed MainDB Variables");
-                    console.log(result);
                     if(result.recordset.length > 0){
                         arregloDepositos = result.recordset;
-                        console.log('arregloDepositos');
-                        console.log(arregloDepositos);
+                        for (var i = 0; i < arregloDepositos.length; i++) {
+                            arregloDepositos[i].fecha = new Date(arregloDepositos[i].fecha.getUTCFullYear(), arregloDepositos[i].fecha.getUTCMonth(), arregloDepositos[i].fecha.getUTCDate());
+                        };
                     } else {
                         arregloDepositos = [];
                     }
                     entroDepositosGetFromTable = true;
-                    //entroPrestamosGetFromTable
-                    console.log("DADADADADADADDA");
                     if(variablesAgrupadas[2].length > 0)
                         loadCredit();
                     else {
-                        console.log("SIIIIIIUUU");
                         createMethods();
                     }
+                });
+            }
+        });
+    }); // fin transaction
+}
+
+function loadCredit () {
+    var fechaSeleccionada = $("#fechaRCL").datepicker('getDate');
+    const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false;
+        transaction.on('rollback', aborted => {
+            rolledBack = true
+        });
+        const request = new sql.Request(transaction);
+        request.query("select * from Prestamos where fecha = '"+formatDateCreationSingleDigits(fechaSeleccionada)+"'", (err, result) => {
+            if (err) {
+                if (!rolledBack) {
+                    transaction.rollback(err => {
+                        $("body").overhang({
+                            type: "error",
+                            primary: "#f84a1d",
+                            accent: "#d94e2a",
+                            message: "Error al conectarse con la tabla de Préstamos.",
+                            overlay: true,
+                            closeConfirm: true
+                        });
+                    });
+                }
+            } else {
+                transaction.commit(err => {
+                    if(result.recordset.length > 0){
+                        arregloPrestamos = result.recordset;
+                        for (var i = 0; i < arregloPrestamos.length; i++) {
+                            arregloPrestamos[i].fecha = new Date(arregloPrestamos[i].fecha.getUTCFullYear(), arregloPrestamos[i].fecha.getUTCMonth(), arregloPrestamos[i].fecha.getUTCDate());
+                            arregloPrestamos[i].fechaInicio = new Date(arregloPrestamos[i].fechaInicio.getUTCFullYear(), arregloPrestamos[i].fechaInicio.getUTCMonth(), arregloPrestamos[i].fechaInicio.getUTCDate());
+                            arregloPrestamos[i].fechaFinal = new Date(arregloPrestamos[i].fechaFinal.getUTCFullYear(), arregloPrestamos[i].fechaFinal.getUTCMonth(), arregloPrestamos[i].fechaFinal.getUTCDate());
+                        };
+                    } else {
+                        arregloPrestamos = [];
+                    }
+                    entroPrestamosGetFromTable = true;
+                    createMethods();
                 });
             }
         });
@@ -489,11 +644,13 @@ function loadDeposits () {
 //	**********		Calculo RCL		**********
 function checkFormulaExists () {
     proyecciones = [];
+    reglasActivos = [];
     $("input[name='dias']:checked").each(function() {
         proyecciones.push($(this).val());
     });
     if(proyecciones.length > 0) {
-        fechaSeleccionada = $("#fechaRCL").datepicker('getDate');
+        //fechaSeleccionada = $("#fechaRCL").datepicker('getDate');
+        fechaSeleccionada = new Date($("#fechaRCL").datepicker('getDate').getFullYear(), $("#fechaRCL").datepicker('getDate').getMonth(), $("#fechaRCL").datepicker('getDate').getDate());
         if (Object.prototype.toString.call(fechaSeleccionada) === "[object Date]") {
             if (isNaN(fechaSeleccionada.getTime())) {
                 $("body").overhang({
@@ -507,6 +664,78 @@ function checkFormulaExists () {
             } else {
                 if (formulaGlobal.length > 0) {
                     variablesDeEquacion = [];
+                    /*variablesSolas = [];
+                    subvariablesSolas = [];
+                    variablesDeSubVariablesSolas = [];
+                    variablesAgrupadas = [];
+                    activosInstanciasIncisos = [];
+                    activosInstanciasSubVariables = [];
+                    activosInstanciasVarReglas = [];
+                    reglasActivos = [];
+                    activosCuerpo = [];
+                    activosAlgebraica = [];
+                    activosAsignacionesIncisos = [];
+                    activosAsignacionesSubVariables = [];
+                    depositosInstanciasIncisos = [];
+                    depositosInstanciasSubVariables = [];
+                    depositosCuerpo = [];
+                    depositosAsignacionesIncisos = [];
+                    arregloReglas = [];
+                    prestamosInstanciasIncisos = [];
+                    prestamosInstanciasSubVariables = [];
+                    prestamosCuerpo = [];
+                    prestamosAsignacionesIncisos = [];
+                    arregloActivos = []*/
+                    variablesDeEquacion = [];
+                    variablesSolas = [];
+                    subvariablesSolas = [];
+                    variablesDeSubVariablesSolas = [];
+                    variablesAgrupadas = [];
+                    reglasActivos = [];
+                    contadorActivosReglas = 0;
+                    contadorDepositosReglas = 0;
+                    contadorPrestamosReglas = 0;
+                    activosInstanciasIncisos = [];
+                    activosInstanciasSubVariables = [];
+                    activosInstanciasVarReglas = [];
+                    activosCuerpo = [];
+                    activosAlgebraica = [];
+                    activosAsignacionesIncisos = [];
+                    activosAsignacionesSubVariables = [];
+                    entroActivosGetRules = false;
+                    entroDepositosGetRules = false;
+                    entroPrestamosGetRules = false;
+                    entroActivosGetFromTable = false;
+                    entroDepositosGetFromTable = false;
+                    entroPrestamosGetFromTable = false;
+                    depositosInstanciasIncisos = [];
+                    depositosInstanciasSubVariables = [];
+                    depositosCuerpo = [];
+                    depositosAsignacionesIncisos = [];
+                    prestamosInstanciasIncisos = [];
+                    prestamosInstanciasSubVariables = [];
+                    prestamosCuerpo = [];
+                    prestamosAsignacionesIncisos = [];
+                    arregloCuentas = [];
+                    montoFosedeGlobal;
+                    equacionVariables = '';
+                    equacionSubVariablesConPadres = '';
+                    equacionSubVariables = '';
+                    equacionVarReglas = '';
+                    equacionVarCuentas = '';
+                    arregloVarDeVarFormula = [];
+                    arregloActivos = [];
+                    arregloDepositos = [];
+                    arregloPrestamos = [];
+                    arregloDeFiltros = [];
+                    arregloDeReglas = [];
+                    arregloCuentaAlgebraica = [];
+                    contadorEntrarCreateFunctionsArray = 0;
+                    contadorFuncionPrint = 0;
+                    arregloMonedas = [];
+                    arregloAgencias = [];
+                    totalesClientes = [];
+                    totalesRCL = [];
                     for (var i = 0; i < formulaGlobal.length; i++) {
                         if(formulaGlobal.charAt(i) != "(" && formulaGlobal.charAt(i) != ")" && formulaGlobal.charAt(i) != "<" && formulaGlobal.charAt(i) != ">" && 
                             formulaGlobal.charAt(i) != "!" && formulaGlobal.charAt(i) != "=" && formulaGlobal.charAt(i) != "/" && formulaGlobal.charAt(i) != "*" && 
@@ -564,9 +793,6 @@ function getVariable (equacion, index) {
 }
 
 function searchAndCreateArrays () {
-    variablesSolas = [];
-    subvariablesSolas = [];
-    variablesDeSubVariablesSolas = [];
     var entroSubVariables = false;
     for (var t = 0; t < proyecciones.length; t++) {
         if(variablesSolas[t] == undefined)
@@ -578,8 +804,28 @@ function searchAndCreateArrays () {
         for (var j = 0; j < variablesDeEquacion.length; j++) {
             for (var i = 0; i < arregloVariables.length; i++) {
                 if (variablesDeEquacion[j].toLowerCase().localeCompare(arregloVariables[i].variables.toLowerCase()) == 0 ) {
-                    variablesSolas[t].push({ID: arregloVariables[i].ID, variable: arregloVariables[i].variables, formula: arregloVariables[i].formula, tipoProyeccion: proyecciones[t], total: 0, dia: fechaSeleccionada});
+                    variablesSolas[t].push({ID: arregloVariables[i].ID, variable: arregloVariables[i].variables, formula: arregloVariables[i].formula, tipoProyeccion: proyecciones[t], total: 0, dia: fechaSeleccionada, numerador: 0, denominador: 0, volumenFormula: 0, influenciaFormula: 0, moneda: "Lempira", calculada: false, varPadre: "", tablaAplicar: 99, sucursal: "", tipo: "variable", esRCL: false, totalRCL: 0, esNumerador: false});
                 }
+            };
+        };
+        //Agregando si tiene variable padre en formula
+        for (var j = 0; j < variablesSolas[t].length; j++) {
+            var subvariablesTemp = [];
+            for (var i = 0; i < variablesSolas[t][j].formula.length; i++) {
+                if(variablesSolas[t][j].formula.charAt(i) != "(" && variablesSolas[t][j].formula.charAt(i) != ")" && variablesSolas[t][j].formula.charAt(i) != "<" && variablesSolas[t][j].formula.charAt(i) != ">" && 
+                    variablesSolas[t][j].formula.charAt(i) != "!" && variablesSolas[t][j].formula.charAt(i) != "=" && variablesSolas[t][j].formula.charAt(i) != "/" && variablesSolas[t][j].formula.charAt(i) != "*" && 
+                    variablesSolas[t][j].formula.charAt(i) != "√" && variablesSolas[t][j].formula.charAt(i) != "+" && variablesSolas[t][j].formula.charAt(i) != "-" && isNaN(variablesSolas[t][j].formula.charAt(i))) {
+                    var pal = getVariable(variablesSolas[t][j].formula, i);
+                    subvariablesTemp.push(pal);
+                    i+=pal.length;
+                }
+            };
+            for (var i = 0; i < subvariablesTemp.length; i++) {
+                for (var k = 0; k < arregloVariables.length; k++) {
+                    if (subvariablesTemp[i].toLowerCase().localeCompare(arregloVariables[k].variables.toLowerCase()) == 0 ) {
+                        variablesSolas[t].push({ID: arregloVariables[k].ID, variable: arregloVariables[k].variables, formula: arregloVariables[k].formula, tipoProyeccion: proyecciones[t], total: 0, dia: fechaSeleccionada, numerador: 0, denominador: 0, volumenFormula: 0, influenciaFormula: 0, moneda: "Lempira", calculada: false, varPadre: variablesSolas[t][j].variable, tablaAplicar: 99, sucursal: "", tipo: "variable", esRCL: false, totalRCL: 0, esNumerador: false});
+                    }
+                };
             };
         };
         for (var j = 0; j < variablesSolas[t].length; j++) {
@@ -600,7 +846,7 @@ function searchAndCreateArrays () {
             for (var i = 0; i < subvariablesTemp.length; i++) {
                 for (var k = 0; k < arregloVariablesDeVariables.length; k++) {
                     if (subvariablesTemp[i].toLowerCase().localeCompare(arregloVariablesDeVariables[k].nombre.toLowerCase()) == 0 ) {
-                        subvariablesSolas[t][j].push({ID: arregloVariablesDeVariables[k].ID, variable: arregloVariablesDeVariables[k].nombre, factor: arregloVariablesDeVariables[k].factor, tablaAplicar: arregloVariablesDeVariables[k].tablaAplicar, tipoProyeccion: proyecciones[t], total: 0, dia: fechaSeleccionada});
+                        subvariablesSolas[t][j].push({ID: arregloVariablesDeVariables[k].ID, variable: arregloVariablesDeVariables[k].nombre, factor: arregloVariablesDeVariables[k].factor, tablaAplicar: arregloVariablesDeVariables[k].tablaAplicar, tipoProyeccion: proyecciones[t], total: 0, dia: fechaSeleccionada, numerador: 0, denominador: 0, volumenFormula: 0, influenciaFormula: 0, moneda: "Lempira", calculada: false, varPadre: variablesSolas[t][j].variable, sucursal: "", tipo: "subVariable", esRCL: false, totalRCL: 0, esNumerador: false, formula: ""});
                         entroSubVariables = true;
                     }
                 };
@@ -619,27 +865,9 @@ function searchAndCreateArrays () {
             closeConfirm: true
         });
     }
-    console.log(variablesSolas);
-    console.log(subvariablesSolas);
 }
 
 function groupArray () {
-    /*for (var i = 0; i < subvariablesSolas.length; i++) {
-        variablesAgrupadas[i] = [];
-        console.log('antes');
-        console.log(variablesAgrupadas[i]);
-        for (var j = 0; j < subvariablesSolas[i].length; j++) {
-            if(variablesAgrupadas[i][j] == undefined)
-                variablesAgrupadas[i][j] = [];
-            console.log('antes');
-            console.log(variablesAgrupadas[i][j]);
-            for (var k = 0; k < subvariablesSolas[i][j].length; k++) {
-                //variablesAgrupadas[i][j][k]
-                console.log(variablesAgrupadas[i][j]);
-                variablesAgrupadas[i][j].push(subvariablesSolas[i][j][k]);
-            };
-        };
-    };*/
     variablesAgrupadas[0] = [];
     variablesAgrupadas[1] = [];
     variablesAgrupadas[2] = [];
@@ -655,8 +883,6 @@ function groupArray () {
             };
         };
     };
-    /*console.log('variablesAgrupadas');
-    console.log(variablesAgrupadas);*/
 
     var fechaSeleccionada = $("#fechaRCL").datepicker('getDate');
 
@@ -664,16 +890,26 @@ function groupArray () {
     contadorActivosReglasAntes = 0;
     contadorActivosReglasDespues = 0;
     entroActivosGetRules = false;
-    entroDepositosGetRules = false;
-    entroPrestamosGetRules = false;
-    if(variablesAgrupadas[1].length == 0) {
-        entroDepositosGetRules = true;
-        //divideAssetsRules();
+    if(variablesAgrupadas[0].length == 0) {
+        entroActivosGetRules = true;
         checkLoadRules();
     }
+
+    /* **** DEPOSITOS **** */
+    contadorDepositosReglasAntes = 0;
+    contadorDepositosReglasDespues = 0;
+    entroDepositosGetRules = false;
+    if(variablesAgrupadas[1].length == 0) {
+        entroDepositosGetRules = true;
+        checkLoadRules();
+    }
+
+    /* **** PRESTAMOS **** */
+    contadorPrestamosReglasAntes = 0;
+    contadorPrestamosReglasDespues = 0;
+    entroPrestamosGetRules = false;
     if(variablesAgrupadas[2].length == 0) {
         entroPrestamosGetRules = true;
-        //divideAssetsRules();
         checkLoadRules();
     }
     for (var i = 0; i < subvariablesSolas.length; i++) {
@@ -684,17 +920,20 @@ function groupArray () {
                     loadRules(subvariablesSolas[i][j][k].ID, i, j, k, 1);
                     if(k == 0)
                         activosInstanciasIncisos.push({codigo:"\tvar "+variablesSolas[i][j].variable+variablesSolas[i][j].tipoProyeccion+" = 0;", variable: variablesSolas[i][j].variable+variablesSolas[i][j].tipoProyeccion, nombreVariable: variablesSolas[i][j].variable, tipoProyeccion: variablesSolas[i][j].tipoProyeccion});
-                    //totalesVariables.push([{variable:variablesAgrupadas[0][i].nombre, total:0, dia: fechaSeleccionada, tipoProyeccion: 0, denominador:0, numerador:0, tablaTipo:1}]);
                 } else if(subvariablesSolas[i][j][k].tablaAplicar == 2) {
-                    //
+                    contadorDepositosReglasAntes++;
+                    loadRules(subvariablesSolas[i][j][k].ID, i, j, k, 2);
+                    if(k == 0)
+                        depositosInstanciasIncisos.push({codigo:"\tvar "+variablesSolas[i][j].variable+variablesSolas[i][j].tipoProyeccion+" = 0;", variable: variablesSolas[i][j].variable+variablesSolas[i][j].tipoProyeccion, nombreVariable: variablesSolas[i][j].variable, tipoProyeccion: variablesSolas[i][j].tipoProyeccion});
+                } else if(subvariablesSolas[i][j][k].tablaAplicar == 3) {
+                    contadorPrestamosReglasAntes++;
+                    loadRules(subvariablesSolas[i][j][k].ID, i, j, k, 3);
+                    if(k == 0)
+                        prestamosInstanciasIncisos.push({codigo:"\tvar "+variablesSolas[i][j].variable+variablesSolas[i][j].tipoProyeccion+" = 0;", variable: variablesSolas[i][j].variable+variablesSolas[i][j].tipoProyeccion, nombreVariable: variablesSolas[i][j].variable, tipoProyeccion: variablesSolas[i][j].tipoProyeccion});
                 }
             };
         };
     };
-    console.log('reglasActivos')
-    console.log(reglasActivos)
-    console.log('activosInstanciasIncisos')
-    console.log(activosInstanciasIncisos)
     /*for (var i = 0; i < variablesAgrupadas[0].length; i++) {
         loadRules(variablesAgrupadas[0][i].ID, i, 1);
         activosInstanciasIncisos.push({codigo:"\tvar "+variablesAgrupadas[0][i].nombre+" = 0;", variable:variablesAgrupadas[0][i].nombre});
@@ -725,76 +964,110 @@ function groupArray () {
 
 function divideAssetsRules () {
     if(contadorActivosReglasDespues == contadorActivosReglasAntes) {
-        console.log('reglasActivos')
-        console.log(reglasActivos)
-        var fechaSeleccionada = $("#fechaRCL").datepicker('getDate');
+        //var fechaSeleccionada = $("#fechaRCL").datepicker('getDate');
+        console.log(fechaSeleccionada)
         for (var i = 0; i < reglasActivos.length; i++) {
             if(reglasActivos[i] != undefined) {
+                if(variablesDeSubVariablesSolas[i] == undefined)
+                    variablesDeSubVariablesSolas[i] = [];
+                if(activosAlgebraica[i] == undefined)
+                    activosAlgebraica[i] = [];
+                if(activosInstanciasVarReglas[i] == undefined)
+                    activosInstanciasVarReglas[i] = [];
+                if(arregloCuentas[i] == undefined)
+                    arregloCuentas[i] = [];
                 for (var j = 0; j < reglasActivos[i].length; j++) {
                     if(reglasActivos[i][j] != undefined) {
+                        if(variablesDeSubVariablesSolas[i][j] == undefined)
+                            variablesDeSubVariablesSolas[i][j] = [];
+                        if(activosAlgebraica[i][j] == undefined)
+                            activosAlgebraica[i][j] = [];
+                        if(activosInstanciasVarReglas[i][j] == undefined)
+                            activosInstanciasVarReglas[i][j] = [];
+                        if(arregloCuentas[i][j] == undefined)
+                            arregloCuentas[i][j] = [];
                         for (var k = 0; k < reglasActivos[i][j].length; k++) {
                             if(reglasActivos[i][j][k] != undefined) {
+                                if(variablesDeSubVariablesSolas[i][j][k] == undefined)
+                                    variablesDeSubVariablesSolas[i][j][k] = [];
+                                if(activosAlgebraica[i][j][k] == undefined)
+                                    activosAlgebraica[i][j][k] = [];
+                                if(activosInstanciasVarReglas[i][j][k] == undefined)
+                                    activosInstanciasVarReglas[i][j][k] = [];
+                                if(arregloCuentas[i][j][k] == undefined)
+                                    arregloCuentas[i][j][k] = [];
                                 for (var n = 0; n < reglasActivos[i][j][k].length; n++) {
+                                    if(arregloCuentas[i][j][k][n]  == undefined)
+                                        arregloCuentas[i][j][k][n] = []
                                     if(reglasActivos[i][j][k][n] != undefined) {
                                         if (reglasActivos[i][j][k][n].campoObjetivo.indexOf("INSTANCIACION") == 0) {
-                                            if(activosInstanciasSubVariables[(i*reglasActivos[i][j].length)+k] != undefined)
-                                                activosInstanciasSubVariables[(i*reglasActivos[i][j].length)+k].push({codigo:"\tvar "+subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion+" = 0;", variable:subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion, orden: subvariablesSolas[i][j][k].orden, nombreVariable: subvariablesSolas[i][j][k].variable, tipoProyeccion: subvariablesSolas[i][j][k].tipoProyeccion});
-                                            else {
-                                                activosInstanciasSubVariables[(i*reglasActivos[i][j].length)+k] = [];
-                                                activosInstanciasSubVariables[(i*reglasActivos[i][j].length)+k].push({codigo:"\tvar "+subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion+" = 0;", variable:subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion, orden: subvariablesSolas[i][j][k].orden, nombreVariable: subvariablesSolas[i][j][k].variable, tipoProyeccion: subvariablesSolas[i][j][k].tipoProyeccion});
-                                            }
-                                            if(activosInstanciasVarReglas[(i*reglasActivos[i][j].length)+k] != undefined) {
-                                                if(activosInstanciasVarReglas[(i*reglasActivos[i][j][k].length)+n] != undefined) {
-                                                    activosInstanciasVarReglas[(i*reglasActivos[i][j][k].length)+n].push({codigo:"\tvar "+reglasActivos[i][j][k][n].variables+subvariablesSolas[i][j][k].tipoProyeccion+" = 0;", variable:reglasActivos[i][j][k][n].variables+subvariablesSolas[i][j][k].tipoProyeccion, orden: subvariablesSolas[i][j][k].orden, nombreVariable: reglasActivos[i][j][k][n].variables, tipoProyeccion: subvariablesSolas[i][j][k].tipoProyeccion});
-                                                    if(variablesDeSubVariablesSolas[i][j][k] == undefined)
-                                                    variablesDeSubVariablesSolas[i][j][k] = [];
-                                                    variablesDeSubVariablesSolas[i][j][k].push({codigo:"\tvar "+reglasActivos[i][j][k][n].variables+subvariablesSolas[i][j][k].tipoProyeccion+" = 0;", variable:reglasActivos[i][j][k][n].variables+subvariablesSolas[i][j][k].tipoProyeccion, orden: subvariablesSolas[i][j][k].orden, nombreVariable: reglasActivos[i][j][k][n].variables, tipoProyeccion: subvariablesSolas[i][j][k].tipoProyeccion});
-                                                } else {
-                                                    activosInstanciasVarReglas[(i*reglasActivos[i][j][k].length)+n] = [];
-                                                    activosInstanciasVarReglas[(i*reglasActivos[i][j][k].length)+n].push({codigo:"\tvar "+reglasActivos[i][j][k][n].variables+subvariablesSolas[i][j][k].tipoProyeccion+" = 0;", variable:reglasActivos[i][j][k][n].variables+subvariablesSolas[i][j][k].tipoProyeccion, orden: subvariablesSolas[i][j][k].orden, nombreVariable: reglasActivos[i][j][k][n].variables, tipoProyeccion: subvariablesSolas[i][j][k].tipoProyeccion});
-                                                    if(variablesDeSubVariablesSolas[i][j][k] == undefined)
-                                                    variablesDeSubVariablesSolas[i][j][k] = [];
-                                                    variablesDeSubVariablesSolas[i][j][k].push({codigo:"\tvar "+reglasActivos[i][j][k][n].variables+subvariablesSolas[i][j][k].tipoProyeccion+" = 0;", variable:reglasActivos[i][j][k][n].variables+subvariablesSolas[i][j][k].tipoProyeccion, orden: subvariablesSolas[i][j][k].orden, nombreVariable: reglasActivos[i][j][k][n].variables, tipoProyeccion: subvariablesSolas[i][j][k].tipoProyeccion});
-                                                }
-                                            } else {
-                                                activosInstanciasVarReglas[(i*reglasActivos[i][j].length)+k] = [];
-                                                activosInstanciasVarReglas[(i*reglasActivos[i][j].length)+k].push([]);
-                                                activosInstanciasVarReglas[(i*reglasActivos[i][j].length)+k][0].push({codigo:"\tvar "+reglasActivos[i][j][k][n].variables+subvariablesSolas[i][j][k].tipoProyeccion+" = 0;", variable:reglasActivos[i][j][k][n].variables+subvariablesSolas[i][j][k].tipoProyeccion, orden: subvariablesSolas[i][j][k].orden, nombreVariable: reglasActivos[i][j][k][n].variables, tipoProyeccion: subvariablesSolas[i][j][k].tipoProyeccion});
-                                                if(variablesDeSubVariablesSolas[i][j][k] == undefined)
-                                                    variablesDeSubVariablesSolas[i][j][k] = [];
-                                                variablesDeSubVariablesSolas[i][j][k].push({codigo:"\tvar "+reglasActivos[i][j][k][n].variables+subvariablesSolas[i][j][k].tipoProyeccion+" = 0;", variable:reglasActivos[i][j][k][n].variables+subvariablesSolas[i][j][k].tipoProyeccion, orden: subvariablesSolas[i][j][k].orden, nombreVariable: reglasActivos[i][j][k][n].variables, tipoProyeccion: subvariablesSolas[i][j][k].tipoProyeccion});
-                                            }
+
+                                            variablesDeSubVariablesSolas[i][j][k].push({ID: reglasActivos[i][j][k][n].ID, variable:reglasActivos[i][j][k][n].variables, total: 0, dia: fechaSeleccionada, tipoProyeccion: subvariablesSolas[i][j][k].tipoProyeccion, numerador: 0, denominador: 0, volumenFormula: 0, influenciaFormula: 0, moneda: "Lempira", varPadre: subvariablesSolas[i][j][k].variable, tablaAplicar: subvariablesSolas[i][j][k].tablaAplicar, sucursal: "", tipo: "varDeSubVariable", esRCL: false, totalRCL: 0, esNumerador: false, formula: ""});
+
+                                            activosInstanciasVarReglas[i][j][k].push({codigo:"\tvar "+reglasActivos[i][j][k][n].variables+subvariablesSolas[i][j][k].tipoProyeccion+" = 0;", variable:reglasActivos[i][j][k][n].variables+subvariablesSolas[i][j][k].tipoProyeccion, orden: reglasActivos[i][j][k][n].orden, nombreVariable: reglasActivos[i][j][k][n].variables, tipoProyeccion: subvariablesSolas[i][j][k].tipoProyeccion, sucursal: ""});
+
                                             var listaCuentas = reglasActivos[i][j][k][n].valor.split("=")[1].split(",");
                                             for (var l = 0; l < listaCuentas.length; l++) {
                                                 activosCuerpo.push("\tif ( arregloActivos[i].cuenta.localeCompare('"+listaCuentas[l]+"') == 0 ) {")
                                                 activosCuerpo.push("\t\tvar saldoConFactor = arregloActivos[i].saldo * getFactor("+reglasActivos[i][j][k][n].variablePadre+");");
                                                 activosCuerpo.push("\t\t"+reglasActivos[i][j][k][n].variables+subvariablesSolas[i][j][k].tipoProyeccion+"+=saldoConFactor;");
-                                                activosCuerpo.push("\t\tinsertarVolumen(arregloActivos[i].cuenta, arregloActivos[i].saldo);");
-                                                activosCuerpo.push("\t\tinsertarInfluencia(arregloActivos[i].cuenta, arregloActivos[i].saldo);");
+                                                activosCuerpo.push("\t\tinsertarCuenta(arregloActivos[i].cuenta, arregloActivos[i].saldo, "+subvariablesSolas[i][j][k].tipoProyeccion+", "+k+", "+n+", arregloActivos[i].moneda.toLowerCase(), arregloActivos[i].sucursal.toLowerCase());");
                                                 activosCuerpo.push("\t}");
+                                                var posCuenta = existeCuenta(listaCuentas[l], subvariablesSolas[i][j][k].tipoProyeccion);
+                                                var signo = '';
+                                                for (var f = 0; f < reglasActivos[i][j][k].length; f++) {
+                                                    //Valor porque es la segunda variable de operacion (la primera siempre es suma)
+                                                    if( reglasActivos[i][j][k][f].valor.includes(reglasActivos[i][j][k][n].variables) ) {
+                                                        signo = reglasActivos[i][j][k][f].operacion;
+                                                        //break;
+                                                    }
+                                                };
+                                                if( l > 0 )
+                                                    signo = '+';
+                                                //if( posCuenta == -1)
+                                                    arregloCuentas[i][j][k][n].push({variable: listaCuentas[l], total: 0, dia: fechaSeleccionada, tipoProyeccion: subvariablesSolas[i][j][k].tipoProyeccion, numerador: 0, denominador: 0, volumenFormula: 0, influenciaFormula: 0, moneda: "Lempira", tipoProyeccion: subvariablesSolas[i][j][k].tipoProyeccion, tablaAplicar: subvariablesSolas[i][j][k].tablaAplicar, varPadre: variablesDeSubVariablesSolas[i][j][k][variablesDeSubVariablesSolas[i][j][k].length-1].variable, signo: signo, precioUnidad: 0, sucursal: "", tipo: "cuenta", esRCL: false, totalRCL: 0, esNumerador: false, formula: ""});
                                             };
-                                            var pos = activosAsignacionesIncisosContieneVar(variablesSolas[i][j].variable, variablesSolas[i][j].tipoProyeccion);
-                                            if( pos >= 0) {
-                                                activosAsignacionesIncisos[pos].codigo+="+"+subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion;
+                                            /*var pos = activosAsignacionesIncisosContieneVar(variablesSolas[i][j].variable, variablesSolas[i][j].tipoProyeccion);
+                                            if( pos >= 0 && n == 0) {
+                                                var signo = getSign(subvariablesSolas[i][j][k].variable, variablesSolas[i][j].formula);
+                                                activosAsignacionesIncisos[pos].codigo+=signo+subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion;
+                                            } else if( n == 0) {
+                                                activosAsignacionesIncisos.push({codigo: variablesSolas[i][j].variable+variablesSolas[i][j].tipoProyeccion+"="+subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion, variable: variablesSolas[i][j].variable+variablesSolas[i][j].tipoProyeccion, nombreVariable: variablesSolas[i][j].variable, tipoProyeccion: variablesSolas[i][j].tipoProyeccion, formula: variablesSolas[i][j].formula});
+                                            }*/
+                                            var posSubVar = activosAsignacionesSubVarContieneVar(variablesSolas[i][j].variable, variablesSolas[i][j].tipoProyeccion);
+                                            if( posSubVar >= 0) {
+                                                activosAsignacionesSubVariables[posSubVar].codigo+="+"+reglasActivos[i][j][k][n].variable+reglasActivos[i][j][k][n].tipoProyeccion;
                                             } else {
-                                                activosAsignacionesIncisos.push({codigo: variablesSolas[i][j].variable+variablesSolas[i][j].tipoProyeccion+"="+subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion, variable: variablesSolas[i][j].variable+variablesSolas[i][j].tipoProyeccion, nombreVariable: variablesSolas[i][j].variable, tipoProyeccion: variablesSolas[i][j].tipoProyeccion});
+                                                activosAsignacionesSubVariables.push({codigo: subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion+"="+reglasActivos[i][j][k][n].variables+subvariablesSolas[i][j][k].tipoProyeccion, variable: subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion, nombreVariable: subvariablesSolas[i][j][k].variable, tipoProyeccion: subvariablesSolas[i][j][k].tipoProyeccion});
                                             }
-                                        } else {
-                                            if(activosAlgebraica[(i*reglasActivos[i][j].length)+k] != undefined) {
-                                                if(activosAlgebraica[(i*reglasActivos[i][j][k].length)+n] != undefined) {
-                                                    activosAlgebraica[(i*reglasActivos[i][j][k].length)+n].push({codigo:"\t"+reglasActivos[i][j][k][n].campoObjetivo.split("=")[1]+" "+reglasActivos[i][j][k][n].operacion+" "+reglasActivos[i][j][k][n].valor.split("=")[1]+";", variable:reglasActivos[i][j][k][n].variables+subvariablesSolas[i][j][k].tipoProyeccion, orden: subvariablesSolas[i][j][k].orden, nombreVariable: reglasActivos[i][j][k][n].variables, tipoProyeccion: subvariablesSolas[i][j][k].tipoProyeccion});
-                                                } else {
-                                                    activosAlgebraica[(i*reglasActivos[i][j][k].length)+n] = [];
-                                                    activosAlgebraica[(i*reglasActivos[i][j][k].length)+n].push({codigo:"\t"+reglasActivos[i][j][k][n].campoObjetivo.split("=")[1]+" "+reglasActivos[i][j][k][n].operacion+" "+reglasActivos[i][j][k][n].valor.split("=")[1]+";", variable:reglasActivos[i][j][k][n].variables+subvariablesSolas[i][j][k].tipoProyeccion, orden: subvariablesSolas[i][j][k].orden, nombreVariable: reglasActivos[i][j][k][n].variables, tipoProyeccion: subvariablesSolas[i][j][k].tipoProyeccion});
+                                        } else if (reglasActivos[i][j][k][n].campoObjetivo.indexOf("AGRUPACION") == 0) {
+                                            activosAlgebraica[i][j][k].push({codigo:"\t"+reglasActivos[i][j][k][n].campoObjetivo.split("=")[1]+subvariablesSolas[i][j][k].tipoProyeccion+" "+reglasActivos[i][j][k][n].operacion+" "+reglasActivos[i][j][k][n].valor.split("=")[1]+subvariablesSolas[i][j][k].tipoProyeccion+";", variable:reglasActivos[i][j][k][n].variables+subvariablesSolas[i][j][k].tipoProyeccion, orden: reglasActivos[i][j][k][n].orden, nombreVariable: reglasActivos[i][j][k][n].variables, tipoProyeccion: subvariablesSolas[i][j][k].tipoProyeccion});
+                                            variablesDeSubVariablesSolas[i][j][k].push({ID: reglasActivos[i][j][k][n].ID, variable:reglasActivos[i][j][k][n].variables, total: 0, dia: fechaSeleccionada, tipoProyeccion: subvariablesSolas[i][j][k].tipoProyeccion, numerador: 0, denominador: 0, volumenFormula: 0, influenciaFormula: 0, moneda: "Lempira", varPadre: subvariablesSolas[i][j][k].variable, tablaAplicar: subvariablesSolas[i][j][k].tablaAplicar, sucursal: "", tipo: "varDeSubVariable", esRCL: false, totalRCL: 0, esNumerador: false, formula: ""});
+                                            var cuenta1 = '', cuenta2 = '';
+                                            for (var m = 0; m < reglasActivos[i][j][k].length; m++) {
+                                                if(reglasActivos[i][j][k][m].variables.localeCompare(reglasActivos[i][j][k][n].campoObjetivo.split("=")[1]) == 0) {
+                                                    var listaCuentas = reglasActivos[i][j][k][m].valor.split("=")[1].split(",");
+                                                    cuenta1 = "(";
+                                                    for (var l = 0; l < listaCuentas.length; l++) {
+                                                        cuenta1+=listaCuentas[l];
+                                                        if(l+1 != listaCuentas.length)
+                                                            cuenta1+="+";
+                                                    };
+                                                    cuenta1 += ")";
                                                 }
-                                            } else {
-                                                activosAlgebraica[(i*reglasActivos[i][j].length)+k] = [];
-                                                activosAlgebraica[(i*reglasActivos[i][j].length)+k].push([]);
-                                                activosAlgebraica[(i*reglasActivos[i][j].length)+k][0].push({codigo:"\t"+reglasActivos[i][j][k][n].campoObjetivo.split("=")[1]+" "+reglasActivos[i][j][k][n].operacion+" "+reglasActivos[i][j][k][n].valor.split("=")[1]+";", variable:reglasActivos[i][j][k][n].variables+subvariablesSolas[i][j][k].tipoProyeccion, orden: subvariablesSolas[i][j][k].orden, nombreVariable: reglasActivos[i][j][k][n].variables, tipoProyeccion: subvariablesSolas[i][j][k].tipoProyeccion});
-                                            }
-                                            /*if(activosAlgebraica[i] == undefined)
-                                                activosAlgebraica[i] = [];
-                                            activosAlgebraica[i].push({codigo:reglasActivos[i][j].campoObjetivo.split("=")[1]+" "+reglasActivos[i][j].operacion+" "+reglasActivos[i][j].valor.split("=")[1]+";", variable: reglasActivos[i][j].variables, orden:reglasActivos[i][j].orden, nombreVariable: reglasActivos[i][j].variables, tipoProyeccion: variablesSolas[i][j].tipoProyeccion});*/
+                                                if(reglasActivos[i][j][k][m].variables.localeCompare(reglasActivos[i][j][k][n].valor.split("=")[1]) == 0) {
+                                                    var listaCuentas = reglasActivos[i][j][k][m].valor.split("=")[1].split(",");
+                                                    cuenta2 = "(";
+                                                    for (var l = 0; l < listaCuentas.length; l++) {
+                                                        cuenta2+=listaCuentas[l];
+                                                        if(l+1 != listaCuentas.length)
+                                                            cuenta2+="+";
+                                                    };
+                                                    cuenta2 += ")";
+                                                }
+                                            };
+                                            arregloCuentas[i][j][k][n].push({variable: cuenta1+reglasActivos[i][j][k][n].operacion+cuenta2, total: 0, dia: fechaSeleccionada, tipoProyeccion: subvariablesSolas[i][j][k].tipoProyeccion, numerador: 0, denominador: 0, volumenFormula: 0, influenciaFormula: 0, moneda: "Lempira", tipoProyeccion: subvariablesSolas[i][j][k].tipoProyeccion, tablaAplicar: subvariablesSolas[i][j][k].tablaAplicar, varPadre: variablesDeSubVariablesSolas[i][j][k][variablesDeSubVariablesSolas[i][j][k].length-1].variable, signo: "+", precioUnidad: 0, sucursal: "", tipo: "cuenta", esRCL: false, totalRCL: 0, varDeCuenta: reglasActivos[i][j][k][n].variables+subvariablesSolas[i][j][k].tipoProyeccion, esNumerador: false, formula: ""});
+                                            arregloCuentaAlgebraica.push({codigo: "\tsaveCuentaAlgebraica("+reglasActivos[i][j][k][n].variables+subvariablesSolas[i][j][k].tipoProyeccion+", '"+reglasActivos[i][j][k][n].variables+subvariablesSolas[i][j][k].tipoProyeccion+"', arregloActivos[i].moneda.toLowerCase(), arregloActivos[i].sucursal.toLowerCase());"});
                                         }
                                     }
                                 };
@@ -804,62 +1077,202 @@ function divideAssetsRules () {
                 };
             }
         };
-        /*for (var i = 0; i < reglasActivos.length; i++) {
-            for (var j = 0; j < reglasActivos[i].length; j++) {
-                if (reglasActivos[i][j].campoObjetivo.indexOf("INSTANCIACION") == 0) {
-                    if(activosInstanciasSubVariables[i] != undefined)
-                        activosInstanciasSubVariables[i].push({codigo:"\tvar "+reglasActivos[i][j].variables+" = 0;", variable:reglasActivos[i][j].variables, orden:reglasActivos[i][j].orden});
-                    else {
-                        activosInstanciasSubVariables[i] = [];
-                        activosInstanciasSubVariables[i].push({codigo:"\tvar "+reglasActivos[i][j].variables+" = 0;", variable:reglasActivos[i][j].variables, orden:reglasActivos[i][j].orden});
-                    }
-                    totalesVariables.push([{variable:reglasActivos[i][j].variables, total:0, dia: fechaSeleccionada, tipoProyeccion: 0, denominador:0, numerador:0, tablaTipo:1}]);
-                    var listaCuentas = reglasActivos[i][j].valor.split("=")[1].split(",");
-                    for (var k = 0; k < listaCuentas.length; k++) {
-                        activosCuerpo.push("\tif ( arregloActivos[i].cuenta.localeCompare('"+listaCuentas[k]+"') == 0 ) {")
-                        activosCuerpo.push("\t\tvar saldoConFactor = arregloActivos[i].saldo * getFactor("+reglasActivos[i][j].variablePadre+");");
-                        activosCuerpo.push("\t\t"+reglasActivos[i][j].variables+"+=saldoConFactor;");
-                        activosCuerpo.push("\t\tinsertarVolumen(arregloActivos[i].cuenta, arregloActivos[i].saldo);");
-                        activosCuerpo.push("\t\tinsertarInfluencia(arregloActivos[i].cuenta, arregloActivos[i].saldo);");
-                        activosCuerpo.push("\t}");
+        for (var i = 0; i < subvariablesSolas.length; i++) {
+            if(activosInstanciasSubVariables[i] == undefined)
+                activosInstanciasSubVariables[i] = [];
+            for (var j = 0; j < subvariablesSolas[i].length; j++) {
+                if(activosInstanciasSubVariables[i][j] == undefined)
+                    activosInstanciasSubVariables[i][j] = [];
+                for (var k = 0; k < subvariablesSolas[i][j].length; k++) {
+                    activosInstanciasSubVariables[i][j].push({codigo:"\tvar "+subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion+" = 0;", variable:subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion, orden: subvariablesSolas[i][j][k].orden, nombreVariable: subvariablesSolas[i][j][k].variable, tipoProyeccion: subvariablesSolas[i][j][k].tipoProyeccion});
+                };
+            };
+        };
+        checkLoadRules();
+    }
+}
+
+function getSign (variable, equacion) {
+    var signo = '+';
+    for (var i = 0; i < equacion.length; i++) {
+        if(equacion.charAt(i) != "(" && equacion.charAt(i) != ")" && equacion.charAt(i) != "<" && equacion.charAt(i) != ">" && 
+            equacion.charAt(i) != "!" && equacion.charAt(i) != "=" && equacion.charAt(i) != "/" && equacion.charAt(i) != "*" && 
+            equacion.charAt(i) != "√" && equacion.charAt(i) != "+" && equacion.charAt(i) != "-" && isNaN(equacion.charAt(i))) {
+            var pal = getVariable(equacion, i);
+            if(pal.toLowerCase().localeCompare(variable.toLowerCase()) == 0) {
+                return signo;
+            }
+            i+=pal.length-1;
+        } else {
+            signo = equacion.charAt(i);
+        }
+    };
+    return signo;
+}
+
+function existeCuenta (cuenta, tipoProyeccion) {
+    for (var i = 0; i < arregloCuentas.length; i++) {
+        if(arregloCuentas[i] != undefined) {
+            for (var j = 0; j < arregloCuentas[i].length; j++) {
+                if(arregloCuentas[i][j] != undefined) {
+                    for (var k = 0; k < arregloCuentas[i][j].length; k++) {
+                        if(arregloCuentas[i][j][k] != undefined) {
+                            for (var n = 0; n < arregloCuentas[i][j][k].length; n++) {
+                                if(arregloCuentas[i][j][k][n] != undefined) {
+                                    for (var z = 0; z < arregloCuentas[i][j][k][n].length; z++) {
+                                        if(arregloCuentas[i][j][k][n][z].variable.localeCompare(cuenta) == 0 && arregloCuentas[i][j][k][n][z].tipoProyeccion == tipoProyeccion)
+                                            return i;
+                                    };
+                                }
+                            };
+                        }
                     };
-                } else {
-                    if(activosAlgebraica[i] != undefined)
-                        activosAlgebraica[i].push({codigo:reglasActivos[i][j].campoObjetivo.split("=")[1]+" "+reglasActivos[i][j].operacion+" "+reglasActivos[i][j].valor.split("=")[1]+";", variable:reglasActivos[i][j].variables, orden:reglasActivos[i][j].orden});
-                    else {
-                        activosAlgebraica[i] = [];
-                        activosAlgebraica[i].push({codigo:reglasActivos[i][j].campoObjetivo.split("=")[1]+" "+reglasActivos[i][j].operacion+" "+reglasActivos[i][j].valor.split("=")[1]+";", variable:reglasActivos[i][j].variables, orden:reglasActivos[i][j].orden});
+                }
+            };
+        }
+    };
+    return -1;
+}
+
+function divideDepositsRules () {
+    if(contadorDepositosReglasDespues == contadorDepositosReglasAntes) {
+        var fechaSeleccionada = $("#fechaRCL").datepicker('getDate');
+        for (var i = 0; i < subvariablesSolas.length; i++) {
+            if(subvariablesSolas[i] != undefined) {
+                if(variablesDeSubVariablesSolas[i] == undefined)
+                    variablesDeSubVariablesSolas[i] = [];
+                for (var j = 0; j < subvariablesSolas[i].length; j++) {
+                    if(subvariablesSolas[i][j] != undefined) {
+                        if(variablesDeSubVariablesSolas[i][j] == undefined)
+                            variablesDeSubVariablesSolas[i][j] = [];
+                        for (var k = 0; k < subvariablesSolas[i][j].length; k++) {
+                            if(subvariablesSolas[i][j][k] != undefined) {
+                                if(variablesDeSubVariablesSolas[i][j][k] == undefined)
+                                    variablesDeSubVariablesSolas[i][j][k] = [];
+                                if(subvariablesSolas[i][j][k].tablaAplicar == 2) {
+                                    depositosInstanciasSubVariables.push({codigo:"\tvar "+subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion+" = 0;", variable:subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion, nombreVariable: subvariablesSolas[i][j][k].variable, tipoProyeccion: subvariablesSolas[i][j][k].tipoProyeccion, moneda: subvariablesSolas[i][j][k].moneda.toLowerCase()});
+                                    /*if(!contieneVariablePadreEnFormula(i, j)) {
+                                        var pos = depositosAsignacionesIncisosContieneVar(variablesSolas[i][j].variable, variablesSolas[i][j].tipoProyeccion);
+                                        if(pos >= 0)
+                                            depositosAsignacionesIncisos[pos].codigo+=" + "+subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion;
+                                        else
+                                            depositosAsignacionesIncisos.push({codigo:"\t"+variablesSolas[i][j].variable+variablesSolas[i][j].tipoProyeccion+" = "+subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion, variable:variablesSolas[i][j].variable+variablesSolas[i][j].tipoProyeccion, nombreVariable: variablesSolas[i][j].variable, tipoProyeccion: variablesSolas[i][j].tipoProyeccion});
+                                    }*/
+                                    for (var n = 0; n < reglasActivos[i][j][k].length; n++) {
+                                        if(reglasActivos[i][j][k][n] != undefined && reglasActivos[i][j][k][n].reglaPadre == 0) {
+                                            var resultado = campoObjetivoDepositos(reglasActivos[i][j][k][n], [], 1, subvariablesSolas[i][j][k].variable, subvariablesSolas[i][j][k].tipoProyeccion);
+                                            resultado[0] = "\n"+resultado[0];
+                                            $.merge( depositosCuerpo, resultado );
+                                        }
+                                    };
+                                }
+                            }
+                        };
                     }
+                };
+            }
+        };
+        /*for (var i = 0; i < proyecciones.length; i++) {
+            for (var j = 0; j < variablesSolas[i].length; j++) {
+                for (var k = 0; k < subvariablesSolas[i][j].length; k++) {
+                    if(subvariablesSolas[i][j][k].tablaAplicar == 2 && contieneVariablePadreEnFormula(i, j) ) {
+                        var variables = obtenerVariables(i , j);
+                        for (var n = 0; n < variables.length; n++) {
+                            var pos = depositosAsignacionesIncisosContieneVar(variablesSolas[i][j].variable, variablesSolas[i][j].tipoProyeccion);
+                            if(pos >= 0) {
+                                depositosAsignacionesIncisos[pos].codigo+=" + "+variables[n]+subvariablesSolas[i][j][k].tipoProyeccion;
+                            } else {
+                                depositosAsignacionesIncisos.push({codigo:"\t"+variablesSolas[i][j].variable+variablesSolas[i][j].tipoProyeccion+" = "+variables[n]+subvariablesSolas[i][j][k].tipoProyeccion, variable:variablesSolas[i][j].variable+variablesSolas[i][j].tipoProyeccion, nombreVariable: variablesSolas[i][j].variable, tipoProyeccion: variablesSolas[i][j].tipoProyeccion});
+                            }
+                        };
+                    }
+                };
+                if(subvariablesSolas[i][j].length == 0 && contieneVariablePadreEnFormula(i, j) && variablesSolas[i][j][k].tablaAplicar == 2) {
+                    var variables = obtenerVariables(i , j);
+                    for (var n = 0; n < variables.length; n++) {
+                        var pos = depositosAsignacionesIncisosContieneVar(variablesSolas[i][j].variable, variablesSolas[i][j].tipoProyeccion);
+                        if(pos >= 0) {
+                            depositosAsignacionesIncisos[pos].codigo+=" + "+variables[n]+variablesSolas[i][j].tipoProyeccion;
+                        } else {
+                            depositosAsignacionesIncisos.push({codigo:"\t"+variablesSolas[i][j].variable+variablesSolas[i][j].tipoProyeccion+" = "+variables[n]+variablesSolas[i][j].tipoProyeccion, variable:variablesSolas[i][j].variable+variablesSolas[i][j].tipoProyeccion, nombreVariable: variablesSolas[i][j].variable, tipoProyeccion: variablesSolas[i][j].tipoProyeccion});
+                        }
+                    };
                 }
             };
         };*/
-        if(activosInstanciasSubVariables.length == 0) {
-            for (var i = 0; i < subvariablesSolas.length; i++) {
+        checkLoadRules();
+    }
+}
+
+function divideCreditRules () {
+    if(contadorPrestamosReglasAntes == contadorPrestamosReglasDespues) {
+        var fechaSeleccionada = $("#fechaRCL").datepicker('getDate');
+        aplicarFactores = [];
+        for (var i = 0; i < subvariablesSolas.length; i++) {
+            if(subvariablesSolas[i] != undefined) {
+                if(variablesDeSubVariablesSolas[i] == undefined)
+                    variablesDeSubVariablesSolas[i] = [];
                 for (var j = 0; j < subvariablesSolas[i].length; j++) {
-                    for (var k = 0; k < subvariablesSolas[i][j].length; k++) {
-                        if(activosInstanciasSubVariables[(i*subvariablesSolas[i][j].length)+k] != undefined) {
-                            activosInstanciasSubVariables[(i*subvariablesSolas[i][j].length)+k].push({codigo:"\tvar "+subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion+" = 0;", variable:subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion, orden: subvariablesSolas[i][j][k].orden, nombreVariable: subvariablesSolas[i][j][k].variable, tipoProyeccion: subvariablesSolas[i][j][k].tipoProyeccion});
+                    if(subvariablesSolas[i][j] != undefined) {
+                        if(variablesDeSubVariablesSolas[i][j] == undefined)
+                            variablesDeSubVariablesSolas[i][j] = [];
+                        for (var k = 0; k < subvariablesSolas[i][j].length; k++) {
+                            if(subvariablesSolas[i][j][k] != undefined) {
+                                if(variablesDeSubVariablesSolas[i][j][k] == undefined)
+                                    variablesDeSubVariablesSolas[i][j][k] = [];
+                                if(subvariablesSolas[i][j][k].tablaAplicar == 3) {
+                                    prestamosInstanciasSubVariables.push({codigo:"\tvar "+subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion+" = 0;", variable:subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion, nombreVariable: subvariablesSolas[i][j][k].variable, tipoProyeccion: subvariablesSolas[i][j][k].tipoProyeccion, moneda: subvariablesSolas[i][j][k].moneda.toLowerCase()});
+                                    /*if(!contieneVariablePadreEnFormula(i, j)) {
+                                        var pos = prestamosAsignacionesIncisosContieneVar(variablesSolas[i][j].variable, variablesSolas[i][j].tipoProyeccion);
+                                        if(pos >= 0) {
+                                            prestamosAsignacionesIncisos[pos].codigo+=" + "+subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion;
+                                        } else {
+                                            prestamosAsignacionesIncisos.push({codigo:"\t"+variablesSolas[i][j].variable+variablesSolas[i][j].tipoProyeccion+" = "+subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion, variable:variablesSolas[i][j].variable+variablesSolas[i][j].tipoProyeccion, nombreVariable: variablesSolas[i][j].variable, tipoProyeccion: variablesSolas[i][j].tipoProyeccion});
+                                        }
+                                    }*/
+                                    for (var n = 0; n < reglasActivos[i][j][k].length; n++) {
+                                        if(reglasActivos[i][j][k][n] != undefined && reglasActivos[i][j][k][n].reglaPadre == 0) {
+                                            var resultado = campoObjetivoPrestamos(reglasActivos[i][j][k][n], [], 2, subvariablesSolas[i][j][k].variable, subvariablesSolas[i][j][k].tipoProyeccion);
+                                            resultado[0] = "\n"+resultado[0];
+                                            $.merge( prestamosCuerpo, resultado );
+                                        }
+                                    };
+                                }
+                            }
+                        };
+                    }
+                };
+            }
+        };
+        /*for (var i = 0; i < proyecciones.length; i++) {
+            for (var j = 0; j < variablesSolas[i].length; j++) {
+                for (var k = 0; k < subvariablesSolas[i][j].length; k++) {
+                    if(subvariablesSolas[i][j][k].tablaAplicar == 3 && contieneVariablePadreEnFormula(i, j) ) {
+                        var variables = obtenerVariables(i , j);
+                        for (var n = 0; n < variables.length; n++) {
+                            var pos = prestamosAsignacionesIncisosContieneVar(variablesSolas[i][j].variable, variablesSolas[i][j].tipoProyeccion);
+                            if(pos >= 0) {
+                                prestamosAsignacionesIncisos[pos].codigo+=" + "+variables[n]+subvariablesSolas[i][j][k].tipoProyeccion;
+                            } else {
+                                prestamosAsignacionesIncisos.push({codigo:"\t"+variablesSolas[i][j].variable+variablesSolas[i][j].tipoProyeccion+" = "+variables[n]+subvariablesSolas[i][j][k].tipoProyeccion, variable:variablesSolas[i][j].variable+variablesSolas[i][j].tipoProyeccion, nombreVariable: variablesSolas[i][j].variable, tipoProyeccion: variablesSolas[i][j].tipoProyeccion});
+                            }
+                        };
+                    }
+                };
+                if(subvariablesSolas[i][j].length == 0 && contieneVariablePadreEnFormula(i, j) && variablesSolas[i][j][k].tablaAplicar == 3) {
+                    var variables = obtenerVariables(i , j);
+                    for (var n = 0; n < variables.length; n++) {
+                        var pos = prestamosAsignacionesIncisosContieneVar(variablesSolas[i][j].variable, variablesSolas[i][j].tipoProyeccion);
+                        if(pos >= 0) {
+                            prestamosAsignacionesIncisos[pos].codigo+=" + "+variables[n]+variablesSolas[i][j].tipoProyeccion;
                         } else {
-                            activosInstanciasSubVariables[(i*subvariablesSolas[i][j].length)+k] = [];
-                            activosInstanciasSubVariables[(i*subvariablesSolas[i][j].length)+k].push({codigo:"\tvar "+subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion+" = 0;", variable:subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion, orden: subvariablesSolas[i][j][k].orden, nombreVariable: subvariablesSolas[i][j][k].variable, tipoProyeccion: subvariablesSolas[i][j][k].tipoProyeccion});
+                            prestamosAsignacionesIncisos.push({codigo:"\t"+variablesSolas[i][j].variable+variablesSolas[i][j].tipoProyeccion+" = "+variables[n]+variablesSolas[i][j].tipoProyeccion, variable:variablesSolas[i][j].variable+variablesSolas[i][j].tipoProyeccion, nombreVariable: variablesSolas[i][j].variable, tipoProyeccion: variablesSolas[i][j].tipoProyeccion});
                         }
                     };
-                };
+                }
             };
-        }
+        };*/
         checkLoadRules();
-        console.log('activosInstanciasIncisos')
-        console.log(activosInstanciasIncisos)
-        console.log('activosInstanciasSubVariables')
-        console.log(activosInstanciasSubVariables)
-        console.log('activosCuerpo')
-        console.log(activosCuerpo)
-        console.log('activosAlgebraica')
-        console.log(activosAlgebraica)
-        console.log('activosAsignacionesIncisos')
-        console.log(activosAsignacionesIncisos)
-        console.log('activosInstanciasVarReglas')
-        console.log(activosInstanciasVarReglas)
     }
 }
 
@@ -870,6 +1283,76 @@ function activosAsignacionesIncisosContieneVar (variable, tipoProyeccion) {
         }
     };
     return -1;
+}
+
+function activosAsignacionesSubVarContieneVar (variable, tipoProyeccion) {
+    for (var i = 0; i < activosAsignacionesSubVariables.length; i++) {
+        if(activosAsignacionesSubVariables[i].nombreVariable.localeCompare(variable) == 0 && activosAsignacionesSubVariables[i].tipoProyeccion == tipoProyeccion) {
+            return i;
+        }
+    };
+    return -1;
+}
+
+function depositosAsignacionesIncisosContieneVar (variable, tipoProyeccion) {
+    for (var i = 0; i < depositosAsignacionesIncisos.length; i++) {
+        if(depositosAsignacionesIncisos[i].nombreVariable.localeCompare(variable) == 0 && depositosAsignacionesIncisos[i].tipoProyeccion == tipoProyeccion) {
+            return i;
+        }
+    };
+    return -1;
+}
+
+function prestamosAsignacionesIncisosContieneVar (variable, tipoProyeccion) {
+    for (var i = 0; i < prestamosAsignacionesIncisos.length; i++) {
+        if(prestamosAsignacionesIncisos[i].nombreVariable.localeCompare(variable) == 0 && prestamosAsignacionesIncisos[i].tipoProyeccion == tipoProyeccion) {
+            return i;
+        }
+    };
+    return -1;
+}
+
+function contieneVariablePadreEnFormula (i, j) {
+    var ecuacionResuelta = variablesSolas[i][j].formula;
+    for (var z = 0; z < ecuacionResuelta.length; z++) {
+        if(ecuacionResuelta.charAt(z) != "(" && ecuacionResuelta.charAt(z) != ")" && ecuacionResuelta.charAt(z) != "<" && ecuacionResuelta.charAt(z) != ">" && 
+            ecuacionResuelta.charAt(z) != "!" && ecuacionResuelta.charAt(z) != "=" && ecuacionResuelta.charAt(z) != "/" && ecuacionResuelta.charAt(z) != "*" && 
+            ecuacionResuelta.charAt(z) != "√" && ecuacionResuelta.charAt(z) != "+" && ecuacionResuelta.charAt(z) != "-" && isNaN(ecuacionResuelta.charAt(z))) {
+            var pal = getVariable(ecuacionResuelta, z);
+            if(esVariablePadre(pal)) {
+                return true;
+            } else {
+                z += pal.length-1;
+            }
+        }
+    };
+    return false;
+}
+
+function esVariablePadre (variable) {
+    for (var i = 0; i < proyecciones.length; i++) {
+        for (var j = 0; j < variablesSolas[i].length; j++) {
+            if(variablesSolas[i][j].variable.toLowerCase().localeCompare(variable.toLowerCase()) == 0) {
+                return true;
+            }
+        };
+    };
+    return false;
+}
+
+function obtenerVariables (i, j) {
+    var arregloVars = [];
+    var ecuacionResuelta = variablesSolas[i][j].formula;
+    for (var z = 0; z < ecuacionResuelta.length; z++) {
+        if(ecuacionResuelta.charAt(z) != "(" && ecuacionResuelta.charAt(z) != ")" && ecuacionResuelta.charAt(z) != "<" && ecuacionResuelta.charAt(z) != ">" && 
+            ecuacionResuelta.charAt(z) != "!" && ecuacionResuelta.charAt(z) != "=" && ecuacionResuelta.charAt(z) != "/" && ecuacionResuelta.charAt(z) != "*" && 
+            ecuacionResuelta.charAt(z) != "√" && ecuacionResuelta.charAt(z) != "+" && ecuacionResuelta.charAt(z) != "-" && isNaN(ecuacionResuelta.charAt(z))) {
+            var pal = getVariable(ecuacionResuelta, z);
+            arregloVars.push(pal);
+            z += pal.length-1;
+        }
+    };
+    return arregloVars;
 }
 
 function checkLoadRules () {
@@ -886,217 +1369,694 @@ function checkLoadRules () {
             if(variablesAgrupadas[2].length == 0)
                 entroPrestamosGetFromTable = true;
             loadDeposits();
-        }/*else if(variablesAgrupadas[2].length > 0)
-            loadCredit();*/
+        } else if(variablesAgrupadas[2].length > 0) {
+            if(variablesAgrupadas[0].length == 0)
+                entroActivosGetFromTable = true;
+            if(variablesAgrupadas[1].length == 0)
+                entroDepositosGetFromTable = true;
+            loadCredit();
+        }
     }
 }
 
 function createMethods () {
     if(entroActivosGetFromTable && entroDepositosGetFromTable && entroPrestamosGetFromTable) {
-        var contentAssets = '';
+        /*var contentAssets = '';
         contentAssets = createAssetsRCL();
         var contentLoans = '';
+        contentLoans = createCreditRCL();
         var contentDeposits = '';
-        console.log('contentAssets');
-        console.log(contentAssets);
+        contentDeposits = createDepositsRCL();
         if(variablesAgrupadas[2].length > 0)    //prestamos
-            contentLoans+="window['ActivosRCL']();";
+            contentLoans+="\tcalculateRCL();\n";
         else if(variablesAgrupadas[1].length > 0)    //depositos
-            contentDeposits+="window['ActivosRCL']();";
+            contentDeposits+="\tcalculateRCL();\n";
         else                                            //activos
-            contentAssets+="window['ActivosRCL']();";
+            contentAssets+="\tcalculateRCL();\n";*/
+        var content = '';
+        content += createAssetsRCL();
+        content += createCreditRCL();
+        content += createDepositsRCL();
+        content+="\tcalculateRCL();\n";
+        window['calculoRCL'] = new Function(
+         'return function anonRCL(){'+
+                    content+
+            '}'
+        )();
+        console.log(window['calculoRCL']);
+        runFunctions();
     }
-    /*var proyecciones = [];
-    $("input[name='dias']:checked").each(function() {
-        proyecciones.push($(this).val());
-    });
+    /*console.log(contentAssets)
+    console.log(contentDeposits)
+    console.log(contentLoans)*/
 
-    //Contenido Activos
-    var contentAssets = "\n";
-    for (var i = 0; i < activosInstanciasIncisos.length; i++) {
-        contentAssets+=activosInstanciasIncisos[i].codigo+"\n";
-    };
-    for (var i = 0; i < activosInstanciasVariablesDeIncisos.length; i++) {
-        for (var j = 0; j < activosInstanciasVariablesDeIncisos[i].length; j++) {
-            contentAssets+=activosInstanciasVariablesDeIncisos[i][j].codigo+"\n";
-        };
-    };
-    contentAssets+="\tfor ( var i = 0; i < arregloActivos.length; i++ ) {\n";
-    for (var i = 0; i < activosCuerpo.length; i++) {
-        contentAssets+="\t"+activosCuerpo[i]+"\n";
-    };
-    contentAssets+="\t}\n";
-    var contentAssetsFinal = '';
-
-    for (var i = 0; i < proyecciones.length; i++) {
-        var fechaProyeccion = proyecciones[i];
-        for (var j = 0; j < totalesVariables.length; j++) {
-            if(totalesVariables[j][totalesVariables[j].length-1].tipoProyeccion == 0 && totalesVariables[j][totalesVariables[j].length-1].tablaTipo != 1) {
-                totalesVariables[j][totalesVariables[j].length-1].tipoProyeccion = proyecciones[i];
-            } else if(totalesVariables[j][totalesVariables[j].length-1].tablaTipo != 1) {
-                var temp = jQuery.extend(true, {}, totalesVariables[j][totalesVariables[j].length-1]);
-                totalesVariables[j].push(temp);
-                totalesVariables[j][totalesVariables[j].length-1].tipoProyeccion = proyecciones[i];
-            }
-        };
-        contentAssetsFinal+=createAssetsRCL(contentAssetsFinal, proyecciones[i]);
-    };
-    contentAssets+=contentAssetsFinal;*/
-
-    window['ActivosRCL'] = new Function(
+    /*window['ActivosRCL'] = new Function(
          'return function anonActivos(){'+
                 contentAssets+
         '}'
     )();
-    console.log(window['ActivosRCL']);
+    window['DepositosRCL'] = new Function(
+         'return function anonDepositos(){'+
+                contentDeposits+
+        '}'
+    )();
+    window['PrestamosRCL'] = new Function(
+         'return function anonPrestamos(){'+
+                contentLoans+
+        '}'
+    )();*/
+    /*console.log(window['ActivosRCL']);
+    console.log(window['DepositosRCL']);
+    console.log(window['PrestamosRCL']);*/
 
-    runFunctions();
+    //runFunctions();
+}
+
+function noExistenEnSubVarTablaActivos (variable) {
+    for (var i = 0; i < arregloVariablesDeVariables.length; i++) {
+        if(arregloVariablesDeVariables[i].nombre.toLowerCase().localeCompare(variable.toLowerCase()) == 0) {
+            return false;
+        }
+    };
+    return true;
 }
 
 function createAssetsRCL () {
     var content = '';
     for (var i = 0; i < activosInstanciasIncisos.length; i++) {
-        content+=activosInstanciasIncisos[i].codigo+"\n";
+        content+="\n"+activosInstanciasIncisos[i].codigo;
     };
+    content+="\n";
     for (var i = 0; i < activosInstanciasSubVariables.length; i++) {
-        for (var j = 0; j < activosInstanciasSubVariables[i].length; j++) {
-            content+=activosInstanciasSubVariables[i][j].codigo+"\n";
-        };
-    };
-    for (var i = 0; i < activosInstanciasVarReglas.length; i++) {
-        if(activosInstanciasVarReglas[i] != undefined) {
-            for (var j = 0; j < activosInstanciasVarReglas[i].length; j++) {
-                if(activosInstanciasVarReglas[i][j] != undefined) {
-                    for (var k = 0; k < activosInstanciasVarReglas[i][j].length; k++) {
-                        content+=activosInstanciasVarReglas[i][j][k].codigo+"\n";
+        if(activosInstanciasSubVariables[i] != undefined) {
+            for (var j = 0; j < activosInstanciasSubVariables[i].length; j++) {
+                if(activosInstanciasSubVariables[i][j] != undefined) {
+                    for (var k = 0; k < activosInstanciasSubVariables[i][j].length; k++) {
+                        if(noExistenEnSubVarTablaActivos(activosInstanciasSubVariables[i][j][k].nombreVariable)) {
+                            if(i == 0 && k == 0)
+                                content+="\n";
+                            content+=activosInstanciasSubVariables[i][j][k].codigo+"\n";
+                        }
                     };
                 }
             };
         }
     };
-    for (var i = 0; i < activosCuerpo.length; i++) {
-        content+=activosCuerpo[i]+"\n";
-    };
-    /*console.log('variablesDeSubVariablesSolas');
-    console.log(variablesDeSubVariablesSolas);
-    for (var i = 0; i < variablesDeSubVariablesSolas.length; i++) {
-        for (var j = 0; j < variablesDeSubVariablesSolas[i].length; j++) {
-            for (var k = 0; k < variablesDeSubVariablesSolas[i][j].length; k++) {
-                for (var n = 0; n < variablesDeSubVariablesSolas[i][j][k].length; n++) {
-                    content+=variablesDeSubVariablesSolas[i][j][k][n].nombreVariable+"\n";
-                    content+="\t"+"saveVariable('"+variablesDeSubVariablesSolas[i][j][k][n].nombreVariable+"', "+variablesDeSubVariablesSolas[i][j][k][n].tipoProyeccion+", "+variablesDeSubVariablesSolas[i][j][k][n].variable+");\n";
-                };
+    for (var i = 0; i < activosInstanciasVarReglas.length; i++) {
+        if(activosInstanciasVarReglas[i] != undefined && activosInstanciasVarReglas[i].length > 0) {
+            for (var j = 0; j < activosInstanciasVarReglas[i].length; j++) {
+                if(activosInstanciasVarReglas[i][j] != undefined && activosInstanciasVarReglas[i][j].length > 0) {
+                    for (var k = 0; k < activosInstanciasVarReglas[i][j].length; k++) {
+                        if(activosInstanciasVarReglas[i][j][k] != undefined && activosInstanciasVarReglas[i][j][k].length > 0) {
+                            for (var n = 0; n < activosInstanciasVarReglas[i][j][k].length; n++) {
+                                content+=activosInstanciasVarReglas[i][j][k][n].codigo+"\n";
+                            };
+                        }
+                    };
+                }
             };
-        };
+        }
+    };
+    content+="\tfor (var i = 0; i < arregloActivos.length; i++) {";
+    for (var p = 0; p < activosCuerpo.length; p++) {
+        if(p == 0){
+            content+="\n";
+            content+="\t\tinsertMoneyArray(arregloActivos[i].moneda.toLowerCase());\n";
+            //content+="\t\tinsertAgenciesArray(arregloActivos[i].sucursal.toLowerCase());\n";
+        }
+        content+="\t"+activosCuerpo[p]+"\n";
+        if(p == activosCuerpo.length-1) {
+            //content+="\t\tif(i == arregloActivos.length-1) {\n"
+            for (var i = 0; i < subvariablesSolas.length; i++) {
+                if(subvariablesSolas[i] != undefined) {
+                    for (var j = 0; j < subvariablesSolas[i].length; j++) {
+                        if(subvariablesSolas[i][j] != undefined) {
+                            for (var k = 0; k < subvariablesSolas[i][j].length; k++) {
+                                if(subvariablesSolas[i][j][k] != undefined) {
+                                    for (var n = 0; n < variablesDeSubVariablesSolas[i][j][k].length; n++) {
+                                        //variablesDeSubVariablesSolas[i][j][k]
+                                        if(activosAlgebraica[i] != undefined && activosAlgebraica[i][j] != undefined && activosAlgebraica[i][j][k] != undefined && activosAlgebraica[i][j][k].length > 0 && activosAlgebraica[i][j][k][n] != undefined) {
+                                            activosAlgebraica[i][j][k].sort(function(a, b){
+                                                if(a.orden < b.orden) { return -1; }
+                                                if(a.orden > b.orden) { return 1; }
+                                                return 0;
+                                            });
+                                            activosInstanciasVarReglas[i][j][k].sort(function(a, b){
+                                                if(a.orden < b.orden) { return -1; }
+                                                if(a.orden > b.orden) { return 1; }
+                                                return 0;
+                                            });
+                                            //for (var z = 0; z < activosAlgebraica[i][j][k].length-1; z++) {
+                                                content+="\t\t\tvar "+activosAlgebraica[i][j][k][n].variable+" = "+activosAlgebraica[i][j][k][n].codigo+"\n";
+                                                //content+="\t\t\t"+"saveVariableVarRule('"+activosAlgebraica[i][j][k][n].nombreVariable+"', "+activosAlgebraica[i][j][k][n].tipoProyeccion+", "+activosAlgebraica[i][j][k][n].variable+", arregloActivos[i].moneda.toLowerCase(), arregloActivos[i].sucursal.toLowerCase());\n";
+                                                //content+="\t\t\t"+"saveVariableVarRuleAgencias('"+activosAlgebraica[i][j][k][n].nombreVariable+"', "+activosAlgebraica[i][j][k][n].tipoProyeccion+", "+activosAlgebraica[i][j][k][n].variable+", arregloActivos[i].sucursal.toLowerCase());\n";
+                                            //};
+                                            var mayor = activosInstanciasVarReglas[i][j][k][n].orden;
+                                            if(mayor < activosAlgebraica[i][j][k][activosAlgebraica[i][j][k].length-1].orden) {
+                                                content+="\t\t\t"+subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion+" = "+activosAlgebraica[i][j][k][activosAlgebraica[i][j][k].length-1].variable+";\n"
+                                                //content+="\t"+"saveVariableVarRule('"+activosAlgebraica[i][j][k][activosAlgebraica[i][j][k].length-1].nombreVariable+"', "+activosAlgebraica[i][j][k][activosAlgebraica[i][j][k].length-1].tipoProyeccion+", "+activosAlgebraica[i][j][k][activosAlgebraica[i][j][k].length-1].variable+");\n";
+                                            } else {
+                                                content+="\t\t\t"+subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion+" = "+activosInstanciasVarReglas[i][j][k][activosInstanciasVarReglas[i][j][k].length-1].variable+";\n"
+                                                //content+="\t"+"saveVariableVarRule('"+activosInstanciasVarReglas[i][j][k][activosInstanciasVarReglas[i][j][k].length-1].nombreVariable+"', "+activosInstanciasVarReglas[i][j][k][activosInstanciasVarReglas[i][j][k].length-1].tipoProyeccion+", "+activosInstanciasVarReglas[i][j][k][activosInstanciasVarReglas[i][j][k].length-1].variable+");\n";
+                                            }
+                                            content+="\t\t\t"+"saveVariableSubVar('"+subvariablesSolas[i][j][k].variable+"', "+subvariablesSolas[i][j][k].tipoProyeccion+", "+subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion+", arregloActivos[i].moneda.toLowerCase(), arregloActivos[i].sucursal.toLowerCase());\n";
+                                            //content+="\t\t\t"+"saveVariableSubVarAgencias('"+subvariablesSolas[i][j][k].variable+"', "+subvariablesSolas[i][j][k].tipoProyeccion+", "+subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion+", arregloActivos[i].sucursal.toLowerCase());\n";
+                                        } else if(reglasActivos[i] != undefined && reglasActivos[i][j] != undefined && reglasActivos[i][j][k] != undefined && activosAlgebraica[i][j][k].length == 0 && n == 0) {
+                                            reglasActivos[i][j][k].sort(function(a, b) {
+                                                if(a.orden < b.orden) { return -1; }
+                                                if(a.orden > b.orden) { return 1; }
+                                                return 0;
+                                            });
+                                            content+="\t\t\t"+subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion+" = "+activosInstanciasVarReglas[i][j][k][activosInstanciasVarReglas[i][j][k].length-1].variable+";\n";
+                                            content+="\t\t\t"+"saveVariableSubVar('"+subvariablesSolas[i][j][k].variable+"', "+subvariablesSolas[i][j][k].tipoProyeccion+", "+subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion+", arregloActivos[i].moneda.toLowerCase(), arregloActivos[i].sucursal.toLowerCase());\n";
+                                            //content+="\t\t\t"+"saveVariableSubVarAgencias('"+subvariablesSolas[i][j][k].variable+"', "+subvariablesSolas[i][j][k].tipoProyeccion+", "+subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion+", arregloActivos[i].sucursal.toLowerCase());\n";
+                                        }
+                                    };
+                                }
+                            };
+                        }
+                    };
+                }
+            };
+            for (var i = 0; i < variablesDeSubVariablesSolas.length; i++) {
+                if(variablesDeSubVariablesSolas[i] != undefined && variablesDeSubVariablesSolas[i].length > 0) {
+                    for (var j = 0; j < variablesDeSubVariablesSolas[i].length; j++) {
+                        if(variablesDeSubVariablesSolas[i][j] != undefined && variablesDeSubVariablesSolas[i][j].length > 0) {
+                            for (var k = 0; k < variablesDeSubVariablesSolas[i][j].length; k++) {
+                                if(variablesDeSubVariablesSolas[i][j][k] != undefined && variablesDeSubVariablesSolas[i][j][k].length > 0) {
+                                    for (var n = 0; n < variablesDeSubVariablesSolas[i][j][k].length; n++) {
+                                        content+="\t\t\t"+"saveVariableVarRule('"+variablesDeSubVariablesSolas[i][j][k][n].variable+"', "+variablesDeSubVariablesSolas[i][j][k][n].tipoProyeccion+", "+variablesDeSubVariablesSolas[i][j][k][n].variable+variablesDeSubVariablesSolas[i][j][k][n].tipoProyeccion+",arregloActivos[i].moneda.toLowerCase(), arregloActivos[i].sucursal.toLowerCase());\n";
+                                        //content+="\t\t\t"+"saveVariableVarRuleAgencias('"+variablesDeSubVariablesSolas[i][j][k][n].variable+"', "+variablesDeSubVariablesSolas[i][j][k][n].tipoProyeccion+", "+variablesDeSubVariablesSolas[i][j][k][n].variable+variablesDeSubVariablesSolas[i][j][k][n].tipoProyeccion+",arregloActivos[i].sucursal.toLowerCase());\n";
+                                    };
+                                }
+                            };
+                        }
+                    };
+                }
+            };
+            /*for (var i = 0; i < arregloCuentaAlgebraica.length; i++) {
+                content+="\t\t"+arregloCuentaAlgebraica[i].codigo+"\n";
+                if(i == arregloCuentaAlgebraica.length-1)
+                    content+="\n";
+            };*/
+            //content+="\t\t\n}"
+        }
+    };
+    content+="\t}\n";
+    /*for (var i = 0; i < subvariablesSolas.length; i++) {
+        if(subvariablesSolas[i] != undefined) {
+            for (var j = 0; j < subvariablesSolas[i].length; j++) {
+                if(subvariablesSolas[i][j] != undefined) {
+                    for (var k = 0; k < subvariablesSolas[i][j].length; k++) {
+                        if(subvariablesSolas[i][j][k] != undefined) {
+                            for (var n = 0; n < variablesDeSubVariablesSolas[i][j][k].length; n++) {
+                                //variablesDeSubVariablesSolas[i][j][k]
+                                if(activosAlgebraica[i] != undefined && activosAlgebraica[i][j] != undefined && activosAlgebraica[i][j][k] != undefined && activosAlgebraica[i][j][k].length > 0 && activosAlgebraica[i][j][k][n] != undefined) {
+                                    activosAlgebraica[i][j][k].sort(function(a, b){
+                                        if(a.orden < b.orden) { return -1; }
+                                        if(a.orden > b.orden) { return 1; }
+                                        return 0;
+                                    });
+                                    activosInstanciasVarReglas[i][j][k].sort(function(a, b){
+                                        if(a.orden < b.orden) { return -1; }
+                                        if(a.orden > b.orden) { return 1; }
+                                        return 0;
+                                    });
+                                    //for (var z = 0; z < activosAlgebraica[i][j][k].length-1; z++) {
+                                        content+="\tvar "+activosAlgebraica[i][j][k][n].variable+" = "+activosAlgebraica[i][j][k][n].codigo+"\n";
+                                        content+="\t"+"saveVariableVarRule('"+activosAlgebraica[i][j][k][n].nombreVariable+"', "+activosAlgebraica[i][j][k][n].tipoProyeccion+", "+activosAlgebraica[i][j][k][n].variable+");\n";
+                                    //};
+                                    var mayor = activosInstanciasVarReglas[i][j][k][n].orden;
+                                    if(mayor < activosAlgebraica[i][j][k][activosAlgebraica[i][j][k].length-1].orden) {
+                                        content+="\t"+subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion+" = "+activosAlgebraica[i][j][k][activosAlgebraica[i][j][k].length-1].variable+";\n"
+                                        //content+="\t"+"saveVariableVarRule('"+activosAlgebraica[i][j][k][activosAlgebraica[i][j][k].length-1].nombreVariable+"', "+activosAlgebraica[i][j][k][activosAlgebraica[i][j][k].length-1].tipoProyeccion+", "+activosAlgebraica[i][j][k][activosAlgebraica[i][j][k].length-1].variable+");\n";
+                                    } else {
+                                        content+="\t"+subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion+" = "+activosInstanciasVarReglas[i][j][k][activosInstanciasVarReglas[i][j][k].length-1].variable+";\n"
+                                        //content+="\t"+"saveVariableVarRule('"+activosInstanciasVarReglas[i][j][k][activosInstanciasVarReglas[i][j][k].length-1].nombreVariable+"', "+activosInstanciasVarReglas[i][j][k][activosInstanciasVarReglas[i][j][k].length-1].tipoProyeccion+", "+activosInstanciasVarReglas[i][j][k][activosInstanciasVarReglas[i][j][k].length-1].variable+");\n";
+                                    }
+                                    content+="\t"+"saveVariableSubVar('"+subvariablesSolas[i][j][k].variable+"', "+subvariablesSolas[i][j][k].tipoProyeccion+", "+subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion+"); //1\n";
+                                } else if(reglasActivos[i] != undefined && reglasActivos[i][j] != undefined && reglasActivos[i][j][k] != undefined && activosAlgebraica[i][j][k].length == 0 && n == 0) {
+                                    reglasActivos[i][j][k].sort(function(a, b) {
+                                        if(a.orden < b.orden) { return -1; }
+                                        if(a.orden > b.orden) { return 1; }
+                                        return 0;
+                                    });
+                                    content+="\t"+subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion+" = "+activosInstanciasVarReglas[i][j][k][activosInstanciasVarReglas[i][j][k].length-1].variable+";\n";
+                                    content+="\t"+"saveVariableSubVar('"+subvariablesSolas[i][j][k].variable+"', "+subvariablesSolas[i][j][k].tipoProyeccion+", "+subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion+");\n";
+                                }
+                            };
+                        }
+                    };
+                }
+            };
+        }
+    };
+    for (var i = 0; i < variablesDeSubVariablesSolas.length; i++) {
+        if(variablesDeSubVariablesSolas[i] != undefined && variablesDeSubVariablesSolas[i].length > 0) {
+            for (var j = 0; j < variablesDeSubVariablesSolas[i].length; j++) {
+                if(variablesDeSubVariablesSolas[i][j] != undefined && variablesDeSubVariablesSolas[i][j].length > 0) {
+                    for (var k = 0; k < variablesDeSubVariablesSolas[i][j].length; k++) {
+                        if(variablesDeSubVariablesSolas[i][j][k] != undefined && variablesDeSubVariablesSolas[i][j][k].length > 0) {
+                            for (var n = 0; n < variablesDeSubVariablesSolas[i][j][k].length; n++) {
+                                content+="\t"+"saveVariableVarRule('"+variablesDeSubVariablesSolas[i][j][k][n].variable+"', "+variablesDeSubVariablesSolas[i][j][k][n].tipoProyeccion+", "+variablesDeSubVariablesSolas[i][j][k][n].variable+variablesDeSubVariablesSolas[i][j][k][n].tipoProyeccion+",arregloActivos[i].moneda.toLowerCase());\n";
+                            };
+                        }
+                    };
+                }
+            };
+        }
     };*/
-    if(activosAlgebraica.length>0) {
-        for (var i = 0; i < activosAlgebraica.length; i++) {
-            if(activosAlgebraica[i] != undefined) {
-                for (var j = 0; j < activosAlgebraica[i].length; j++) {
-                    if(activosAlgebraica[i][j] != undefined) {
-                        for (var k = 0; k < activosAlgebraica[i][j].length; k++) {
-                            if(activosAlgebraica[i] != undefined && activosAlgebraica[i][j] != undefined && activosAlgebraica[i][j][k] != undefined) {
-                                console.log(activosAlgebraica[i])
-                                console.log(activosAlgebraica[i][j])
-                                console.log(activosAlgebraica[i][j][k])
-                                activosAlgebraica[i][j].sort(function(a, b){
-                                    if(a.orden < b.orden) { return -1; }
-                                    if(a.orden > b.orden) { return 1; }
-                                    return 0;
-                                });
-                                activosInstanciasVarReglas[i].sort(function(a, b){
-                                    if(a.orden < b.orden) { return -1; }
-                                    if(a.orden > b.orden) { return 1; }
-                                    return 0;
-                                });
-                                for (var j = 0; j < activosAlgebraica[i][j][k].length; j++) {
-                                    content+="\tvar "+activosAlgebraica[i][j].variable+" = "+activosAlgebraica[i][j].codigo+"\n";
-                                };
-                                var mayor = activosInstanciasVarReglas[i][j][k][activosInstanciasVarReglas[i][j][k].length-1].orden;
-                                if(mayor < activosAlgebraica[i][j][k][activosInstanciasVarReglas[i][j][k].length-1].orden) {
-                                    content+="\t"+activosInstanciasSubVariables[i][j].variable+" = "+activosAlgebraica[i][j][k][activosAlgebraica[i][j][k].length-1].variable+";\n"
-                                } else {
-                                    content+="\t"+activosInstanciasSubVariables[i][j].variable+" = "+activosInstanciasVarReglas[i][j][k][activosInstanciasVarReglas[i][j][k].length-1].variable+";\n"
-                                }
-                                content+="\t"+"saveVariable('"+activosInstanciasSubVariables[i][j].nombreVariable+"', "+activosInstanciasSubVariables[i][j].tipoProyeccion+", "+activosInstanciasSubVariables[i][j].variable+");\n";
-                            } else if(activosInstanciasVarReglas[i] != undefined && activosInstanciasVarReglas[i][j] != undefined && activosInstanciasVarReglas[i][j][k] != undefined && (activosAlgebraica[i] == undefined || activosAlgebraica[i][j] == undefined || activosAlgebraica[i][j][k] == undefined)) {
-                                activosInstanciasVarReglas[i][j][k].sort(function(a, b){
-                                    if(a.orden < b.orden) { return -1; }
-                                    if(a.orden > b.orden) { return 1; }
-                                    return 0;
-                                });
-                                content+="\t"+activosInstanciasSubVariables[i][j].variable+" = "+activosInstanciasVarReglas[i][j][activosInstanciasVarReglas[i][j].length-1].variable+";\n";
-                                content+="\t"+"saveVariable('"+activosInstanciasSubVariables[i][j].nombreVariable+"', "+activosInstanciasSubVariables[i][j].tipoProyeccion+", "+activosInstanciasSubVariables[i][j].variable+");\n";
-                            }
-                        };
-                    }
-                };
-            }
-        };
-    } else {
-        for (var i = 0; i < activosInstanciasVarReglas.length; i++) {
-            if(activosInstanciasVarReglas[i] != undefined) {
-                for (var j = 0; j < activosInstanciasVarReglas[i].length; j++) {
-                    if(activosInstanciasVarReglas[i][j] != undefined) {
-                        for (var k = 0; k < activosInstanciasVarReglas[i][j].length; k++) {
-                            /*if(activosAlgebraica[i] != undefined && activosAlgebraica[i][j] != undefined && activosAlgebraica[i][j][k] != undefined) {
-                                activosAlgebraica[i][j].sort(function(a, b){
-                                    if(a.orden < b.orden) { return -1; }
-                                    if(a.orden > b.orden) { return 1; }
-                                    return 0;
-                                });
-                                activosInstanciasVarReglas[i][j].sort(function(a, b){
-                                    if(a.orden < b.orden) { return -1; }
-                                    if(a.orden > b.orden) { return 1; }
-                                    return 0;
-                                });
-                                for (var j = 0; j < activosAlgebraica[i][j][k].length; j++) {
-                                    content+="\tvar "+activosAlgebraica[i][j].variable+" = "+activosAlgebraica[i][j].codigo+"\n";
-                                };
-                                var mayor = activosInstanciasVarReglas[i][j][k][activosInstanciasVarReglas[i][j][k].length-1].orden;
-                                if(mayor < activosAlgebraica[i][j][k][activosInstanciasVarReglas[i][j][k].length-1].orden) {
-                                    content+="\t"+activosInstanciasSubVariables[i][j].variable+" = "+activosAlgebraica[i][j][activosAlgebraica[i][j][k].length-1].variable+";\n"
-                                } else {
-                                    content+="\t"+activosInstanciasSubVariables[i][j].variable+" = "+activosInstanciasVarReglas[i][j][activosInstanciasVarReglas[i][j][k].length-1].variable+";\n"
-                                }
-                                content+="\t"+"saveVariable('"+activosInstanciasSubVariables[i][j].nombreVariable+"', "+activosAsignacionesIncisos[i].tipoProyeccion+", "+activosAsignacionesIncisos[i].variable+");\n";
-                            } else */if(activosInstanciasVarReglas[i] != undefined && activosInstanciasVarReglas[i][j] != undefined && activosInstanciasVarReglas[i][j][k] != undefined && (activosAlgebraica[i] == undefined || activosAlgebraica[i][j] == undefined || activosAlgebraica[i][j][k] == undefined)) {
-                                activosInstanciasVarReglas[i][j].sort(function(a, b){
-                                    if(a.orden < b.orden) { return -1; }
-                                    if(a.orden > b.orden) { return 1; }
-                                    return 0;
-                                });
-                                content+="\t"+activosInstanciasSubVariables[i][j].variable+" = "+activosInstanciasVarReglas[i][j][activosInstanciasVarReglas[i][j].length-1].variable+";\n";
-                                content+="\t"+"saveVariable('"+activosInstanciasSubVariables[i][j].nombreVariable+"', "+activosInstanciasSubVariables[i][j].tipoProyeccion+", "+activosInstanciasSubVariables[i][j].variable+");\n";
-                            }
-                        };
-                    }
-                };
-            }
-        };
-    }
-    for (var i = 0; i < activosAsignacionesIncisos.length; i++) {
+    /*for (var i = 0; i < activosAsignacionesIncisos.length; i++) {
         content+="\t"+activosAsignacionesIncisos[i].codigo+";\n";
         content+="\t"+"saveVariable('"+activosAsignacionesIncisos[i].nombreVariable+"', "+activosAsignacionesIncisos[i].tipoProyeccion+", "+activosAsignacionesIncisos[i].variable+");\n";
+    };*/
+    /*for (var i = 0; i < arregloCuentaAlgebraica.length; i++) {
+        content+=arregloCuentaAlgebraica[i].codigo+"\n";
+    };*/
+    return content;
+}
+
+function createDepositsRCL () {
+    var content = '';
+    for (var i = 0; i < depositosInstanciasIncisos.length; i++) {
+        content+="\n"+depositosInstanciasIncisos[i].codigo;
     };
+    for (var i = 0; i < depositosInstanciasSubVariables.length; i++) {
+        content+="\n"+depositosInstanciasSubVariables[i].codigo;
+    };
+    content+="\n\tfor (var i = 0; i < arregloDepositos.length; i++) {";
+    for (var i = 0; i < depositosCuerpo.length; i++) {
+        content+=depositosCuerpo[i]+"\n";
+        if(i == depositosCuerpo.length-1) {
+            for (var j = 0; j < depositosInstanciasSubVariables.length; j++) {
+                content+="\n\t"+"saveVariableSubVar('"+depositosInstanciasSubVariables[j].nombreVariable+"',"+depositosInstanciasSubVariables[j].tipoProyeccion+","+depositosInstanciasSubVariables[j].variable+",arregloDepositos[i].moneda.toLowerCase(), arregloDepositos[i].sucursal.toLowerCase());";
+                //content+="\n\t"+"saveVariableSubVarAgencias('"+depositosInstanciasSubVariables[j].nombreVariable+"',"+depositosInstanciasSubVariables[j].tipoProyeccion+","+depositosInstanciasSubVariables[j].variable+",arregloDepositos[i].sucursal.toLowerCase());";
+            };
+        }
+    };
+    content+="\t}\n";
+    /*for (var i = 0; i < depositosInstanciasSubVariables.length; i++) {
+        content+="\n\t"+"saveVariableSubVar('"+depositosInstanciasSubVariables[i].nombreVariable+"',"+depositosInstanciasSubVariables[i].tipoProyeccion+","+depositosInstanciasSubVariables[i].variable+",arregloDepositos[i].moneda.toLowerCase());";
+    };
+    for (var i = 0; i < depositosAsignacionesIncisos.length; i++) {
+        if(i == 0)
+            content+="\n";
+        content+=depositosAsignacionesIncisos[i].codigo+";\n";
+        content+="\t"+"saveVariable('"+depositosAsignacionesIncisos[i].nombreVariable+"', "+depositosAsignacionesIncisos[i].tipoProyeccion+", "+depositosAsignacionesIncisos[i].variable+", arregloDepositos[i].moneda.toLowerCase());\n";
+    };*/
+    return content;
+}
+
+function createCreditRCL (argument) {
+    var content = '';
+    for (var i = 0; i < prestamosInstanciasIncisos.length; i++) {
+        content+="\n"+prestamosInstanciasIncisos[i].codigo;
+    };
+    for (var i = 0; i < prestamosInstanciasSubVariables.length; i++) {
+        content+="\n"+prestamosInstanciasSubVariables[i].codigo;
+    };
+    content+="\n\tfor (var i = 0; i < arregloPrestamos.length; i++) {";
+    for (var i = 0; i < prestamosCuerpo.length; i++) {
+        content+=prestamosCuerpo[i]+"\n";
+        if(i == prestamosCuerpo.length-1) {
+            //aplicarFactores == factores de agrupaciones de credito
+            for (var j = 0; j < aplicarFactores.length; j++) {
+                if(j == 0) {
+                    content += "\n\t\tif( i == arregloPrestamos.length-1) {\n";
+                }
+                content += "\t\t\t"+aplicarFactores[j];
+                if(j == aplicarFactores.length-1) {
+                    content += "\n\t\t}\n";
+                }
+            };
+            for (var j = 0; j < prestamosInstanciasSubVariables.length; j++) {
+                content+="\n\t"+"saveVariableSubVar('"+prestamosInstanciasSubVariables[j].nombreVariable+"',"+prestamosInstanciasSubVariables[j].tipoProyeccion+","+prestamosInstanciasSubVariables[j].variable+",arregloPrestamos[i].moneda.toLowerCase(), arregloPrestamos[i].sucursal.toLowerCase());";
+                //content+="\n\t"+"saveVariableSubVarAgencias('"+prestamosInstanciasSubVariables[j].nombreVariable+"',"+prestamosInstanciasSubVariables[j].tipoProyeccion+","+prestamosInstanciasSubVariables[j].variable+",arregloPrestamos[i].sucursal.toLowerCase());";
+                if(j == 0)
+                    content+="\n";
+            };
+        }
+    };
+    content+="\t}\n";
+    /*for (var i = 0; i < prestamosInstanciasSubVariables.length; i++) {
+        content+="\n\t"+"saveVariableSubVar('"+prestamosInstanciasSubVariables[i].nombreVariable+"',"+prestamosInstanciasSubVariables[i].tipoProyeccion+","+prestamosInstanciasSubVariables[i].variable+",arregloPrestamos[i].moneda.toLowerCase());";
+        if(i == 0)
+            content+="\n";
+    };
+    for (var i = 0; i < prestamosAsignacionesIncisos.length; i++) {
+        if(i == 0)
+            content+="\n";
+        content+=prestamosAsignacionesIncisos[i].codigo+";\n";
+        content+="\t"+"saveVariable('"+prestamosAsignacionesIncisos[i].nombreVariable+"', "+prestamosAsignacionesIncisos[i].tipoProyeccion+", "+prestamosAsignacionesIncisos[i].variable+", arregloPrestamos[i].moneda.toLowerCase());\n";
+    };*/
     return content;
 }
 
 function runFunctions () {
+    /*console.log(window['ActivosRCL'])
+    console.log(window['DepositosRCL'])
+    console.log(window['PrestamosRCL'])
     window['ActivosRCL']();
-    calculateRCL();
-    console.log('totalesVariables')
-    console.log(totalesVariables)
+    window['DepositosRCL']();
+    window['PrestamosRCL']();*/
+    window['calculoRCL']();
+    //calculateRCL();
 }
 
-function saveVariable (nombreVariable, valorVariable) {
-    /*for (var i = 0; i < totalesVariables.length; i++) {
-        for (var j = 0; j < totalesVariables[i].length; j++) {
-            if (totalesVariables[i][j].variable.localeCompare(nombreVariable) == 0) {
-                totalesVariables[i][j].total = valorVariable;
+function saveVariable (nombreVariable, tipoProyecVariable, valorVariable, moneda, agencia) {
+    LoopVar:
+    for (var i = 0; i < variablesSolas.length; i++) {
+        if(variablesSolas[i] != undefined) {
+            for (var j = 0; j < variablesSolas[i].length; j++) {
+                if (variablesSolas[i][j].variable.localeCompare(nombreVariable) == 0 && variablesSolas[i][j].tipoProyeccion == tipoProyecVariable) {
+                    //variablesSolas[i][j].total = valorVariable;
+                    window["variablesSolas"+moneda][i][j].total = valorVariable;
+                    window["variablesSolas"+moneda][i][j].sucursal = agencia;
+                    break LoopVar;
+                }
+            };
+        }
+    };
+}
+
+function saveVariableSubVar (nombreVariable, tipoProyecVariable, valorVariable, moneda, agencia) {
+    LoopSubVar:
+    for (var i = 0; i < subvariablesSolas.length; i++) {
+        if(subvariablesSolas[i] != undefined) {
+            for (var j = 0; j < subvariablesSolas[i].length; j++) {
+                if(subvariablesSolas[i][j] != undefined) {
+                    for (var k = 0; k < subvariablesSolas[i][j].length; k++) {
+                        if (subvariablesSolas[i][j][k].variable.toLowerCase().localeCompare(nombreVariable.toLowerCase()) == 0 && subvariablesSolas[i][j][k].tipoProyeccion == tipoProyecVariable) {
+                            /*subvariablesSolas[i][j][k].total = valorVariable;
+                            subvariablesSolas[i][j][k].calculada = true;*/
+                            window["subvariablesSolas"+moneda][i][j][k].total = valorVariable;
+                            window["subvariablesSolas"+moneda][i][j][k].calculada = true;
+                            window["subvariablesSolas"+moneda][i][j][k].sucursal = agencia;
+                            break LoopSubVar;
+                        }
+                    };
+                }
+            };
+        }
+    };
+}
+
+function saveVariableVarRule (nombreVariable, tipoProyecVariable, valorVariable, moneda, agencia) {
+    LoopVarSubVar:
+    for (var i = 0; i < variablesDeSubVariablesSolas.length; i++) {
+        if(variablesDeSubVariablesSolas[i] != undefined) {
+            for (var j = 0; j < variablesDeSubVariablesSolas[i].length; j++) {
+                if(variablesDeSubVariablesSolas[i][j] != undefined) {
+                    for (var k = 0; k < variablesDeSubVariablesSolas[i][j].length; k++) {
+                        if(variablesDeSubVariablesSolas[i][j][k] != undefined) {
+                            for (var n = 0; n < variablesDeSubVariablesSolas[i][j][k].length; n++) {
+                                if (variablesDeSubVariablesSolas[i][j][k][n].variable.toLowerCase().localeCompare(nombreVariable.toLowerCase()) == 0 && variablesDeSubVariablesSolas[i][j][k][n].tipoProyeccion == tipoProyecVariable) {
+                                    //variablesDeSubVariablesSolas[i][j][k][n].total = valorVariable;
+                                    window["variablesDeSubVariablesSolas"+moneda][i][j][k][n].total = valorVariable;
+                                    window["variablesDeSubVariablesSolas"+moneda][i][j][k][n].sucursal = agencia;
+                                    break LoopVarSubVar;
+                                }
+                            };
+                        }
+                    };
+                }
+            };
+        }
+    };
+}
+
+function insertarCuenta (nombreVariable, valorVariable, tipoProyeccion, kFor, nFor, moneda, agencia) {
+    for (var i = 0; i < arregloCuentas.length; i++) {
+        if(arregloCuentas[i] != undefined) {
+            for (var j = 0; j < arregloCuentas[i].length; j++) {
+                if(arregloCuentas[i][j] != undefined) {
+                    for (var k = 0; k < arregloCuentas[i][j].length; k++) {
+                        if(arregloCuentas[i][j][k] != undefined) {
+                            for (var n = 0; n < arregloCuentas[i][j][k].length; n++) {
+                                if(arregloCuentas[i][j][k][n] != undefined) {
+                                    for (var z = 0; z < arregloCuentas[i][j][k][n].length; z++) {
+                                        if(arregloCuentas[i][j][k][n][z].variable.localeCompare(nombreVariable) == 0 && arregloCuentas[i][j][k][n][z].tipoProyeccion == tipoProyeccion) {
+                                            /*arregloCuentas[i][j][k][n][z].total += valorVariable;
+                                            if(z == zFor)
+                                                arregloCuentas[i][j][k][n][z].precioUnidad += valorVariable;*/
+                                            window["arregloCuentas"+moneda][i][j][k][n][z].total += valorVariable;
+                                            window["arregloCuentas"+moneda][i][j][k][n][z].sucursal = agencia;
+                                            if(k == kFor && n == nFor)
+                                                window["arregloCuentas"+moneda][i][j][k][n][z].precioUnidad += valorVariable;
+                                        }
+                                    };
+                                }
+                            };
+                        }
+                    };
+                }
+            };
+        }
+    };
+}
+
+function saveCuentaAlgebraica (valorVariable, nombreVariable, moneda, agencia) {
+    /*var totalVariable = 0;
+    for (var i = 0; i < variablesDeSubVariablesSolas.length; i++) {
+        if(variablesDeSubVariablesSolas[i] != undefined) {
+            for (var j = 0; j < variablesDeSubVariablesSolas[i].length; j++) {
+                if(variablesDeSubVariablesSolas[i][j] != undefined) {
+                    for (var k = 0; k < variablesDeSubVariablesSolas[i][j].length; k++) {
+                        if(variablesDeSubVariablesSolas[i][j][k] != undefined) {
+                            for (var n = 0; n < variablesDeSubVariablesSolas[i][j][k].length; n++) {
+                                if ((variablesDeSubVariablesSolas[i][j][k][n].variable+variablesDeSubVariablesSolas[i][j][k][n].tipoProyeccion).toLowerCase().localeCompare(nombreVariable.toLowerCase()) == 0) {
+                                    totalVariable = variablesDeSubVariablesSolas[i][j][k][n].total;
+                                }
+                            };
+                        }
+                    };
+                }
+            };
+        }
+    };*/
+    for (var i = 0; i < window["arregloCuentas"+moneda].length; i++) {
+        if(window["arregloCuentas"+moneda][i] != undefined) {
+            for (var j = 0; j < window["arregloCuentas"+moneda][i].length; j++) {
+                if(window["arregloCuentas"+moneda][i][j] != undefined) {
+                    for (var k = 0; k < window["arregloCuentas"+moneda][i][j].length; k++) {
+                        if(window["arregloCuentas"+moneda][i][j][k] != undefined) {
+                            for (var n = 0; n < window["arregloCuentas"+moneda][i][j][k].length; n++) {
+                                if(window["arregloCuentas"+moneda][i][j][k][n] != undefined) {
+                                    for (var z = 0; z < window["arregloCuentas"+moneda][i][j][k][n].length; z++) {
+                                        if(window["arregloCuentas"+moneda][i][j][k][n][z].varDeCuenta != undefined && window["arregloCuentas"+moneda][i][j][k][n][z].varDeCuenta.localeCompare(nombreVariable) == 0) {
+                                            window["arregloCuentas"+moneda][i][j][k][n][z].total += valorVariable;
+                                            window["arregloCuentas"+moneda][i][j][k][n][z].volumenFormula += valorVariable;
+                                            window["arregloCuentas"+moneda][i][j][k][n][z].influenciaFormula += valorVariable;
+                                            window["arregloCuentas"+moneda][i][j][k][n][z].sucursal = agencia;
+                                        }
+                                    };
+                                }
+                            };
+                        }
+                    };
+                }
+            };
+        }
+    };
+}
+
+function getPriceALAC (cuenta) {
+    var saldo = 0;
+    for (var i = 0; i < arregloCuentas.length; i++) {
+        if(arregloCuentas[i] != undefined) {
+            for (var j = 0; j < arregloCuentas[i].length; j++) {
+                if(arregloCuentas[i][j] != undefined) {
+                    for (var k = 0; k < arregloCuentas[i][j].length; k++) {
+                        if(arregloCuentas[i][j][k] != undefined) {
+                            for (var n = 0; n < arregloCuentas[i][j][k].length; n++) {
+                                if(arregloCuentas[i][j][k][n] != undefined) {
+                                    for (var z = 0; z < arregloCuentas[i][j][k][n].length; z++) {
+                                        if(arregloCuentas[i][j][k][n][z].variable.localeCompare(cuenta) == 0) {
+                                            saldo = arregloCuentas[i].total;
+                                        }
+                                    };
+                                }
+                            };
+                        }
+                    };
+                }
+            };
+        }
+    };
+    return saldo;
+}
+
+function insertMoneyArray (moneda) {
+    var agregarNoExiste = true;
+    for (var i = 0; i < arregloMonedas.length; i++) {
+        if(arregloMonedas[i].localeCompare(moneda) == 0) {
+            agregarNoExiste = false;
+            break;
+        }
+    };
+    if(agregarNoExiste) {
+        /*window["variablesSolas"+moneda] = variablesSolas.slice();
+        window["subvariablesSolas"+moneda] = subvariablesSolas.slice();
+        window["variablesDeSubVariablesSolas"+moneda] = variablesDeSubVariablesSolas.slice();
+        window["arregloCuentas"+moneda] = arregloCuentas.slice();*/
+        window["variablesSolas"+moneda] = JSON.parse(JSON.stringify(variablesSolas));
+        window["subvariablesSolas"+moneda] = JSON.parse(JSON.stringify(subvariablesSolas));
+        window["variablesDeSubVariablesSolas"+moneda] = JSON.parse(JSON.stringify(variablesDeSubVariablesSolas));
+        window["arregloCuentas"+moneda] = JSON.parse(JSON.stringify(arregloCuentas));
+        for (var i = 0; i < window["variablesSolas"+moneda].length; i++) {
+            if(window["variablesSolas"+moneda][i] != undefined) {
+                for (var j = 0; j < window["variablesSolas"+moneda][i].length; j++) {
+                    window["variablesSolas"+moneda][i][j].dia = fechaSeleccionada;
+                    if(window["subvariablesSolas"+moneda][i][j] != undefined) {
+                        for (var k = 0; k < window["subvariablesSolas"+moneda][i][j].length; k++) {
+                            window["subvariablesSolas"+moneda][i][j][k].dia = fechaSeleccionada;
+                            if(window["variablesDeSubVariablesSolas"+moneda][i][j][k] != undefined) {
+                                for (var n = 0; n < window["variablesDeSubVariablesSolas"+moneda][i][j][k].length; n++) {
+                                    window["variablesDeSubVariablesSolas"+moneda][i][j][k][n].dia = fechaSeleccionada;
+                                    if(window["arregloCuentas"+moneda][i][j][k][n] != undefined) {
+                                        for (var z = 0; z < window["arregloCuentas"+moneda][i][j][k][n].length; z++) {
+                                            window["arregloCuentas"+moneda][i][j][k][n][z].dia = fechaSeleccionada;
+                                        };
+                                    }
+                                };
+                            }
+                        };
+                    }
+                };
             }
         };
-    };*/
+        arregloMonedas.push(moneda);
+    }
+}
+
+/*function saveVariableSubVarAgencias (nombreVariable, tipoProyecVariable, valorVariable, agencia) {
+    for (var i = 0; i < subvariablesSolas.length; i++) {
+        if(subvariablesSolas[i] != undefined) {
+            for (var j = 0; j < subvariablesSolas[i].length; j++) {
+                if(subvariablesSolas[i][j] != undefined) {
+                    for (var k = 0; k < subvariablesSolas[i][j].length; k++) {
+                        if (subvariablesSolas[i][j][k].variable.toLowerCase().localeCompare(nombreVariable.toLowerCase()) == 0 && subvariablesSolas[i][j][k].tipoProyeccion == tipoProyecVariable) {
+                            //subvariablesSolas[i][j][k].total = valorVariable;
+                            //subvariablesSolas[i][j][k].calculada = true;
+                            window["subvariablesSolas"+agencia][i][j][k].total += valorVariable;
+                            window["subvariablesSolas"+agencia][i][j][k].calculada = true;
+                            window["subvariablesSolas"+agencia][i][j][k].agencia = agencia;
+                        }
+                    };
+                }
+            };
+        }
+    };
+}
+
+function saveVariableVarRuleAgencias (nombreVariable, tipoProyecVariable, valorVariable, agencia) {
+    for (var i = 0; i < variablesDeSubVariablesSolas.length; i++) {
+        if(variablesDeSubVariablesSolas[i] != undefined) {
+            for (var j = 0; j < variablesDeSubVariablesSolas[i].length; j++) {
+                if(variablesDeSubVariablesSolas[i][j] != undefined) {
+                    for (var k = 0; k < variablesDeSubVariablesSolas[i][j].length; k++) {
+                        if(variablesDeSubVariablesSolas[i][j][k] != undefined) {
+                            for (var n = 0; n < variablesDeSubVariablesSolas[i][j][k].length; n++) {
+                                if (variablesDeSubVariablesSolas[i][j][k][n].variable.toLowerCase().localeCompare(nombreVariable.toLowerCase()) == 0 && variablesDeSubVariablesSolas[i][j][k][n].tipoProyeccion == tipoProyecVariable) {
+                                    //variablesDeSubVariablesSolas[i][j][k][n].total = valorVariable;
+                                    window["variablesDeSubVariablesSolas"+agencia][i][j][k][n].total += valorVariable;
+                                    window["variablesDeSubVariablesSolas"+agencia][i][j][k][n].agencia = agencia;
+                                }
+                            };
+                        }
+                    };
+                }
+            };
+        }
+    };
+}
+
+function insertarCuentaAgencias (nombreVariable, valorVariable, tipoProyeccion, zFor, agencia) {
+    for (var i = 0; i < arregloCuentas.length; i++) {
+        if(arregloCuentas[i] != undefined) {
+            for (var j = 0; j < arregloCuentas[i].length; j++) {
+                if(arregloCuentas[i][j] != undefined) {
+                    for (var k = 0; k < arregloCuentas[i][j].length; k++) {
+                        if(arregloCuentas[i][j][k] != undefined) {
+                            for (var n = 0; n < arregloCuentas[i][j][k].length; n++) {
+                                if(arregloCuentas[i][j][k][n] != undefined) {
+                                    for (var z = 0; z < arregloCuentas[i][j][k][n].length; z++) {
+                                        if(arregloCuentas[i][j][k][n][z].variable.localeCompare(nombreVariable) == 0 && arregloCuentas[i][j][k][n][z].tipoProyeccion == tipoProyeccion) {
+                                            //arregloCuentas[i][j][k][n][z].total += valorVariable;
+                                            //if(z == zFor)
+                                            //    arregloCuentas[i][j][k][n][z].precioUnidad += valorVariable;
+                                            window["arregloCuentas"+agencia][i][j][k][n][z].total += valorVariable;
+                                            window["arregloCuentas"+agencia][i][j][k][n][z].agencia = agencia;
+                                            if(z == zFor)
+                                                window["arregloCuentas"+agencia][i][j][k][n][z].precioUnidad += valorVariable;
+                                        }
+                                    };
+                                }
+                            };
+                        }
+                    };
+                }
+            };
+        }
+    };
+}
+
+function saveCuentaAlgebraicaAgencias (valorVariable, nombreVariable, agencia) {
+    for (var i = 0; i < window["arregloCuentas"+agencia].length; i++) {
+        if(window["arregloCuentas"+agencia][i] != undefined) {
+            for (var j = 0; j < window["arregloCuentas"+agencia][i].length; j++) {
+                if(window["arregloCuentas"+agencia][i][j] != undefined) {
+                    for (var k = 0; k < window["arregloCuentas"+agencia][i][j].length; k++) {
+                        if(window["arregloCuentas"+agencia][i][j][k] != undefined) {
+                            for (var n = 0; n < window["arregloCuentas"+agencia][i][j][k].length; n++) {
+                                if(window["arregloCuentas"+agencia][i][j][k][n] != undefined) {
+                                    for (var z = 0; z < window["arregloCuentas"+agencia][i][j][k][n].length; z++) {
+                                        if(window["arregloCuentas"+agencia][i][j][k][n][z].varDeCuenta != undefined && window["arregloCuentas"+agencia][i][j][k][n][z].varDeCuenta.localeCompare(nombreVariable) == 0) {
+                                            window["arregloCuentas"+agencia][i][j][k][n][z].total += valorVariable;
+                                            window["arregloCuentas"+agencia][i][j][k][n][z].agencia = agencia;
+                                            window["arregloCuentas"+agencia][i][j][k][n][z].volumenFormula += valorVariable;
+                                            window["arregloCuentas"+agencia][i][j][k][n][z].influenciaFormula += valorVariable;
+                                        }
+                                    };
+                                }
+                            };
+                        }
+                    };
+                }
+            };
+        }
+    };
+}
+
+function insertAgenciesArray (agencia) {
+    var agregarNoExiste = true;
+    for (var i = 0; i < arregloAgencias.length; i++) {
+        if(arregloAgencias[i].localeCompare(agencia) == 0) {
+            agregarNoExiste = false;
+            break;
+        }
+    };
+    if(agregarNoExiste) {
+        window["variablesSolas"+agencia] = JSON.parse(JSON.stringify(variablesSolas));
+        window["subvariablesSolas"+agencia] = JSON.parse(JSON.stringify(subvariablesSolas));
+        window["variablesDeSubVariablesSolas"+agencia] = JSON.parse(JSON.stringify(variablesDeSubVariablesSolas));
+        window["arregloCuentas"+agencia] = JSON.parse(JSON.stringify(arregloCuentas));
+        arregloAgencias.push(agencia);
+    }
+}*/
+
+function insertClient (idCliente, total, tipoProyeccion, moneda) {
+    for (var i = 0; i < totalesClientes.length; i++) {
+        if(totalesClientes[i].nombreVariable.localeCompare(idCliente) == 0) {
+            totalesClientes[i].total+=total;
+            totalesClientes[i].volumenFormula=total;
+            totalesClientes[i].influenciaFormula=total;
+            break;
+        } else if(totalesClientes[i].nombreVariable.localeCompare(idCliente) > 0) {
+            totalesClientes.splice(i, 0, {nombreVariable: idCliente, total: total, formula: '', dia: fechaSeleccionada, tipoProyeccion: tipoProyeccion, volumenFormula: total, influenciaFormula: total, numerador: 0, denominador: 0, moneda: moneda, sucursal: '', tipo: 'cliente', tablaAplicar: 99, varPadre: '', esNumerador: false, esRCL: false, totalRCL: 0});
+            break;
+        }
+    };
 }
 
 function getFactor (idVariable) {
@@ -1109,103 +2069,1102 @@ function getFactor (idVariable) {
 }
 
 function calculateRCL (argument) {
-    //if(formulaGlobal.split(/[=|+|-|*|\/]+/)[0])
-    var equacion1 = formulaGlobal.split("=")[0].split(/[+|-|*|\/]+/), equacion2 = formulaGlobal.split("=")[1].split(/[+|-|*|\/]+/);
-    var equacionValoresReemplazadosSubVariables;
+    var equacion1 = formulaGlobal.split("=")[0].split(/[+|-|*|\/]+/), equacion2 = formulaGlobal.split("=")[1].split(/[+|-|*|\/]+/);;
     var todasTienenFormula = true;
-    var totalesPorVariablesFormula = [];
+    var soloUnoNoTieneFormula = false;
+    var indexVarRCL;
+    var todasTienenVariable = true;     //Para la equacion de variables de Sub-Variables
+    //Verificando si solo var RCL no tiene formula
     Loop1:
     for (var i = 0; i < equacion1.length; i++) {
-        for (var j = 0; j < arregloVariables.length; j++) {
-            if(equacion1[i].toLowerCase().localeCompare(arregloVariables[j].variables.toLowerCase()) == 0 && arregloVariables[j].formula.length == 0) {
-                todasTienenFormula =  false;
-                equacionValoresReemplazadosSubVariables = formulaGlobal.split("=")[1];
-                totalesPorVariablesFormula.push({variable: arregloVariables[j].variables, formula: "", total: 0, tipoProyeccion: 0});
-                break Loop1;
+        for (var k = 0; k < variablesDeEquacion.length; k++) {
+            if(variablesDeEquacion[k].toLowerCase().localeCompare(equacion1[i].toLowerCase()) == 0) {
+                for (var j = 0; j < arregloVariables.length; j++) {
+                    if(equacion1[i].toLowerCase().localeCompare(arregloVariables[j].variables.toLowerCase()) == 0 && arregloVariables[j].formula.length == 0) {
+                        if(!soloUnoNoTieneFormula && todasTienenFormula)
+                            soloUnoNoTieneFormula = true;
+                        else if(soloUnoNoTieneFormula && !todasTienenFormula)
+                            soloUnoNoTieneFormula = false;
+                        todasTienenFormula =  false;
+                        indexVarRCL = k;
+                        //Tomado equacionVariables
+                        equacionVariables = formulaGlobal.split("=")[1];
+                        //totalesPorVariablesFormula.push({variable: arregloVariables[j].variables, formula: "", total: 0, tipoProyeccion: 0});
+                        break Loop1;
+                    }
+                };
             }
         };
     };
     if(todasTienenFormula) {
         Loop2:
         for (var i = 0; i < equacion2.length; i++) {
-            for (var j = 0; j < arregloVariables.length; j++) {
-                if(equacion2[i].toLowerCase().localeCompare(arregloVariables[j].variables.toLowerCase()) == 0 && arregloVariables[j].formula.length == 0) {
-                    todasTienenFormula =  false;
-                    equacionValoresReemplazadosSubVariables = formulaGlobal.split("=")[0];
-                    totalesPorVariablesFormula.push({variable: arregloVariables[j].variables, formula: "", total: 0, tipoProyeccion: 0});
-                    break Loop2;
+            for (var k = 0; k < variablesDeEquacion.length; k++) {
+                if(variablesDeEquacion[k].toLowerCase().localeCompare(equacion2[i].toLowerCase()) == 0) {
+                    for (var j = 0; j < arregloVariables.length; j++) {
+                        if(equacion2[i].toLowerCase().localeCompare(arregloVariables[j].variables.toLowerCase()) == 0 && arregloVariables[j].formula.length == 0) {
+                            if(!soloUnoNoTieneFormula && todasTienenFormula)
+                                soloUnoNoTieneFormula = true;
+                            else if(soloUnoNoTieneFormula && !todasTienenFormula)
+                                soloUnoNoTieneFormula = false;
+                            todasTienenFormula =  false;
+                            indexVarRCL = k;
+                            //Tomado equacionVariables
+                            equacionVariables = formulaGlobal.split("=")[0];
+                            //totalesPorVariablesFormula.push({variable: arregloVariables[j].variables, formula: "", total: 0, tipoProyeccion: 0});
+                            break Loop2;
+                        }
+                    };
                 }
             };
         };
     }
-    if(!todasTienenFormula) {
-        for (var i = 0; i < equacionValoresReemplazadosSubVariables.length; i++) {
-            if(equacionValoresReemplazadosSubVariables.charAt(i) != "(" && equacionValoresReemplazadosSubVariables.charAt(i) != ")" && equacionValoresReemplazadosSubVariables.charAt(i) != "<" && equacionValoresReemplazadosSubVariables.charAt(i) != ">" && 
-                equacionValoresReemplazadosSubVariables.charAt(i) != "!" && equacionValoresReemplazadosSubVariables.charAt(i) != "=" && equacionValoresReemplazadosSubVariables.charAt(i) != "/" && equacionValoresReemplazadosSubVariables.charAt(i) != "*" && 
-                equacionValoresReemplazadosSubVariables.charAt(i) != "√" && equacionValoresReemplazadosSubVariables.charAt(i) != "+" && equacionValoresReemplazadosSubVariables.charAt(i) != "-" && isNaN(equacionValoresReemplazadosSubVariables.charAt(i))) {
-                var pal = getVariable(equacionValoresReemplazadosSubVariables, i);
+    if(!todasTienenFormula && soloUnoNoTieneFormula) {
+        //Preparando equacionSubVariables
+        equacionSubVariablesConPadres = equacionVariables;
+        for (var i = 0; i < equacionSubVariablesConPadres.length; i++) {
+            if(equacionSubVariablesConPadres.charAt(i) != "(" && equacionSubVariablesConPadres.charAt(i) != ")" && equacionSubVariablesConPadres.charAt(i) != "<" && equacionSubVariablesConPadres.charAt(i) != ">" && 
+                equacionSubVariablesConPadres.charAt(i) != "!" && equacionSubVariablesConPadres.charAt(i) != "=" && equacionSubVariablesConPadres.charAt(i) != "/" && equacionSubVariablesConPadres.charAt(i) != "*" && 
+                equacionSubVariablesConPadres.charAt(i) != "√" && equacionSubVariablesConPadres.charAt(i) != "+" && equacionSubVariablesConPadres.charAt(i) != "-" && isNaN(equacionSubVariablesConPadres.charAt(i))) {
+                var pal = getVariable(equacionSubVariablesConPadres, i);
                 var formulaVariable, tieneFormula = false;
                 for (var j = 0; j < arregloVariables.length; j++) {
                     if(arregloVariables[j].variables.toLowerCase().localeCompare(pal.toLowerCase()) == 0) {
                         formulaVariable = arregloVariables[j].formula;
                         if(arregloVariables[j].formula.length > 0) {
                             tieneFormula = true;
-                            totalesPorVariablesFormula.push({variable: arregloVariables[j].variables, formula: arregloVariables[j].formula.split(/[+|-|*|\/]+/), total: 0});
+                            //totalesPorVariablesFormula.push({variable: arregloVariables[j].variables, formula: arregloVariables[j].formula.split(/[+|-|*|\/]+/), total: 0});
                         }
                         break;
                     }
                 };
                 if(tieneFormula) {
-                    var primeraParte = equacionValoresReemplazadosSubVariables.substring(0, i);
-                    var ultimaParte = equacionValoresReemplazadosSubVariables.substring(i+pal.length);
-                    equacionValoresReemplazadosSubVariables = primeraParte + formulaVariable + ultimaParte;
-                    //equacionValoresReemplazadosSubVariables.replace(pal, formulaVariable);
+                    var primeraParte = equacionSubVariablesConPadres.substring(0, i);
+                    var ultimaParte = equacionSubVariablesConPadres.substring(i+pal.length);
+                    if(equacionSubVariablesConPadres.charAt(i-1).localeCompare("-") == 0 || equacionSubVariablesConPadres.charAt(i-1).localeCompare("+") == 0 ||
+                        equacionSubVariablesConPadres.charAt(i-1).localeCompare("/") == 0 || equacionSubVariablesConPadres.charAt(i-1).localeCompare("*") == 0) {
+
+                        if(equacionSubVariablesConPadres.charAt(i-1).localeCompare("-") == 0) {
+                            if(formulaVariable.includes("+"))
+                                formulaVariable = customReplace("+", "-", formulaVariable);
+                            if(formulaVariable.includes("/"))
+                                formulaVariable = customReplace("/", "-", formulaVariable);
+                            if(formulaVariable.includes("*"))
+                                formulaVariable = customReplace("*", "-", formulaVariable);
+                        }
+                        if(equacionSubVariablesConPadres.charAt(i-1).localeCompare("+") == 0) {
+                            if(formulaVariable.includes("-"))
+                                formulaVariable = customReplace("-", "+", formulaVariable);
+                            if(formulaVariable.includes("/"))
+                                formulaVariable = customReplace("/", "+", formulaVariable);
+                            if(formulaVariable.includes("*"))
+                                formulaVariable = customReplace("*", "+", formulaVariable);
+                        }
+                        if(equacionSubVariablesConPadres.charAt(i-1).localeCompare("/") == 0) {
+                            if(formulaVariable.includes("-"))
+                                formulaVariable = customReplace("-", "/", formulaVariable);
+                            if(formulaVariable.includes("+"))
+                                formulaVariable = customReplace("+", "/", formulaVariable);
+                            if(formulaVariable.includes("*"))
+                                formulaVariable = customReplace("*", "/", formulaVariable);
+                        }
+                        if(equacionSubVariablesConPadres.charAt(i-1).localeCompare("*") == 0) {
+                            if(formulaVariable.includes("-"))
+                                formulaVariable = customReplace("-", "*", formulaVariable);
+                            if(formulaVariable.includes("/"))
+                                formulaVariable = customReplace("/", "*", formulaVariable);
+                            if(formulaVariable.includes("+"))
+                                formulaVariable = customReplace("+", "*", formulaVariable);
+                        }
+                    }
+                    equacionSubVariablesConPadres = primeraParte + formulaVariable + ultimaParte;
+                    i+=formulaVariable.toString().length;
+                } else
+                    i+=pal.length;
+            }
+        };
+        equacionSubVariables = equacionSubVariablesConPadres;
+        //Verificando si formula es variable padre
+        for (var i = 0; i < equacionSubVariables.length; i++) {
+            if(equacionSubVariables.charAt(i) != "(" && equacionSubVariables.charAt(i) != ")" && equacionSubVariables.charAt(i) != "<" && equacionSubVariables.charAt(i) != ">" && 
+                equacionSubVariables.charAt(i) != "!" && equacionSubVariables.charAt(i) != "=" && equacionSubVariables.charAt(i) != "/" && equacionSubVariables.charAt(i) != "*" && 
+                equacionSubVariables.charAt(i) != "√" && equacionSubVariables.charAt(i) != "+" && equacionSubVariables.charAt(i) != "-" && isNaN(equacionSubVariables.charAt(i))) {
+                var pal = getVariable(equacionSubVariables, i);
+                var formulaVariable, tieneNuevaVariable = false;
+                for (var j = 0; j < arregloVariables.length; j++) {
+                    if(arregloVariables[j].variables.toLowerCase().localeCompare(pal.toLowerCase()) == 0) {
+                        formulaVariable = arregloVariables[j].formula;
+                        if(arregloVariables[j].formula.length > 0) {
+                            tieneNuevaVariable = true;
+                            //totalesPorVariablesFormula.push({variable: arregloVariables[j].variables, formula: arregloVariables[j].formula.split(/[+|-|*|\/]+/), total: 0});
+                        }
+                        break;
+                    }
+                };
+                if(tieneNuevaVariable) {
+                    var primeraParte = equacionSubVariables.substring(0, i);
+                    var ultimaParte = equacionSubVariables.substring(i+pal.length);
+                    if(equacionSubVariables.charAt(i-1).localeCompare("-") == 0 || equacionSubVariables.charAt(i-1).localeCompare("+") == 0 ||
+                        equacionSubVariables.charAt(i-1).localeCompare("/") == 0 || equacionSubVariables.charAt(i-1).localeCompare("*") == 0) {
+
+                        if(equacionSubVariables.charAt(i-1).localeCompare("-") == 0) {
+                            if(formulaVariable.includes("+"))
+                                formulaVariable = customReplace("+", "-", formulaVariable);
+                            if(formulaVariable.includes("/"))
+                                formulaVariable = customReplace("/", "-", formulaVariable);
+                            if(formulaVariable.includes("*"))
+                                formulaVariable = customReplace("*", "-", formulaVariable);
+                        }
+                        if(equacionSubVariables.charAt(i-1).localeCompare("+") == 0) {
+                            if(formulaVariable.includes("-"))
+                                formulaVariable = customReplace("-", "+", formulaVariable);
+                            if(formulaVariable.includes("/"))
+                                formulaVariable = customReplace("/", "+", formulaVariable);
+                            if(formulaVariable.includes("*"))
+                                formulaVariable = customReplace("*", "+", formulaVariable);
+                        }
+                        if(equacionSubVariables.charAt(i-1).localeCompare("/") == 0) {
+                            if(formulaVariable.includes("-"))
+                                formulaVariable = customReplace("-", "/", formulaVariable);
+                            if(formulaVariable.includes("+"))
+                                formulaVariable = customReplace("+", "/", formulaVariable);
+                            if(formulaVariable.includes("*"))
+                                formulaVariable = customReplace("*", "/", formulaVariable);
+                        }
+                        if(equacionSubVariables.charAt(i-1).localeCompare("*") == 0) {
+                            if(formulaVariable.includes("-"))
+                                formulaVariable = customReplace("-", "*", formulaVariable);
+                            if(formulaVariable.includes("/"))
+                                formulaVariable = customReplace("/", "*", formulaVariable);
+                            if(formulaVariable.includes("+"))
+                                formulaVariable = customReplace("+", "*", formulaVariable);
+                        }
+                    }
+                    equacionSubVariables = primeraParte + formulaVariable + ultimaParte;/*
+                    console.log('equacionSubVariables despues')
+                    console.log(equacionSubVariables)*/
                 }
-                i+=pal.length;
+                //i+=pal.length;
             }
         };
 
-        var equacionValoresReemplazadosNumeros = equacionValoresReemplazadosSubVariables;
+        equacionVarReglas = '';
+        if(activosInstanciasVarReglas.length > 0) {
+            equacionVarReglas = equacionSubVariables;
+            for (var i = 0; i < equacionVarReglas.length; i++) {
+                if(equacionVarReglas.charAt(i) != "(" && equacionVarReglas.charAt(i) != ")" && equacionVarReglas.charAt(i) != "<" && equacionVarReglas.charAt(i) != ">" && 
+                    equacionVarReglas.charAt(i) != "!" && equacionVarReglas.charAt(i) != "=" && equacionVarReglas.charAt(i) != "/" && equacionVarReglas.charAt(i) != "*" && 
+                    equacionVarReglas.charAt(i) != "√" && equacionVarReglas.charAt(i) != "+" && equacionVarReglas.charAt(i) != "-" && isNaN(equacionVarReglas.charAt(i))) {
+                    var pal = getVariable(equacionVarReglas, i);
+                    var variablesDeSubVariable = '', tieneVariable = false, modificarSigno = true;
+                    Loop1:
+                    for (var j = 0; j < subvariablesSolas.length; j++) {
+                        if(subvariablesSolas[j] != undefined) {
+                            for (var k = 0; k < subvariablesSolas[j].length; k++) {
+                                if(subvariablesSolas[j][k] != undefined) {
+                                    for (var n = 0; n < subvariablesSolas[j][k].length; n++) {
+                                        if(subvariablesSolas[j][k][n] != undefined) {
+                                            if(subvariablesSolas[j][k][n].variable.toLowerCase().localeCompare(pal.toLowerCase()) == 0 && subvariablesSolas[j][k][n].tablaAplicar == 1) {
+                                                if(reglasActivos[j] != undefined && reglasActivos[j][k] != undefined && reglasActivos[j][k][n] != undefined) {
+                                                    for (var q = 0; q < reglasActivos[j][k][n].length; q++) {
+                                                        //if(q == reglasActivos[j][k][n].length-1) {
+                                                            var signo = '';
+                                                            for (var f = 0; f < reglasActivos[j][k][n].length; f++) {
+                                                                if( reglasActivos[j][k][n][f].valor.includes(reglasActivos[j][k][n][q].variables) ) {
+                                                                    signo = reglasActivos[j][k][n][f].operacion;
+                                                                    modificarSigno = false;
+                                                                    //break;
+                                                                }
+                                                            };
+                                                            if(reglasActivos[j][k][n][q].campoObjetivo.indexOf("AGRUPACION") == 0) {
+                                                                signo = "+";
+                                                                modificarSigno = false
+                                                            }
+                                                            variablesDeSubVariable+=signo+reglasActivos[j][k][n][q].variables;
+                                                        //}
+                                                        tieneVariable = true;
+                                                    };
+                                                }
+                                                break Loop1;
+                                            }
+                                        }
+                                    };
+                                }
+                            };
+                        }
+                    };
+                    if(tieneVariable) {
+                        var primeraParte = equacionVarReglas.substring(0, i);
+                        var ultimaParte = equacionVarReglas.substring(i+pal.length);
+                        if( (equacionVarReglas.charAt(i-1).localeCompare("-") == 0 || equacionVarReglas.charAt(i-1).localeCompare("+") == 0 ||
+                            equacionVarReglas.charAt(i-1).localeCompare("/") == 0 || equacionVarReglas.charAt(i-1).localeCompare("*") == 0) && modificarSigno) {
 
-        for (var i = 0; i < equacionValoresReemplazadosNumeros.length; i++) {
-            if(equacionValoresReemplazadosNumeros.charAt(i) != "(" && equacionValoresReemplazadosNumeros.charAt(i) != ")" && equacionValoresReemplazadosNumeros.charAt(i) != "<" && equacionValoresReemplazadosNumeros.charAt(i) != ">" && 
-                equacionValoresReemplazadosNumeros.charAt(i) != "!" && equacionValoresReemplazadosNumeros.charAt(i) != "=" && equacionValoresReemplazadosNumeros.charAt(i) != "/" && equacionValoresReemplazadosNumeros.charAt(i) != "*" && 
-                equacionValoresReemplazadosNumeros.charAt(i) != "√" && equacionValoresReemplazadosNumeros.charAt(i) != "+" && equacionValoresReemplazadosNumeros.charAt(i) != "-" && isNaN(equacionValoresReemplazadosNumeros.charAt(i))) {
-                var pal = getVariable(equacionValoresReemplazadosNumeros, i);
-                var valorInciso;
-                Loop1:
-                for (var j = 0; j < totalesVariables.length; j++) {
-                    for (var k = 0; k < totalesVariables[j].length; k++) {
-                        if(totalesVariables[j][k].variable.toLowerCase().localeCompare(pal.toLowerCase()) == 0) {
-                            valorInciso = totalesVariables[j][k].total;
-                            for (var l = 0; l < totalesPorVariablesFormula.length; l++) {
-                                for (var o = 0; o < totalesPorVariablesFormula[l].formula.length; o++) {
-                                    if(totalesPorVariablesFormula[l].formula[o].toLowerCase().localeCompare(totalesVariables[j][k].variable.toLowerCase()) == 0) {
-                                        totalesPorVariablesFormula[l].total+=totalesVariables[j][k].total;
+                            if(equacionVarReglas.charAt(i-1).localeCompare("-") == 0) {
+                                if(variablesDeSubVariable.includes("+"))
+                                    variablesDeSubVariable = customReplace("+", "-", variablesDeSubVariable);
+                                if(variablesDeSubVariable.includes("/"))
+                                    variablesDeSubVariable = customReplace("/", "-", variablesDeSubVariable);
+                                if(variablesDeSubVariable.includes("*"))
+                                    variablesDeSubVariable = customReplace("*", "-", variablesDeSubVariable);
+                            }
+                            if(equacionVarReglas.charAt(i-1).localeCompare("+") == 0) {
+                                if(variablesDeSubVariable.includes("-"))
+                                    variablesDeSubVariable = customReplace("-", "+", variablesDeSubVariable);
+                                if(variablesDeSubVariable.includes("/"))
+                                    variablesDeSubVariable = customReplace("/", "+", variablesDeSubVariable);
+                                if(variablesDeSubVariable.includes("*"))
+                                    variablesDeSubVariable = customReplace("*", "+", variablesDeSubVariable);
+                            }
+                            if(equacionVarReglas.charAt(i-1).localeCompare("/") == 0) {
+                                if(variablesDeSubVariable.includes("-"))
+                                    variablesDeSubVariable = customReplace("-", "/", variablesDeSubVariable);
+                                if(variablesDeSubVariable.includes("+"))
+                                    variablesDeSubVariable = customReplace("+", "/", variablesDeSubVariable);
+                                if(variablesDeSubVariable.includes("*"))
+                                    variablesDeSubVariable = customReplace("*", "/", variablesDeSubVariable);
+                            }
+                            if(equacionVarReglas.charAt(i-1).localeCompare("*") == 0) {
+                                if(variablesDeSubVariable.includes("-"))
+                                    variablesDeSubVariable = customReplace("-", "*", variablesDeSubVariable);
+                                if(variablesDeSubVariable.includes("/"))
+                                    variablesDeSubVariable = customReplace("/", "*", variablesDeSubVariable);
+                                if(variablesDeSubVariable.includes("+"))
+                                    variablesDeSubVariable = customReplace("+", "*", variablesDeSubVariable);
+                            }
+                        }
+                        equacionVarReglas = primeraParte + variablesDeSubVariable + ultimaParte;
+                    } //else
+                        //todasTienenVariable = false;
+                    i+=variablesDeSubVariable.toString().length;
+                }
+            };
+        }
+
+        equacionVarCuentas = '';
+        if(arregloCuentas.length > 0) {
+            equacionVarCuentas = equacionSubVariables;
+            for (var i = 0; i < equacionVarCuentas.length; i++) {
+                if(equacionVarCuentas.charAt(i) != "(" && equacionVarCuentas.charAt(i) != ")" && equacionVarCuentas.charAt(i) != "<" && equacionVarCuentas.charAt(i) != ">" && 
+                    equacionVarCuentas.charAt(i) != "!" && equacionVarCuentas.charAt(i) != "=" && equacionVarCuentas.charAt(i) != "/" && equacionVarCuentas.charAt(i) != "*" && 
+                    equacionVarCuentas.charAt(i) != "√" && equacionVarCuentas.charAt(i) != "+" && equacionVarCuentas.charAt(i) != "-" && isNaN(equacionVarCuentas.charAt(i))) {
+                    var pal = getVariable(equacionVarCuentas, i);
+                    var variablesDeSubVariable = '', tieneVariable = false, modificarSigno = true;
+                    Loop1:
+                    for (var j = 0; j < subvariablesSolas.length; j++) {
+                        if(subvariablesSolas[j] != undefined) {
+                            for (var k = 0; k < subvariablesSolas[j].length; k++) {
+                                if(subvariablesSolas[j][k] != undefined) {
+                                    for (var n = 0; n < subvariablesSolas[j][k].length; n++) {
+                                        if(subvariablesSolas[j][k][n] != undefined) {
+                                            if(subvariablesSolas[j][k][n].variable.toLowerCase().localeCompare(pal.toLowerCase()) == 0 && subvariablesSolas[j][k][n].tablaAplicar == 1) {
+                                                if(arregloCuentas[j] != undefined && arregloCuentas[j][k] != undefined && arregloCuentas[j][k][n] != undefined) {
+                                                    for (var q = 0; q < arregloCuentas[j][k][n].length; q++) {
+                                                        if(arregloCuentas[j][k][n][q] != undefined) {
+                                                            for (var f = 0; f < arregloCuentas[j][k][n][q].length; f++) {
+                                                                if(arregloCuentas[j][k][n][q][f].varDeCuenta == undefined) {
+                                                                    //if(q == arregloCuentas[j][k][n].length-1) {
+                                                                        variablesDeSubVariable+=arregloCuentas[j][k][n][q][f].signo+arregloCuentas[j][k][n][q][f].variable;
+                                                                    //}
+                                                                    tieneVariable = true;
+                                                                    modificarSigno = false;
+                                                                }
+                                                            };
+                                                        }
+                                                    };
+                                                }
+                                                break Loop1;
+                                            }
+                                        }
+                                    };
+                                }
+                            };
+                        }
+                    };
+                    if(tieneVariable) {
+                        var primeraParte = equacionVarCuentas.substring(0, i);
+                        var ultimaParte = equacionVarCuentas.substring(i+pal.length);
+                        if( (equacionVarCuentas.charAt(i-1).localeCompare("-") == 0 || equacionVarCuentas.charAt(i-1).localeCompare("+") == 0 ||
+                            equacionVarCuentas.charAt(i-1).localeCompare("/") == 0 || equacionVarCuentas.charAt(i-1).localeCompare("*") == 0) && modificarSigno) {
+
+                            if(equacionVarCuentas.charAt(i-1).localeCompare("-") == 0) {
+                                if(variablesDeSubVariable.includes("+"))
+                                    variablesDeSubVariable = customReplace("+", "-", variablesDeSubVariable);
+                                if(variablesDeSubVariable.includes("/"))
+                                    variablesDeSubVariable = customReplace("/", "-", variablesDeSubVariable);
+                                if(variablesDeSubVariable.includes("*"))
+                                    variablesDeSubVariable = customReplace("*", "-", variablesDeSubVariable);
+                            }
+                            if(equacionVarCuentas.charAt(i-1).localeCompare("+") == 0) {
+                                if(variablesDeSubVariable.includes("-"))
+                                    variablesDeSubVariable = customReplace("-", "+", variablesDeSubVariable);
+                                if(variablesDeSubVariable.includes("/"))
+                                    variablesDeSubVariable = customReplace("/", "+", variablesDeSubVariable);
+                                if(variablesDeSubVariable.includes("*"))
+                                    variablesDeSubVariable = customReplace("*", "+", variablesDeSubVariable);
+                            }
+                            if(equacionVarCuentas.charAt(i-1).localeCompare("/") == 0) {
+                                if(variablesDeSubVariable.includes("-"))
+                                    variablesDeSubVariable = customReplace("-", "/", variablesDeSubVariable);
+                                if(variablesDeSubVariable.includes("+"))
+                                    variablesDeSubVariable = customReplace("+", "/", variablesDeSubVariable);
+                                if(variablesDeSubVariable.includes("*"))
+                                    variablesDeSubVariable = customReplace("*", "/", variablesDeSubVariable);
+                            }
+                            if(equacionVarCuentas.charAt(i-1).localeCompare("*") == 0) {
+                                if(variablesDeSubVariable.includes("-"))
+                                    variablesDeSubVariable = customReplace("-", "*", variablesDeSubVariable);
+                                if(variablesDeSubVariable.includes("/"))
+                                    variablesDeSubVariable = customReplace("/", "*", variablesDeSubVariable);
+                                if(variablesDeSubVariable.includes("+"))
+                                    variablesDeSubVariable = customReplace("+", "*", variablesDeSubVariable);
+                            }
+                        }
+                        equacionVarCuentas = primeraParte + variablesDeSubVariable + ultimaParte;
+                    } //else
+                        //todasTienenVariable = false;
+                    i+=variablesDeSubVariable.toString().length;
+                }
+            };
+        }
+        //var rcl = math.eval(equacionSubVariables);
+        //totalesPorVariablesFormula[0].total = rcl;
+        var numeradoresVariables = getNumeratorFraction(equacionVariables);
+        var denominadoresVariables = getDenominatorFraction(equacionVariables);
+        var numeradoresSubVariablesConPadres = getNumeratorFraction(equacionSubVariablesConPadres);
+        var denominadoresSubVariablesConPadres = getDenominatorFraction(equacionSubVariablesConPadres);
+        var numeradoresSubVariables = getNumeratorFraction(equacionSubVariables);
+        var denominadoresSubVariables = getDenominatorFraction(equacionSubVariables);
+        console.log('equacionVariables');
+        console.log(equacionVariables);
+        console.log('equacionSubVariablesConPadres')
+        console.log(equacionSubVariablesConPadres)
+        console.log('equacionSubVariables');
+        console.log(equacionSubVariables);
+        console.log('equacionVarReglas');
+        console.log(equacionVarReglas);
+        console.log('equacionVarCuentas');
+        console.log(equacionVarCuentas);
+        console.log('formulaGlobal');
+        console.log(formulaGlobal);
+        console.log('numeradoresVariables');
+        console.log(numeradoresVariables);
+        console.log('denominadoresVariables');
+        console.log(denominadoresVariables);
+        console.log('numeradoresSubVariables');
+        console.log(numeradoresSubVariables);
+        console.log('denominadoresSubVariables');
+        console.log(denominadoresSubVariables);
+        console.log('reglasActivos');
+        console.log(reglasActivos);
+        console.log('FECHA');
+        console.log(diaRCL);
+        console.log('arregloMonedas');
+        console.log(arregloMonedas);
+        console.log('variablesSolas');
+        console.log(variablesSolas);
+        console.log('subvariablesSolas');
+        console.log(subvariablesSolas);
+        console.log('variablesDeSubVariablesSolas');
+        console.log(variablesDeSubVariablesSolas);
+        console.log('arregloCuentas');
+        console.log(arregloCuentas);
+        for (var i = 0; i < arregloMonedas.length; i++) {
+            console.log('variablesSolas = '+arregloMonedas[i]);
+            console.log(window["variablesSolas"+arregloMonedas[i]]);
+            console.log('subvariablesSolas = '+arregloMonedas[i]);
+            console.log(window["subvariablesSolas"+arregloMonedas[i]]);
+            console.log('variablesDeSubVariablesSolas = '+arregloMonedas[i]);
+            console.log(window["variablesDeSubVariablesSolas"+arregloMonedas[i]]);
+            console.log('arregloCuentas = '+arregloMonedas[i]);
+            console.log(window["arregloCuentas"+arregloMonedas[i]]);
+        };
+        /*for (var i = 0; i < arregloAgencias.length; i++) {
+            console.log('variablesSolas = '+arregloAgencias[i]);
+            console.log(window["variablesSolas"+arregloAgencias[i]]);
+            console.log('subvariablesSolas = '+arregloAgencias[i]);
+            console.log(window["subvariablesSolas"+arregloAgencias[i]]);
+            console.log('variablesDeSubVariablesSolas = '+arregloAgencias[i]);
+            console.log(window["variablesDeSubVariablesSolas"+arregloAgencias[i]]);
+            console.log('arregloCuentas = '+arregloAgencias[i]);
+            console.log(window["arregloCuentas"+arregloAgencias[i]]);
+        };*/
+        /*for (var i = 0; i < subvariablesSolas.length; i++) {
+            for (var j = 0; j < subvariablesSolas[i].length; j++) {
+                for (var k = 0; k < subvariablesSolas[i][j].length; k++) {
+                    console.log(subvariablesSolas[i][j][k])
+                    console.log(subvariablesSolas[i][j][k].total)
+                };
+            };
+        };*/
+        //console.log('totalesPorVariablesFormula');
+        //console.log(totalesPorVariablesFormula);
+
+        //Con ecuaciones listas, reemplazar por valores numericos en cada proyeccion
+        //equacionVarReglas
+        /*if(todasTienenVariable) {
+            for (var i = 0; i < proyecciones.length; i++) {
+                var ecuacionResuelta = equacionVarReglas;
+                for (var j = 0; j < variablesSolas[i].length; j++) {
+                    if(variablesSolas[j] != undefined) {
+                        for (var k = 0; k < subvariablesSolas[i][j].length; k++) {
+                            if(subvariablesSolas[i][j] != undefined) {
+                                for (var n = 0; n < variablesDeSubVariablesSolas[i][j][k].length; n++) {
+                                    LoopChar:
+                                    for (var z = 0; z < ecuacionResuelta.length; z++) {
+                                        if(ecuacionResuelta.charAt(z) != "(" && ecuacionResuelta.charAt(z) != ")" && ecuacionResuelta.charAt(z) != "<" && ecuacionResuelta.charAt(z) != ">" && 
+                                            ecuacionResuelta.charAt(z) != "!" && ecuacionResuelta.charAt(z) != "=" && ecuacionResuelta.charAt(z) != "/" && ecuacionResuelta.charAt(z) != "*" && 
+                                            ecuacionResuelta.charAt(z) != "√" && ecuacionResuelta.charAt(z) != "+" && ecuacionResuelta.charAt(z) != "-" && isNaN(ecuacionResuelta.charAt(z))) {
+                                            var pal = getVariable(ecuacionResuelta, z);
+                                            var valorInciso;
+                                            if(variablesDeSubVariablesSolas[i][j][k][n] != undefined && variablesDeSubVariablesSolas[i][j][k][n].variable.toLowerCase().localeCompare(pal.toLowerCase()) == 0 && variablesDeSubVariablesSolas[i][j][k][n].tipoProyeccion == proyecciones[i]) {
+                                                valorInciso = variablesDeSubVariablesSolas[i][j][k][n].total;
+                                                var primeraParte = ecuacionResuelta.substring(0, z);
+                                                var ultimaParte = ecuacionResuelta.substring(z+pal.length);
+                                                ecuacionResuelta = primeraParte + valorInciso + ultimaParte;
+                                                var resultado;
+                                                if(k == variablesDeSubVariablesSolas[i][j][k].length-1) {
+                                                    try {
+                                                        resultado = math.eval(ecuacionResuelta);
+                                                    } catch(err) {
+                                                        resultado = 0;
+                                                    }
+                                                    console.log(subvariablesSolas[i][j][k]);
+                                                    console.log('antes = '+subvariablesSolas[i][j][k].total);
+                                                    subvariablesSolas[i][j][k].total = resultado;
+                                                    console.log('despues = '+subvariablesSolas[i][j][k].total);
+                                                    //if(!isNaN(resultado))
+                                                }
+                                                break LoopChar;
+                                            }
+                                            z+=pal.length;
+                                        }
+                                    };
+                                };
+                                LoopChar:
+                                for (var z = 0; z < ecuacionResuelta.length; z++) {
+                                    if(ecuacionResuelta.charAt(z) != "(" && ecuacionResuelta.charAt(z) != ")" && ecuacionResuelta.charAt(z) != "<" && ecuacionResuelta.charAt(z) != ">" && 
+                                        ecuacionResuelta.charAt(z) != "!" && ecuacionResuelta.charAt(z) != "=" && ecuacionResuelta.charAt(z) != "/" && ecuacionResuelta.charAt(z) != "*" && 
+                                        ecuacionResuelta.charAt(z) != "√" && ecuacionResuelta.charAt(z) != "+" && ecuacionResuelta.charAt(z) != "-" && isNaN(ecuacionResuelta.charAt(z))) {
+                                        var pal = getVariable(ecuacionResuelta, z);
+                                        var valorInciso;
+                                        if(subvariablesSolas[i][j][k] != undefined && subvariablesSolas[i][j][k].variable.toLowerCase().localeCompare(pal.toLowerCase()) == 0 && subvariablesSolas[i][j][k].tipoProyeccion == proyecciones[i]) {
+                                            valorInciso = subvariablesSolas[i][j][k].total;
+                                            var primeraParte = ecuacionResuelta.substring(0, z);
+                                            var ultimaParte = ecuacionResuelta.substring(z+pal.length);
+                                            ecuacionResuelta = primeraParte + valorInciso + ultimaParte;
+                                            var resultado;
+                                            if(k == variablesDeSubVariablesSolas[i][j][k].length-1) {
+                                                try {
+                                                    resultado = math.eval(ecuacionResuelta);
+                                                } catch(err) {
+                                                    resultado = 0;
+                                                }
+                                                //console.log('antes = '+subvariablesSolas[i][indexVarRCL][k].total);
+                                                subvariablesSolas[i][j][k].total = resultado;
+                                                //console.log('despues = '+subvariablesSolas[i][indexVarRCL][k].total);
+                                            }
+                                            break LoopChar;
+                                        }
+                                        z+=pal.length;
+                                    }
+                                };
+                            }
+                        };
+                    }
+                };
+            };
+        } else {
+            $("body").overhang({
+                type: "error",
+                primary: "#f84a1d",
+                accent: "#d94e2a",
+                message: "No se pudo calcular el RCL, dado que no todas las sub-variable tienen variables asociadas.",
+                overlay: true,
+                closeConfirm: true
+            });
+        }*/
+        console.log('==============');
+        console.log('==============');
+        console.log('==============');
+        console.log('==============');
+        //equacionSubVariables Añadiendo total a variables padres que tienen hijas variables padres y subvariables
+        for (var p = 0; p < arregloMonedas.length; p++) {
+            for (var i = 0; i < proyecciones.length; i++) {
+                var calculoTodasMenosRCL = false, contadorSalida = 0, j = 0, calculoTodasContador = 0;
+                while(!calculoTodasMenosRCL && contadorSalida < 100) {
+                    if( VarEnFormulaYaCalculadasMoneda(window["variablesSolas"+arregloMonedas[p]][i][j].formula, window["variablesSolas"+arregloMonedas[p]][i][j].tipoProyeccion, arregloMonedas[p]) && !window["variablesSolas"+arregloMonedas[p]][i][j].calculada && window["variablesSolas"+arregloMonedas[p]][i][j].formula.length > 0) {
+                        var ecuacionResuelta = window["variablesSolas"+arregloMonedas[p]][i][j].formula;
+                        for (var z = 0; z < ecuacionResuelta.length; z++) {
+                            if(ecuacionResuelta.charAt(z) != "(" && ecuacionResuelta.charAt(z) != ")" && ecuacionResuelta.charAt(z) != "<" && ecuacionResuelta.charAt(z) != ">" && 
+                                ecuacionResuelta.charAt(z) != "!" && ecuacionResuelta.charAt(z) != "=" && ecuacionResuelta.charAt(z) != "/" && ecuacionResuelta.charAt(z) != "*" && 
+                                ecuacionResuelta.charAt(z) != "√" && ecuacionResuelta.charAt(z) != "+" && ecuacionResuelta.charAt(z) != "-" && isNaN(ecuacionResuelta.charAt(z))) {
+                                var pal = getVariable(ecuacionResuelta, z);
+                                Loop1:
+                                for (var c = 0; c < window["subvariablesSolas"+arregloMonedas[p]][i].length; c++) {
+                                    for (var f = 0; f < window["subvariablesSolas"+arregloMonedas[p]][i][c].length; f++) {
+                                        if(window["subvariablesSolas"+arregloMonedas[p]][i][c][f].variable.toLowerCase().localeCompare(pal.toLowerCase()) == 0) {
+                                            var primeraParte = ecuacionResuelta.substring(0, z);
+                                            var ultimaParte = ecuacionResuelta.substring(z+pal.length);
+                                            ecuacionResuelta = primeraParte + window["subvariablesSolas"+arregloMonedas[p]][i][c][f].total + ultimaParte;
+                                            z += window["subvariablesSolas"+arregloMonedas[p]][i][c][f].total.toString().length-1;
+                                            break Loop1;
+                                        }
+                                    };
+                                    if(window["variablesSolas"+arregloMonedas[p]][i][c].variable.toLowerCase().localeCompare(pal.toLowerCase()) == 0) {
+                                        var primeraParte = ecuacionResuelta.substring(0, z);
+                                        var ultimaParte = ecuacionResuelta.substring(z+pal.length);
+                                        ecuacionResuelta = primeraParte + window["variablesSolas"+arregloMonedas[p]][i][c].total + ultimaParte;
+                                        z += window["variablesSolas"+arregloMonedas[p]][i][c].total.toString().length-1;
+                                        break Loop1;
+                                    }
+                                };
+                            }
+                        };
+                        var resultado;
+                        try {
+                            resultado = math.eval(ecuacionResuelta);
+                        } catch(err) {
+                            resultado = 0;
+                        }
+                        calculoTodasContador++;
+                        window["variablesSolas"+arregloMonedas[p]][i][j].total = resultado;
+                        window["variablesSolas"+arregloMonedas[p]][i][j].calculada = true;
+                    }
+                    contadorSalida++;
+                    j++;
+                    if(j == window["variablesSolas"+arregloMonedas[p]][i].length)
+                        j = 0;
+                    if(calculoTodasContador == window["variablesSolas"+arregloMonedas[p]][i].length-1)
+                        calculoTodasMenosRCL = true;
+                }
+            };
+        };
+        /*for (var i = 0; i < proyecciones.length; i++) {
+            var calculoTodasMenosRCL = false, contadorSalida = 0, j = 0, calculoTodasContador = 0;
+            while(!calculoTodasMenosRCL && contadorSalida < 100) {
+                if( VarEnFormulaYaCalculadas(variablesSolas[i][j].formula, variablesSolas[i][j].tipoProyeccion) && !variablesSolas[i][j].calculada && variablesSolas[i][j].formula.length > 0) {
+                    var ecuacionResuelta = variablesSolas[i][j].formula;
+                    for (var z = 0; z < ecuacionResuelta.length; z++) {
+                        if(ecuacionResuelta.charAt(z) != "(" && ecuacionResuelta.charAt(z) != ")" && ecuacionResuelta.charAt(z) != "<" && ecuacionResuelta.charAt(z) != ">" && 
+                            ecuacionResuelta.charAt(z) != "!" && ecuacionResuelta.charAt(z) != "=" && ecuacionResuelta.charAt(z) != "/" && ecuacionResuelta.charAt(z) != "*" && 
+                            ecuacionResuelta.charAt(z) != "√" && ecuacionResuelta.charAt(z) != "+" && ecuacionResuelta.charAt(z) != "-" && isNaN(ecuacionResuelta.charAt(z))) {
+                            var pal = getVariable(ecuacionResuelta, z);
+                            Loop1:
+                            for (var c = 0; c < subvariablesSolas[i].length; c++) {
+                                for (var f = 0; f < subvariablesSolas[i][c].length; f++) {
+                                    if(subvariablesSolas[i][c][f].variable.toLowerCase().localeCompare(pal.toLowerCase()) == 0) {
+                                        var primeraParte = ecuacionResuelta.substring(0, z);
+                                        var ultimaParte = ecuacionResuelta.substring(z+pal.length);
+                                        ecuacionResuelta = primeraParte + subvariablesSolas[i][c][f].total + ultimaParte;
+                                        z += subvariablesSolas[i][c][f].total.toString().length-1;
+                                        break Loop1;
+                                    }
+                                };
+                                if(variablesSolas[i][c].variable.toLowerCase().localeCompare(pal.toLowerCase()) == 0) {
+                                    var primeraParte = ecuacionResuelta.substring(0, z);
+                                    var ultimaParte = ecuacionResuelta.substring(z+pal.length);
+                                    ecuacionResuelta = primeraParte + variablesSolas[i][c].total + ultimaParte;
+                                    z += variablesSolas[i][c].total.toString().length-1;
+                                    break Loop1;
+                                }
+                            };
+                        }
+                    };
+                    var resultado;
+                    try {
+                        resultado = math.eval(ecuacionResuelta);
+                    } catch(err) {
+                        resultado = 0;
+                    }
+                    calculoTodasContador++;
+                    variablesSolas[i][j].total = resultado;
+                    variablesSolas[i][j].calculada = true;
+                }
+                contadorSalida++;
+                j++;
+                if(j == variablesSolas[i].length)
+                    j = 0;
+                if(calculoTodasContador == variablesSolas[i].length-1)
+                    calculoTodasMenosRCL = true;
+            }
+        };*/
+        /*for (var i = 0; i < proyecciones.length; i++) {
+            for (var j = 0; j < variablesSolas[i].length; j++) {
+                if(variablesSolas[i][j] != undefined) {
+                    if(subvariablesSolas[i][j] != undefined) {
+                        if(subvariablesSolas[i][j].length == 0 && j != indexVarRCL) {
+                            var ecuacionResuelta = variablesSolas[i][j].formula;
+                            for (var o = 0; o < arregloVariables.length; o++) {
+                                LoopChar:
+                                for (var z = 0; z < ecuacionResuelta.length; z++) {
+                                    if(ecuacionResuelta.charAt(z) != "(" && ecuacionResuelta.charAt(z) != ")" && ecuacionResuelta.charAt(z) != "<" && ecuacionResuelta.charAt(z) != ">" && 
+                                        ecuacionResuelta.charAt(z) != "!" && ecuacionResuelta.charAt(z) != "=" && ecuacionResuelta.charAt(z) != "/" && ecuacionResuelta.charAt(z) != "*" && 
+                                        ecuacionResuelta.charAt(z) != "√" && ecuacionResuelta.charAt(z) != "+" && ecuacionResuelta.charAt(z) != "-" && isNaN(ecuacionResuelta.charAt(z))) {
+                                        var pal = getVariable(ecuacionResuelta, z);
+                                        var valorInciso;
+                                        var variableAComparar = getVarForTotal(arregloVariables[o].variables, proyecciones[i]);
+                                        if(variableAComparar != undefined && arregloVariables[o].variables.toLowerCase().localeCompare(pal.toLowerCase()) == 0 && variableAComparar.tipoProyeccion == proyecciones[i]) {
+                                            valorInciso = variableAComparar.total;
+                                            var primeraParte = ecuacionResuelta.substring(0, z);
+                                            var ultimaParte = ecuacionResuelta.substring(z+pal.length);
+                                            ecuacionResuelta = primeraParte + valorInciso + ultimaParte;
+                                            z += pal.length-1;
+                                            var resultado;
+                                            if(o == arregloVariables.length-1) {
+                                                try {
+                                                    resultado = math.eval(ecuacionResuelta);
+                                                } catch(err) {
+                                                    resultado = 0;
+                                                }
+                                                variablesSolas[i][j].total = resultado;
+                                            }
+                                            break LoopChar;
+                                        } else {
+                                            z += pal.length-1;
+                                        }
                                     }
                                 };
                             };
-                            break Loop1;
+                        }
+                    }
+                }
+            };
+        };*/
+        //equacionVariables
+        for (var p = 0; p < arregloMonedas.length; p++) {
+            for (var i = 0; i < proyecciones.length; i++) {
+                var ecuacionResuelta = equacionVariables;
+                for (var j = 0; j < window["variablesSolas"+arregloMonedas[p]][i].length; j++) {
+                    if(proyecciones[i] == window["variablesSolas"+arregloMonedas[p]][i][j].tipoProyeccion) {
+                        LoopChar:
+                        for (var z = 0; z < ecuacionResuelta.length; z++) {
+                            if(ecuacionResuelta.charAt(z) != "(" && ecuacionResuelta.charAt(z) != ")" && ecuacionResuelta.charAt(z) != "<" && ecuacionResuelta.charAt(z) != ">" && 
+                                ecuacionResuelta.charAt(z) != "!" && ecuacionResuelta.charAt(z) != "=" && ecuacionResuelta.charAt(z) != "/" && ecuacionResuelta.charAt(z) != "*" && 
+                                ecuacionResuelta.charAt(z) != "√" && ecuacionResuelta.charAt(z) != "+" && ecuacionResuelta.charAt(z) != "-" && isNaN(ecuacionResuelta.charAt(z))) {
+                                var pal = getVariable(ecuacionResuelta, z);
+                                var valorInciso;
+                                if(window["variablesSolas"+arregloMonedas[p]][i][j] != undefined && window["variablesSolas"+arregloMonedas[p]][i][j].variable.toLowerCase().localeCompare(pal.toLowerCase()) == 0 && window["variablesSolas"+arregloMonedas[p]][i][j].tipoProyeccion == proyecciones[i]) {
+                                    var valorInciso = window["variablesSolas"+arregloMonedas[p]][i][j].total;
+                                    var primeraParte = ecuacionResuelta.substring(0, z);
+                                    var ultimaParte = ecuacionResuelta.substring(z+pal.length);
+                                    ecuacionResuelta = primeraParte + valorInciso + ultimaParte;
+                                    var resultado;
+                                    if(j == window["variablesSolas"+arregloMonedas[p]][i].length-1) {
+                                        try {
+                                            resultado = math.eval(ecuacionResuelta);
+                                        } catch(err) {
+                                            resultado = 0;
+                                        }
+                                        window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].total = resultado;
+                                    }
+                                    break LoopChar;                                                     /// REVISAR --------------
+                                }
+                            } else if(j == window["variablesSolas"+arregloMonedas[p]][i].length-1) {
+                                try {
+                                    resultado = math.eval(ecuacionResuelta);
+                                } catch(err) {
+                                    resultado = 0;
+                                }
+                                window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].total = resultado;
+                                window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].esRCL = true;
+                                window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].volumenFormula = 100;
+                                window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].influenciaFormula = 100;
+                                window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].numerador = 100;
+                                window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].denominador = 100;
+                            }
+                        };
+                    }
+                };
+            };
+        };
+        /*for (var i = 0; i < proyecciones.length; i++) {
+            var ecuacionResuelta = equacionVariables;
+            for (var j = 0; j < variablesSolas[i].length; j++) {
+                if(proyecciones[i] == variablesSolas[i][j].tipoProyeccion) {
+                    LoopChar:
+                    for (var z = 0; z < ecuacionResuelta.length; z++) {
+                        if(ecuacionResuelta.charAt(z) != "(" && ecuacionResuelta.charAt(z) != ")" && ecuacionResuelta.charAt(z) != "<" && ecuacionResuelta.charAt(z) != ">" && 
+                            ecuacionResuelta.charAt(z) != "!" && ecuacionResuelta.charAt(z) != "=" && ecuacionResuelta.charAt(z) != "/" && ecuacionResuelta.charAt(z) != "*" && 
+                            ecuacionResuelta.charAt(z) != "√" && ecuacionResuelta.charAt(z) != "+" && ecuacionResuelta.charAt(z) != "-" && isNaN(ecuacionResuelta.charAt(z))) {
+                            var pal = getVariable(ecuacionResuelta, z);
+                            var valorInciso;
+                            if(variablesSolas[i][j] != undefined && variablesSolas[i][j].variable.toLowerCase().localeCompare(pal.toLowerCase()) == 0 && variablesSolas[i][j].tipoProyeccion == proyecciones[i]) {
+                                var valorInciso = variablesSolas[i][j].total;
+                                var primeraParte = ecuacionResuelta.substring(0, z);
+                                var ultimaParte = ecuacionResuelta.substring(z+pal.length);
+                                ecuacionResuelta = primeraParte + valorInciso + ultimaParte;
+                                var resultado;
+                                if(j == variablesSolas[i].length-1) {
+                                    try {
+                                        resultado = math.eval(ecuacionResuelta);
+                                    } catch(err) {
+                                        resultado = 0;
+                                    }
+                                    variablesSolas[i][indexVarRCL].total = resultado;
+                                }
+                                break LoopChar;                                                     /// REVISAR --------------
+                            }
+                        } else if(j == variablesSolas[i].length-1) {
+                            try {
+                                resultado = math.eval(ecuacionResuelta);
+                            } catch(err) {
+                                resultado = 0;
+                            }
+                            variablesSolas[i][indexVarRCL].total = resultado;
+                            variablesSolas[i][indexVarRCL].esRCL = true;
+                            variablesSolas[i][indexVarRCL].volumenFormula = 100;
+                            variablesSolas[i][indexVarRCL].influenciaFormula = 100;
+                            variablesSolas[i][indexVarRCL].numerador = 100;
+                            variablesSolas[i][indexVarRCL].denominador = 100;
+                        }
+                    };
+                }
+            };
+        };*/
+
+        //Agregando valor de total RCL
+        for (var p = 0; p < arregloMonedas.length; p++) {
+            for (var i = 0; i < proyecciones.length; i++) {
+                for (var j = 0; j < window["variablesSolas"+arregloMonedas[p]][i].length; j++) {
+                    if(window["variablesSolas"+arregloMonedas[p]][i][j] != undefined) {
+                        window["variablesSolas"+arregloMonedas[p]][i][j].totalRCL = window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].total;
+                        for (var k = 0; k < window["subvariablesSolas"+arregloMonedas[p]][i][j].length; k++) {
+                            if(window["subvariablesSolas"+arregloMonedas[p]][i][j][k] != undefined) {
+                                window["subvariablesSolas"+arregloMonedas[p]][i][j][k].totalRCL = window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].total;
+                                for (var n = 0; n < window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k].length; n++) {
+                                    if(window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k][n] != undefined) {
+                                        window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k][n].totalRCL = window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].total;
+                                        for (var z = 0; z < arregloCuentas[i][j][k][n].length; z++) {
+                                            window["arregloCuentas"+arregloMonedas[p]][i][j][k][n][z].totalRCL = window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].total;
+                                        };
+                                    }
+                                };
+                            }
+                        };
+                    }
+                };
+            };
+        };
+        /*for (var i = 0; i < proyecciones.length; i++) {
+            for (var j = 0; j < variablesSolas[i].length; j++) {
+                if(variablesSolas[i][j] != undefined) {
+                    variablesSolas[i][j].totalRCL = variablesSolas[i][indexVarRCL].total;
+                    for (var k = 0; k < subvariablesSolas[i][j].length; k++) {
+                        if(subvariablesSolas[i][j][k] != undefined) {
+                            subvariablesSolas[i][j][k].totalRCL = variablesSolas[i][indexVarRCL].total;
+                            for (var n = 0; n < variablesDeSubVariablesSolas[i][j][k].length; n++) {
+                                if(variablesDeSubVariablesSolas[i][j][k][n] != undefined) {
+                                    variablesDeSubVariablesSolas[i][j][k][n].totalRCL = variablesSolas[i][indexVarRCL].total;
+                                    for (var z = 0; z < arregloCuentas[i][j][k][n].length; z++) {
+                                        arregloCuentas[i][j][k][n][z].totalRCL = variablesSolas[i][indexVarRCL].total;
+                                    };
+                                }
+                            };
+                        }
+                    };
+                }
+            };
+        };*/
+
+        //Añadiendo numerador y denominador
+        var totalesNumerador = [], totalesDenominador = [];
+        for (var i = 0; i < proyecciones.length; i++) {
+            for (var o = 0; o < numeradoresVariables.length; o++) {
+                var ecuacionResuelta = numeradoresVariables[o];
+                var totalesPalabras = ecuacionResuelta.split(/[-+\/*]/);
+                var contTotalPalabras = 0;
+                LoopChar:
+                for (var z = 0; z < ecuacionResuelta.length; z++) {
+                    for (var j = 0; j < variablesSolas[i].length; j++) {
+                        if(variablesSolas[i][j] != undefined && ecuacionResuelta.charAt(z) != "(" && ecuacionResuelta.charAt(z) != ")" && ecuacionResuelta.charAt(z) != "<" && ecuacionResuelta.charAt(z) != ">" && 
+                            ecuacionResuelta.charAt(z) != "!" && ecuacionResuelta.charAt(z) != "=" && ecuacionResuelta.charAt(z) != "/" && ecuacionResuelta.charAt(z) != "*" && 
+                            ecuacionResuelta.charAt(z) != "√" && ecuacionResuelta.charAt(z) != "+" && ecuacionResuelta.charAt(z) != "-" && isNaN(ecuacionResuelta.charAt(z))) {
+                            var pal = getVariable(ecuacionResuelta, z);
+                            var valorInciso;
+                            if(variablesSolas[i][j].variable.toLowerCase().localeCompare(pal.toLowerCase()) == 0) {
+                                valorInciso = variablesSolas[i][j].total;
+                                var primeraParte = ecuacionResuelta.substring(0, z);
+                                var ultimaParte = ecuacionResuelta.substring(z+pal.length);
+                                ecuacionResuelta = primeraParte + valorInciso + ultimaParte;
+                                z += pal.length-1;
+                                j = 0;
+                                contTotalPalabras++;
+                                var resultado;
+                                if(o == numeradoresVariables.length-1 && contTotalPalabras >= totalesPalabras.length) {
+                                    try {
+                                        resultado = math.eval(ecuacionResuelta);
+                                    } catch(err) {
+                                        resultado = 0;
+                                    }
+                                    totalesNumerador.push(resultado);
+                                }
+                            }/* else {
+                                z += pal.length-1;
+                            }*/
                         }
                     };
                 };
-                var primeraParte = equacionValoresReemplazadosNumeros.substring(0, i);
-                var ultimaParte = equacionValoresReemplazadosNumeros.substring(i+pal.length);
-                equacionValoresReemplazadosNumeros = primeraParte + valorInciso + ultimaParte;
-                //equacionValoresReemplazadosSubVariables.replace(pal, valorInciso);
-                i+=valorInciso.toString().length;
-            }
+            }; /// fin numerador
+            for (var o = 0; o < denominadoresVariables.length; o++) {
+                var ecuacionResuelta = denominadoresVariables[o];
+                var totalesPalabras = ecuacionResuelta.split(/[-+\/*]/);
+                var contTotalPalabras = 0;
+                LoopChar:
+                for (var z = 0; z < ecuacionResuelta.length; z++) {
+                    for (var j = 0; j < variablesSolas[i].length; j++) {
+                        if(variablesSolas[i][j] != undefined && ecuacionResuelta.charAt(z) != "(" && ecuacionResuelta.charAt(z) != ")" && ecuacionResuelta.charAt(z) != "<" && ecuacionResuelta.charAt(z) != ">" && 
+                            ecuacionResuelta.charAt(z) != "!" && ecuacionResuelta.charAt(z) != "=" && ecuacionResuelta.charAt(z) != "/" && ecuacionResuelta.charAt(z) != "*" && 
+                            ecuacionResuelta.charAt(z) != "√" && ecuacionResuelta.charAt(z) != "+" && ecuacionResuelta.charAt(z) != "-" && isNaN(ecuacionResuelta.charAt(z)) &&
+                            ecuacionResuelta.charAt(z) != "." ) {
+                            var pal = getVariable(ecuacionResuelta, z);
+                            var valorInciso;
+                            if(variablesSolas[i][j].variable.toLowerCase().localeCompare(pal.toLowerCase()) == 0) {
+                                valorInciso = variablesSolas[i][j].total;
+                                var primeraParte = ecuacionResuelta.substring(0, z);
+                                var ultimaParte = ecuacionResuelta.substring(z+pal.length);
+                                ecuacionResuelta = primeraParte + valorInciso + ultimaParte;
+                                z += valorInciso.toString().length-1;
+                                j = 0;
+                                contTotalPalabras++;
+                                var resultado;
+                                if(o == denominadoresVariables.length-1 && contTotalPalabras >= totalesPalabras.length) {
+                                    try {
+                                        resultado = math.eval(ecuacionResuelta);
+                                    } catch(err) {
+                                        resultado = 0;
+                                    }
+                                    totalesDenominador.push(resultado);
+                                }
+                            }/* else {
+                                z += pal.length-1;
+                            }*/
+                        }
+                    };
+                };
+            }; /// fin denominador
         };
-        var rcl = math.eval(equacionValoresReemplazadosNumeros);
-        totalesPorVariablesFormula[0].total = rcl;
-        console.log('equacionValoresReemplazadosSubVariables');
-        console.log(equacionValoresReemplazadosSubVariables);
-        console.log('equacionValoresReemplazadosNumeros');
-        console.log(equacionValoresReemplazadosNumeros);
-        console.log('formulaGlobal');
-        console.log(formulaGlobal);
-        console.log('totalesPorVariablesFormula');
-        console.log(totalesPorVariablesFormula);
+        if(totalesDenominador.length == 0) {
+            for (var i = 0; i < proyecciones.length; i++) {
+                totalesDenominador.push(1);
+            };
+        }
+        for (var p = 0; p < arregloMonedas.length; p++) {
+            for (var i = 0; i < proyecciones.length; i++) {
+                for (var j = 0; j < window["variablesSolas"+arregloMonedas[p]][i].length; j++) {
+                    if(indexVarRCL != j) {
+                        if(numeradoresVariables[0].includes(window["variablesSolas"+arregloMonedas[p]][i][j].variable))
+                            window["variablesSolas"+arregloMonedas[p]][i][j].esNumerador = true;
+                        else if(numeradoresSubVariablesConPadres[0].includes(window["variablesSolas"+arregloMonedas[p]][i][j].variable))
+                            window["variablesSolas"+arregloMonedas[p]][i][j].esNumerador = true;
+                        else if(denominadoresSubVariablesConPadres[0].includes(window["variablesSolas"+arregloMonedas[p]][i][j].variable))
+                            window["variablesSolas"+arregloMonedas[p]][i][j].esNumerador = false;
+                        else
+                            window["variablesSolas"+arregloMonedas[p]][i][j].esNumerador = false;
+                        window["variablesSolas"+arregloMonedas[p]][i][j].numerador = totalesNumerador[i];
+                        window["variablesSolas"+arregloMonedas[p]][i][j].denominador = totalesDenominador[i];
+                    }
+                    if(window["subvariablesSolas"+arregloMonedas[p]][i][j].length > 0) {
+                        for (var k = 0; k < window["subvariablesSolas"+arregloMonedas[p]][i][j].length; k++) {
+                            if(numeradoresSubVariables[0].includes(variablesSolas[i][j].variable))
+                                window["subvariablesSolas"+arregloMonedas[p]][i][j][k].esNumerador = true;
+                            else if(numeradoresSubVariablesConPadres[0].includes(variablesSolas[i][j].variable))
+                                window["subvariablesSolas"+arregloMonedas[p]][i][j][k].esNumerador = true;
+                            else
+                                window["subvariablesSolas"+arregloMonedas[p]][i][j][k].esNumerador = false;
+                            window["subvariablesSolas"+arregloMonedas[p]][i][j][k].numerador = totalesNumerador[i];
+                            window["subvariablesSolas"+arregloMonedas[p]][i][j][k].denominador = totalesDenominador[i];
+                            if(window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k].length > 0) {
+                                for (var n = 0; n < window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k].length; n++) {
+                                    if(numeradoresSubVariables[0].includes(variablesSolas[i][j].variable))
+                                        window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k][n].esNumerador = true;
+                                    else if(numeradoresSubVariablesConPadres[0].includes(variablesSolas[i][j].variable))
+                                        window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k][n].esNumerador = true;
+                                    else
+                                        window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k][n].esNumerador = false;
+                                    window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k][n].numerador = totalesNumerador[i];
+                                    window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k][n].denominador = totalesDenominador[i];
+                                };
+                            }
+                        };
+                    }
+                }
+            };
+        };
+        /*for (var i = 0; i < proyecciones.length; i++) {
+            for (var j = 0; j < variablesSolas[i].length; j++) {
+                if(indexVarRCL != j) {
+                    if(numeradoresVariables[0].includes(variablesSolas[i][j].variable))
+                        variablesSolas[i][j].esNumerador = true;
+                    else if(numeradoresSubVariablesConPadres[0].includes(variablesSolas[i][j].variable))
+                        variablesSolas[i][j].esNumerador = true;
+                    else if(denominadoresSubVariablesConPadres[0].includes(variablesSolas[i][j].variable))
+                        variablesSolas[i][j].esNumerador = false;
+                    else
+                        variablesSolas[i][j].esNumerador = false;
+                    variablesSolas[i][j].numerador = totalesNumerador[i];
+                    variablesSolas[i][j].denominador = totalesDenominador[i];
+                }
+                if(subvariablesSolas[i][j].length > 0) {
+                    for (var k = 0; k < subvariablesSolas[i][j].length; k++) {
+                        if(numeradoresSubVariables[0].includes(variablesSolas[i][j].variable))
+                            subvariablesSolas[i][j][k].esNumerador = true;
+                        else if(numeradoresSubVariablesConPadres[0].includes(variablesSolas[i][j].variable))
+                            subvariablesSolas[i][j][k].esNumerador = true;
+                        else
+                            subvariablesSolas[i][j][k].esNumerador = false;
+                        subvariablesSolas[i][j][k].numerador = totalesNumerador[i];
+                        subvariablesSolas[i][j][k].denominador = totalesDenominador[i];
+                        if(variablesDeSubVariablesSolas[i][j][k].length > 0) {
+                            for (var n = 0; n < variablesDeSubVariablesSolas[i][j][k].length; n++) {
+                                if(numeradoresSubVariables[0].includes(variablesSolas[i][j].variable))
+                                    variablesDeSubVariablesSolas[i][j][k][n].esNumerador = true;
+                                else if(numeradoresSubVariablesConPadres[0].includes(variablesSolas[i][j].variable))
+                                    variablesDeSubVariablesSolas[i][j][k][n].esNumerador = true;
+                                else
+                                    variablesDeSubVariablesSolas[i][j][k][n].esNumerador = false;
+                                variablesDeSubVariablesSolas[i][j][k][n].numerador = totalesNumerador[i];
+                                variablesDeSubVariablesSolas[i][j][k][n].denominador = totalesDenominador[i];
+                            };
+                        }
+                    };
+                }
+            }
+        };*/
+        //agregando numerador y denominador a cuentas
+        for (var p = 0; p < arregloMonedas.length; p++) {
+            for (var i = 0; i < window["arregloCuentas"+arregloMonedas[p]].length; i++) {
+                if(window["arregloCuentas"+arregloMonedas[p]][i] != undefined) {
+                    for (var j = 0; j < window["arregloCuentas"+arregloMonedas[p]][i].length; j++) {
+                        if(window["arregloCuentas"+arregloMonedas[p]][i][j] != undefined) {
+                            for (var k = 0; k < window["arregloCuentas"+arregloMonedas[p]][i][j].length; k++) {
+                                if(window["arregloCuentas"+arregloMonedas[p]][i][j][k] != undefined) {
+                                    for (var n = 0; n < window["arregloCuentas"+arregloMonedas[p]][i][j][k].length; n++) {
+                                        if(window["arregloCuentas"+arregloMonedas[p]][i][j][k][n] != undefined) {
+                                            for (var z = 0; z < window["arregloCuentas"+arregloMonedas[p]][i][j][k][n].length; z++) {
+                                                if (window["arregloCuentas"+arregloMonedas[p]][i][j][k][n][z].tipoProyeccion == proyecciones[i]) {
+                                                    if(numeradoresSubVariables[0].includes(variablesSolas[i][j].variable))
+                                                        window["arregloCuentas"+arregloMonedas[p]][i][j][k][n][z].esNumerador = true;
+                                                    else if(numeradoresSubVariablesConPadres[0].includes(variablesSolas[i][j].formula))
+                                                        window["arregloCuentas"+arregloMonedas[p]][i][j][k][n][z].esNumerador = true;
+                                                    else
+                                                        window["arregloCuentas"+arregloMonedas[p]][i][j][k][n][z].esNumerador = false;
+                                                    window["arregloCuentas"+arregloMonedas[p]][i][j][k][n][z].numerador = totalesNumerador[i];
+                                                    window["arregloCuentas"+arregloMonedas[p]][i][j][k][n][z].denominador = totalesDenominador[i];
+                                                }
+                                            };
+                                        }
+                                    };
+                                }
+                            };
+                        }
+                    };
+                }
+            };
+        };
+        /*for (var i = 0; i < arregloCuentas.length; i++) {
+            if(arregloCuentas[i] != undefined) {
+                for (var j = 0; j < arregloCuentas[i].length; j++) {
+                    if(arregloCuentas[i][j] != undefined) {
+                        for (var k = 0; k < arregloCuentas[i][j].length; k++) {
+                            if(arregloCuentas[i][j][k] != undefined) {
+                                for (var n = 0; n < arregloCuentas[i][j][k].length; n++) {
+                                    if(arregloCuentas[i][j][k][n] != undefined) {
+                                        for (var z = 0; z < arregloCuentas[i][j][k][n].length; z++) {
+                                            if (arregloCuentas[i][j][k][n][z].tipoProyeccion == proyecciones[i]) {
+                                                if(numeradoresSubVariables[0].includes(variablesSolas[i][j].variable))
+                                                    arregloCuentas[i][j][k][n][z].esNumerador = true;
+                                                else if(numeradoresSubVariablesConPadres[0].includes(variablesSolas[i][j].formula))
+                                                    arregloCuentas[i][j][k][n][z].esNumerador = true;
+                                                else
+                                                    arregloCuentas[i][j][k][n][z].esNumerador = false;
+                                                arregloCuentas[i][j][k][n][z].numerador = totalesNumerador[i];
+                                                arregloCuentas[i][j][k][n][z].denominador = totalesDenominador[i];
+                                            }
+                                        };
+                                    }
+                                };
+                            }
+                        };
+                    }
+                };
+            }
+        };*/
+
+        //agregando volumen e influencia
+        for (var p = 0; p < arregloMonedas.length; p++) {
+            for (var i = 0; i < proyecciones.length; i++) {
+                for (var j = 0; j < window["variablesSolas"+arregloMonedas[p]][i].length; j++) {
+                    if(window["variablesSolas"+arregloMonedas[p]][i][j].varPadre.length == 0) {
+                        if(!window["variablesSolas"+arregloMonedas[p]][i][j].esRCL) {
+                            var res = getInfluenceAndVolumeVariablesSola (window["variablesSolas"+arregloMonedas[p]][i][j], equacionVariables);
+                            window["variablesSolas"+arregloMonedas[p]][i][j].volumenFormula = res.volumen;
+                            window["variablesSolas"+arregloMonedas[p]][i][j].influenciaFormula = res.influencia;
+                        }
+                    } else {
+                        var res = getInfluenceAndVolumeVariablesSola (window["variablesSolas"+arregloMonedas[p]][i][j], equacionSubVariablesConPadres);
+                        window["variablesSolas"+arregloMonedas[p]][i][j].volumenFormula = res.volumen;
+                        window["variablesSolas"+arregloMonedas[p]][i][j].influenciaFormula = res.influencia;
+                    }
+                    for (var k = 0; k < window["subvariablesSolas"+arregloMonedas[p]][i][j].length; k++) {
+                        var resSub = getInfluenceAndVolumeVariablesSola (window["subvariablesSolas"+arregloMonedas[p]][i][j][k], equacionSubVariables);
+                        window["subvariablesSolas"+arregloMonedas[p]][i][j][k].volumenFormula = resSub.volumen;
+                        window["subvariablesSolas"+arregloMonedas[p]][i][j][k].influenciaFormula = resSub.influencia;
+                        for (var n = 0; n < window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k].length; n++) {
+                            var resSub = getInfluenceAndVolumeVariablesSola (window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k][n], equacionVarReglas);
+                            window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k][n].volumenFormula = resSub.volumen;
+                            window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k][n].influenciaFormula = resSub.influencia;
+                            for (var z = 0; z < window["arregloCuentas"+arregloMonedas[p]][i][j][k][n].length; z++) {
+                                if(window["arregloCuentas"+arregloMonedas[p]][i][j][k][n][z].varDeCuenta == undefined) {
+                                    var resSub = getInfluenceAndVolumeCuenta (window["arregloCuentas"+arregloMonedas[p]][i][j][k][n][z], equacionVarCuentas);
+                                    window["arregloCuentas"+arregloMonedas[p]][i][j][k][n][z].volumenFormula = resSub.volumen;
+                                    window["arregloCuentas"+arregloMonedas[p]][i][j][k][n][z].influenciaFormula = resSub.influencia;
+                                }
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        /*for (var i = 0; i < proyecciones.length; i++) {
+            for (var j = 0; j < variablesSolas[i].length; j++) {
+                if(variablesSolas[i][j].varPadre.length == 0) {
+                    var res = getInfluenceAndVolumeVariablesSola (variablesSolas[i][j], equacionVariables);
+                    variablesSolas[i][j].volumenFormula = res.volumen;
+                    variablesSolas[i][j].influenciaFormula = res.influencia;
+                } else {
+                    var res = getInfluenceAndVolumeVariablesSola (variablesSolas[i][j], equacionSubVariablesConPadres);
+                    variablesSolas[i][j].volumenFormula = res.volumen;
+                    variablesSolas[i][j].influenciaFormula = res.influencia;
+                }
+                for (var k = 0; k < subvariablesSolas[i][j].length; k++) {
+                    var resSub = getInfluenceAndVolumeVariablesSola (subvariablesSolas[i][j][k], equacionSubVariables);
+                    subvariablesSolas[i][j][k].volumenFormula = resSub.volumen;
+                    subvariablesSolas[i][j][k].influenciaFormula = resSub.influencia;
+                    for (var n = 0; n < variablesDeSubVariablesSolas[i][j][k].length; n++) {
+                        var resSub = getInfluenceAndVolumeVariablesSola (variablesDeSubVariablesSolas[i][j][k][n], equacionVarReglas);
+                        variablesDeSubVariablesSolas[i][j][k][n].volumenFormula = resSub.volumen;
+                        variablesDeSubVariablesSolas[i][j][k][n].influenciaFormula = resSub.influencia;
+                        for (var z = 0; z < arregloCuentas[i][j][k][n].length; z++) {
+                            if(arregloCuentas[i][j][k][n][z].varDeCuenta == undefined) {
+                                var resSub = getInfluenceAndVolumeCuenta (arregloCuentas[i][j][k][n][z], equacionVarCuentas);
+                                arregloCuentas[i][j][k][n][z].volumenFormula = resSub.volumen;
+                                arregloCuentas[i][j][k][n][z].influenciaFormula = resSub.influencia;
+                            }
+                        };
+                    };
+                };
+            };
+        };*/
+        //saveResults();
+    } else if(!soloUnoNoTieneFormula) {
+        $("body").overhang({
+            type: "error",
+            primary: "#f84a1d",
+            accent: "#d94e2a",
+            message: "Más de una variable no tiene fórmula asociada. Solo la variable del Ratio del RCL no debe tener fórmula.",
+            overlay: true,
+            closeConfirm: true
+        });
     } else {
         $("body").overhang({
             type: "error",
@@ -1218,100 +3177,271 @@ function calculateRCL (argument) {
     }
 }
 
-var arreglosNombres = [];
-/*function calculateRCL () {
-    arreglosNombres = [];
-    contadorFuncionPrint = 0;
-    if(formulaGlobal.length > 0) {
-        if(arregloVariables.length > 0) {
-            if(arregloVariablesDeVariables.length > 0) {
-                var variablesTexto = getVariables(formulaGlobal);
-                var salir = false, texto = '', tabla = '';
-                arregloVarDeVarFormula = []
-                for (var i = 0; i < variablesTexto.length; i++) {
-                    for (var j = 0; j < arregloVariables.length; j++) {
-                        if(arregloVariables[j].variables.toLowerCase() == variablesTexto[i].toLowerCase()){
-                            for (var k = 0; k < arregloVariablesDeVariables.length; k++) {
-                                if(arregloVariablesDeVariables[k].idVariable == arregloVariables[j].ID){
-                                    if(arregloVariablesDeVariables[k].tablaAplicar == 1 && arregloActivos.length == 0) {
-                                        salir = true;
-                                        texto = arregloVariablesDeVariables[k].nombre;
-                                        tabla = 'activos';
-                                        break;
-                                    } else if(arregloVariablesDeVariables[k].tablaAplicar == 2 && arregloDepositos.length == 0) {
-                                        salir = true;
-                                        texto = arregloVariablesDeVariables[k].nombre;
-                                        tabla = 'depositos';
-                                        break;
-                                    } else {
-                                        var encontro = arregloVarDeVarFormula.filter(function( object ) {
-                                                            return object.ID == arregloVariablesDeVariables[k].ID;
-                                                        });
-                                        if(encontro.length == 0) {
-                                            arregloVarDeVarFormula.push(arregloVariablesDeVariables[k]);
-                                            var arregloNombre = '';
-                                            if(arregloVariablesDeVariables[k].tablaAplicar == 1)
-                                                arregloNombre = 'arregloActivos';
-                                            else if(arregloVariablesDeVariables[k].tablaAplicar == 2)
-                                                arregloNombre = 'arregloDepositos';
-                                            arreglosNombres.push(arregloNombre);
-                                        }
-                                    }
-                                }
-                            };
-                        }
-                        if(salir)
-                            break;
+function getVarForTotal(nombreVariable, proyeccion) {
+    for (var i = 0; i < variablesSolas.length; i++) {
+        for (var j = 0; j < variablesSolas[i].length; j++) {
+            if(variablesSolas[i][j].variable.toLowerCase().localeCompare(nombreVariable.toLowerCase()) == 0 && proyeccion == variablesSolas[i][j].tipoProyeccion) {
+                return variablesSolas[i][j];
+            }
+        };
+    };
+    return undefined;
+}
+
+function saveResults () {
+    /*for (var p = 0; p < arregloMonedas.length; p++) {
+        for (var i = 0; i < variablesSolas.length; i++) {
+            for (var j = 0; j < variablesSolas[i].length; j++) {
+                if(variablesSolas[i][j] != undefined)
+                    checkIfResultExists(variablesSolas[i][j]);
+                for (var k = 0; k < subvariablesSolas[i][j].length; k++) {
+                    if(subvariablesSolas[i][j][k] != undefined)
+                        checkIfResultExists(subvariablesSolas[i][j][k]);
+                    for (var n = 0; n < variablesDeSubVariablesSolas[i][j][k].length; n++) {
+                        if(variablesDeSubVariablesSolas[i][j][k][n] != undefined)
+                            checkIfResultExists(variablesDeSubVariablesSolas[i][j][k][n]);
+                        for (var z = 0; z < arregloCuentas[i][j][k][n].length; z++) {
+                            if(arregloCuentas[i][j][k][n][z] != undefined)
+                                checkIfResultExists(arregloCuentas[i][j][k][n][z]);
+                        };
                     };
-                    if(salir)
-                        break;
                 };
-                if(salir) {
-                    $("body").overhang({
-                        type: "error",
-                        primary: "#f84a1d",
-                        accent: "#d94e2a",
-                        message: "No existen valores en la base de datos de la tabla "+tabla+" y la sub-variable "+texto+" los ocupa.",
-                        duration: 3,
-                        overlay: true,
-                        closeConfirm: true
+            };
+        };
+    };*/
+    for (var p = 0; p < arregloMonedas.length; p++) {
+        for (var i = 0; i < variablesSolas.length; i++) {
+            for (var j = 0; j < variablesSolas[i].length; j++) {
+                if(variablesSolas[i][j] != undefined) {
+                    checkIfResultExists(window["variablesSolas"+arregloMonedas[p]][i][j]);
+                    if(window["variablesSolas"+arregloMonedas[p]][i][j].esRCL)
+                        totalesRCL.push({proyeccion: proyecciones[i], total: window["variablesSolas"+arregloMonedas[p]][i][j].total});
+                }
+                for (var k = 0; k < subvariablesSolas[i][j].length; k++) {
+                    if(subvariablesSolas[i][j][k] != undefined)
+                        checkIfResultExists(window["subvariablesSolas"+arregloMonedas[p]][i][j][k]);
+                    for (var n = 0; n < variablesDeSubVariablesSolas[i][j][k].length; n++) {
+                        if(variablesDeSubVariablesSolas[i][j][k][n] != undefined)
+                            checkIfResultExists(window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k][n]);
+                        for (var z = 0; z < arregloCuentas[i][j][k][n].length; z++) {
+                            if(arregloCuentas[i][j][k][n][z] != undefined)
+                                checkIfResultExists(window["arregloCuentas"+arregloMonedas[p]][i][j][k][n][z]);
+                        };
+                    };
+                };
+            };
+        };
+    };
+    $("body").overhang({
+        type: "success",
+        primary: "#40D47E",
+        accent: "#27AE60",
+        message: "Resultados guardados satisfactoriamente.",
+        duration: 2,
+        overlay: true
+    });
+    var content = '';
+    var colores = ["aero", "green", "blue", "red"];
+    for (var i = 0; i < totalesRCL.length; i++) {
+        content+='<li class="media event">'+
+                    '<a class="pull-left border-aero profile_thumb">'+
+                      '<i class="fa fa-check '+colores[i]+'"></i>'+
+                    '</a>'+
+                    '<div class="media-body">'+
+                      '<a class="title" href="#">Proyección: '+totalesRCL[i].proyeccion+'</a>'+
+                      '<p><strong>'+totalesRCL[i].total+'</strong> % </p>'+
+                      '</p>'+
+                    '</div>'+
+                  '</li>';
+    };
+    $("#totalesRCL").empty();
+    $("#totalesRCL").append(content);
+    $("#modalTotalRCL").modal('toggle');
+}
+
+function checkIfResultExists (variable) {
+    /*var fecha = new Date();
+    const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false
+ 
+        transaction.on('rollback', aborted => {
+            // emited with aborted === true
+     
+            rolledBack = true
+        })
+        const request = new sql.Request(transaction);
+        request.query("select * from Totales where fecha = '"+formatDateCreation(new Date(variable.dia))+"' and tipoProyeccion = "+variable.tipoProyeccion+" and nombreVariable = '"+variable.variable+"'", (err, result) => {
+            if (err) {
+                console.log('err');
+                console.log(err);
+                if (!rolledBack) {
+                    transaction.rollback(err => {
+                        $("body").overhang({
+                            type: "error",
+                            primary: "#f84a1d",
+                            accent: "#d94e2a",
+                            message: "Error en revision de existencia de Totales.",
+                            overlay: true,
+                            closeConfirm: true
+                        });
                     });
-                } else
-                    getRulesByVariable();
+                }
             } else {
-                $("body").overhang({
-                    type: "error",
-                    primary: "#f84a1d",
-                    accent: "#d94e2a",
-                    message: "No existen sub-variables en la base de datos.",
-                    duration: 2,
-                    overlay: true,
-                    closeConfirm: true
+                transaction.commit(err => {
+                    // ... error checks
+                    if (result.recordset.length > 0) {
+                        result.recordset[0].fecha = new Date(result.recordset[0].fecha.getUTCFullYear(), result.recordset[0].fecha.getUTCMonth(), result.recordset[0].fecha.getUTCDate());
+                        deleteRCL(result.recordset[0], variable);
+                    } else {*/
+                        saveRCL(variable);
+                    /*}
                 });
             }
-        } else {
-            $("body").overhang({
-                type: "error",
-                primary: "#f84a1d",
-                accent: "#d94e2a",
-                message: "No existen variables en la base de datos.",
-                duration: 2,
-                overlay: true,
-                closeConfirm: true
-            });
-        }
-    } else {
-        $("body").overhang({
-            type: "error",
-            primary: "#f84a1d",
-            accent: "#d94e2a",
-            message: "No existe una formula en la base de datos.",
-            duration: 2,
-            overlay: true,
-            closeConfirm: true
         });
+    });*/ // fin transaction
+}
+
+function saveRCL (variable) {
+    const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false
+ 
+        transaction.on('rollback', aborted => {
+            // emited with aborted === true
+     
+            rolledBack = true
+        })
+        const request = new sql.Request(transaction);
+        request.query("insert into Totales (nombreVariable, fecha, tipoProyeccion, volumenFormula, influenciaFormula, numerador, denominador, moneda, sucursal, tipo, tablaAplicar, varPadre, esNumerador, esRCL, totalRCL, total) values ('"+variable.variable+"','"+formatDateCreation(new Date (variable.dia.getFullYear(), variable.dia.getMonth(), variable.dia.getDate()/*+diaRCL*/))+"',"+variable.tipoProyeccion+","+variable.volumenFormula+","+variable.influenciaFormula+","+variable.numerador+","+variable.denominador+",'"+variable.moneda+"','"+variable.sucursal+"','"+variable.tipo+"',"+variable.tablaAplicar+",'"+variable.varPadre+"','"+variable.esNumerador+"','"+variable.esRCL+"',"+variable.totalRCL+","+variable.total+")", (err, result) => {
+            if (err) {
+                console.log(err)
+                if (!rolledBack) {
+                    console.log(err)
+                    console.log(variable)
+                    transaction.rollback(err => {
+                        $("body").overhang({
+                            type: "error",
+                            primary: "#f84a1d",
+                            accent: "#d94e2a",
+                            message: "Error en inserción de Totales.",
+                            overlay: true,
+                            closeConfirm: true
+                        });
+                    });
+                }
+            } else {
+                transaction.commit(err => {
+                    // ... error checks
+                });
+            }
+        });
+    }); // fin transaction
+}
+
+function deleteRCL (oldVariable, newVariable) {
+    let variable = newVariable;
+    const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false
+ 
+        transaction.on('rollback', aborted => {
+            // emited with aborted === true
+     
+            rolledBack = true
+        })
+        const request = new sql.Request(transaction);
+        request.query("delete from Totales where id = "+oldVariable.ID, (err, result) => {
+            if (err) {
+                console.log('err');
+                console.log(err);
+                if (!rolledBack) {
+                    transaction.rollback(err => {
+                        $("body").overhang({
+                            type: "error",
+                            primary: "#f84a1d",
+                            accent: "#d94e2a",
+                            message: "Error en inserción de Totales.",
+                            overlay: true,
+                            closeConfirm: true
+                        });
+                    });
+                }
+            } else {
+                transaction.commit(err => {
+                    // ... error checks
+                    console.log('variable')
+                    console.log(variable)
+                    saveRCL(variable);
+                });
+            }
+        });
+    }); // fin transaction
+}
+
+
+function getNumeratorFraction(equacion) {
+    var numeradores = [];
+    var variable = '', esNumerador = true;
+    for (var i = 0; i < equacion.length; i++) {
+        var tempNumerador, inserto = false;
+        variable+=equacion.charAt(i);
+        if(equacion.charAt(i) == "(" && esNumerador) {
+            tempNumerador = [equacion.slice(i+1, countPosFractioParenthes(equacion, i)+1)].join('');
+            inserto = true;
+        } else if(equacion.charAt(i) == "/") {
+            esNumerador = false;
+        } else if(equacion.charAt(i) == ")" && !esNumerador) {
+            esNumerador = true;
+        }
+        if(inserto && esNumerador) {
+            variable = '';
+            numeradores.push(tempNumerador);
+        } else if (i == equacion.length-1 && numeradores.length == 0) {
+            numeradores.push(variable);
+        }
+    };
+    return numeradores;
+}
+
+function countPosFractioParenthes (cadena, pos) {
+    var contadorFrac = 0;
+    for (var i = pos; i < cadena.length; i++) {
+      if( cadena.charAt(i) == '(' )
+        contadorFrac++;
+      else if( cadena.charAt(i) == ')' )
+        contadorFrac--;
+      if(contadorFrac == 0)
+        return i-1;
     }
-}*/
+    return i;
+}
+
+function getDenominatorFraction(equacion) {
+    var denominadores = [];
+    var variable = '', esDenominador = false, ultimoParentesis = 1000;
+    for (var i = 0; i < equacion.length; i++) {
+        var tempNumerador, inserto = false;
+        variable+=equacion.charAt(i);
+        if(equacion.charAt(i) == "(" && esDenominador) {
+            tempNumerador = [equacion.slice(i+1, countPosFractioParenthes(equacion, i)+1)].join('');
+            inserto = true;
+            ultimoParentesis = countPosFractioParenthes(equacion, i);
+        } else if(equacion.charAt(i) == "/") {
+            esDenominador = true;
+            ultimoParentesis = countPosFractioParenthes(equacion, i+1);
+        } else if(i >= ultimoParentesis) {
+            esDenominador = false;
+        }
+        if(inserto && esDenominador) {
+            variable = '';
+            denominadores.push(tempNumerador);
+        }/* else if (i == equacion.length-1 && denominadores.length == 0) {
+            denominadores.push(variable);
+        }*/
+    };
+    return denominadores;
+}
 
 function getVariables (equacion) {
     var variable = [];
@@ -1327,6 +3457,228 @@ function getVariables (equacion) {
     return variable;
 }
 
+//retorna si todas las variables de la formula ya fueron calculadas (se les ingreso valor)
+function VarEnFormulaYaCalculadas (equacion, proyeccion) {
+    var variables = [];
+    for (var i = 0; i < equacion.length; i++) {
+        if(equacion.charAt(i) != "(" && equacion.charAt(i) != ")" && equacion.charAt(i) != "<" && equacion.charAt(i) != ">" && 
+            equacion.charAt(i) != "!" && equacion.charAt(i) != "=" && equacion.charAt(i) != "/" && equacion.charAt(i) != "*" && 
+            equacion.charAt(i) != "√" && equacion.charAt(i) != "+" && equacion.charAt(i) != "-" && isNaN(equacion.charAt(i))) {
+            var pal = getVariable(equacion, i);
+            variables.push(pal);
+            i+=pal.length-1;
+        }
+    };
+    var contador = 0;
+    for (var i = 0; i < proyecciones.length; i++) {
+        for (var n = 0; n < variables.length; n++) {
+            OuterLoop:
+            for (var j = 0; j < variablesSolas[i].length; j++) {
+                for (var k = 0; k < subvariablesSolas[i][j].length; k++) {
+                    if( variables[n].toLowerCase().localeCompare(subvariablesSolas[i][j][k].variable.toLowerCase()) == 0 && subvariablesSolas[i][j][k].calculada == true && subvariablesSolas[i][j][k].tipoProyeccion == proyeccion ) {
+                        contador++;
+                        break OuterLoop;
+                    }
+                };
+                if( variables[n].toLowerCase().localeCompare(variablesSolas[i][j].variable.toLowerCase()) == 0 && variablesSolas[i][j].calculada == true && variablesSolas[i][j].tipoProyeccion == proyeccion ) {
+                    contador++;
+                    break OuterLoop;
+                }
+            };
+        };
+    };
+    if(contador == variables.length) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+function VarEnFormulaYaCalculadasMoneda (equacion, proyeccion, moneda) {
+    var variables = [];
+    for (var i = 0; i < equacion.length; i++) {
+        if(equacion.charAt(i) != "(" && equacion.charAt(i) != ")" && equacion.charAt(i) != "<" && equacion.charAt(i) != ">" && 
+            equacion.charAt(i) != "!" && equacion.charAt(i) != "=" && equacion.charAt(i) != "/" && equacion.charAt(i) != "*" && 
+            equacion.charAt(i) != "√" && equacion.charAt(i) != "+" && equacion.charAt(i) != "-" && isNaN(equacion.charAt(i))) {
+            var pal = getVariable(equacion, i);
+            variables.push(pal);
+            i+=pal.length-1;
+        }
+    };
+    var contador = 0;
+    for (var i = 0; i < proyecciones.length; i++) {
+        for (var n = 0; n < variables.length; n++) {
+            OuterLoop:
+            for (var j = 0; j < window["variablesSolas"+moneda][i].length; j++) {
+                for (var k = 0; k < window["subvariablesSolas"+moneda][i][j].length; k++) {
+                    if( variables[n].toLowerCase().localeCompare(window["subvariablesSolas"+moneda][i][j][k].variable.toLowerCase()) == 0 && window["subvariablesSolas"+moneda][i][j][k].calculada == true && window["subvariablesSolas"+moneda][i][j][k].tipoProyeccion == proyeccion ) {
+                        contador++;
+                        break OuterLoop;
+                    }
+                };
+                if( variables[n].toLowerCase().localeCompare(window["variablesSolas"+moneda][i][j].variable.toLowerCase()) == 0 && window["variablesSolas"+moneda][i][j].calculada == true && window["variablesSolas"+moneda][i][j].tipoProyeccion == proyeccion ) {
+                    contador++;
+                    break OuterLoop;
+                }
+            };
+        };
+    };
+    if(contador == variables.length) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+function customReplace (charToLook, charToReplace, string) {
+    var retornoString = string;
+    for (var i = 0; i < string.length; i++) {
+        if(retornoString.charAt(i).localeCompare(charToLook) == 0) {
+            retornoString = retornoString.substring(0, i) + charToReplace + retornoString.substring(i+1);
+        }
+    };
+    return retornoString;
+}
+
+function getInfluenceAndVolumeVariablesSola (variable, ecuacionResuelta) {
+    var total = {volumen: 0, influencia: 0};
+    /*console.log("variable = "+variable.variable)
+    console.log(ecuacionResuelta)
+    console.log("+++++++++++")*/
+    /*for (var z = 0; z < ecuacionResuelta.length; z++) {
+        if( ecuacionResuelta.charAt(z) != "(" && ecuacionResuelta.charAt(z) != ")" && ecuacionResuelta.charAt(z) != "<" && ecuacionResuelta.charAt(z) != ">" && 
+            ecuacionResuelta.charAt(z) != "!" && ecuacionResuelta.charAt(z) != "=" && ecuacionResuelta.charAt(z) != "/" && ecuacionResuelta.charAt(z) != "*" && 
+            ecuacionResuelta.charAt(z) != "√" && ecuacionResuelta.charAt(z) != "+" && ecuacionResuelta.charAt(z) != "-" && isNaN(ecuacionResuelta.charAt(z)) ) {
+            var pal = getVariable(ecuacionResuelta, z);
+            if(variable.variable.toLowerCase().localeCompare(pal.toLowerCase()) == 0) {
+                total.volumen+=variable.total;
+                if( ecuacionResuelta.charAt(z-1).localeCompare("-") == 0 || ecuacionResuelta.charAt(z-1).localeCompare("+") == 0 ||
+                    ecuacionResuelta.charAt(z-1).localeCompare("/") == 0 || ecuacionResuelta.charAt(z-1).localeCompare("*") == 0 &&
+                    total.influencia > 0) {
+                    total.influencia = math.eval(total.influencia + ecuacionResuelta.charAt(z-1) + variable.total);
+                }
+                if( ecuacionResuelta.charAt(z-1).localeCompare("-") == 0 || ecuacionResuelta.charAt(z-1).localeCompare("+") == 0 ||
+                    ecuacionResuelta.charAt(z-1).localeCompare("/") == 0 || ecuacionResuelta.charAt(z-1).localeCompare("*") == 0 &&
+                    total.influencia == 0) {
+                    total.influencia = variable.total;
+                }
+                //para tomar la primera variable de una division
+                if( ecuacionResuelta.charAt(z-1).localeCompare("(") == 0 ) {
+                    total.influencia += variable.total;
+                } else if(z == 0) { //para tomar la primera variable de una NO division
+                    total.influencia += variable.total;
+                }
+                z += variable.total.toString().length-1;
+            } else {
+                z += pal.length-1;
+            }
+        }
+    };*/
+    var ecuacion = '';
+    var ecuacion1 = '';
+    for (var z = 0; z < ecuacionResuelta.length; z++) {
+        if( ecuacionResuelta.charAt(z) != "(" && ecuacionResuelta.charAt(z) != ")" && ecuacionResuelta.charAt(z) != "<" && ecuacionResuelta.charAt(z) != ">" && 
+            ecuacionResuelta.charAt(z) != "!" && ecuacionResuelta.charAt(z) != "=" && ecuacionResuelta.charAt(z) != "/" && ecuacionResuelta.charAt(z) != "*" && 
+            ecuacionResuelta.charAt(z) != "√" && ecuacionResuelta.charAt(z) != "+" && ecuacionResuelta.charAt(z) != "-" ) {
+            var pal = getVariable(ecuacionResuelta, z);
+            if(variable.variable.toLowerCase().localeCompare(pal.toLowerCase()) == 0) {
+                if(ecuacion.length == 0) {
+                    ecuacion+=variable.total;
+                    ecuacion1+=variable.variable;
+                } else {
+                    var signo = '';
+                    if(ecuacionResuelta.charAt(z-1).localeCompare("-") == 0 || ecuacionResuelta.charAt(z-1).localeCompare("+") == 0 ||
+                        ecuacionResuelta.charAt(z-1).localeCompare("/") == 0 || ecuacionResuelta.charAt(z-1).localeCompare("*") == 0)
+                        signo = ecuacionResuelta.charAt(z-1);
+                    ecuacion+=signo+variable.total;
+                    ecuacion1+=signo+variable.variable;
+                }
+            } else {
+                z += pal.length-1;
+            }
+        }
+    };
+    total.volumen = variable.total;
+    total.influencia = math.eval(ecuacion);
+    /*console.log(ecuacion);
+    console.log(ecuacion1);
+    console.log(total);*/
+    return total;
+}
+
+function getInfluenceAndVolumeCuenta (variable, ecuacionResuelta) {
+    var total = {volumen: 0, influencia: 0};
+    /*console.log("variable = "+variable.variable)
+    console.log(ecuacionResuelta)
+    console.log("+++++++++++")*/
+    /*for (var z = 0; z < ecuacionResuelta.length; z++) {
+        if( ecuacionResuelta.charAt(z) != "(" && ecuacionResuelta.charAt(z) != ")" && ecuacionResuelta.charAt(z) != "<" && ecuacionResuelta.charAt(z) != ">" && 
+            ecuacionResuelta.charAt(z) != "!" && ecuacionResuelta.charAt(z) != "=" && ecuacionResuelta.charAt(z) != "/" && ecuacionResuelta.charAt(z) != "*" && 
+            ecuacionResuelta.charAt(z) != "√" && ecuacionResuelta.charAt(z) != "+" && ecuacionResuelta.charAt(z) != "-" ) {
+            var pal = getVariable(ecuacionResuelta, z);
+            if(variable.variable.toLowerCase().localeCompare(pal.toLowerCase()) == 0) {
+                var yaEntro = false;
+                //porque el total de la cuenta ya trae el volumen
+                total.volumen = variable.total;
+                //console.log(variable)
+                if( (ecuacionResuelta.charAt(z-1).localeCompare("-") == 0 || ecuacionResuelta.charAt(z-1).localeCompare("+") == 0 ||
+                    ecuacionResuelta.charAt(z-1).localeCompare("/") == 0 || ecuacionResuelta.charAt(z-1).localeCompare("*") == 0) &&
+                    total.influencia > 0) {
+                    //console.log('1')
+                    //console.log(total.influencia + ecuacionResuelta.charAt(z-1) + variable.precioUnidad)
+                    total.influencia = math.eval(total.influencia + ecuacionResuelta.charAt(z-1) + variable.precioUnidad);
+                    yaEntro = true;
+                }
+                if( (ecuacionResuelta.charAt(z-1).localeCompare("-") == 0 || ecuacionResuelta.charAt(z-1).localeCompare("+") == 0 ||
+                    ecuacionResuelta.charAt(z-1).localeCompare("/") == 0 || ecuacionResuelta.charAt(z-1).localeCompare("*") == 0) &&
+                    total.influencia == 0 && !yaEntro) {
+                    //console.log('2')
+                    //console.log(variable.precioUnidad)
+                    total.influencia = variable.precioUnidad;
+                }
+                if( ecuacionResuelta.charAt(z-1).localeCompare("(") == 0 ) {
+                    //console.log('3')
+                    //console.log(variable.precioUnidad)
+                    total.influencia += variable.precioUnidad;
+                }
+                z += variable.precioUnidad.toString().length-1;
+            } else {
+                z += pal.length-1;
+            }
+        }
+    };*/
+    var ecuacion = '';
+    var ecuacion1 = '';
+    for (var z = 0; z < ecuacionResuelta.length; z++) {
+        if( ecuacionResuelta.charAt(z) != "(" && ecuacionResuelta.charAt(z) != ")" && ecuacionResuelta.charAt(z) != "<" && ecuacionResuelta.charAt(z) != ">" && 
+            ecuacionResuelta.charAt(z) != "!" && ecuacionResuelta.charAt(z) != "=" && ecuacionResuelta.charAt(z) != "/" && ecuacionResuelta.charAt(z) != "*" && 
+            ecuacionResuelta.charAt(z) != "√" && ecuacionResuelta.charAt(z) != "+" && ecuacionResuelta.charAt(z) != "-" ) {
+            var pal = getVariable(ecuacionResuelta, z);
+            if(variable.variable.toLowerCase().localeCompare(pal.toLowerCase()) == 0) {
+                if(ecuacion.length == 0) {
+                    ecuacion+=variable.variable;
+                    ecuacion1+=variable.precioUnidad;
+                } else {
+                    var signo = '';
+                    if(ecuacionResuelta.charAt(z-1).localeCompare("-") == 0 || ecuacionResuelta.charAt(z-1).localeCompare("+") == 0 ||
+                        ecuacionResuelta.charAt(z-1).localeCompare("/") == 0 || ecuacionResuelta.charAt(z-1).localeCompare("*") == 0)
+                        signo = ecuacionResuelta.charAt(z-1);
+                    ecuacion+=signo+variable.variable;
+                    ecuacion1+=signo+variable.precioUnidad;
+                }
+            } else {
+                z += pal.length-1;
+            }
+        }
+    };
+    total.volumen = variable.total;
+    total.influencia = math.eval(ecuacion1);
+    /*console.log(ecuacion);
+    console.log(ecuacion1);
+    console.log(total);*/
+    return total;
+}
+
 /*function getVariable (equacion, index) {
     var variable = '';
     for (var i = index; i < equacion.length; i++) {
@@ -1340,198 +3692,40 @@ function getVariables (equacion) {
     return variable;
 }*/
 
-function getRulesByVariable () {
-    arregloDeReglas = [];
-    arregloDeComprobacionDeReglas = [];
-    console.log('arregloActivos');
-    console.log(arregloActivos);
-    console.log(arregloActivos[0].monto);
-    contadorEntrarCreateFunctionsArray = 0;
-    for (var i = 0; i < arregloVarDeVarFormula.length; i++) {
-        console.log('---------');
-        console.log(arregloVarDeVarFormula[i]);
-        console.log('---------');
-        loadRules(arregloVarDeVarFormula[i].ID);
-    }
-}
 
-var arregloDeFuncionesReglas = [];
-var arregloDeFuncionesFiltros = [];
-var arregloDeReglasNullPosiciones = [];
-
-function createFunctionsArray (argument) {
-    console.log("jkjkjkjkj");
-    console.log('arregloActivos');
-    console.log(arregloActivos);
-    console.log('arregloDeReglas');
-    console.log(arregloDeReglas);
-    console.log('arreglosNombres');
-    console.log(arreglosNombres);
-    console.log('arregloVarDeVarFormula');
-    console.log(arregloVarDeVarFormula);
-    console.log('contadorEntrarCreateFunctionsArray');
-    console.log(contadorEntrarCreateFunctionsArray);
-    var contienePurosNull = false, contadorDeNulls = 0;
-    for (var i = 0; i < arregloDeReglas.length; i++) {
-        if(arregloDeReglas[i].length == 0)
-            contadorDeNulls++;
+function getMontoFOSEDE (moneda) {
+    for (var i = 0; i < montoFosedeGlobal.length; i++) {
+        if(montoFosedeGlobal[i].moneda.toLowerCase().localeCompare(moneda.toLowerCase()) == 0)
+            return montoFosedeGlobal[i].montoFosede;
     };
-    if(contadorDeNulls == arregloDeReglas.length)
-        contienePurosNull = true;
-    if(arregloVarDeVarFormula.length == contadorEntrarCreateFunctionsArray && !contienePurosNull) {
-        //console.log("ANTES ANTES");
-        arregloDeReglasNullPosiciones = [];
-        for (var i = 0; i < arregloDeReglas.length; i++) {
-            //console.log(arregloDeReglas[i]);
-            if(arregloDeReglas[i].length == 0) {
-                arregloDeReglasNullPosiciones.push(i);
-            }
-        };
-        for (var i = 0; i < arregloDeReglas.length; i++) {
-            var indice = ubicacion(arregloDeReglas[i]);
-            if(indice != -1) {
-                var temp = arregloDeReglas[indice];
-                arregloDeReglas[indice] = arregloDeReglas[i];
-                arregloDeReglas[i] = temp;
-            }
-        };
-        for (var i = 0; i < arregloDeFiltros.length; i++) {
-            var indice = ubicacion(arregloDeFiltros[i]);
-            if(indice != -1) {
-                var temp = arregloDeFiltros[indice];
-                arregloDeFiltros[indice] = arregloDeFiltros[i];
-                arregloDeFiltros[i] = temp;
-            }
-        };
-        /*arregloDeFiltros.sort(function(a, b){
-            if(a.length > 0 && b.length == 0)
-                return 0;
-            if(a.length == 0 && b.length == 0)
-                return 0;
-            if(a.length == 0 && b.length > 0)
-                return 1;
-            if(a[0].variablePadre > b[0].variablePadre)
-                return 1;
-            else
-                return 0;
-        });*/
-        //console.log("ANTES ANTES");
-        /*for (var i = 0; i < arregloVariables.length; i++) {
-            var encontro = false;
-            for (var j = 0; j < arregloVariablesDeVariables.length; j++) {
-                if(arregloVariablesDeVariables[j].idVariable == arregloVariables[i].ID) {
-                    encontro = true;
-                    break;
-                }
-            };
-            if(!encontro)
-                arregloDeReglas.splice(i, 0, null);
-        };*/
-        /*console.log("DESPUES DESPUES");
-        for (var i = 0; i < arregloDeReglas.length; i++) {
-            console.log(arregloDeReglas[i]);
-        };
-        console.log("DESPUES DESPUES");*/
-        arregloDeFuncionesReglas = [];
-        for (var i = 0; i < arregloDeReglas.length; i++) {
-            var rulesArray = [];
-            if(arregloDeReglas[i] != null) {
-                for (var j = 0; j < arregloDeReglas[i].length; j++) {
-                    if(arregloDeReglas[i][j].reglaPadre == 0) {
-                        var arreglo = [];
-                        var resultado = campoObjetivo(arregloDeReglas[i][j], arreglo, 0, i);
-                        resultado[0] = "\n"+resultado[0];
-                        $.merge( rulesArray, resultado );
-                    }
-                }
-            }
-            arregloDeFuncionesReglas.push(rulesArray);
-        };
-        for (var i = 0; i < arregloDeFiltros.length; i++) {
-            var rulesArray = [];
-            if(arregloDeFiltros[i] != null) {
-                for (var j = 0; j < arregloDeFiltros[i].length; j++) {
-                    if(arregloDeFiltros[i][j].reglaPadre == 0) {
-                        var arreglo = [];
-                        var resultado = campoObjetivo(arregloDeFiltros[i][j], arreglo, 0, i);
-                        resultado[0] = "\n"+resultado[0];
-                        $.merge( rulesArray, resultado );
-                    }
-                }
-            }
-            arregloDeFuncionesFiltros.push(rulesArray);
-        };
-        /*console.log("11111111========11111111");
-        for (var i = 0; i < arregloDeFunciones.length; i++) {
-            console.log(arregloDeFunciones[i]);
-        };
-        console.log("11111111========11111111");
-        for (var j = 0; j < arregloVariables.length; j++) {
-            var entro = false;
-            var varialesHijas = arregloVariablesDeVariables.filter(function( object ) {
-                                    return object.idVariable == arregloVariables[j].ID;
-                                });
-            for (var k = 0; k < varialesHijas.length; k++) {
-                for (var i = 0; i < arregloDeReglas.length; i++) {
-                    if(arregloDeReglas[i] != null) {
-                        for (var r = 0; r < arregloDeReglas[i].length; r++) {
-                            if(arregloDeReglas[i][r].variablePadre == varialesHijas[k].ID)
-                                entro = true;
-                        };
-                    }
-                };
-            };
-            if(!entro)
-                arregloDeFunciones.splice(j, 0, null);
-        };*/
-        console.log("+++++++========+++++++");
-        for (var i = 0; i < arregloDeFuncionesReglas.length; i++) {
-            console.log(arregloDeFuncionesReglas[i]);
-        };
-        console.log("+++++++========+++++++");
-        createMethods();
-    } else if(arregloVariablesDeVariables.length == contadorEntrarCreateFunctionsArray && contienePurosNull) {
-        $("body").overhang({
-            type: "error",
-            primary: "#f84a1d",
-            accent: "#d94e2a",
-            message: "No existen reglas en la base de datos.",
-            duration: 2,
-            overlay: true,
-            closeConfirm: true
-        });
-    }
+    return 0;
 }
 
-function ubicacion (arreglo) {
-    var index = -1;
-    /*console.log('---------------\n---\n-----+++');
-    console.log('HOHOHOHOHO');
-    console.log(arreglo);
-    console.log(arreglo[0]);*/
-    if(arreglo.length > 0){
-        for (var i = 0; i < arregloVarDeVarFormula.length; i++) {
-            /*console.log('arregloVarDeVarFormula[i]');
-            console.log(arregloVarDeVarFormula[i]);
-            console.log('HOHOHOHOHO');
-            console.log(arreglo);
-            console.log(arreglo[0]);*/
-            if(arregloVarDeVarFormula[i].ID == arreglo[0].variablePadre) {
-                /*console.log('arregloVarDeVarFormula[i]');
-                console.log(arregloVarDeVarFormula[i]);*/
-                index = i;
-                break;
-            }
-        };
-    }
-    /*console.log('index');
-    console.log(index);
-    console.log('---------------\n---\n-----+++');*/
-    return index;
+function conCuentasHastaFOSEDE () {
+    var sumaCuentas = 0;
+    for (var i = 0; i < cuentasOperativasClientes.length; i++) {
+        cuentasOperativasClientes[i]
+    };
+    return sumaCuentas;
 }
 
-function campoObjetivo (regla, arreglo, tabs, index) {
-    var esCondicion = false;
+function conCuentasMayorFOSEDE () {
+    var sumaCuentas = -1;
+    return sumaCuentas;
+}
+
+function sinCuentasHastaFOSEDE () {
+    var sumaCuentas = -1;
+    return sumaCuentas;
+}
+
+function sinCuentasMayorFOSEDE () {
+    var sumaCuentas = -1;
+    return sumaCuentas;
+}
+
+function campoObjetivoDepositos (regla, arreglo, tabs, variable, proyeccion) {
+    var esCondicion = false, noAgregarFactor = false, noAgregarFecha = false;
     if(regla.operacion=="-" || regla.operacion=="+" || regla.operacion=="*" || regla.operacion=="/" || regla.operacion=="=")
         esCondicion = false;
     else
@@ -1545,538 +3739,435 @@ function campoObjetivo (regla, arreglo, tabs, index) {
         tabsText+='\t';
     };
     var posicionesIF = [];
-    console.log('index');
-    console.log(index);
-    console.log('index');
     if(regla.campoObjetivo.indexOf('COLUMNA') == 0) {
         if(esCondicion) {
-            var campo = arreglosNombres[index]+"Copia[i]."+regla.campoObjetivo.split("=")[1];
+            if(!regla.campoObjetivo.includes('plazoResidual')) {
+                var campo = regla.campoObjetivo.split("=")[1];
 
-            // Agregando campo Operacion
-            arreglo.push(tabsText+"if ( "+campo+" "+regla.operacion);
-            posicionesIF.push(arreglo.length);
-        } else {
-            var campo = arreglosNombres[index]+"Copia[i]."+regla.campoObjetivo.split("=")[1];
-
-            // Agregando campo Operacion
-            if(regla.operacion=="=")
-                arreglo.push(tabsText+campo+" "+regla.operacion);
-            else
-                arreglo.push(tabsText+campo+" = "+campo+" "+regla.operacion);
-        }
-        if(hasVariables)
-            textVariables.push(campo + " " + regla.operacion);
-    } else if(regla.campoObjetivo.indexOf('LISTA') == 0) {
-        var arregloLista = regla.campoObjetivo.split("=")[1].split(",");
-        if(esCondicion) {
-            // Agregando campo Operacion
-            if(regla.operacion == "!=") {
-                for (var i = 0; i < arregloLista.length; i++) {
-                    var opcionAMostrar = arregloLista[i].split("$");
-                    var valorElemento = arregloLista[i];
-                    if(opcionAMostrar.length > 1) {
-                        if(opcionAMostrar[1] == "1")
-                            valorElemento = opcionAMostrar[0].split("-")[0];
-                        else
-                            valorElemento = opcionAMostrar[0].split("-")[1];
-                    }
-                    if(isNaN(valorElemento))
-                        arreglo.push("\n"+tabsText+"if ( '"+valorElemento+"'' "+regla.operacion);
-                    else
-                        arreglo.push("\n"+tabsText+"if ( "+valorElemento+" "+regla.operacion);
-                    if(posicionesIF.length>0)
-                        posicionesIF.push(posicionesIF[posicionesIF.length-1]+2);
-                    else
-                        posicionesIF.push(1);
-                    if(hasVariables)
-                        textVariables.push(valorElemento + " " + regla.operacion);
-                };
+                // Agregando campo Operacion
+                if(regla.operacion=="en" || regla.operacion=="no")
+                    arreglo.push(tabsText+"if ( arregloDepositos[i]."+campo+".localeCompare('");
+                else
+                    arreglo.push(tabsText+"if ( arregloDepositos[i]."+campo+" "+regla.operacion);
+                //posicionesIF.push(arreglo.length-1);
+                posicionesIF.push(arreglo.length);
             } else {
-                for (var i = 0; i < arregloLista.length; i++) {
-                    var opcionAMostrar = arregloLista[i].split("$");
-                    var valorElemento = arregloLista[i];
-                    if(opcionAMostrar.length > 1){
-                        if(opcionAMostrar[1] == "1")
-                            valorElemento = opcionAMostrar[0].split("-")[0];
-                        else
-                            valorElemento = opcionAMostrar[0].split("-")[1];
-                    }
-                    if(isNaN(valorElemento))
-                        arreglo.push("\n"+tabsText+"if ( '"+valorElemento+"'' "+regla.operacion);
-                    else
-                        arreglo.push("\n"+tabsText+"if ( "+valorElemento+" "+regla.operacion);
-                    if(posicionesIF.length>0)
-                        posicionesIF.push(posicionesIF[posicionesIF.length-1]+2);
-                    else
-                        posicionesIF.push(1);
-                    if(hasVariables)
-                        textVariables.push(valorElemento + " " + regla.operacion);
-                };
+                noAgregarFecha = true;
+                var campo = regla.campoObjetivo.split("=")[1];
+
+                arreglo.push(tabsText+"var nuevaFecha"+regla.ID+" = new Date();\n");
+                arreglo.push(tabsText+"nuevaFecha"+regla.ID+" = addDays(nuevaFecha"+regla.ID+","+proyeccion+");\n");
+                var query, agregarComparator, agregarIsSame;
+                if(regla.operacion.includes("<")) {
+                    query = 'isBefore';
+                } else {
+                    query = 'isAfter';
+                }
+                if(!regla.operacion.includes("!") && !regla.operacion.includes("==")) {
+                    agregarComparator = "moment(arregloDepositos[i].fechaFinal)."+query+"(moment(nuevaFecha"+regla.ID+"), 'day')";
+                } else if(regla.operacion.includes("==")) {
+                    agregarComparator = "moment(arregloDepositos[i].fechaFinal).isSame(moment(nuevaFecha"+regla.ID+"), 'day')";
+                } else {
+                    agregarComparator = "!moment(arregloDepositos[i].fechaFinal).isSame(moment(nuevaFecha"+regla.ID+"), 'day')";
+                }
+                if(regla.operacion.includes("=") && (regla.operacion.includes("<") || regla.operacion.includes(">")) ) {
+                    agregarIsSame = " || moment(arregloDepositos[i].fechaFinal).isSame(moment(nuevaFecha"+regla.ID+"), 'day')";
+                } else {
+                    agregarIsSame = "";
+                }
+                // Agregando campo Operacion
+                arreglo.push(tabsText+"if ( "+agregarComparator+" "+agregarIsSame+" ) {");
+                //posicionesIF.push(arreglo.length-1);
+                posicionesIF.push(arreglo.length);
             }
         } else {
+            var campo = regla.campoObjetivo.split("=")[1];
+
             // Agregando campo Operacion
-            for (var i = 0; i < arregloLista.length; i++) {
-                var opcionAMostrar = arregloLista[i].split("$");
-                var valorElemento = arregloLista[i];
-                if(opcionAMostrar.length > 1){
-                    if(opcionAMostrar[1] == "1")
-                        valorElemento = opcionAMostrar[0].split("-")[0];
-                    else
-                        valorElemento = opcionAMostrar[0].split("-")[1];
-                }
-                if(regla.operacion=="=") {
-                    arreglo.push("\n"+tabsText+valorElemento+" "+regla.operacion);
-                } else {
-                    arreglo.push("\n"+tabsText+valorElemento+" = "+valorElemento+" "+regla.operacion);
-                }
-                if(hasVariables)
-                    textVariables.push(valorElemento + " " + regla.operacion);
-            };
+            arreglo.push(tabsText+"var totalDeposito = arregloDepositos[i].saldo;");
+            arreglo.push("\n"+tabsText+variable+proyeccion+" += totalDeposito "+regla.operacion);
         }
-    } else if(regla.campoObjetivo.indexOf('VARIABLE') == 0) {
-        var arregloVariable = regla.campoObjetivo.split("=")[1].split(",");
-        if(esCondicion) {
-            // Agregando campo Operacion
-            for (var i = 0; i < arregloVariable.length; i++) {
-                var textCreatedVariables = '';
-                if(arregloVariable[i].indexOf("RESULTADO") == 0 )
-                    textCreatedVariables = 'variableResultado'+regla.reglaPadre;
-                else if(arregloVariable[i].indexOf("OBJETIVO") == 0 )
-                    textCreatedVariables = 'variableObjetivo'+regla.reglaPadre;
-                else if(arregloVariable[i].indexOf("VALOR") == 0 )
-                    textCreatedVariables = 'variableValor'+regla.reglaPadre;
-                var valorLista = '';
-                if(arregloVariable[i].indexOf("$") > 0 ) {
-                    if(arregloVariable[i].split("$")[1] == "1")
-                        valorLista = ".nombre";
-                    else
-                        valorLista = ".valor";
-                }
-                arreglo.push(tabsText+"if ( "+textCreatedVariables+valorLista+" "+regla.operacion);
-                posicionesIF.push(arreglo.length);
-                if(hasVariables)
-                    textVariables.push(textCreatedVariables+valorLista + " " + regla.operacion);
-            };
-        } else {
-            // Agregando campo Operacion
-            for (var i = 0; i < arregloVariable.length; i++) {
-                var textCreatedVariables = '';
-                if(arregloVariable[i].indexOf("RESULTADO") == 0 )
-                    textCreatedVariables = 'variableResultado'+regla.reglaPadre;
-                else if(arregloVariable[i].indexOf("OBJETIVO") == 0 )
-                    textCreatedVariables = 'variableObjetivo'+regla.reglaPadre;
-                else if(arregloVariable[i].indexOf("VALOR") == 0 )
-                    textCreatedVariables = 'variableValor'+regla.reglaPadre;
-                var valorLista = '';
-                if(arregloVariable[i].indexOf("$") > 0 ) {
-                    if(arregloVariable[i].split("$")[1] == "1")
-                        valorLista = ".nombre";
-                    else
-                        valorLista = ".valor";
-                }
-                if(regla.operacion=="=")
-                    arreglo.push(tabsText+textCreatedVariables+valorLista+" "+regla.operacion);
-                else
-                    arreglo.push(tabsText+textCreatedVariables+valorLista+" = "+textCreatedVariables+valorLista+" "+regla.operacion);
-                if(hasVariables)
-                    textVariables.push(textCreatedVariables+valorLista + " " + regla.operacion);
-            };
+    } else if(regla.campoObjetivo.indexOf('hastaFOSEDE') == 0) {
+        noAgregarFactor = true;
+        arreglo.push(tabsText+"var totalDeposito;");
+        arreglo.push("\n"+tabsText+"var montoFosede = getMontoFOSEDE(arregloDepositos[i].moneda);");
+        arreglo.push("\n"+tabsText+"if ( arregloDepositos[i].saldo > montoFosede )");
+        arreglo.push("\n\t"+tabsText+"totalDeposito = montoFosede;");
+        arreglo.push("\n"+tabsText+"else");
+        arreglo.push("\n\t"+tabsText+"totalDeposito = arregloDepositos[i].saldo;");
+        /*arreglo.push("\n\t"+tabsText+"console.log('total = '+totalDeposito * "+(parseInt(regla.valor.split("=")[1])/100)+");");
+        arreglo.push("\n\t"+tabsText+"console.log(arregloDepositos[i]);");
+        arreglo.push("\n\t"+tabsText+"console.log('factor = '+"+parseInt(regla.valor.split("=")[1])+");");
+        arreglo.push("\n\t"+tabsText+"console.log('porcentaje = '+"+(parseInt(regla.valor.split("=")[1])/100)+");");*/
+        arreglo.push("\n"+tabsText+variable+proyeccion+" += totalDeposito * "+(parseInt(regla.valor.split("=")[1])/100)+";");
+    } else if(regla.campoObjetivo.indexOf('mayorFOSEDE') == 0) {
+        noAgregarFactor = true;
+        arreglo.push(tabsText+"var montoFosede = getMontoFOSEDE(arregloDepositos[i].moneda);");
+        arreglo.push("\n"+tabsText+"if ( arregloDepositos[i].saldo > montoFosede ) {");
+        arreglo.push("\n"+tabsText+"\tvar totalDeposito = arregloDepositos[i].saldo - montoFosede;");
+        arreglo.push("\n\t"+tabsText+(variable+proyeccion)+" += totalDeposito * "+(parseInt(regla.valor.split("=")[1])/100)+";");
+        arreglo.push("\n"+tabsText+"}");
+    } else if(regla.campoObjetivo.indexOf('CONCUENTAS') == 0) {
+        noAgregarFactor = true;
+        if(regla.campoObjetivo.split("=")[1].localeCompare('hastaFOSEDE') == 0) {
+            arreglo.push(tabsText+"var totalDeposito = conCuentasHastaFOSEDE(arregloDepositos[i].idCliente);\n");
+            arreglo.push("\n"+tabsText+"var montoFosede = getMontoFOSEDE(arregloDepositos[i].moneda);");
+            arreglo.push(tabsText+"if ( arregloDepositos[i].saldo > montoFosede && totalDeposito != -1 ) {\n");
+            arreglo.push(tabsText+"\tif ( totalDeposito > montoFosede)");
+            arreglo.push("\n\t\t"+tabsText+"totalDeposito = montoFosede;");
+            arreglo.push("\n\t"+tabsText+(variable+proyeccion)+" += totalDeposito * "+(parseInt(regla.valor.split("=")[1])/100)+";");
+            arreglo.push("\n"+tabsText+"}");
+        } else if(regla.campoObjetivo.split("=")[1].localeCompare('mayorFOSEDE') == 0) {
+            arreglo.push(tabsText+"var totalDeposito = conCuentasMayorFOSEDE(arregloDepositos[i].idCliente);\n");
+            arreglo.push("\n"+tabsText+"var montoFosede = getMontoFOSEDE(arregloDepositos[i].moneda);");
+            arreglo.push(tabsText+"if ( arregloDepositos[i].saldo > montoFosede && totalDeposito != -1 ) {\n");
+            arreglo.push(tabsText+"\tif ( totalDeposito > montoFosede) {");
+            arreglo.push("\n\t\t"+tabsText+"totalDeposito = totalDeposito - montoFosede;");
+            arreglo.push("\n\t\t"+tabsText+(variable+proyeccion)+" += totalDeposito * "+(parseInt(regla.valor.split("=")[1])/100)+";");
+            arreglo.push("\n\t"+tabsText+"}");
+            arreglo.push("\n"+tabsText+"}");
+        }
+    } else if(regla.campoObjetivo.indexOf('SINCUENTAS') == 0) {
+        noAgregarFactor = true;
+        if(regla.campoObjetivo.split("=")[1].localeCompare('hastaFOSEDE') == 0) {
+            arreglo.push(tabsText+"var totalDeposito = sinCuentasHastaFOSEDE(arregloDepositos[i].idCliente);\n");
+            arreglo.push("\n"+tabsText+"var montoFosede = getMontoFOSEDE(arregloDepositos[i].moneda);");
+            arreglo.push(tabsText+"if ( arregloDepositos[i].saldo > montoFosede && totalDeposito != -1 ) {\n");
+            arreglo.push(tabsText+"\tif ( totalDeposito > montoFosede)");
+            arreglo.push("\n\t\t"+tabsText+"totalDeposito = montoFosede;");
+            arreglo.push("\n\t"+tabsText+(variable+proyeccion)+" += totalDeposito * "+(parseInt(regla.valor.split("=")[1])/100)+";");
+            arreglo.push("\n"+tabsText+"}");
+        } else if(regla.campoObjetivo.split("=")[1].localeCompare('mayorFOSEDE') == 0) {
+            arreglo.push(tabsText+"var totalDeposito = sinCuentasMayorFOSEDE(arregloDepositos[i].idCliente);\n");
+            arreglo.push("\n"+tabsText+"var montoFosede = getMontoFOSEDE(arregloDepositos[i].moneda);");
+            arreglo.push(tabsText+"if ( arregloDepositos[i].saldo > montoFosede && totalDeposito != -1 ) {\n");
+            arreglo.push(tabsText+"\tif ( totalDeposito > montoFosede) {");
+            arreglo.push("\n\t\t"+tabsText+"totalDeposito = totalDeposito - montoFosede;");
+            arreglo.push("\n\t\t"+tabsText+(variable+proyeccion)+" += totalDeposito * "+(parseInt(regla.valor.split("=")[1])/100)+";");
+            arreglo.push("\n\t"+tabsText+"}");
+            arreglo.push("\n"+tabsText+"}");
         }
     }
 
-    if(regla.valor.indexOf('COLUMNA') == 0) {
-        if(esCondicion) {
-            //var valor = arreglosNombres[index]+"[i]."+regla.valor.split("=")[1];
-            var valor = regla.valor.split("=")[1];
-            if(!isNaN(valor) && regla.campoObjetivo.split("=")[0] != "totalDepositos" && regla.campoObjetivo.split("=")[0] != "monto")
-                valor = '"'+valor+'"';
-            for (var i = 0; i < arreglo.length; i++) {
-                arreglo[i] += " "+valor+" )  {";
-                textVariables[i] += " " + valor;
-            };
-        } else {
-            //var valor = arreglosNombres[index]+"[i]."+regla.valor.split("=")[1];
-            var valor = regla.valor.split("=")[1];
-            if(!isNaN(valor) && regla.campoObjetivo.split("=")[0] != "totalDepositos" && regla.campoObjetivo.split("=")[0] != "monto")
-                valor = '"'+valor+'"';
-            for (var i = 0; i < arreglo.length; i++) {
-                arreglo[i] += " "+valor+";";
-                textVariables[i] += " " + valor;
-            };
-        }
-    } else if(regla.valor.indexOf('LISTA') == 0) {
+    if(regla.valor.indexOf('LISTA') == 0) {
         if(esCondicion) {
             var arregloLista = regla.valor.split("=")[1].split(",");
             var copiaRegla = arreglo.slice();
-            var copiaTextVariable = textVariables.slice();
             var tamArreglo = arreglo.length;
-            if(regla.operacion == "!=") {
+            if(regla.operacion == "no") {
                 for (var j = 0; j < tamArreglo; j++) {
                     for (var i = 0; i < arregloLista.length; i++) {
-                        var opcionAMostrar = arregloLista[i].split("$");
-                        var valorElemento = arregloLista[i];
-                        if(opcionAMostrar.length > 1){
-                            if(opcionAMostrar[1] == "1")
-                                valorElemento = opcionAMostrar[0].split("-")[0];
-                            else
-                                valorElemento = opcionAMostrar[0].split("-")[1];
-                        }
                         if(i==0) {
-                            var textoFinal = '';
+                            var textoFinal = ' != 0 ';
                             if(i+1 == arregloLista.length)
-                                textoFinal = " ) {";
-                            if(isNaN(valorElemento))
-                                arreglo[j] += " '"+valorElemento + "'" + textoFinal;
-                            else
-                                arreglo[j] += " "+valorElemento + textoFinal;
-                            textVariables[j] += " " + valorElemento;
+                                textoFinal += " ) {";
+                            arreglo[j] +=arregloLista[i] + "')" + textoFinal;
                         } else {
-                            var textoFinal = '';
+                            var textoFinal = ' != 0 ';
                             if(i+1 == arregloLista.length)
-                                textoFinal = " ) {";
-                            if(isNaN(valorElemento))
-                                arreglo[j] += " && "+copiaRegla[j].split(" ( ")[1]+" '"+valorElemento+"'"+textoFinal;
-                            else 
-                                arreglo[j] += " && "+copiaRegla[j].split(" ( ")[1]+" "+valorElemento+textoFinal;
-                            textVariables[j] += " && " + valorElemento;
+                                textoFinal += " ) {";
+                            arreglo[j] += " && "+copiaRegla[j].split(" ( ")[1]+arregloLista[i]+"')"+textoFinal;
                         }
                     }
                 };
             } else {
-                for (var i = 0; i < arregloLista.length; i++) {
-                    var opcionAMostrar = arregloLista[i].split("$");
-                    var valorElemento = arregloLista[i];
-                    if(opcionAMostrar.length > 1){
-                        if(opcionAMostrar[1] == "1")
-                            valorElemento = opcionAMostrar[0].split("-")[0];
-                        else
-                            valorElemento = opcionAMostrar[0].split("-")[1];
-                    }
-                    for (var j = 0; j < tamArreglo; j++) {
+                for (var j = 0; j < tamArreglo; j++) {
+                    for (var i = 0; i < arregloLista.length; i++) {
                         if(i==0) {
-                            //if(isNaN(valorElemento))
-                                arreglo[j] += " '"+valorElemento + "' ) {";
-                            /*else
-                                arreglo[j] += " "+valorElemento + " ) {";*/
-                            textVariables[j] += " " + valorElemento;
+                            var textoFinal = ' == 0 ';
+                            if(i+1 == arregloLista.length)
+                                textoFinal += " ) {";
+                            arreglo[j] +=arregloLista[i] + "')" + textoFinal;
                         } else {
-                            //if(isNaN(valorElemento))
-                                arreglo.push("\n"+copiaRegla[j]+" '"+valorElemento+"' ) {");
-                            /*else
-                                arreglo.push("\n"+copiaRegla[j]+" "+valorElemento+" ) {");*/
-                            posicionesIF.push(posicionesIF[posicionesIF.length-1]+2);
-                            textVariables.push(copiaTextVariable[j] + " " + valorElemento);
+                            var textoFinal = ' == 0 ';
+                            if(i+1 == arregloLista.length)
+                                textoFinal += " ) {";
+                            arreglo[j] += " || "+copiaRegla[j].split(" ( ")[1]+arregloLista[i]+"')"+textoFinal;
                         }
-                    };
+                    }
                 };
             }
-        } else {
-            var arregloLista = regla.valor.split("=")[1].split(",");
-            var copiaRegla = arreglo[arreglo.length-1];
-            var copiaTextVariable = textVariables[textVariables.length-1];
-            var tamArreglo = arreglo.length;
-            for (var i = 0; i < arregloLista.length; i++) {
-                for (var j = 0; j < tamArreglo; j++) {
-                    var opcionAMostrar = arregloLista[i].split("$");
-                    var valorElemento = arregloLista[i];
-                    if(opcionAMostrar.length > 1){
-                        if(opcionAMostrar[1] == "1")
-                            valorElemento = opcionAMostrar[0].split("-")[0];
-                        else
-                            valorElemento = opcionAMostrar[0].split("-")[1];
-                    }
-                    if(i==0) {
-                        arreglo[j] += " "+valorElemento + ";";
-                        textVariables[j] += " " + valorElemento;
-                    } else {
-                        arreglo.push("\n"+copiaRegla+" "+valorElemento + ";");
-                        textVariables.push(copiaTextVariable + " " + valorElemento);
-                    }
-                };
-            };
         }
-    } else if(regla.valor.indexOf('FACTOR') == 0) {
+    } else if(regla.valor.indexOf('FACTOR') == 0 && !noAgregarFactor) {
         if(esCondicion) {
-            var factorValor = regla.valor.split("=")[1];
-            for (var i = 0; i < arreglo.length; i++) {
-                arreglo[i] += " "+factorValor + " ) {";
-                textVariables[i] += " " + factorValor;
+            var factorValor = parseInt(regla.valor.split("=")[1]);
+            for (var i = 1; i < arreglo.length; i++) {
+                arreglo[i] += " "+factorValor/100 + " ) {";
             };
         } else {
             var factorValor = regla.valor.split("=")[1];
-            for (var i = 0; i < arreglo.length; i++) {
-                arreglo[i] += " "+factorValor + ";";
-                textVariables[i] += " " + factorValor;
+            for (var i = 1; i < arreglo.length; i++) {
+                arreglo[i] += " "+factorValor/100 + ";";
             };
         }
-    } else if(regla.valor.indexOf('DIA') == 0) {
+    } else if(regla.valor.indexOf('COLUMNA') == 0) {
         if(esCondicion) {
-            var diaValor = regla.valor.split("=")[1];
+            var columnaValor = regla.valor.split("=")[1];
             for (var i = 0; i < arreglo.length; i++) {
-                arreglo[i] += " "+diaValor + " ) {";
-                textVariables[i] += " " + diaValor;
+                arreglo[i] += " "+columnaValor + " ) {";
             };
         } else {
-            var diaValor = regla.valor.split("=")[1];
-            for (var i = 0; i < arreglo.length; i++) {
-                arreglo[i] += " "+diaValor + ";";
-                textVariables[i] += " " + diaValor;
-            };
+            var columnaValor = regla.valor.split("=")[1];
+            arreglo[arreglo.length-1] += " "+columnaValor + ";";
+            /*for (var i = 0; i < arreglo.length; i++) {
+                arreglo[i] += " "+columnaValor + ";";
+            };*/
         }
-    } else if(regla.valor.indexOf('VARIABLE') == 0) {
-        var arregloVariable = regla.valor.split("=")[1].split(",");
+    } else if(regla.valor.indexOf('FECHA') == 0 && !noAgregarFecha) {
         if(esCondicion) {
-            // Agregando campo Operacion
-            for (var i = 0; i < arregloVariable.length; i++) {
-                var textCreatedVariables = '';
-                if(arregloVariable[i].indexOf("RESULTADO") == 0 )
-                    textCreatedVariables = 'variableResultado'+regla.reglaPadre;
-                else if(arregloVariable[i].indexOf("OBJETIVO") == 0 )
-                    textCreatedVariables = 'variableObjetivo'+regla.reglaPadre;
-                else if(arregloVariable[i].indexOf("VALOR") == 0 )
-                    textCreatedVariables = 'variableValor'+regla.reglaPadre;
-                var valorLista = '';
-                if(arregloVariable[i].indexOf("$") > 0 ) {
-                    if(arregloVariable[i].split("$")[1] == "1")
-                        valorLista = ".nombre";
-                    else
-                        valorLista = ".valor";
-                }
-                for (var k = 0; k < arreglo.length; k++) {
-                    arreglo[k] += " "+textCreatedVariables + valorLista + " ) {";
-                };
+            for (var i = 0; i < arreglo.length; i++) {
+                arreglo[i] += " "+proyeccion+" ) {";
             };
         } else {
-            // Agregando campo Operacion
-            for (var i = 0; i < arregloVariable.length; i++) {
-                var textCreatedVariables = '';
-                if(arregloVariable[i].indexOf("RESULTADO") == 0 )
-                    textCreatedVariables = 'variableResultado'+regla.reglaPadre;
-                else if(arregloVariable[i].indexOf("OBJETIVO") == 0 )
-                    textCreatedVariables = 'variableObjetivo'+regla.reglaPadre;
-                else if(arregloVariable[i].indexOf("VALOR") == 0 )
-                    textCreatedVariables = 'variableValor'+regla.reglaPadre;
-                var valorLista = '';
-                if(arregloVariable[i].indexOf("$") > 0 ) {
-                    if(arregloVariable[i].split("$")[1] == "1")
-                        valorLista = ".nombre";
-                    else
-                        valorLista = ".valor";
-                }
-                for (var k = 0; k < arreglo.length; k++) {
-                    arreglo[k] += " "+textCreatedVariables + valorLista + ";";
-                };
-            };
-        }
-        if(hasVariables) {
-            for (var i = 0; i < arregloVariable.length; i++) {
-                textVariables.push(arregloVariable[i] + " " + regla.operacion);
+            var columnaValor = regla.valor.split("=")[1];
+            for (var i = 0; i < arreglo.length; i++) {
+                arreglo[i] += " "+proyeccion+";";
             };
         }
     }
 
-    var cuerpo;
-    if(arregloDeReglas[index] != null){
-        cuerpo = arregloDeReglas[index].filter(function( object ) {
-            return object.reglaPadre == regla.ID;;
-        });
-    } else {
-        cuerpo = [];
-    }
-    if(regla.variables.length > 0){
-        var variables = regla.variables.split("//")[1].split("#");
-        var tamArreglo = arreglo.length;
-        var contador = 0;
-        for (var j = 0; j < tamArreglo; j++) {
-            for (var i = 0; i < variables.length; i++) {
-                if(j == 0)
-                    contador = 1;
-                else 
-                    contador = 0;
-                if(variables[i].indexOf('RESULTADO') == 0) {
-                    var variablesText = '';
-                    if(esCondicion) {
-                        variablesText = textVariables[j];
-                    } else {
-                        if( textVariables[j].indexOf(">") > 0 ){
-                            variablesText+=textVariables[j].split(">")[0];
-                        } else if( textVariables[j].indexOf(">=") > 0 ) {
-                            variablesText+=textVariables[j].split(">=")[0];
-                        } else if( textVariables[j].indexOf("<") > 0 ) {
-                            variablesText+=textVariables[j].split("<")[0];
-                        } else if( textVariables[j].indexOf("<=") > 0 ) {
-                            variablesText+=textVariables[j].split("<=")[0];
-                        } else if( textVariables[j].indexOf("==") > 0 ) {
-                            variablesText+=textVariables[j].split("==")[0];
-                        } else if( textVariables[j].indexOf("=") > 0 ) {
-                            variablesText+=textVariables[j].split("=")[0];
-                        } else if( textVariables[j].indexOf("!=") > 0 ) {
-                            variablesText+=textVariables[j].split("!=");
-                        }  else if( textVariables[j].indexOf("*") > 0 ) {
-                            variablesText+=textVariables[j].split("*")[0];
-                        } else if( textVariables[j].indexOf("+") > 0 ) {
-                            variablesText+=textVariables[j].split("+")[0];
-                        } else if( textVariables[j].indexOf("-") > 0 ) {
-                            variablesText+=textVariables[j].split("-")[0];
-                        } else if( textVariables[j].indexOf("/") > 0) {
-                            variablesText+=textVariables[j].split("/")[0];
-                        }
-                    }
-                    variablesText+=";";
-                    arreglo.splice(j+(j*variables.length)+1, 0, "\n"+tabsText+"var variableResultado"+(regla.ID)+" = "+variablesText);
-                    for (var k = j; k < posicionesIF.length; k++) {
-                        posicionesIF[k]++;
-                    };
-                } else if(variables[i].indexOf('CAMPOOBJETIVO') == 0) {
-                    var variablesText = '';
-                    for (var k = j; k < j+1; k++) {
-                        variablesText = "var variableObjetivo"+(regla.ID)+" = ";
-                        if(variables[i].indexOf("$") == -1) {
-                            if( textVariables[k].indexOf(">") > 0 ){
-                                variablesText+=textVariables[k].split(">")[0];
-                            } else if( textVariables[k].indexOf(">=") > 0 ) {
-                                variablesText+=textVariables[k].split(">=")[0];
-                            } else if( textVariables[k].indexOf("<") > 0 ) {
-                                variablesText+=textVariables[k].split("<")[0];
-                            } else if( textVariables[k].indexOf("<=") > 0 ) {
-                                variablesText+=textVariables[k].split("<=")[0];
-                            } else if( textVariables[k].indexOf("==") > 0 ) {
-                                variablesText+=textVariables[k].split("==")[0];
-                            } else if( textVariables[k].indexOf("=") > 0 ) {
-                                variablesText+=textVariables[k].split("=")[0];
-                            } else if( textVariables[k].indexOf("!=") > 0 ) {
-                                variablesText+=textVariables[k].split("!=");
-                            }  else if( textVariables[k].indexOf("*") > 0 ) {
-                                variablesText+=textVariables[k].split("*")[0];
-                            } else if( textVariables[k].indexOf("+") > 0 ) {
-                                variablesText+=textVariables[k].split("+")[0];
-                            } else if( textVariables[k].indexOf("-") > 0 ) {
-                                variablesText+=textVariables[k].split("-")[0];
-                            } else if( textVariables[k].indexOf("/") > 0) {
-                                variablesText+=textVariables[k].split("/")[0];
-                            }
-                        } else {
-                            var nombre = '';
-                            if( textVariables[k].indexOf(">") > 0 ){
-                                nombre+=textVariables[k].split(">")[0];
-                            } else if( textVariables[k].indexOf(">=") > 0 ) {
-                                nombre+=textVariables[k].split(">=")[0];
-                            } else if( textVariables[k].indexOf("<") > 0 ) {
-                                nombre+=textVariables[k].split("<")[0];
-                            } else if( textVariables[k].indexOf("<=") > 0 ) {
-                                nombre+=textVariables[k].split("<=")[0];
-                            } else if( textVariables[k].indexOf("==") > 0 ) {
-                                nombre+=textVariables[k].split("==")[0];
-                            } else if( textVariables[k].indexOf("=") > 0 ) {
-                                nombre+=textVariables[k].split("=")[0];
-                            } else if( textVariables[k].indexOf("!=") > 0 ) {
-                                nombre+=textVariables[k].split("!=");
-                                //
-                            }  else if( textVariables[k].indexOf("*") > 0 ) {
-                                nombre+=textVariables[k].split("*")[0];
-                            } else if( textVariables[k].indexOf("+") > 0 ) {
-                                nombre+=textVariables[k].split("+")[0];
-                            } else if( textVariables[k].indexOf("-") > 0 ) {
-                                nombre+=textVariables[k].split("-")[0];
-                            } else if( textVariables[k].indexOf("/") > 0) {
-                                nombre+=textVariables[k].split("/")[0];
-                            }
-                            var arregloVariables = variables[i].split("-")[1].split(",");
-                            for (var i = 0; i < arregloVariables.length; i++) {
-                                if(arregloVariables[i].replace(" ", "").indexOf(nombre).replace(" ", "") > -1){
-                                    var tipo = arregloVariables[i].split("-")[1].split("$")[1];
-                                    var nombre = arregloVariables[i].split("-")[0], valor = arregloVariables[i].split("-")[1].split("$")[0];
-                                    variablesText+="{nombre: '"+nombre+"', valor: '"+valor+"'}"
-                                }
-                            };
-                        }
-                        variablesText+=";";
-                        arreglo.splice(j+(j*variables.length)+1, 0, "\n"+tabsText+"\t"+variablesText);
-                        for (var l = j; l < posicionesIF.length; l++) {
-                            posicionesIF[l]++;
-                        };
-                    };
-                } else if(variables[i].indexOf('VALOR') == 0) {
-                    var variablesText = '';
-                    for (var k = j; k < j+1; k++) {
-                        variablesText = "var variableValor"+(regla.ID)+" = ";
-                        if(variables[i].indexOf("$") == -1) {
-                            if( textVariables[k].indexOf(">") > 0 ){
-                                variablesText+=textVariables[k].split(">")[1];
-                            } else if( textVariables[k].indexOf(">=") > 0 ) {
-                                variablesText+=textVariables[k].split(">=")[1];
-                            } else if( textVariables[k].indexOf("<") > 0 ) {
-                                variablesText+=textVariables[k].split("<")[1];
-                            } else if( textVariables[k].indexOf("<=") > 0 ) {
-                                variablesText+=textVariables[k].split("<=")[1];
-                            } else if( textVariables[k].indexOf("==") > 0 ) {
-                                variablesText+=textVariables[k].split("==")[1];
-                            } else if( textVariables[k].indexOf("=") > 0 ) {
-                                variablesText+=textVariables[k].split("=")[1];
-                            } else if( textVariables[k].indexOf("!=") > 0 ) {
-                                variablesText+=textVariables[k].split("!=");
-                                //
-                            }  else if( textVariables[k].indexOf("*") > 0 ) {
-                                variablesText+=textVariables[k].split("*")[1];
-                            } else if( textVariables[k].indexOf("+") > 0 ) {
-                                variablesText+=textVariables[k].split("+")[1];
-                            } else if( textVariables[k].indexOf("-") > 0 ) {
-                                variablesText+=textVariables[k].split("-")[1];
-                            } else if( textVariables[k].indexOf("/") > 0) {
-                                variablesText+=textVariables[k].split("/")[1];
-                            }
-                        } else {
-                            var nombre = '';
-                            if( textVariables[k].indexOf(">") > 0 ){
-                                nombre+=textVariables[k].split(">")[1];
-                            } else if( textVariables[k].indexOf(">=") > 0 ) {
-                                nombre+=textVariables[k].split(">=")[1];
-                            } else if( textVariables[k].indexOf("<") > 0 ) {
-                                nombre+=textVariables[k].split("<")[1];
-                            } else if( textVariables[k].indexOf("<=") > 0 ) {
-                                nombre+=textVariables[k].split("<=")[1];
-                            } else if( textVariables[k].indexOf("==") > 0 ) {
-                                nombre+=textVariables[k].split("==")[1];
-                            } else if( textVariables[k].indexOf("=") > 0 ) {
-                                nombre+=textVariables[k].split("=")[1];
-                            } else if( textVariables[k].indexOf("!=") > 0 ) {
-                                nombre+=textVariables[k].split("!=");
-                                //
-                            }  else if( textVariables[k].indexOf("*") > 0 ) {
-                                nombre+=textVariables[k].split("*")[1];
-                            } else if( textVariables[k].indexOf("+") > 0 ) {
-                                nombre+=textVariables[k].split("+")[1];
-                            } else if( textVariables[k].indexOf("-") > 0 ) {
-                                nombre+=textVariables[k].split("-")[1];
-                            } else if( textVariables[k].indexOf("/") > 0) {
-                                nombre+=textVariables[k].split("/")[1];
-                            }
-                            var arregloVariables = variables[i].split("=")[1].split(",");
-                            for (var i = 0; i < arregloVariables.length; i++) {
-                                if(arregloVariables[i].replace(/( *)/, "").indexOf(nombre.replace(/( *)/, "")) > -1){
-                                    var tipo = arregloVariables[i].split("-")[1].split("$")[1].replace(")", "");
-                                    var nombre = arregloVariables[i].split("-")[0], valor = arregloVariables[i].split("-")[1].split("$")[0];
-                                    variablesText+="{nombre: '"+nombre+"', valor: '"+valor+"'}"
-                                }
-                            };
-                        }
-                        variablesText+=";";
-                        arreglo.splice(j+(j*variables.length)+1, 0, "\n"+tabsText+"\t"+variablesText);
-                        for (var l = j; l < posicionesIF.length; l++) {
-                            posicionesIF[l]++;
-                        };
-                    };
-                }
-            };
-        };
-    }
-    if(cuerpo.length > 0){
+    var cuerpo = arregloReglas.filter(function( object ) {
+        return object.reglaPadre == regla.ID;
+    });
+    if(cuerpo.length > 0) {
         var arregloCuerpo = [];
         for (var i = 0; i < cuerpo.length; i++) {
             var cuantasTabs = tabs;
             if(esCondicion)
                 cuantasTabs++;
-            var retorno = campoObjetivo(cuerpo[i], [], cuantasTabs, index);
+            var retorno = campoObjetivoDepositos(cuerpo[i], [], cuantasTabs, variable, proyeccion);
+            retorno[0] = "\n"+retorno[0];
+            $.merge( arregloCuerpo, retorno );
+        };
+        for (var i = 0; i < posicionesIF.length; i++) {
+            arreglo.splice(posicionesIF[i], 0, ...arregloCuerpo);
+            if(esCondicion)
+                arreglo.splice(posicionesIF[i]+arregloCuerpo.length, 0, "\n"+tabsText+"}");
+            for (var j = i; j < posicionesIF.length; j++) {
+                posicionesIF[j]+=arregloCuerpo.length;
+            };
+        };
+        if(posicionesIF.length == 0)
+            $.merge( arreglo, arregloCuerpo );
+        return arreglo;
+    } else {
+        if(esCondicion){
+            for (var i = 0; i < posicionesIF.length; i++) {
+                arreglo.splice(posicionesIF[i], 0, "\n"+tabsText+"}")
+            };
+        }
+        return arreglo;
+    }
+}
+
+function campoObjetivoPrestamos (regla, arreglo, tabs, variable, proyeccion) {
+    var esCondicion = false, noAgregarFactor = false, noAgregarFecha = false, noAgregarBoolean = false;
+    if(regla.operacion=="-" || regla.operacion=="+" || regla.operacion=="*" || regla.operacion=="/" || regla.operacion=="=")
+        esCondicion = false;
+    else
+        esCondicion = true;
+    var hasVariables = false;
+    var textVariables = [];
+    if(regla.variables.length > 0)
+        hasVariables = true;
+    var tabsText = '';
+    for (var i = 0; i < tabs; i++) {
+        tabsText+='\t';
+    };
+    var posicionesIF = [];
+    if(regla.campoObjetivo.indexOf('COLUMNA') == 0) {
+        if(regla.campoObjetivo.split("=")[1].indexOf("valorFinanciacion") != 0 && regla.campoObjetivo.split("=")[1].indexOf("utilizable") != 0 && regla.campoObjetivo.split("=")[1].indexOf("vencimiento") != 0 && regla.campoObjetivo.split("=")[1].indexOf("alac") != 0) {
+            if(esCondicion) {
+                var campo = regla.campoObjetivo.split("=")[1];
+
+                // Agregando campo Operacion
+                if(regla.operacion=="en" || regla.operacion=="no")
+                    arreglo.push(tabsText+"if ( arregloPrestamos[i]."+campo+".localeCompare('");
+                else
+                    arreglo.push(tabsText+"if ( arregloPrestamos[i]."+campo+" "+regla.operacion);
+                //posicionesIF.push(arreglo.length-1);
+                posicionesIF.push(arreglo.length);
+            } else {
+                var campo = regla.campoObjetivo.split("=")[1];
+
+                // Agregando campo Operacion
+                arreglo.push(tabsText+"var totalPrestamo = arregloPrestamos[i].pago"+proyeccion+";");
+                arreglo.push("\n"+tabsText+(variable+proyeccion)+" += totalPrestamo "+regla.operacion);
+            }
+        } else if(regla.campoObjetivo.split("=")[1].indexOf("utilizable") == 0) {
+            noAgregarFecha = true;
+            var campo = regla.campoObjetivo.split("=")[1];
+
+            arreglo.push(tabsText+"var nuevaFecha"+regla.ID+" = new Date();\n");
+            arreglo.push(tabsText+"nuevaFecha"+regla.ID+" = addDays(nuevaFecha"+regla.ID+","+proyeccion+");\n");
+            var query, agregarComparator, agregarIsSame;
+            if(regla.operacion.includes("<")) {
+                query = 'isBefore';
+            } else {
+                query = 'isAfter';
+            }
+            if(!regla.operacion.includes("!") && !regla.operacion.includes("==")) {
+                agregarComparator = "moment(nuevaFecha"+regla.ID+")."+query+"(moment(arregloPrestamos[i].fechaFinal), 'day')";
+            } else if(regla.operacion.includes("==")) {
+                agregarComparator = "moment(nuevaFecha"+regla.ID+").isSame(moment(arregloPrestamos[i].fechaFinal), 'day')";
+            } else {
+                agregarComparator = "!moment(nuevaFecha"+regla.ID+").isSame(moment(arregloPrestamos[i].fechaFinal), 'day')";
+            }
+            if(regla.operacion.includes("=") && (regla.operacion.includes("<") || regla.operacion.includes(">")) ) {
+                agregarIsSame = " || moment(nuevaFecha"+regla.ID+").isSame(moment(arregloPrestamos[i].fechaFinal), 'day')";
+            } else {
+                agregarIsSame = "";
+            }
+            // Agregando campo Operacion
+            arreglo.push(tabsText+"if ( "+agregarComparator+" "+agregarIsSame+" ) {");
+            //posicionesIF.push(arreglo.length-1);
+            posicionesIF.push(arreglo.length);
+        } else if(regla.campoObjetivo.split("=")[1].indexOf("vencimiento") == 0) {
+            noAgregarFecha = true;
+            var campo = regla.campoObjetivo.split("=")[1];
+
+            arreglo.push(tabsText+"var nuevaFecha"+regla.ID+" = new Date();\n");
+            arreglo.push(tabsText+"nuevaFecha"+regla.ID+" = addDays(nuevaFecha"+regla.ID+","+proyeccion+");\n");
+            var query, agregarComparator, agregarIsSame;
+            if(regla.operacion.includes("<")) {
+                query = 'isBefore';
+            } else {
+                query = 'isAfter';
+            }
+            if(!regla.operacion.includes("!") && !regla.operacion.includes("==")) {
+                agregarComparator = "moment(arregloPrestamos[i].fechaFinal)."+query+"(moment(nuevaFecha"+regla.ID+"), 'day')";
+            } else if(regla.operacion.includes("==")) {
+                agregarComparator = "moment(arregloPrestamos[i].fechaFinal).isSame(moment(nuevaFecha"+regla.ID+"), 'day')";
+            } else {
+                agregarComparator = "!moment(arregloPrestamos[i].fechaFinal).isSame(moment(nuevaFecha"+regla.ID+"), 'day')";
+            }
+            if(regla.operacion.includes("=") && (regla.operacion.includes("<") || regla.operacion.includes(">")) ) {
+                agregarIsSame = " || moment(arregloPrestamos[i].fechaFinal).isSame(moment(nuevaFecha"+regla.ID+"), 'day')";
+            } else {
+                agregarIsSame = "";
+            }
+            // Agregando campo Operacion
+            arreglo.push(tabsText+"if ( "+agregarComparator+" "+agregarIsSame+" ) {");
+            //posicionesIF.push(arreglo.length-1);
+            posicionesIF.push(arreglo.length);
+        } else if(regla.campoObjetivo.split("=")[1].indexOf("alac") == 0) {
+            noAgregarBoolean = true;
+            var campo = regla.campoObjetivo.split("=")[1];
+            // Agregando campo Operacion
+            arreglo.push(tabsText+"if ( arregloPrestamos[i].alac.length > 0 ) {");
+            //posicionesIF.push(arreglo.length-1);
+            posicionesIF.push(arreglo.length);
+        } else {
+            noAgregarFactor = true;
+            arreglo.push(tabsText+(variable+proyeccion)+" += arregloPrestamos[i].valorFinanciacion - getPriceALAC(arregloPrestamos[i].alac);");
+        }
+    } else if(regla.campoObjetivo.indexOf('NOUAGRUPACION') == 0) {
+        noAgregarFactor = true;
+        arreglo.push(tabsText+"if ( arregloPrestamos[i].tipoCredito.localeCompare('"+regla.campoObjetivo.split("=")[1]+"') == 0 ) {\n");
+        arreglo.push(tabsText+"\tvar totalPrestamo = "+(regla.variables/100)+" * arregloPrestamos[i].pago"+proyeccion+";");
+        arreglo.push("\n\t"+tabsText+(variable+proyeccion)+" += totalPrestamo;\n");
+        arreglo.push(tabsText+"}");
+        aplicarFactores.push((variable+proyeccion)+" = "+(variable+proyeccion)+" * "+(parseInt(regla.valor.split("=")[1])/100)+";\n");
+    }
+
+    if(regla.valor.indexOf('LISTA') == 0 && !noAgregarBoolean) {
+        if(esCondicion) {
+            var arregloLista = regla.valor.split("=")[1].split(",");
+            var copiaRegla = arreglo.slice();
+            var tamArreglo = arreglo.length;
+            if(regla.operacion == "no") {
+                for (var j = 0; j < tamArreglo; j++) {
+                    for (var i = 0; i < arregloLista.length; i++) {
+                        if(i==0) {
+                            var textoFinal = ' != 0 ';
+                            if(i+1 == arregloLista.length)
+                                textoFinal += " ) {";
+                            arreglo[j] +=arregloLista[i] + "')" + textoFinal;
+                        } else {
+                            var textoFinal = ' != 0 ';
+                            if(i+1 == arregloLista.length)
+                                textoFinal += " ) {";
+                            arreglo[j] += " && "+copiaRegla[j].split(" ( ")[1]+arregloLista[i]+"')"+textoFinal;
+                        }
+                    }
+                };
+            } else {
+                for (var j = 0; j < tamArreglo; j++) {
+                    for (var i = 0; i < arregloLista.length; i++) {
+                        if(i==0) {
+                            var textoFinal = ' == 0 ';
+                            if(i+1 == arregloLista.length)
+                                textoFinal += " ) {";
+                            arreglo[j] +=arregloLista[i] + "')" + textoFinal;
+                        } else {
+                            var textoFinal = ' == 0 ';
+                            if(i+1 == arregloLista.length)
+                                textoFinal += " ) {";
+                            arreglo[j] += " || "+copiaRegla[j].split(" ( ")[1]+arregloLista[i]+"')"+textoFinal;
+                        }
+                    }
+                };
+            }
+        }
+    } else if(regla.valor.indexOf('FACTOR') == 0 && !noAgregarFactor) {
+        if(esCondicion) {
+            var factorValor = parseInt(regla.valor.split("=")[1]);
+            for (var i = 1; i < arreglo.length; i++) {
+                arreglo[i] += " "+factorValor/100 + " ) {";
+            };
+        } else {
+            var factorValor = regla.valor.split("=")[1];
+            for (var i = 1; i < arreglo.length; i++) {
+                arreglo[i] += " "+factorValor/100 + ";";
+            };
+        }
+    } else if(regla.valor.indexOf('COLUMNA') == 0) {
+        if(esCondicion) {
+            var columnaValor = regla.valor.split("=")[1];
+            for (var i = 0; i < arreglo.length; i++) {
+                arreglo[i] += " "+columnaValor + " ) {";
+            };
+        } else {
+            var columnaValor = regla.valor.split("=")[1];
+            for (var i = 0; i < arreglo.length; i++) {
+                arreglo[i] += " "+columnaValor + ";";
+            };
+        }
+    } else if(regla.valor.indexOf('FECHA') == 0 && !noAgregarFecha) {
+        if(esCondicion) {
+            for (var i = 0; i < arreglo.length; i++) {
+                arreglo[i] += " "+proyeccion+" ) {";
+            };
+        } else {
+            var columnaValor = regla.valor.split("=")[1];
+            for (var i = 0; i < arreglo.length; i++) {
+                arreglo[i] += " "+proyeccion+";";
+            };
+        }
+    } else if(regla.valor.indexOf('MANUAL') == 0 || regla.valor.indexOf('MORA') == 0 || (regla.valor.indexOf('BOOLEAN') == 0 && !noAgregarBoolean)) {
+        if(esCondicion) {
+            var columnaValor = regla.valor.split("=")[1];
+            for (var i = 0; i < arreglo.length; i++) {
+                arreglo[i] += " "+columnaValor + " ) {";
+            };
+        } else {
+            var columnaValor = regla.valor.split("=")[1];
+            for (var i = 0; i < arreglo.length; i++) {
+                arreglo[i] += " "+columnaValor + ";";
+            };
+        }
+    }
+
+    var cuerpo = arregloReglas.filter(function( object ) {
+        return object.reglaPadre == regla.ID;
+    });
+    if(cuerpo.length > 0) {
+        var arregloCuerpo = [];
+        for (var i = 0; i < cuerpo.length; i++) {
+            var cuantasTabs = tabs;
+            if(esCondicion)
+                cuantasTabs++;
+            var retorno = campoObjetivoPrestamos(cuerpo[i], [], cuantasTabs, variable, proyeccion);
             retorno[0] = "\n"+retorno[0];
             $.merge( arregloCuerpo, retorno );
         };
@@ -2101,312 +4192,33 @@ function campoObjetivo (regla, arreglo, tabs, index) {
     }
 }
 
-var contadorVariablesFinales = 0;
-var funcionesDeVariables = [];
-/*function createMethods () {
-    window["variablesFinales"] = [];
-    funcionesDeVariables = [];
-    for (var i = 0; i < arregloVariables.length; i++) {
-        window[arregloVariables[i].variables] = 0;
-        for (var j = 0; j < arregloVarDeVarFormula.length; j++) {
-            console.log("arregloVarDeVarFormula[j]");
-            console.log(arregloVarDeVarFormula[j]);
-            console.log("arregloVariables[i]");
-            console.log(arregloVariables[i]);
-            if(arregloVarDeVarFormula[j].idVariable == arregloVariables[i].ID) {
-                if(arregloDeFuncionesReglas[j].length > 0) {
-                    contadorVariablesFinales++;
-                    var varMonto = '', varNombre = '';
-                    if(arreglosNombres[j] == "arregloActivos") {
-                        varMonto = 'saldo';
-                        varNombre = 'nombre';
-                    } if(arreglosNombres[j] == "arregloDepositos") {
-                        varMonto = 'saldo';
-                        varNombre = 'nombreCliente';
-                    }
-                    var contentFiltro = '';
-                    if(arregloDeFuncionesFiltros[j].length > 0) {
-                        contentFiltro = '\tfor (var i = 0; i < '+arreglosNombres[j]+'.length; i++) {';
-                        for (var k = 0; k < arregloDeFuncionesFiltros[j].length; k++) {
-                            //arregloDeFiltros[j][k]
-                            contentFiltro+='\t\t'+arregloDeFuncionesFiltros[j]+';';
-                        };
-                        contentFiltro+='\n\t};\n';
-                    } else
-                        contentFiltro+='\tvar '+arreglosNombres[j]+'Copia = '+arreglosNombres[j]+'.slice();\n';
-                    contentFiltro+='console.log('+arreglosNombres[j]+'Copia);\n';
-                    var contentRegla = '\tfor (var i = 0; i < '+arreglosNombres[j]+'Copia.length; i++) {';
-                    for (var k = 0; k < arregloDeFuncionesReglas[j].length; k++) {
-                        contentRegla+='\t\t'+arregloDeFuncionesReglas[j][k];
-                    }
-                    contentRegla+='\n\t};\n';
-
-                    contentRegla+='\tvar total = 0;\n';
-                    contentRegla+='\tfor (var j = 0; j < '+arreglosNombres[j]+'Copia.length; j++) {\n'+
-                                '\t\ttotal+='+arreglosNombres[j]+'Copia[j].'+varMonto+';\n'+
-                                '\t\tconsole.log('+arreglosNombres[j]+'Copia[j].'+varNombre+'+" = "+'+arreglosNombres[j]+'Copia[j].'+varMonto+');\n'+
-                                '\t\tconsole.log(total);\n'+
-                                '\t\tconsole.log('+arreglosNombres[j]+'Copia[j].ID);\n'+
-                            '\t}\n';
-                    contentRegla+='\tconsole.log("TOTAL = "+total);\n';
-                    contentRegla+='\twindow['+arregloVariables[i].variables+'] += total;\n';
-                    contentRegla+='\tvar encontro = window["variablesFinales"].filter(function( object ) {\n'+
-                                            'return object.variable == '+arregloVariables[i].variables+';\n'+
-                                        '});\n';
-                    contentRegla+='\tvar o = 0, encontro = false;\n';
-                    contentRegla+='\tfor (o = 0; o < window["variablesFinales"].length; o++) {\n';
-                        contentRegla+='\tif(window["variablesFinales"][o].variable == '+arregloVariables[i].variables+') {\n';
-                            contentRegla+='\tencontro = true;\n';
-                            contentRegla+='\tbreak;\n';
-                        contentRegla+='\t}\n';
-                    contentRegla+='\t};\n';
-                    contentRegla+='\tif(encontro)\n';
-                        contentRegla+='\twindow["variablesFinales"][o].total+=total;\n';
-                    contentRegla+='\telse\n';
-                    contentRegla+='\t\nwindow["variablesFinales"].push({variable: "'+arregloVariables[i].variables+'", total: total});\n';
-                    contentRegla+='\tprint();\n';
-                    window['Fun'+arregloVariables[i].variables] = new Function(
-                         'return function duncion(){'+
-                                contentFiltro+contentRegla+
-                        '}'
-                    )();
-                    window['Fun'+arregloVariables[i].variables]();
-                }
-            }
-        };*/
-        /*if(arregloDeFunciones[i].length > 0){
-            contadorVariablesFinales++;
-            var varMonto = '';
-            if(arreglosNombres[i] == "arregloActivos")
-                varMonto = 'monto';
-            if(arreglosNombres[i] == "arregloDepositos")
-                varMonto = 'totalDepositos';
-
-            //window[coneccion[0].arreglo] = [];
-            console.log("THOOOOR");
-            //console.log(arregloActivos[0].monto);
-            for (var k = 0; k < arregloActivos.length; k++) {
-                console.log(arregloActivos[k]);
-            };
-            console.log(arregloDeFunciones[i]);
-            console.log(arregloDeFunciones);
-            console.log("THOOOOR");
-
-            var content = '\tfor (var i = 0; i < '+arreglosNombres[i]+'.length; i++) {';
-            if(varMonto == "totalDepositos") {
-                content+='console.log(arregloDepositos[i].idCliente == "1");';
-                content+='console.log(arregloDepositos[i].idCliente);';
-            }
-            for (var j = 0; j < arregloDeFunciones[i].length; j++) {
-                content+="\t\t"+arregloDeFunciones[i][j]+"\n";
-            };
-            content+='\t}\n';
-            content+='\tvar total = 0;\n';
-            content+='\tfor (var j = 0; j < '+arreglosNombres[i]+'.length; j++) {\n'+
-                        '\t\ttotal+='+arreglosNombres[i]+'[j].'+varMonto+';\n'+
-                        '\t\tconsole.log('+arreglosNombres[i]+'[j].nombre+" = "+'+arreglosNombres[i]+'[j].'+varMonto+');\n'+
-                        '\t\tconsole.log(total);\n'+
-                    '\t}\n';
-            content+='\tconsole.log('+arreglosNombres[i]+');\n';
-            content+='\tconsole.log("TOTAL = "+total);\n';
-            content+='\twindow['+arregloVariables[i].variables+'] = total;\n';
-            content+='\twindow["variablesFinales"].push({variable: "'+arregloVariables[i].variables+'", total: total});\n';
-            content+='\tconsole.log("YEEEEEEEEEEEEEEEEEEEEEEE");\n';
-            content+='\tconsole.log(window["variablesFinales"]);\n';
-            content+='\tconsole.log("YEEEEEEEEEEEEEEEEEEEEEEE");\n';
-            content+='\tprint();\n';
-
-            window['Fun'+arregloVariables[i].variables] = new Function(
-                 'return function hola(){'+
-                        content+
-                '}'
-            )();
-
-            window['Fun'+arregloVariables[i].variables]();
-
-            //window['Connection'+i]();
-        }*/
-    /*};
-}*/
-/*function createMethods () {
-    contadorVariablesFinales = 0;
-    window["variablesFinales"] = [];
-    console.log(arregloVariables);
-    for (var i = 0; i < arregloVariables.length; i++) {
-        console.log("21212121121");
-        console.log(arregloDeFunciones[i]);
-        console.log(arregloDeFunciones);
-        console.log(arregloDeReglas);
-        window[arregloVariables[i].variables] = 0;
-        //if(arregloDeFunciones[i]!= null){
-        if(arregloDeFunciones[i].length > 0){
-            contadorVariablesFinales++;
-            console.log(arregloVariables[i].ID);*/
-            /*var coneccion = conec.filter(function( object ) {
-                return object.idVariable == arregloVariables[i].ID;
-            });*/
-            /*window['Connection'+i] = new Function(
-                 'return function hola(){'+
-                        'const sql = require("mssql");'+
-                        'const pool = new sql.ConnectionPool({'+
-                            'user: "'+coneccion[0].usuario+'",'+
-                            'password: "'+coneccion[0].constrasena+'",'+
-                            'server: "'+coneccion[0].server+'",'+
-                            'database: "'+coneccion[0].basedatos+'"'+
-                        '});'+
-                        'pool.connect(err => {'+
-                            'pool.request()'+
-                            '.query("select * from '+coneccion[0].tabla+'", (err, result) => {'+
-                                'if(err){'+
-                                    '$("body").overhang({'+
-                                        'type: "error",'+
-                                        'primary: "#f84a1d",'+
-                                        'accent: "#d94e2a",'+
-                                        'message: "Intento de conexión fallido.",'+
-                                        'duration: 2,'+
-                                        'overlay: true'+
-                                    '});'+
-                                '} else {'+
-                                    '$("body").overhang({'+
-                                        'type: "success",'+
-                                        'primary: "#f84a1d",'+
-                                        'accent: "#d94e2a",'+
-                                        'message: "EXITOOOO.",'+
-                                        'duration: 2,'+
-                                        'overlay: true'+
-                                    '});'+
-                                    'console.log(result);'+
-                                    coneccion[0].arreglo+'=result.recordset;'+
-                                    'Fun'+arregloVariables[i].variables+'()'+
-                                '}'+
-                            '});'+
-                        '});'+
-                '}'
-            )();*/
-            /*var varMonto = '';
-            if(arreglosNombres[i] == "arregloActivos")
-                varMonto = 'monto';
-            if(arreglosNombres[i] == "arregloDepositos")
-                varMonto = 'totalDepositos';*/
-
-            //window[coneccion[0].arreglo] = [];
-            //console.log("THOOOOR");
-            //console.log(arregloActivos[0].monto);
-            /*for (var k = 0; k < arregloActivos.length; k++) {
-                console.log(arregloActivos[k]);
-            };
-            console.log(arregloDeFunciones[i]);
-            console.log(arregloDeFunciones);
-            console.log("THOOOOR");
-
-            var content = '\tfor (var i = 0; i < '+arreglosNombres[i]+'.length; i++) {';
-            if(varMonto == "totalDepositos") {
-                content+='console.log(arregloDepositos[i].idCliente == "1");';
-                content+='console.log(arregloDepositos[i].idCliente);';
-            }
-            for (var j = 0; j < arregloDeFunciones[i].length; j++) {
-                content+="\t\t"+arregloDeFunciones[i][j]+"\n";*/
-                /*content+='console.log("HOLAAAA = ");';
-                content+='console.log('+arreglosNombres[i]+'[0].monto);';*/
-            /*};
-            content+='\t}\n';
-            ``+='\tvar total = 0;\n';
-            content+='\tfor (var j = 0; j < '+arreglosNombres[i]+'.length; j++) {\n'+
-                        '\t\ttotal+='+arreglosNombres[i]+'[j].'+varMonto+';\n'+
-                        '\t\tconsole.log('+arreglosNombres[i]+'[j].nombre+" = "+'+arreglosNombres[i]+'[j].'+varMonto+');\n'+
-                        '\t\tconsole.log(total);\n'+
-                    '\t}\n';
-            content+='\tconsole.log('+arreglosNombres[i]+');\n';
-            content+='\tconsole.log("TOTAL = "+total);\n';
-            content+='\twindow['+arregloVariables[i].variables+'] = total;\n';
-            content+='\twindow["variablesFinales"].push({variable: "'+arregloVariables[i].variables+'", total: total});\n';
-            content+='\tconsole.log("YEEEEEEEEEEEEEEEEEEEEEEE");\n';
-            content+='\tconsole.log(window["variablesFinales"]);\n';
-            content+='\tconsole.log("YEEEEEEEEEEEEEEEEEEEEEEE");\n';
-            content+='\tprint();\n';
-
-            window['Fun'+arregloVariables[i].variables] = new Function(
-                 'return function hola(){'+
-                        content+
-                '}'
-            )();
-
-            window['Fun'+arregloVariables[i].variables]();
-
-            //window['Connection'+i]();
-        }*//* else 
-            window["variablesFinales"].push({variable: arregloVariables[i].variables, total: 0});*/
-        /*var reultado = new Function('console.log(window["ALAC"]);console.log("'+formulaGlobal+'");'+formulaGlobal+';console.log(window["RCL"]);');
-        reultado();*/
-    //};
-    /*console.log("YAAAAAA");
-    console.log(window["variablesFinales"]);
-    for (var i = 0; i < window["variablesFinales"].length; i++) {
-        console.log(window["variablesFinales"][i]);
-    };*/
-//}
-
-function print () {
-    var form = formulaGlobal;
-    if(contadorVariablesFinales == contadorFuncionPrint){
-        for (var i = 0; i < window["variablesFinales"].length; i++) {
-            console.log(window["variablesFinales"][i]);
-            console.log(window["variablesFinales"]);
-            console.log('FORMULA ANTES');
-            console.log(form);
-            if(form.indexOf(window["variablesFinales"][i].variable.toLowerCase()) > -1) {
-                form = form.slice(0, form.indexOf(window["variablesFinales"][i].variable.toLowerCase())) + window["variablesFinales"][i].total + form.slice(form.indexOf(window["variablesFinales"][i].variable.toLowerCase()) + window["variablesFinales"][i].variable.length);
-                console.log("i = "+i+" "+form);
-            } else if(form.indexOf(window["variablesFinales"][i].variable.toUpperCase()) > -1) {
-                form = form.slice(0, form.indexOf(window["variablesFinales"][i].variable.toUpperCase())) + window["variablesFinales"][i].total + form.slice(form.indexOf(window["variablesFinales"][i].variable.toUpperCase()) + window["variablesFinales"][i].variable.length);
-                console.log("i = "+i+" "+form);
-            }
-            console.log('FORMULA DESPUES');
-            console.log(form);
-        };
-        var resultado = math.eval(form.split("=")[1]);
-        //saveRCL(resultado);
-    }
-}
-
-function saveRCL (rcl) {
-    var fecha = new Date();
-    const transaction = new sql.Transaction( pool1 );
-    transaction.begin(err => {
-        var rolledBack = false
- 
-        transaction.on('rollback', aborted => {
-            // emited with aborted === true
-     
-            rolledBack = true
-        })
-        const request = new sql.Request(transaction);
-        request.query("insert into RCL (fecha, RCL) values ('"+formatDateCreationSingleDigits(fecha)+"',"+rcl+")", (err, result) => {
-            if (err) {
-                if (!rolledBack) {
-                    console.log('error en rolledBack MainDB Variables');
-                    transaction.rollback(err => {
-                        console.log('error en rolledBack');
-                        console.log(err);
-                    });
-                }
-            } else {
-                transaction.commit(err => {
-                    // ... error checks
-                    console.log("Transaction committed MainDB Variables");
-                    console.log(result);
-                });
-            }
-        });
-    }); // fin transaction
-}
-
 function formatDateCreationSingleDigits(date) {
     var day = date.getDate();
     var monthIndex = date.getMonth();
     var year = date.getFullYear();
 
     return year + '-' + (monthIndex+1) + '-' + day;
+}
+
+function formatDateCreation(date) {
+    var monthNames = [
+        "Ene", "Feb", "Mar",
+        "Abr", "May", "Jun", "Jul",
+        "Ago", "Sep", "Oct",
+        "Nov", "Dec"
+    ];
+
+    var day = date.getDate();
+    var monthIndex = date.getMonth();
+    monthIndex++;
+    var year = date.getFullYear();
+    return year + '-' + monthIndex + '-' + day;
+}
+
+function addDays(date, days) {
+    var result = new Date(date);
+    result.setDate(result.getDate() + days);
+    return result;
 }
 //	**********		Fin Calculo RCL		**********
 
@@ -2437,10 +4249,16 @@ function goConnections () {
     $("#app_root").load("src/importaciones.html");
 }
 
+function goConfig () {
+    $("#app_root").empty();
+    //cleanup();
+    $("#app_root").load("src/config.html");
+}
+
 function logout () {
 	$("#app_root").empty();
+    session.defaultSession.clearStorageData([], (data) => {});
     $("#app_root").load("src/login.html");
-	session.defaultSession.clearStorageData([], (data) => {});
 }
 
 function goRCL () {
@@ -2451,4 +4269,15 @@ function goRCL () {
 function goReports () {
     $("#app_root").empty();
     $("#app_root").load("src/reportes.html");
+}
+
+function goGraphics () {
+    $("#app_root").empty();
+    $("#app_root").load("src/graficos.html");
+}
+
+function goLists () {
+    $("#app_root").empty();
+    //cleanup();
+    $("#app_root").load("src/variablesLists.html");
 }

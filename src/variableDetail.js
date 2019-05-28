@@ -1,9 +1,24 @@
 const electron = require('electron');
-const path = require('path');
 const remote = require('electron').remote;
 const sql = require('mssql');
 
+var user = getUser();
+var password = getPassword();
+var server = getServer();
+var database = getDataBase();
+
 const config = {
+    user: user,
+    password: password,
+    server: server,
+    database: database,
+    pool: {
+        max: 10,
+        min: 0,
+        idleTimeoutMillis: 30000
+    }
+}
+/*const config = {
     user: 'SA',
     password: 'password111!',
     server: 'localhost',
@@ -13,7 +28,7 @@ const config = {
         min: 0,
         idleTimeoutMillis: 30000
     }
-}
+}*/
 
 const pool1 = new sql.ConnectionPool(config, err => {
 	if(err) {
@@ -98,6 +113,41 @@ function loadSelectCampoObjetivo (tabla) {
 	$("#campoCampoInput").append(content);
 }
 
+var colores = [
+    {color1: "#ffe0b2"},
+	{color1: "#d50000"},
+    {color1: "#ffccbc"},
+    {color1: "#fffde7"},
+	{color1: "#fce4ec"},
+	{color1: "#ede7f6"},
+	{color1: "#e1f5fe"},
+	{color1: "#e8eaf6"},
+	{color1: "#e0f7fa"},
+    {color1: "#ffecb3"},
+    {color1: "#ffa726"},
+	{color1: "#2962ff"},
+	{color1: "#64dd17"},
+	{color1: "#00c853"},
+	{color1: "#ff1744"},
+	{color1: "#00bfa5"},
+	{color1: "#880e4f"},
+    {color1: "#ffc400"},
+	{color1: "#4a148c"},
+	{color1: "#0d47a1"},
+	{color1: "#7986cb"},
+    {color1: "#ff6e40"},
+	{color1: "#9575cd"},
+	{color1: "#4fc3f7"},
+    {color1: "#ffc107"},
+	{color1: "#4dd0e1"},
+    {color1: "#6d4c41"},
+    {color1: "#fff176"},
+	{color1: "#b9f6ca"},
+    {color1: "#424242"},
+	{color1: "#33691e"},
+    {color1: "#37474f"}
+];
+
 var arregloListas = [];
 var arregloElementosDeListas = [];
 var arregloReglas = [];
@@ -144,6 +194,7 @@ function loadRules () {
                     		ordenGlobal = arregloReglas[i].orden;
                     };
                     renderRules();
+                    renderTable();
                 });
             }
         });
@@ -220,6 +271,13 @@ function loadVariablesMainDB () {
                     		montoFosedeGlobal = result.recordset[0].montoFosede;
                     	else
                     		montoFosedeGlobal = 0.00;
+
+                        if(result.recordset[0].fullLogo.length > 0){
+                            $("#fullLogo").attr("src",filepathFullLogo);
+                        }
+                        if(result.recordset[0].smallLogo.length > 0){
+                            $("#smallLogo").attr("src",filepathSmallLogo);
+                        }
                     } else {
                     	montoFosedeGlobal = null;
                     }
@@ -229,20 +287,293 @@ function loadVariablesMainDB () {
     }); // fin transaction
 }
 
+function renderTable () {
+    if ( $.fn.dataTable.isDataTable( '#tablaReglas' ) )
+        $("#tablaReglas").dataTable().fnDestroy();
+    $( "#tablaReglas tbody").unbind( "click" );
+    var table = $('#tablaReglas').DataTable({
+        "data": arregloReglas,
+        dom: "Bflrtip",
+        "language": {
+            "lengthMenu": '_MENU_ entradas por página',
+            "search": '<i class="fa fa-search"></i>',
+            "paginate": {
+                "previous": '<i class="fa fa-angle-left"></i>',
+                "next": '<i class="fa fa-angle-right"></i>'
+            },
+            "loadingRecords": "Cargando...",
+            "processing":     "Procesando...",
+            "emptyTable":     "No hay información en la tabla",
+            "info":           "Mostrando _START_ a _END_ de un total _TOTAL_ de entradas",
+            "infoEmpty":      "Mostrando 0 a 0 de 0 entradas",
+            "infoFiltered":   "(filtrado de un total de _MAX_ entradas)"
+        },
+        "columns": [
+            { "data": "ID" },
+            { "data": "reglaPadre" },
+            { "data": "campoObjetivo" },
+            { "data": "Guardar" },
+            { "data": "Eliminar" }
+        ],
+        rowCallback: function(row, data, index){
+            $(row).find('td:eq(2)').html(getTextRule(data));
+        },
+        "columnDefs": [ {
+            "targets": -1,
+            "defaultContent": '<a class="btn btn-app deleteRule"> <i class="fa fa-eraser"></i> Eliminar </a>',
+            "className": "text-center"
+        },
+        {
+            "targets": -2,
+            "defaultContent": '<a class="btn btn-app saveRule"> <i class="fa fa-save"></i> Guardar </a>',
+            "className": "text-center"
+        },
+        {
+            "targets": 0,
+            "className": "text-center",
+        },
+        {
+            "targets": 1,
+            "className": "text-center"
+        },
+        {
+            "targets": 2,
+            "className": "text-center"
+        }]
+    });
+    if ( $.fn.dataTable.isDataTable( '#tablaReglas' ) )
+        table.MakeCellsEditable("destroy");
+
+    var content = [];
+    for (var i = 0; i < arregloReglas.length; i++) {
+    	content.push({value: arregloReglas[i].ID, display: arregloReglas[i].ID});
+    };
+
+    table.MakeCellsEditable({
+        "onUpdate": function() { return; },
+        "columns": [1],
+        "confirmationButton": false,
+        "inputTypes": [
+        	{
+                "column": 1,
+                "type":"list",
+                "options": content
+            }
+        ]
+    });
+
+    $('#tablaReglas tbody').on( 'click', 'tr a.saveRule', function () {
+        var data = table.row( $(this).parents('tr') ).data();
+        console.log(data)
+        if(!isNaN(data.reglaPadre)) {
+        	if(data.reglaPadre != data.ID) {
+	            $("body").overhang({
+	                type: "confirm",
+	                primary: "#f5a433",
+	                accent: "#dc9430",
+	                yesColor: "#3498DB",
+	                message: 'Esta seguro que desea guardar los cambios?',
+	                overlay: true,
+	                yesMessage: "Modificar",
+	                noMessage: "Cancelar",
+	                callback: function (value) {
+	                    if(value)
+	                        modifyRule(data.ID, data.reglaPadre);
+	                }
+	            });
+	           } else {
+	            $("body").overhang({
+	                type: "error",
+	                primary: "#f84a1d",
+	                accent: "#d94e2a",
+	                message: "La variable padre no puede ser la misma variable.",
+	                overlay: true,
+	                closeConfirm: true
+	            });
+	        }
+        } else {
+            $("body").overhang({
+                type: "error",
+                primary: "#f84a1d",
+                accent: "#d94e2a",
+                message: "La variable padre solo puede ser un número.",
+                overlay: true,
+                closeConfirm: true
+            });
+        }
+    } );
+
+    $('#tablaReglas tbody').on( 'click', 'tr a.deleteRule', function () {
+        var data = table.row( $(this).parents('tr') ).data();
+        $("body").overhang({
+            type: "confirm",
+            primary: "#f5a433",
+            accent: "#dc9430",
+            yesColor: "#3498DB",
+            message: 'Esta seguro que desea eliminar la variable?',
+            overlay: true,
+            yesMessage: "Eliminar",
+            noMessage: "Cancelar",
+            callback: function (value) {
+                if(value)
+                    deleteRule(data.ID);
+            }
+        });
+    } );
+}
+
+function modifyRule (id, variablePadre) {
+	const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false;
+        transaction.on('rollback', aborted => {
+            // emited with aborted === true
+            rolledBack = true;
+        });
+        const request = new sql.Request(transaction);
+        request.query("update Reglas set reglaPadre = "+variablePadre+" where id = "+id, (err, result) => {
+            if (err) {
+                if (!rolledBack) {
+                    transaction.rollback(err => {
+                        $("body").overhang({
+                            type: "error",
+                            primary: "#f84a1d",
+                            accent: "#d94e2a",
+                            message: "Error en modificación de Variable.",
+                            overlay: true,
+                            closeConfirm: true
+                        });
+                    });
+                }
+            }  else {
+                transaction.commit(err => {
+                    // ... error checks
+                    $("body").overhang({
+					  	type: "success",
+					  	primary: "#40D47E",
+		  				accent: "#27AE60",
+					  	message: "Variable modificada con éxito.",
+					  	duration: 2,
+					  	overlay: true
+					});
+                    loadRules();
+                });
+            }
+        });
+    }); // fin transaction
+}
+
+function deleteRule (id) {
+	const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false;
+        transaction.on('rollback', aborted => {
+            // emited with aborted === true
+            rolledBack = true;
+        });
+        const request = new sql.Request(transaction);
+        request.query("delete from Reglas where id = "+id, (err, result) => {
+            if (err) {
+                if (!rolledBack) {
+                    transaction.rollback(err => {
+                        $("body").overhang({
+                            type: "error",
+                            primary: "#f84a1d",
+                            accent: "#d94e2a",
+                            message: "Error en eliminación de Variable.",
+                            overlay: true,
+                            closeConfirm: true
+                        });
+                    });
+                }
+            }  else {
+                transaction.commit(err => {
+                    // ... error checks
+                    $("body").overhang({
+					  	type: "success",
+					  	primary: "#40D47E",
+		  				accent: "#27AE60",
+					  	message: "Variable eliminada con éxito.",
+					  	duration: 2,
+					  	overlay: true
+					});
+                    loadRules();
+                });
+            }
+        });
+    }); // fin transaction
+}
+
+function getTextRule (regla) {
+	var reglaTexto = '';
+	if(regla.operacion=="-" || regla.operacion=="+" || (regla.operacion=="*" && !regla.campoObjetivo.includes("FOSEDE")) || regla.operacion=="/") {
+		var campoObjetivo;
+		if(regla.campoObjetivo.split("=").length > 1)
+			campoObjetivo = getCampo(regla.campoObjetivo.split("=")[1]);
+		else
+			campoObjetivo = regla.campoObjetivo;
+		var valor;
+		if(regla.valor.split("=").length > 1)
+			valor = regla.valor.split("=")[1];
+		else
+			valor = regla.valor;
+		reglaTexto+=campoObjetivo +" "+ regla.operacion +" "+ valor;
+	} else if(regla.operacion=="<" || regla.operacion=="<=" || regla.operacion==">" || regla.operacion==">=" || regla.operacion=="==" || regla.operacion=="!=") {
+		var campoObjetivo;
+		if(regla.campoObjetivo.split("=").length > 1)
+			campoObjetivo = getCampo(regla.campoObjetivo.split("=")[1]);
+		else
+			campoObjetivo = regla.campoObjetivo;
+		var valor;
+		if(regla.valor.split("=").length > 1)
+			valor = regla.valor.split("=")[1];
+		else
+			valor = regla.valor;
+		reglaTexto+="Si "+campoObjetivo +" "+ regla.operacion +" "+ valor;
+	} else if(regla.campoObjetivo.includes("FOSEDE")) {
+		var campoObjetivo;
+		if(regla.campoObjetivo.includes("hastaFOSEDE"))
+			campoObjetivo = "Factor * Saldo menor a FOSEDE";
+		else
+			campoObjetivo = "Factor * Saldo mayor a FOSEDE";
+		reglaTexto+=campoObjetivo;
+	} else if(regla.operacion == "en" || regla.operacion == "no") {
+		var campoObjetivo;
+		if(regla.campoObjetivo.split("=").length > 1)
+			campoObjetivo = getCampo(regla.campoObjetivo.split("=")[1]);
+		else
+			campoObjetivo = regla.campoObjetivo;
+		var valor;
+		if(regla.valor.split("=").length > 1)
+			valor = regla.valor.split("=")[1];
+		else
+			valor = regla.valor;
+		/*if(regla.operacion)
+			valor = getCampo(regla.valor.split("=")[1]);
+		else
+			valor = regla.valor;*/
+		var operacion;
+		if(regla.operacion == "no")
+			operacion = "NO se encuentra en";
+		else if(regla.operacion == "en")
+			operacion = "se encuentra en";
+		reglaTexto+="Si "+campoObjetivo +" "+ operacion +" "+ valor;
+	}
+	return reglaTexto;
+}
+
 
 function renderRules () {
 	$("#listRules").empty();
 	var listContent = '';
 	for (var i = 0; i < arregloReglas.length; i++) {
-		var regla = '';
+		var regla = getTextRule(arregloReglas[i]);
 		listContent = '';
-		if(arregloReglas[i].operacion=="-" || arregloReglas[i].operacion=="+" || arregloReglas[i].operacion=="*" || arregloReglas[i].operacion=="/")
-			regla+=arregloReglas[i].campoObjetivo +" "+ arregloReglas[i].operacion +" "+ arregloReglas[i].valor;
-		else
-			regla+="if ( "+arregloReglas[i].campoObjetivo +" "+ arregloReglas[i].operacion +" "+ arregloReglas[i].valor +" )";
 		var clase = '';
-		if(arregloReglas[i].reglaPadre != 0)
-			clase = 'style="padding-left:20%;"';
+		/*if(arregloReglas[i].reglaPadre < colores.length)
+			clase = 'style="background-color:'+colores[arregloReglas[i].reglaPadre].color1+';"';
+		else
+			clase = 'style="background-color:'+colores[arregloReglas[i].reglaPadre%colores.length].color1+';"';*/
 		listContent+='<li '+clase+'><p><input type="radio" name="rules" class="flat" value="'+arregloReglas[i].ID+'"> '+ regla +' </p></li>';
 		$("#listRules").append(listContent);
 	};
@@ -417,6 +748,23 @@ function renderRules () {
 	$("#resultadoDisable").on('ifUnchecked', function(event){
 		$("#resultadoGuardarVariable").attr('disabled',false);
 	});
+}
+
+function getCampo (campo) {
+	if(campo.localeCompare("idCliente") == 0)
+		return"ID del Cliente";
+	else if(campo.localeCompare("nombreCliente") == 0)
+		return"Nombre del Cliente";
+	else if(campo.localeCompare("tipoPersona") == 0)
+		return"Tipo de Persona";
+	else if(campo.localeCompare("tipoSubPersona") == 0)
+		return"Tipo de Sub-Persona";
+	else if(campo.localeCompare("saldo") == 0)
+		return"Saldo";
+	else if(campo.localeCompare("plazoResidual") == 0)
+		return"Plazo Residual";
+	else if(campo.localeCompare("tipoCuenta") == 0)
+		return"Tipo de Cuenta";
 }
 
 
@@ -627,6 +975,8 @@ function mostrarFieldsCampoSelect () {
 		$( "#factorField" ).hide();
 		$( "#sumarSiField" ).hide();
 		$("#meOperadorRadio").iCheck('check');
+		$( "#fechaValorRadioLabel" ).hide();
+		$( "#diasField" ).hide();
 	} else if(campo == 'plazoResidual') {
 		$( "#relacionalesField" ).fadeIn( "slow", function() {
 		});
@@ -651,6 +1001,8 @@ function mostrarFieldsCampoSelect () {
 		$( "#algebraicosField" ).hide();
 		$( "#ln_solidOPERACION" ).hide();
 		$("#sumarSiOperadorRadio").iCheck('check');
+		$( "#fechaValorRadioLabel" ).hide();
+		$( "#diasField" ).hide();
 	}
 	if(campo == 'tipoPersona') {
 		renderListsSelect(4);
@@ -769,13 +1121,14 @@ function saveRule () {
 	else if( $('#multOperadorRadio').is(':checked') )
 		operacion = '*';
 	if( $('#manualValorRadio').is(':checked') )
-		valor = "COLUMNA="+$("#manualValorInput").val().split(" ")[1];
+		valor = "COLUMNA="+parseFloat($("#manualValorInput").val().split(" ")[1].replace(/,/, ""));
 	else if( $('#elementoValorRadio').is(':checked') ) {
 		var elementosSelect = $("#elementoValorOptionSelect").val();
 		var elementos = '';
-		var aplicarNombre = "1";
+		var aplicarNombre = "0";
+		/*var aplicarNombre = "1";
 		if($('#valorElementoListaValorRadio').is(':checked'))
-			aplicarNombre = "0";
+			aplicarNombre = "0";*/
 		if(elementosSelect != null) {
 			for (var i = 0; i < elementosSelect.length; i++) {
 				if(aplicarNombre == "1")
@@ -788,8 +1141,11 @@ function saveRule () {
 			valor = 'LISTA=' + elementos;
 		} else 
 			valor = 'LISTA=' + getSelectOptions(arregloElementosDeListasValor, aplicarNombre);
-	} else if( $('#factorValorRadio').is(':checked') )
+	} else if( $('#factorValorRadio').is(':checked') ) {
 		valor = "FACTOR="+variableDeVariableObject.factor;
+	} else if( $('#fechaValorRadio').is(':checked') ) {
+		valor = "FECHA";
+	}
 	console.log("-_------___----");
 	console.log(reglaPadre);
 	console.log(campoObjetivo);
@@ -832,7 +1188,7 @@ function saveRule () {
 								  	type: "success",
 								  	primary: "#40D47E",
 					  				accent: "#27AE60",
-								  	message: "Regla creada con exito.",
+								  	message: "Regla creada con éxito.",
 								  	duration: 2,
 								  	overlay: true
 								});
@@ -928,10 +1284,16 @@ function goConnections () {
     $("#app_root").load("src/importaciones.html");
 }
 
+function goConfig () {
+    $("#app_root").empty();
+    //cleanup();
+    $("#app_root").load("src/config.html");
+}
+
 function logout () {
 	$("#app_root").empty();
+    session.defaultSession.clearStorageData([], (data) => {});
     $("#app_root").load("src/login.html");
-	session.defaultSession.clearStorageData([], (data) => {});
 }
 
 function goRCL () {
@@ -942,6 +1304,17 @@ function goRCL () {
 function goReports () {
 	$("#app_root").empty();
     $("#app_root").load("src/reportes.html");
+}
+
+function goGraphics () {
+    $("#app_root").empty();
+    $("#app_root").load("src/graficos.html");
+}
+
+function goLists () {
+    $("#app_root").empty();
+    //cleanup();
+    $("#app_root").load("src/variablesLists.html");
 }
 
 
@@ -975,7 +1348,7 @@ function showRules () {
 }
 
 function campoObjetivo (regla, arreglo, tabs) {
-	var esCondicion = false;
+	var esCondicion = false, noAgregarFactor = false;
 	if(regla.operacion=="-" || regla.operacion=="+" || regla.operacion=="*" || regla.operacion=="/" || regla.operacion=="=")
 		esCondicion = false;
 	else
@@ -995,25 +1368,68 @@ function campoObjetivo (regla, arreglo, tabs) {
 
 			// Agregando campo Operacion
 			if(regla.operacion=="en" || regla.operacion=="no")
-				arreglo.push(tabsText+"if ( "+campo+".localeCompare('");
+				arreglo.push(tabsText+"if ( arregloDepositos[i]."+campo+".localeCompare('");
 			else
-				arreglo.push(tabsText+"if ( "+campo+" "+regla.operacion);
+				arreglo.push(tabsText+"if ( arregloDepositos[i]."+campo+" "+regla.operacion);
 			//posicionesIF.push(arreglo.length-1);
 			posicionesIF.push(arreglo.length);
 		} else {
 			var campo = regla.campoObjetivo.split("=")[1];
 
 			// Agregando campo Operacion
-			arreglo.push(tabsText+campo+" = "+campo+" "+regla.operacion);
+			arreglo.push(tabsText+"var totalDeposito = arregloDepositos[i].saldo;");
+			arreglo.push("\n"+tabsText+variableDeVariableObject.nombre+" += totalDeposito "+regla.operacion);
 		}
 	} else if(regla.campoObjetivo.indexOf('hastaFOSEDE') == 0) {
-		arreglo.push(tabsText+"if ( arreglo.saldo > "+montoFosedeGlobal+" )");
-		arreglo.push("\n\t"+tabsText+variableDeVariableObject.nombre+" = arreglo.saldo - "+montoFosedeGlobal);
-		arreglo.push("\n"+tabsText+"total"+variableDeVariableObject.nombre+" = "+variableDeVariableObject.nombre+" * "+(montoFosedeGlobal/100));
+		noAgregarFactor = true;
+		arreglo.push(tabsText+"var totalDeposito;");
+		arreglo.push("\n"+tabsText+"if ( arregloDepositos[i].saldo > "+montoFosedeGlobal+" )");
+		arreglo.push("\n\t"+tabsText+"totalDeposito = "+montoFosedeGlobal+";");
+		arreglo.push("\n"+tabsText+"else");
+		arreglo.push("\n\t"+tabsText+"totalDeposito = arregloDepositos[i].saldo;");
+		arreglo.push("\n"+tabsText+variableDeVariableObject.nombre+" += totalDeposito * "+(parseInt(regla.valor.split("=")[1])/100)+";");
 	} else if(regla.campoObjetivo.indexOf('mayorFOSEDE') == 0) {
-		arreglo.push(tabsText+"if ( arreglo.saldo > "+montoFosedeGlobal+" )");
-		arreglo.push("\n\t"+tabsText+variableDeVariableObject.nombre+" = arreglo.saldo - "+montoFosedeGlobal);
-		arreglo.push("\n"+tabsText+"total"+variableDeVariableObject.nombre+" = "+variableDeVariableObject.nombre+" * "+(montoFosedeGlobal/100));
+		noAgregarFactor = true;
+		arreglo.push(tabsText+"if ( arregloDepositos[i].saldo > "+montoFosedeGlobal+" ) {");
+		arreglo.push("\n"+tabsText+"\tvar totalDeposito = arregloDepositos[i].saldo - "+montoFosedeGlobal+";");
+		arreglo.push("\n\t"+tabsText+variableDeVariableObject.nombre+" += totalDeposito * "+(parseInt(regla.valor.split("=")[1])/100)+";");
+		arreglo.push("\n"+tabsText+"}");
+	} else if(regla.campoObjetivo.indexOf('CONCUENTAS') == 0) {
+		noAgregarFactor = true;
+		if(regla.campoObjetivo.split("=")[1].localeCompare('hastaFOSEDE') == 0) {
+			arreglo.push(tabsText+"var totalDeposito = conCuentasHastaFOSEDE(arregloDepositos[i].idCliente);\n");
+			arreglo.push(tabsText+"if ( arregloDepositos[i].saldo > "+montoFosedeGlobal+" && totalDeposito != -1 ) {\n");
+			arreglo.push(tabsText+"\tif ( totalDeposito > "+montoFosedeGlobal+")");
+			arreglo.push("\n\t\t"+tabsText+"totalDeposito = "+montoFosedeGlobal+";");
+			arreglo.push("\n\t"+tabsText+variableDeVariableObject.nombre+" += totalDeposito * "+(parseInt(regla.valor.split("=")[1])/100)+";");
+			arreglo.push("\n"+tabsText+"}");
+		} else if(regla.campoObjetivo.split("=")[1].localeCompare('mayorFOSEDE') == 0) {
+			arreglo.push(tabsText+"var totalDeposito = conCuentasMayorFOSEDE(arregloDepositos[i].idCliente);\n");
+			arreglo.push(tabsText+"if ( arregloDepositos[i].saldo > "+montoFosedeGlobal+" && totalDeposito != -1 ) {\n");
+			arreglo.push(tabsText+"\tif ( totalDeposito > "+montoFosedeGlobal+") {");
+			arreglo.push("\n\t\t"+tabsText+"totalDeposito = totalDeposito - "+montoFosedeGlobal+";");
+			arreglo.push("\n\t\t"+tabsText+variableDeVariableObject.nombre+" += totalDeposito * "+(parseInt(regla.valor.split("=")[1])/100)+";");
+			arreglo.push("\n\t"+tabsText+"}");
+			arreglo.push("\n"+tabsText+"}");
+		}
+	} else if(regla.campoObjetivo.indexOf('SINCUENTAS') == 0) {
+		noAgregarFactor = true;
+		if(regla.campoObjetivo.split("=")[1].localeCompare('hastaFOSEDE') == 0) {
+			arreglo.push(tabsText+"var totalDeposito = sinCuentasHastaFOSEDE(arregloDepositos[i].idCliente);\n");
+			arreglo.push(tabsText+"if ( arregloDepositos[i].saldo > "+montoFosedeGlobal+" && totalDeposito != -1 ) {\n");
+			arreglo.push(tabsText+"\tif ( totalDeposito > "+montoFosedeGlobal+")");
+			arreglo.push("\n\t\t"+tabsText+"totalDeposito = "+montoFosedeGlobal+";");
+			arreglo.push("\n\t"+tabsText+variableDeVariableObject.nombre+" += totalDeposito * "+(parseInt(regla.valor.split("=")[1])/100)+";");
+			arreglo.push("\n"+tabsText+"}");
+		} else if(regla.campoObjetivo.split("=")[1].localeCompare('mayorFOSEDE') == 0) {
+			arreglo.push(tabsText+"var totalDeposito = sinCuentasMayorFOSEDE(arregloDepositos[i].idCliente);\n");
+			arreglo.push(tabsText+"if ( arregloDepositos[i].saldo > "+montoFosedeGlobal+" && totalDeposito != -1 ) {\n");
+			arreglo.push(tabsText+"\tif ( totalDeposito > "+montoFosedeGlobal+") {");
+			arreglo.push("\n\t\t"+tabsText+"totalDeposito = totalDeposito - "+montoFosedeGlobal+";");
+			arreglo.push("\n\t\t"+tabsText+variableDeVariableObject.nombre+" += totalDeposito * "+(parseInt(regla.valor.split("=")[1])/100)+";");
+			arreglo.push("\n\t"+tabsText+"}");
+			arreglo.push("\n"+tabsText+"}");
+		}
 	}
 
 	console.log('arreglo Campo');
@@ -1031,41 +1447,56 @@ function campoObjetivo (regla, arreglo, tabs) {
 				for (var j = 0; j < tamArreglo; j++) {
 					for (var i = 0; i < arregloLista.length; i++) {
 						if(i==0) {
-							var textoFinal = '';
+							var textoFinal = ' != 0 ';
 							if(i+1 == arregloLista.length)
-								textoFinal = " ) {";
+								textoFinal += " ) {";
 							arreglo[j] +=arregloLista[i] + "')" + textoFinal;
 						} else {
-							var textoFinal = '';
+							var textoFinal = ' != 0 ';
 							if(i+1 == arregloLista.length)
-								textoFinal = " ) {";
+								textoFinal += " ) {";
 							arreglo[j] += " && "+copiaRegla[j].split(" ( ")[1]+arregloLista[i]+"')"+textoFinal;
 						}
 					}
 				};
 			} else {
-				for (var i = 0; i < arregloLista.length; i++) {
+				/*for (var i = 0; i < arregloLista.length; i++) {
 					for (var j = 0; j < tamArreglo; j++) {
 						if(i==0) {
-							arreglo[j] +=arregloLista[i] + "')" + " ) {";
+							arreglo[j] +=arregloLista[i] + "') == 0 ) {";
 						} else {
-							arreglo.push("\n"+copiaRegla[j]+arregloLista[i]+"')"+" ) {");
+							arreglo.push("\n"+copiaRegla[j]+arregloLista[i]+"') == 0 ) {");
 							posicionesIF.push(posicionesIF[posicionesIF.length-1]+2);
 						}
 					};
+				};*/
+				for (var j = 0; j < tamArreglo; j++) {
+					for (var i = 0; i < arregloLista.length; i++) {
+						if(i==0) {
+							var textoFinal = ' == 0 ';
+							if(i+1 == arregloLista.length)
+								textoFinal += " ) {";
+							arreglo[j] +=arregloLista[i] + "')" + textoFinal;
+						} else {
+							var textoFinal = ' == 0 ';
+							if(i+1 == arregloLista.length)
+								textoFinal += " ) {";
+							arreglo[j] += " || "+copiaRegla[j].split(" ( ")[1]+arregloLista[i]+"')"+textoFinal;
+						}
+					}
 				};
 			}
 		}
-	} else if(regla.valor.indexOf('FACTOR') == 0) {
+	} else if(regla.valor.indexOf('FACTOR') == 0 && !noAgregarFactor) {
 		if(esCondicion) {
-			var factorValor = regla.valor.split("=")[1];
-			for (var i = 0; i < arreglo.length; i++) {
-				arreglo[i] += " "+factorValor + " ) {";
+			var factorValor = parseInt(regla.valor.split("=")[1]);
+			for (var i = 1; i < arreglo.length; i++) {
+				arreglo[i] += " "+factorValor/100 + " ) {";
 			};
 		} else {
 			var factorValor = regla.valor.split("=")[1];
-			for (var i = 0; i < arreglo.length; i++) {
-				arreglo[i] += " "+factorValor + ";";
+			for (var i = 1; i < arreglo.length; i++) {
+				arreglo[i] += " "+factorValor/100 + ";";
 			};
 		}
 	} else if(regla.valor.indexOf('COLUMNA') == 0) {
@@ -1076,11 +1507,29 @@ function campoObjetivo (regla, arreglo, tabs) {
 			};
 		} else {
 			var columnaValor = regla.valor.split("=")[1];
-			for (var i = 0; i < arreglo.length; i++) {
+			arreglo[arreglo.length-1] += " "+columnaValor + ";";
+			/*for (var i = 0; i < arreglo.length; i++) {
 				arreglo[i] += " "+columnaValor + ";";
+			};*/
+		}
+	} else if(regla.valor.indexOf('FECHA') == 0) {
+		if(esCondicion) {
+			for (var i = 0; i < arreglo.length; i++) {
+				arreglo[i] += " proyecciones[i] ) {";
+			};
+		} else {
+			var columnaValor = regla.valor.split("=")[1];
+			for (var i = 0; i < arreglo.length; i++) {
+				arreglo[i] += " proyecciones[i];";
 			};
 		}
 	}
+
+	console.log('arreglo VALOR');
+	console.log(arreglo);
+	for (var i = 0; i < arreglo.length; i++) {
+		console.log(arreglo[i]);
+	};
 
 	var cuerpo = arregloReglas.filter(function( object ) {
 	    return object.reglaPadre == regla.ID;

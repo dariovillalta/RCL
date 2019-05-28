@@ -2,12 +2,16 @@
 <link href="src/libs/iCheck/skins/flat/green.css" rel="stylesheet">
 <link href="src/libs/bootstrap-datepicker/datepicker3.css" rel="stylesheet">
 <link href="src/libs/overhang/overhang.min.css" rel="stylesheet">
+<link href="src/libs/custom.min.css" rel="stylesheet">
 <div class="container body">
+  <div class="loadingScreen" style="display: none;">
+    <p class="loadingScreenText">Espere un momento por favor <span class="dots"></span> </p>
+  </div>
   <div class="main_container">
     <div class="col-md-3 left_col">
       <div class="left_col scroll-view">
         <div class="navbar nav_title" style="border: 0;" id="wrapper">
-          <a onclick="goHome()" class="site_title cursorHand"><img src="src/img/full-logo-example.png" alt="" class="logo_company"> <img src="src/img/small-logo-example.png" alt="" class="logo_company_solo"></a>
+          <a onclick="goHome()" style="height: 100%;" class="site_title cursorHand"><img id="fullLogo" src="src/img/full-logo-example.png" class="logo_company"> <img id="smallLogo" src="src/img/small-logo-example.png" alt="" class="logo_company_solo"></a>
         </div>
 
         <div class="clearfix"></div>
@@ -34,6 +38,8 @@
               </li>
               <li><a onclick="goReports()"><i class="fa fa-list-alt"></i> Reporteria </a>
               </li>
+              <li><a onclick="goGraphics()"><i class="fa fa-bar-chart"></i> Gr&aacute;ficos </a>
+              </li>
             </ul>
           </div>
 
@@ -57,9 +63,11 @@
                 <span class=" fa fa-angle-down"></span>
               </a>
               <ul class="dropdown-menu dropdown-usermenu pull-right">
-                <li id="varLabel"><a onclick="goVariables()"> Editar Variables </a></li>
-                <li id="userLabel"><a onclick="goUsers()"> Control de Usuarios </a></li>
+                <li id="varLabel"><a onclick="goVariables()"> Editar Variables de F&oacute;rmula </a></li>
+                <li id="configLabel"><a onclick="goLists()"> Mantenimiento de Listas </a></li>
+                <li id="userLabel"><a onclick="goUsers()"> Control de Usuarios y Logo </a></li>
                 <li id="importLabel"><a onclick="goConnections()"> Importar Tablas </a></li>
+                <li id="configLabel"><a onclick="goConfig()"> Configuraci&oacute;n de Rutina </a></li>
                 <li><a onclick="logout()"><i class="fa fa-sign-out pull-right"></i> Cerrar Sesi&oacute;n</a></li>
               </ul>
             </li>
@@ -76,7 +84,7 @@
           <h3>Capturaci&oacute;n de Datos</h3>
         </div>
 
-        <div class="title_right">
+        <!-- <div class="title_right">
           <div class="col-md-5 col-sm-5 col-xs-12 form-group pull-right top_search">
             <div class="input-group">
               <input id="buscarDiv" type="text" class="form-control" placeholder="Buscar...">
@@ -85,7 +93,7 @@
               </span>
             </div>
           </div>
-        </div>
+        </div> -->
       </div>
       
       <div class="clearfix"></div>
@@ -105,7 +113,7 @@
             <div class="x_content">
 
               <div class="col-md-12 col-sm-12 col-xs-12">
-                <div style="display: flex; align-items: center; justify-content: center; height: 25vh; text-align: center;">
+                <div style="display: flex; align-items: center; justify-content: center; text-align: center;">
                   <div class="row">
                     <h2>Importaci&oacute;n Diaria</h2>
                     <label for="">Seleccionar Conecci&oacute;n:</label>
@@ -125,6 +133,13 @@
                       <label>
                         <input id="carteraCredito" type="radio" class="flat" name="coneccionesRadio" value="3"> Cartera de Cr&eacute;dito
                       </label>
+                    </div>
+                    <br/>
+                    <div id="wrapper">
+                      <label>D&iacute;a a Calcular</label>
+                    </div>
+                    <div class="row" style="display: flex; justify-content: center;">
+                      <div id="fechaImportacion" class="center-block"></div>
                     </div>
                     <br/>
                     <button onclick="importFromConnection()" type="button" class="btn btn-success">Importar</button>
@@ -274,6 +289,13 @@
                       <td>Agencia</td>
                       <td>
                         <input type="text" id="sucursalConexionActivos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">6</th>
+                      <td>Fecha de Importaci&oacute;n</td>
+                      <td>
+                        <input type="text" id="fechaImportacionConexionActivos" required="required" class="form-control">
                       </td>
                     </tr>
                   </tbody>
@@ -447,16 +469,30 @@
                     </tr>
                     <tr>
                       <th scope="row">8</th>
-                      <td>Plazo Residual</td>
+                      <td>Fecha de Inicio</td>
                       <td>
-                        <input type="text" id="plazoResidualConexionDepositos" required="required" class="form-control">
+                        <input type="text" id="fechaInicioConexionDepositos" required="required" class="form-control">
                       </td>
                     </tr>
                     <tr>
                       <th scope="row">9</th>
+                      <td>Fecha Final</td>
+                      <td>
+                        <input type="text" id="fechaFinalConexionDepositos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">10</th>
                       <td>Agencia</td>
                       <td>
                         <input type="text" id="sucursalConexionDepositos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">11</th>
+                      <td>Fecha de Importaci&oacute;n</td>
+                      <td>
+                        <input type="text" id="fechaImportacionConexionDepositos" required="required" class="form-control">
                       </td>
                     </tr>
                   </tbody>
@@ -630,114 +666,142 @@
                     </tr>
                     <tr>
                       <th scope="row">8</th>
-                      <td>Tipo de Cuenta (TC)</td>
-                      <td>
-                        <input type="text" id="tipoCuentaConexionPrestamos" required="required" class="form-control">
-                      </td>
-                    </tr>
-                    <tr>
-                      <th scope="row">9</th>
                       <td>D&iacute;as de Mora</td>
                       <td>
                         <input type="text" id="moraConexionPrestamos" required="required" class="form-control">
                       </td>
                     </tr>
                     <tr>
-                      <th scope="row">10</th>
+                      <th scope="row">9</th>
                       <td>Amortizaciones</td>
                       <td>
                         <input type="text" id="amortizacionesConexionPrestamos" required="required" class="form-control">
                       </td>
                     </tr>
                     <tr>
-                      <th scope="row">11</th>
+                      <th scope="row">10</th>
                       <td>Sobregiros</td>
                       <td>
                         <input type="text" id="sobregirosConexionPrestamos" required="required" class="form-control">
                       </td>
                     </tr>
                     <tr>
-                      <th scope="row">12</th>
+                      <th scope="row">11</th>
                       <td>Contingente</td>
                       <td>
                         <input type="text" id="contingenteConexionPrestamos" required="required" class="form-control">
                       </td>
                     </tr>
                     <tr>
-                      <th scope="row">13</th>
+                      <th scope="row">12</th>
                       <td>Clasificaci&oacute;n de Cartera</td>
                       <td>
                         <input type="text" id="clasificacionCarteraConexionPrestamos" required="required" class="form-control">
                       </td>
                     </tr>
                     <tr>
-                      <th scope="row">14</th>
+                      <th scope="row">13</th>
                       <td>Tipo de Cr&eacute;dito</td>
                       <td>
                         <input type="text" id="tipoCreditoConexionPrestamos" required="required" class="form-control">
                       </td>
                     </tr>
                     <tr>
-                      <th scope="row">15</th>
+                      <th scope="row">14</th>
                       <td>Pago Esperado en 30 D&iacute;as</td>
                       <td>
                         <input type="text" id="esperado30ConexionPrestamos" required="required" class="form-control">
                       </td>
                     </tr>
                     <tr>
-                      <th scope="row">16</th>
+                      <th scope="row">15</th>
                       <td>Pago Esperado en 60 D&iacute;as</td>
                       <td>
                         <input type="text" id="esperado60ConexionPrestamos" required="required" class="form-control">
                       </td>
                     </tr>
                     <tr>
-                      <th scope="row">17</th>
+                      <th scope="row">16</th>
                       <td>Pago Esperado en 90 D&iacute;as</td>
                       <td>
                         <input type="text" id="esperado90ConexionPrestamos" required="required" class="form-control">
                       </td>
                     </tr>
                     <tr>
-                      <th scope="row">18</th>
+                      <th scope="row">17</th>
                       <td>Pago Esperado en 120 D&iacute;as</td>
                       <td>
                         <input type="text" id="esperado120ConexionPrestamos" required="required" class="form-control">
                       </td>
                     </tr>
                     <tr>
-                      <th scope="row">19</th>
+                      <th scope="row">18</th>
                       <td>Clausulas Restrictivas</td>
                       <td>
                         <input type="text" id="clausulasRestrictivasConexionPrestamos" required="required" class="form-control">
                       </td>
                     </tr>
                     <tr>
+                      <th scope="row">19</th>
+                      <td>Financiaci&oacute;n Garantizada</td>
+                      <td>
+                        <input type="text" id="financiacionGarantizadaConexionPrestamos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
                       <th scope="row">20</th>
+                      <td>Valor de la Financiaci&oacute;n</td>
+                      <td>
+                        <input type="text" id="valorFinanciacionConexionPrestamos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">21</th>
+                      <td>ALAC</td>
+                      <td>
+                        <input type="text" id="alacConexionPrestamos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">22</th>
+                      <td>Factor</td>
+                      <td>
+                        <input type="text" id="factorConexionPrestamos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">23</th>
                       <td>Fecha de Inicio</td>
                       <td>
                         <input type="text" id="fechaInicioConexionPrestamos" required="required" class="form-control">
                       </td>
                     </tr>
                     <tr>
-                      <th scope="row">21</th>
+                      <th scope="row">24</th>
                       <td>Fecha de Expiraci&oacute;n</td>
                       <td>
                         <input type="text" id="fechaExpiracionConexionPrestamos" required="required" class="form-control">
                       </td>
                     </tr>
                     <tr>
-                      <th scope="row">22</th>
+                      <th scope="row">25</th>
                       <td>Monto Otorgado</td>
                       <td>
                         <input type="text" id="montoOtorgadoConexionPrestamos" required="required" class="form-control">
                       </td>
                     </tr>
                     <tr>
-                      <th scope="row">23</th>
+                      <th scope="row">26</th>
                       <td>Agencia</td>
                       <td>
                         <input type="text" id="sucursalConexionPrestamos" required="required" class="form-control">
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">27</th>
+                      <td>Fecha de Importaci&oacute;n</td>
+                      <td>
+                        <input type="text" id="fechaImportacionConexionPrestamos" required="required" class="form-control">
                       </td>
                     </tr>
                   </tbody>
@@ -771,6 +835,10 @@
 <script src="src/libs/overhang/overhang.min.js"></script>
 
 <script src="src/libs/jquery.inputmask/dist/min/jquery.inputmask.bundle.min.js"></script>
+
+<script src="src/libs/bootstrap-datepicker/bootstrap-datepicker.js"></script>
+
+<script src="src/libs/bootstrap-datepicker/locales/bootstrap-datepicker.es.js"></script>
 
 <script src="src/importaciones.js"></script>
 

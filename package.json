@@ -1,23 +1,47 @@
 {
   "name": "RCL",
   "version": "1.0.0",
-  "description": "",
+  "description": "RCL",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build-win": "electron-packager ./ --platform win32 --arch x64 --out ./dist --overwrite"
+    "build-win": "electron-packager ./ --overwrite --asar=true --platform=win32 --arch=x64 --icon=src/img/logo.ico --prune=true --out=release-builds --version-string.CompanyName='LUGON HN' --version-string.FileDescription='TOLOC RCL' --version-string.ProductName='TOLOC RCL'",
+    "dist": "electron-builder -w"
   },
   "keywords": [],
-  "author": "",
+  "author": "Dario Villalta",
   "license": "ISC",
   "devDependencies": {
     "electron": "4.0.0",
+    "electron-builder": "^20.40.2",
     "electron-packager": "^13.0.1"
   },
   "dependencies": {
+    "crypto-js": "3.1.9-1",
+    "html2canvas": "1.0.0-rc.0",
+    "js-md5": "0.7.3",
     "mssql": "4.3.0",
+    "nodemailer": "6.1.1",
     "safer-buffer": "2.1.2",
     "trip.js": "3.3.3",
     "xlsx-style": "0.8.13"
+  },
+  "build": {
+    "appId": "com.lugon.rcl",
+    "productName": "RCL",
+    "directories": {
+      "output": "build"
+    },
+    "nsis": {
+      "allowToChangeInstallationDirectory": true,
+      "oneClick": false
+    },
+    "win": {
+      "target": "nsis",
+      "signingHashAlgorithms": [
+        "sha1",
+        "sha256"
+      ]
+    }
   }
 }

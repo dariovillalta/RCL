@@ -1,0 +1,727 @@
+<link rel="stylesheet" href="src/variablesStyles.css">
+<link href="src/libs/iCheck/skins/flat/green.css" rel="stylesheet">
+<link href="src/libs/bootstrap-datepicker/datepicker3.css" rel="stylesheet">
+<link href="src/libs/overhang/overhang.min.css" rel="stylesheet">
+<link href="src/libs/custom.min.css" rel="stylesheet">
+<div class="container body">
+  <div class="loadingScreen" style="display: none;">
+    <p class="loadingScreenText">Espere un momento por favor <span class="dots"></span> </p>
+  </div>
+  <div class="main_container" style="z-index: -1;">
+    <div class="col-md-3 left_col">
+      <div class="left_col scroll-view">
+        <div class="navbar nav_title" style="border: 0;" id="wrapper">
+          <a onclick="goHome()" style="height: 100%;" class="site_title cursorHand"><img id="fullLogo" src="src/img/full-logo-example.png" class="logo_company"> <img id="smallLogo" src="src/img/small-logo-example.png" alt="" class="logo_company_solo"></a>
+        </div>
+
+        <div class="clearfix"></div>
+
+        <!-- menu profile quick info -->
+        <div class="profile clearfix">
+          <div class="profile_info">
+            <span>Bienvenido,</span>
+            <h2 id="nameUser"></h2>
+          </div>
+        </div>
+        <!-- /menu profile quick info -->
+
+        <br />
+
+        <!-- sidebar menu -->
+        <div id="sidebar-menu" class="main_menu_side hidden-print main_menu">
+          <div class="menu_section">
+            <h3>General</h3>
+            <ul class="nav side-menu">
+              <li><a onclick="goHome()"><i class="fa fa-home"></i> Home</a>
+              </li>
+              <li><a onclick="goRCL()"><i class="fa fa-bar-chart"></i> C&aacute;lculo Diario de RCL </a>
+              </li>
+              <li><a onclick="goReports()"><i class="fa fa-list-alt"></i> Reporter&iacute;a </a>
+              </li>
+              <li><a onclick="goGraphics()"><i class="fa fa-bar-chart"></i> Gr&aacute;ficos </a>
+              </li>
+            </ul>
+          </div>
+
+        </div>
+        <!-- /sidebar menu -->
+      </div>
+    </div>
+
+    <!-- top navigation -->
+    <div class="top_nav">
+      <div class="nav_menu">
+        <nav>
+          <div class="nav toggle">
+            <a id="menu_toggle"><i class="fa fa-bars"></i></a>
+          </div>
+
+          <ul class="nav navbar-nav navbar-right">
+            <li class="">
+              <a href="javascript:;" class="user-profile dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                <img src="" alt=""> <span id="navbar_name"></span>
+                <span class=" fa fa-angle-down"></span>
+              </a>
+              <ul class="dropdown-menu dropdown-usermenu pull-right">
+                <li id="varLabel"><a onclick="goVariables()"> Editar Variables de F&oacute;rmula </a></li>
+                <li id="configLabel"><a onclick="goLists()"> Mantenimiento de Listas </a></li>
+                <li id="userLabel"><a onclick="goUsers()"> Control de Usuarios y Logo </a></li>
+                <li id="importLabel"><a onclick="goConnections()"> Importar Tablas </a></li>
+                <li id="configLabel"><a onclick="goConfig()"> Configuraci&oacute;n de Rutina </a></li>
+                <li><a onclick="logout()"><i class="fa fa-sign-out pull-right"></i> Cerrar Sesi&oacute;n</a></li>
+              </ul>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+    <!-- /top navigation -->
+
+    <!-- page content -->
+    <div class="right_col" role="main">
+      <div class="page-title">
+        <div class="title_left">
+          <h3>Editar Variables </h3>
+        </div>
+
+        <!-- <div class="title_right">
+          <div class="col-md-5 col-sm-5 col-xs-12 form-group pull-right top_search">
+            <div class="input-group">
+              <input id="buscarDiv" type="text" class="form-control" placeholder="Buscar...">
+              <span class="input-group-btn">
+                <button class="btn btn-default" type="button" onclick="filterDiv()">Filtrar</button>
+              </span>
+            </div>
+          </div>
+        </div> -->
+      </div>
+      
+      <div class="clearfix"></div>
+      <div id="listas_div" class="row filtrarRow">
+        <div class="col-md-12">
+          <div class="x_panel">
+            <div class="x_title">
+              <h2>Importar Manual Contable y Administraci&oacute;n de Listas para las Reglas</h2>
+              <ul class="nav navbar-right panel_toolbox">
+                <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                </li>
+              </ul>
+              <div class="clearfix"></div>
+            </div>
+
+            <div class="x_content">
+
+              <div class="col-md-12 col-sm-12 col-xs-12">
+                <div class="row">
+                  <div class="x_panel" role="tabpanel" data-example-id="togglable-tabs">
+                    <ul id="myTabManual" class="nav nav-tabs bar_tabs" role="tablist">
+                      <li role="presentation" class="active" value="1"><a href="#tab_Manual_Excel" role="tab" id="profile-tab" data-toggle="tab" aria-expanded="false">Excel</a>
+                      </li>
+                      <li role="presentation" value="0"><a href="#tab_Manual_MSSQL" id="home-tab" role="tab" data-toggle="tab" aria-expanded="true">Conexi&oacute;n a una Base de Datos MSSQL</a>
+                      </li>
+                    </ul>
+                    <div id="myTabContentActivos" class="tab-content">
+                      <div role="tabpanel" class="tab-pane fade in" id="tab_Manual_MSSQL" aria-labelledby="home-tab">
+                        <div class="col-md-6">
+                          <div class="form-group">
+                            <label>Usuario</label>
+                            <input id="manualUserDB" type="text" class="form-control" placeholder="Ingrese el nombre de usuario de la base de datos">
+                          </div>
+                        </div>
+                        <div class="col-md-6">
+                          <div class="form-group">
+                            <label>Contrase&ntilde;a</label>
+                            <input id="manualPasswordDB" type="password" class="form-control" placeholder="Ingrese la contrase&ntilde;a de la base de datos">
+                          </div>
+                        </div>
+                        <div class="col-md-6">
+                          <div class="form-group">
+                            <label>Servidor</label>
+                            <input id="manualServerDB" type="text" class="form-control" placeholder="Ingrese la direcci&oacute;n del servidor de la base de datos">
+                          </div>
+                        </div>
+                        <div class="col-md-6">
+                          <div class="form-group">
+                            <label>Base de Datos</label>
+                            <input id="manualDataBaseDB" type="text" class="form-control" placeholder="Ingrese el nombre de la base de datos">
+                          </div>
+                        </div>
+                        <div class="col-md-6">
+                          <div class="form-group">
+                            <label>Tabla</label>
+                            <input id="manualTableDB" type="text" class="form-control" placeholder="Ingrese el nombre de la tabla">
+                          </div>
+                        </div>
+                        <div class="col-md-6">
+                          <br/>
+                          <button id="testConnection" onclick="connectionTest()" type="button" class="btn btn-primary" style="margin-top:1%;">Probar Conexi&oacute;n</button>
+                        </div>
+                        <div class="col-md-12">
+                          <h5>* Nota: Ingresar en los campos siguientes el nombre de la columna correspondiente a su tabla.</h5>
+                        </div>
+                        <br/><br/>
+                        <div class="col-md-12">
+                          <h4>Mapeo de Campos</h4>
+                        </div>
+                        <br/>
+                        
+                        <table class="table table-striped">
+                          <thead>
+                            <tr>
+                              <th>#</th>
+                              <th>Campo</th>
+                              <th>Origen</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr>
+                              <th scope="row">1</th>
+                              <td>Cuenta</td>
+                              <td>
+                                <input type="text" id="cuentaManual" required="required" class="form-control">
+                              </td>
+                            </tr>
+                            <tr>
+                              <th scope="row">2</th>
+                              <td>Nombre</td>
+                              <td>
+                                <input type="text" id="nombreManual" required="required" class="form-control">
+                              </td>
+                            </tr>
+                            <tr>
+                              <th scope="row">3</th>
+                              <td>Fecha de inicio de vigencia</td>
+                              <td>
+                                <input type="text" id="fechaInicioManual" required="required" class="form-control">
+                              </td>
+                            </tr>
+                            <tr>
+                              <th scope="row">4</th>
+                              <td>Fecha de Expiraci&oacute;n</td>
+                              <td>
+                                <input type="text" id="fechaFinalManual" required="required" class="form-control">
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+
+                        <br/>
+                        <div class="ln_solid"></div>
+                        <div id="wrapper">
+                          <button id="mostrar" onclick="saveManualContable()" type="button" class="btn btn-success">Importar</button>
+                        </div>
+                      </div>
+                      <div role="tabpanel" class="tab-pane fade active in" id="tab_Manual_Excel" aria-labelledby="profile-tab">
+                        <h4>Importar Lista por archivo de excel:</h4>
+                        <br/>
+                        <button onclick="selectFile()" type="button" class="col-xs-10 col-xs-offset-1 btn btn-primary" style="margin-top:1.6em;">Seleccionar Archivo</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <hr class="style11">
+                <h4>Mantenimiento manual de listas:</h4>
+                <!-- <h4>Crear listas de forma manual:</h4> -->
+                <label style="margin-left: 4%;">Crear lista:</label>
+                <br/>
+                <div class="row">
+                  <label class="control-label col-sm-2 col-sm-offset-1 col-xs-6" for="nameList">Nombre Lista: </label>
+                  <div class="col-sm-3 col-xs-6">
+                    <input id="nameList" type="text" class="form-control" placeholder="Ingresar nombre de la lista">
+                  </div>
+                  <button type="button" onclick="createList()" class="btn btn-primary col-sm-offset-1 col-sm-3 col-xs-12">Crear Lista</button>
+                </div>
+                <br/>
+                <div id="wrapper" class="row" style="border-radius: 25px; border: 1px solid #D3D3D3; padding: 10px 0px; margin: 15px 0px;">
+                  <div id="wrapper">
+                    <p>Tipo de Lista</p>
+                  </div>
+                  <label>
+                    <input id="listaManualContable" type="radio" class="flat" name="listaValorRadioALAC" value="1" checked/> Manual Contable
+                  </label>
+                  <!-- <label>
+                    <input id="cuentasContable" type="radio" class="flat" name="listaValorRadioALAC" value="2"/> Cuentas Operativas
+                  </label> -->
+                  <label>
+                    <input id="exclusionesFosede" type="radio" class="flat" name="listaValorRadioALAC" value="3"/> Exclusiones FOSEDE
+                  </label>
+                  <label>
+                    <input id="tipPers" type="radio" class="flat" name="listaValorRadioALAC" value="4"/> Tipo de Personas
+                  </label>
+                  <label>
+                    <input id="subTipPers" type="radio" class="flat" name="listaValorRadioALAC" value="5"/> Tipo de Sub-Personas
+                  </label>
+                  <label>
+                    <input id="otroFosede" type="radio" class="flat" name="listaValorRadioALAC" value="6"/> Cuentas Operativas de Clientes
+                  </label>
+                  <label>
+                    <input id="agencias" type="radio" class="flat" name="listaValorRadioALAC" value="7"/> Agencias
+                  </label>
+                  <label>
+                    <input id="tipCred" type="radio" class="flat" name="listaValorRadioALAC" value="8"/> Tipos de Crédito
+                  </label>
+                  <label>
+                    <input id="tipDepos" type="radio" class="flat" name="listaValorRadioALAC" value="9"/> Tipos de Depósitos
+                  </label>
+                  <label>
+                    <input id="otroFosede" type="radio" class="flat" name="listaValorRadioALAC" value="10"/> Otro
+                  </label>
+                </div>
+                <br/>
+                <div class="ln_solid"></div>
+                <div class="row">
+                  <label class="control-label col-sm-2 col-sm-offset-1 col-xs-6" for="elementosLista">Editar nombre de Lista: </label>
+                  <div class="col-sm-3 col-xs-12">
+                    <div class="select-style">
+                      <select id="elementosDeListaEdit" onchange="$('#elementoNombreEdit').val($('#elementosDeListaEdit :selected').text())">
+                      </select>
+                    </div>
+                  </div>
+                  <div class="col-sm-offset-1 col-sm-2 col-xs-12">
+                    <input id="elementoNombreEdit" type="text" class="form-control" placeholder="Ingresar nombre de elemento">
+                  </div>
+                  <button type="button" onclick="updateList()" class="btn btn-success col-sm-1 col-xs-12"><span class="glyphicon glyphicon-pencil"></span></button>
+                  <button type="button" onclick="deleteList()" class="btn btn-danger col-sm-1 col-xs-12"><span class="glyphicon glyphicon-trash"></span></button>
+                </div>
+                <br/>
+                <div class="ln_solid"></div>
+                <h4>Mantenimiento de listas:</h4>
+                <div class="row" style="padding-left:5%;">
+                  <label class="control-label" for="elementosLista">Agregar Elemento a Lista: </label>
+                </div>
+                <div class="row">
+                  <div class="col-sm-4 col-sm-offset-1 col-xs-12">
+                    <div class="select-style">
+                      <select id="elementosDeLista" onchange="showListsFields($('#elementosDeLista').val())">
+                      </select>
+                    </div>
+                  </div>
+                  <div class="col-sm-4 col-xs-12">
+                    <input id="elementoNombre" type="text" class="form-control" placeholder="Ingrese nombre de cuenta">
+                  </div>
+                  <div class="col-sm-3 col-xs-12">
+                    <input id="elementoValor" type="text" class="form-control" placeholder="Ingrese n&uacute;mero de cuenta">
+                  </div>
+                </div>
+                <div id="puestoField" class="row" style="display: none;">
+                  <br/>
+                  <div class="col-sm-offset-5 col-sm-7 col-xs-12">
+                    <input id="elementoPuesto" type="text" class="form-control" placeholder="Ingrese puesto de la persona">
+                  </div>
+                </div>
+                <div id="saldosField" class="row" style="display: none;">
+                  <br/>
+                  <div class="col-sm-offset-5 col-sm-4 col-xs-12">
+                    <input id="idClienteCueOp" type="text" class="form-control" placeholder="Ingrese ID de cliente">
+                  </div>
+                  <div class="col-sm-3 col-xs-12">
+                    <input id="saldoCueOp" type="text" class="form-control" placeholder="Ingrese saldo de cuenta">
+                  </div>
+                </div>
+                <div id="fechasField" class="row">
+                  <br/>
+                  <div class="col-sm-offset-5 col-sm-4 col-xs-12">
+                    <div id="wrapper">
+                      <label for="fechaCreacionManCon">Columna de inicio de vigencia de Elemento</label>
+                    </div>
+                    <div class="row" style="display: flex; justify-content: center;">
+                      <div id="fechaCreacionManCon" class="center-block"></div>
+                    </div>
+                  </div>
+                  <div class="col-sm-3 col-xs-12">
+                    <div id="wrapper">
+                      <label for="fechaCaducidadManCon">Columna de fin de vigencia</label>
+                    </div>
+                    <div class="row" style="display: flex; justify-content: center;">
+                      <div id="fechaCaducidadManCon"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="row" id="wrapper">
+                  <br/>
+                  <button onclick="createElementList()" type="button" class="btn btn-success">Agregar Elemento a Lista</button>
+                </div>
+
+                <hr class="style11">
+
+                <div class="row">
+                  <h4>Editar listas:</h4>
+                  <div class="col-sm-4 col-xs-12 col-sm-offset-1">
+                    <div class="row">
+                      <div class="select-style">
+                        <select id="elementosDeListaUpdate" onchange="loadListListsExcel()">
+                        </select>
+                      </div>
+                    </div>
+                    <br/>
+                    <div class="row">
+                      <label for="">Ordenar por:</label>
+                      <div id="wrapper">
+                        <label>
+                          <input id="nombreListaOrdenRadio" type="radio" class="flat" name="listaOrdenRadio" checked/> Campo Nombre de Elemento
+                        </label>
+                        <label>
+                          <input id="valorListaOrdenRadio" type="radio" class="flat" name="listaOrdenRadio"/> Campo Valor de Elemento
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-sm-7 col-xs-12">
+                    <ul id="listsElements" class="to_do" style="max-height:50vh;overflow-y:scroll;">
+                    </ul>
+                  </div>
+                </div>
+
+                <br/>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div> <!-- /end Manual Contable y Listas -->
+
+      <div id="fosede_div" class="row filtrarRow">
+        <div class="col-md-12">
+          <div class="x_panel">
+            <div class="x_title">
+              <h2>Monto de cobertura del Seguro de Dep&oacute;sitos</h2>
+              <ul class="nav navbar-right panel_toolbox">
+                <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                </li>
+              </ul>
+              <div class="clearfix"></div>
+            </div>
+
+            <div class="x_content">
+
+              <div class="col-md-12 col-sm-12 col-xs-12">
+                <h4>Monto de cobertura del Seguro de Dep&oacute;sitos &#8594; FOSEDE <span class="pull-right">Monto Actual: <span id="montoActual"></span></span></h4>
+                <br/>
+                <form class="form-horizontal form-label-left">
+
+                  <div class="form-group">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="first-name">Ingresar Monto:</label>
+                    <div class="col-md-3 col-sm-3 col-xs-12">
+                      <input type="text" id="lempiraInput" required="required" class="form-control col-md-7 col-xs-12" data-inputmask-alias="currency" data-inputmask-prefix="L " data-inputmask-clearmaskonlostfocus="true" style="display:none;">
+                      <input type="text" id="euroInput" required="required" class="form-control col-md-7 col-xs-12" data-inputmask-alias="currency" data-inputmask-prefix="€ " data-inputmask-clearmaskonlostfocus="true" style="display:none;">
+                      <input type="text" id="dollarInput" required="required" class="form-control col-md-7 col-xs-12" data-inputmask-alias="currency" data-inputmask-clearmaskonlostfocus="true" >
+                    </div>
+                    <div class="col-md-2 col-md-offset-1 col-sm-2 col-sm-offset-1 col-xs-3 col-xs-offset-3">
+                      <label class="control-label" for="first-name">Moneda:</label>
+                    </div>
+                    <div class="col-md-3 col-sm-3 col-xs-6">
+                      <div class="radio">
+                        <label>
+                          <input id="dollarInputRadio" onclick="showDollar()" type="radio" checked name="moneda"> Dolar
+                        </label>
+                      </div>
+                      <div class="radio">
+                        <label>
+                          <input id="lempiraInputRadio" onclick="showLempira()" type="radio" name="moneda"> Lempira
+                        </label>
+                      </div>
+                      <div class="radio">
+                        <label>
+                          <input id="euroInputRadio" onclick="showEuro()" type="radio" name="moneda"> Euro
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="first-name">Tasa de Cambio:</label>
+                    <div class="col-md-3 col-sm-3 col-xs-12">
+                      <input type="text" id="lempiraInputCambio" required="required" class="form-control col-md-7 col-xs-12" data-inputmask-alias="currency" data-inputmask-prefix="L " data-inputmask-clearmaskonlostfocus="true">
+                      <!-- <input type="text" id="dollarInputCambio" required="required" class="form-control col-md-7 col-xs-12" data-inputmask-alias="currency" data-inputmask-clearmaskonlostfocus="true" data-inputmask-digits="3" style="display:none;"> -->
+                    </div>
+                    <div class="col-md-2 col-md-offset-1 col-sm-2 col-sm-offset-1 col-xs-3 col-xs-offset-3">
+                      <!-- <label class="control-label" for="first-name">Moneda:</label> -->
+                    </div>
+                    <div class="col-md-3 col-sm-3 col-xs-6">
+                      <!-- <div class="radio">
+                        <label>
+                          <input id="dollarRadio" type="radio" name="cambio" disabled="disabled"> Dolar
+                        </label>
+                      </div> -->
+                      <!-- <div class="radio">
+                        <label>
+                          <input id="lempiraRadio" type="radio" checked name="cambio" disabled="disabled"> Lempira
+                        </label>
+                      </div> -->
+                    </div>
+                  </div>
+
+                  <div class="row tile_count">
+                    <div class="tile_stats_count" id="wrapper">
+                      <span class="count_top">Total:</span>
+                      <div class="count" id="totalTasaCambio"></div>
+                    </div>
+                  </div>
+
+                </form>
+
+                <br/>
+                <div class="ln_solid"></div>
+                <div id="wrapper">
+                  <button id="mostrar" onclick="calculateRateChange()" type="button" class="btn btn-info">Calcular</button>
+                  <button id="mostrar" onclick="verifyAndSaveFOSEDE()" type="button" class="btn btn-success">Guardar</button>
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div> <!-- /end FOSEDE -->
+
+    </div>
+    <!-- /page content -->
+
+  </div>
+</div>
+
+<!-- MODAL ELEMENTO LISTA-->
+<div id="modalElement" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <div class="text-divider"><h2>Modificar Elemento de Lista</h2></div>
+      </div>
+      <div class="modal-body">
+        <form id="" data-parsley-validate class="form-horizontal form-label-left">
+          
+          <div class="form-group">
+            <label class="control-label col-md-3 col-sm-3 col-xs-12" for="elementosDeListaModify">Lista Asociada</label>
+            <div class="col-md-6 col-sm-6 col-xs-12">
+              <div class="select-style">
+                <select id="elementosDeListaModify" onchange="showListsFieldsUpdate($('#elementosDeListaModify').val())">
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-xs-5 col-xs-offset-1">
+              <form class="form-horizontal form-label-left">
+                <div class="form-group">
+                  <i style="color:red;" class="fa fa-asterisk"></i><label id="labelNombreExcelUpdate">Columna de Nombre de Elemento</label>
+                  <input id="nombreCuentaUpdate" type="text" class="form-control" placeholder="Nombre de Elemento">
+                </div>
+              </form>
+            </div>
+            <div id="cuentaModalFieldUpdate" class="col-xs-5">
+              <form class="form-horizontal form-label-left">
+                <div class="form-group">
+                  <i id="asteriskNumUpdate" style="color:red;" class="fa fa-asterisk"></i><label id="labelCuentaExcelUpdate">Columna de Cuenta de Elemento</label>
+                  <input id="numeroCuentaUpdate" type="text" class="form-control" placeholder="Cuenta de Elemento">
+                </div>
+              </form>
+            </div>
+          </div>
+          <div id="saldoModalFieldUpdate" class="row" style="display: none;">
+            <div class="col-xs-10 col-xs-offset-1">
+              <form class="form-horizontal form-label-left">
+                <div class="form-group">
+                  <i style="color:red;" class="fa fa-asterisk"></i><label id="labelModalExcelUpdate">Columna de Saldo de Elemento</label>
+                  <input id="saldoCuentaUpdate" type="text" class="form-control" placeholder="A&ntilde;os de vigencia">
+                </div>
+              </form>
+            </div>
+          </div>
+          <div id="fechasModalFieldUpdate" class="row">
+            <div class="col-xs-5 col-xs-offset-1">
+              <form class="form-horizontal form-label-left">
+                <div class="form-group">
+                  <i style="color:red;" class="fa fa-asterisk"></i><label id="labelFechaCreacionExcelUpdate">Columna de inicio de vigencia de Elemento</label>Letra</small>
+                  <div id="fechaCreacionModalUpdate" class="center-block"></div>
+                </div>
+              </form>
+            </div>
+            <div class="col-xs-5">
+              <form class="form-horizontal form-label-left">
+                <div class="form-group">
+                  <i style="color:red;" class="fa fa-asterisk"></i><label id="labelFechaCaducidadExcelUpdate">Columna de fin de vigencia de Elemento</label>
+                  <div id="fechaCaducidadModalUpdate" class="center-block"></div>
+                </div>
+              </form>
+            </div>
+          </div>
+          <div id="cuentOpFieldUpdate" class="row" style="display:none;">
+            <div class="col-xs-5 col-xs-offset-1">
+              <form class="form-horizontal form-label-left">
+                <div class="form-group">
+                  <input id="idClienteModalUpdate" type="text" class="form-control" placeholder="Fecha de Creaci&oacute;n">
+                </div>
+              </form>
+            </div>
+            <div class="col-xs-5">
+              <form class="form-horizontal form-label-left">
+                <div class="form-group">
+                  <input id="saldoClienteModalUpdate" type="text" class="form-control" placeholder="Fecha de Caducidad">
+                </div>
+              </form>
+            </div>
+          </div>
+
+        </form>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" onclick="$('#modalElement').modal('toggle');" class="btn btn-info">Cancelar</button>
+        <button type="button" onclick="deleteElementList()" class="btn btn-danger">Eliminar</button>
+        <button type="button" onclick="updateElementList()" class="btn btn-success">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- MODAL IMPORTAR MANUAL CONTABLE-->
+<div id="modalManual" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <div class="text-divider"><h2>Importar Manual Contable</h2></div>
+      </div>
+      <div class="modal-body">
+        <form id="" data-parsley-validate class="form-horizontal form-label-left">
+          
+          <div class="row">
+            <div id="wrapper">
+              <label>Hojas de Excel del Archivo</label>
+            </div>
+            <div id="wrapper" class="nombreHojas" style="border-radius: 25px; border: 1px solid #D3D3D3; padding: 10px 0px; margin: 15px 0px;">
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-xs-5 col-xs-offset-1">
+              <form class="form-horizontal form-label-left">
+                <div class="form-group">
+                  <i style="color:red;" class="fa fa-asterisk"></i><label id="labelNombreExcel">Columna de Nombre de Elemento</label><br><small>Letra</small>
+                  <input id="nombreCuenta" type="text" class="form-control" placeholder="Nombre de Elemento">
+                </div>
+              </form>
+            </div>
+            <div id="cuentaModalField" class="col-xs-5">
+              <form class="form-horizontal form-label-left">
+                <div class="form-group">
+                  <i id="asteriskNum" style="color:red;" class="fa fa-asterisk"></i><label id="labelCuentaExcel">Columna de Cuenta de Elemento</label><br/><small>Letra</small>
+                  <input id="numeroCuenta" type="text" class="form-control" placeholder="Cuenta de Elemento">
+                </div>
+              </form>
+            </div>
+          </div>
+          <div id="saldoModalField" class="row" style="display: none;">
+            <div class="col-xs-10 col-xs-offset-1">
+              <form class="form-horizontal form-label-left">
+                <div class="form-group">
+                  <i style="color:red;" class="fa fa-asterisk"></i><label id="labelModalExcel">Columna de Saldo de Elemento</label><br><small>Letra</small>
+                  <input id="saldoCuenta" type="text" class="form-control" placeholder="A&ntilde;os de vigencia">
+                </div>
+              </form>
+            </div>
+          </div>
+          <div id="fechasModalField" class="row">
+            <div class="col-xs-5 col-xs-offset-1">
+              <form class="form-horizontal form-label-left">
+                <div class="form-group">
+                  <i style="color:red;" class="fa fa-asterisk"></i><label id="labelFechaCreacionExcel">Columna de inicio de vigencia de Elemento</label><br><small>Letra</small>
+                  <input id="fechaCreacionModal" type="text" class="form-control" placeholder="Fecha de Creaci&oacute;n">
+                </div>
+              </form>
+            </div>
+            <div class="col-xs-5">
+              <form class="form-horizontal form-label-left">
+                <div class="form-group">
+                  <i style="color:red;" class="fa fa-asterisk"></i><label id="labelFechaCaducidadExcel">Columna de fin de vigencia de Elemento</label><br><small>Letra</small>
+                  <input id="fechaCaducidadModal" type="text" class="form-control" placeholder="Fecha de Caducidad">
+                </div>
+              </form>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-xs-5 col-xs-offset-1">
+              <form class="form-horizontal form-label-left">
+                <div class="form-group">
+                  <i style="color:red;" class="fa fa-asterisk"></i><label>Fila Inicial&nbsp;</label><small>Fila donde se empezar&aacute;n a tomar las valores</small>
+                  <input id="filaInicial" type="text" class="form-control" placeholder="Fila" data-inputmask="'mask': '9[9][9][9]'" data-inputmask-clearmaskonlostfocus="true">
+                </div>
+              </form>
+            </div>
+            <div id="filaFinalModalField" class="col-xs-5 ">
+              <form class="form-horizontal form-label-left">
+                <div class="form-group">
+                  <label>Fila Final </label> <small>(opcional: si vac&iacute;o se toma hasta el final del archivo)</small>
+                  <input id="filaFinal" type="text" class="form-control" placeholder="Fila" data-inputmask="'mask': '9[9][9][9]'" data-inputmask-clearmaskonlostfocus="true">
+                </div>
+              </form>
+            </div>
+          </div>
+          <div class="row" style="padding: 0% 20%;">
+            <i style="color:red;" class="fa fa-asterisk"></i><small>Campos Obligatorios.</small>
+          </div>
+          <br/>
+          <div class="row" id="wrapper" style="border-radius: 25px; border: 1px solid #D3D3D3; padding: 10px 0px; margin: 15px 0px;">
+            <div id="wrapper">
+              <label>Tipo de Lista:</label>
+            </div>
+            <label>
+              <input id="createListManual" type="radio" class="flat" name="listaRadio" checked value="1"> Manual Contable
+            </label>
+            <label>
+              <input id="createListCuentas" type="radio" class="flat" name="listaRadio" value="6"> Cuentas Operativas de Clientes
+            </label>
+            <label>
+              <input id="createListExclusiones" type="radio" class="flat" name="listaRadio" value="3"> Exclusiones FOSEDE
+            </label>
+            <!-- <label>
+              <input id="createListCuentasBG" type="radio" class="flat" name="listaRadio" value="4"> Cuentas Operativas Balance General
+            </label> -->
+            <label>
+              <input id="createListTipPersona" type="radio" class="flat" name="listaRadio" value="4"> Tipo de Personas
+            </label>
+            <label>
+              <input id="createListTipSubPersona" type="radio" class="flat" name="listaRadio" value="5"> Tipo de Sub-Personas
+            </label>
+            <label>
+              <input id="createAgencia" type="radio" class="flat" name="listaRadio" value="7"> Agencias
+            </label>
+            <label>
+              <input id="createListTipCredito" type="radio" class="flat" name="listaRadio" value="8"> Tipos de Crédito
+            </label>
+            <label>
+              <input id="createListTipDep" type="radio" class="flat" name="listaRadio" value="9"> Tipos de Depósito
+            </label>
+          </div>
+
+        </form>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" onclick="$('#modalManual').modal('toggle');" class="btn btn-info">Cancelar</button>
+        <button type="button" onclick="getListID()" class="btn btn-success">Importar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="src/libs/iCheck/icheck.min.js"></script>
+
+<script src="src/libs/jquery-ui/jquery-ui.min.js"></script>
+
+<script src="src/libs/overhang/overhang.min.js"></script>
+
+<script src="src/libs/mathjs/math.js"></script>
+
+<script src="src/libs/jquery.inputmask/dist/min/jquery.inputmask.bundle.min.js"></script>
+
+<script src="src/libs/bootstrap-datepicker/bootstrap-datepicker.js"></script>
+
+<script src="src/libs/bootstrap-datepicker/locales/bootstrap-datepicker.es.js"></script>
+
+<script src="src/variablesLists.js"></script>
+
+<!-- Custom Theme Scripts -->
+<script src="src/libs/custom.min.js"></script>

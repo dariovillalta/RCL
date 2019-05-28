@@ -1,8 +1,25 @@
 const electron = require('electron');
 const remote = require('electron').remote;
 const sql = require('mssql');
+const md5 = require('js-md5');
+
+var user = getUser();
+var password = getPassword();
+var server = getServer();
+var database = getDataBase();
 
 const config = {
+    user: user,
+    password: password,
+    server: server,
+    database: database,
+    pool: {
+        max: 10,
+        min: 0,
+        idleTimeoutMillis: 30000
+    }
+}
+/*const config = {
     user: 'SA',
     password: 'password111!',
     server: 'localhost',
@@ -12,7 +29,7 @@ const config = {
         min: 0,
         idleTimeoutMillis: 30000
     }
-}
+}*/
 
 const pool1 = new sql.ConnectionPool(config, err => {
 	if(err) {
@@ -28,7 +45,6 @@ const pool1 = new sql.ConnectionPool(config, err => {
 		console.log('pool loaded');
 		loadUsers();
 		loadPolicies();
-		loadVariablesMainDB();
 		loadVariablesIMG();
 	}
 });
@@ -90,7 +106,6 @@ function loadVariablesIMG () {
                     	if(result.recordset[0].fullLogo.length > 0){
                     		filepathFullLogo = result.recordset[0].fullLogo;
                     		$("#fullLogo").attr("src",filepathFullLogo);
-                    		$("#fullLogo").css("height","3.3em");
                     		/*$("#fullLogo").css("display","block");
                     		$("#fullLogo").css("margin-left","auto");
                     		$("#fullLogo").css("margin-right","auto");*/
@@ -99,7 +114,6 @@ function loadVariablesIMG () {
                     	if(result.recordset[0].smallLogo.length > 0){
                     		filepathSmallLogo = result.recordset[0].smallLogo;
                     		$("#smallLogo").attr("src",filepathSmallLogo);
-                    		$("#smallLogo").css("height","3.4em");
                     		/*$("#smallLogo").css("display","block");
                     		$("#smallLogo").css("margin-left","auto");
                     		$("#smallLogo").css("margin-right","auto");*/
@@ -164,7 +178,7 @@ function createUser () {
 							            rolledBack = true;
 							        });
 							        const request = new sql.Request(transaction);
-							        request.query("insert into Usuarios (Nombre, Apellido, Usuario, Contrasena, formulaPermiso, fosedePermiso, usuariosPermiso, cambioPass) values ('"+firstname+"','"+lastname+"','"+username+"','"+password+"','"+formulaPermiso+"','"+fosedePermiso+"','"+usuariosPermiso+"','"+fechaPass+"')", (err, result) => {
+							        request.query("insert into Usuarios (Nombre, Apellido, Usuario, Contrasena, formulaPermiso, fosedePermiso, usuariosPermiso, cambioPass) values ('"+firstname+"','"+lastname+"','"+username+"','"+md5(password)+"','"+formulaPermiso+"','"+fosedePermiso+"','"+usuariosPermiso+"','"+fechaPass+"')", (err, result) => {
 							            if (err) {
 							                if (!rolledBack) {
 							                    transaction.rollback(err => {
@@ -186,7 +200,7 @@ function createUser () {
 												  	type: "success",
 												  	primary: "#40D47E",
 									  				accent: "#27AE60",
-												  	message: "Usuario creado con exito.",
+												  	message: "Usuario creado con éxito.",
 												  	duration: 2,
 												  	overlay: true
 												});
@@ -549,7 +563,7 @@ function updateUser () {
 								            rolledBack = true;
 								        });
 								        const request = new sql.Request(transaction);
-								        request.query("update Usuarios set Nombre = '"+firstname+"', Apellido = '"+lastname+"', Usuario = '"+username+"', Contrasena = '"+password+"', formulaPermiso = '"+formulaPermiso+"', fosedePermiso = '"+fosedePermiso+"', usuariosPermiso = '"+usuariosPermiso+"', cambioPass = '"+fechaPass+"' where ID = '"+userListClicked.ID+"' ", (err, result) => {
+								        request.query("update Usuarios set Nombre = '"+firstname+"', Apellido = '"+lastname+"', Usuario = '"+username+"', Contrasena = '"+md5(password)+"', formulaPermiso = '"+formulaPermiso+"', fosedePermiso = '"+fosedePermiso+"', usuariosPermiso = '"+usuariosPermiso+"', cambioPass = '"+fechaPass+"' where ID = '"+userListClicked.ID+"' ", (err, result) => {
 								            if (err) {
 								                if (!rolledBack) {
 								                    transaction.rollback(err => {
@@ -571,7 +585,7 @@ function updateUser () {
 													  	type: "success",
 													  	primary: "#40D47E",
 										  				accent: "#27AE60",
-													  	message: "Usuario modificado con exito.",
+													  	message: "Usuario modificado con éxito.",
 													  	duration: 2,
 													  	overlay: true
 													});
@@ -687,7 +701,7 @@ function updateUser () {
 						  	type: "success",
 						  	primary: "#40D47E",
 			  				accent: "#27AE60",
-						  	message: "Usuario modificado con exito.",
+						  	message: "Usuario modificado con éxito.",
 						  	duration: 2,
 						  	overlay: true
 						});
@@ -730,7 +744,7 @@ function deleteUser () {
 					  	type: "success",
 					  	primary: "#40D47E",
 		  				accent: "#27AE60",
-					  	message: "Usuario eliminado con exito.",
+					  	message: "Usuario eliminado con éxito.",
 					  	duration: 2,
 					  	overlay: true
 					});
@@ -909,7 +923,7 @@ function savePolicies () {
 					  	type: "success",
 					  	primary: "#40D47E",
 		  				accent: "#27AE60",
-					  	message: "Política modificada con exito.",
+					  	message: "Política modificada con éxito.",
 					  	duration: 2,
 					  	overlay: true
 					});
@@ -972,84 +986,34 @@ var objetoBandera = null;
 
 function showDialogFullLogo () {
 	dialog.showOpenDialog({filters: [{name: 'Images', extensions: ['jpg', 'png'] }]}, (filepath) => {
-		$("#fullLogo").attr("src",filepath);
-		filepathFullLogo = "data:image/png;base64," + getBase64Image(document.getElementById("fullLogo"));
-		//$("#smallLogo").attr("src", "data:image/png;base64," +  dataURL);
+		$("#fullLogoUpload").attr("src",filepath);
+		//filepathFullLogo = "data:image/png;base64," + getBase64Image(document.getElementById("fullLogoUpload"));
+		filepathFullLogo = getBase64Image(document.getElementById("fullLogoUpload"));
+		setTimeout(function(){
+			filepathFullLogo = getBase64Image(document.getElementById("fullLogoUpload"));
+		}, 500);
 	});
 }
 
 function showDialogLogo () {
 	dialog.showOpenDialog({filters: [{name: 'Images', extensions: ['jpg', 'png'] }]}, (filepath) => {
-		$("#smallLogo").attr("src",filepath);
-		filepathSmallLogo = "data:image/png;base64," + getBase64Image(document.getElementById("smallLogo"));
+		$("#smallLogoUpload").attr("src",filepath);
+		//filepathSmallLogo = "data:image/png;base64," + getBase64Image(document.getElementById("smallLogoUpload"));
+		filepathSmallLogo = getBase64Image(document.getElementById("smallLogoUpload"));
+		setTimeout(function(){
+			filepathSmallLogo = getBase64Image(document.getElementById("smallLogoUpload"));
+		}, 500);
 	});
 }
 
 function getBase64Image(img) {
   	var canvas = document.createElement("canvas");
-  	canvas.width = img.width;
-  	canvas.height = img.height;
+  	canvas.width = img.naturalWidth;
+  	canvas.height = img.naturalHeight;
   	var ctx = canvas.getContext("2d");
-  	ctx.drawImage(img, 0, 0);
-  	var dataURL = canvas.toDataURL("image/png");
-  	return dataURL.replace(/^data:image\/(png|jpg);base64,/, "");
-}
-
-function loadVariablesMainDB () {
-	const transaction = new sql.Transaction( pool1 );
-    transaction.begin(err => {
-        var rolledBack = false;
-        transaction.on('rollback', aborted => {
-            // emited with aborted === true
-            rolledBack = true;
-        });
-        const request = new sql.Request(transaction);
-        request.query("select * from Variables", (err, result) => {
-            if (err) {
-                if (!rolledBack) {
-                    transaction.rollback(err => {
-                        $("body").overhang({
-				            type: "error",
-				            primary: "#f84a1d",
-				            accent: "#d94e2a",
-				            message: "Error en conección de logo.",
-				            overlay: true,
-				            closeConfirm: true
-				        });
-                    });
-                }
-            }  else {
-                transaction.commit(err => {
-                    // ... error checks
-                    if(result.recordset.length > 0){
-                    	objetoBandera = result.recordset[0];
-                    	if(result.recordset[0].fullLogo.length > 0){
-                    		filepathFullLogo = result.recordset[0].fullLogo;
-                    		$("#fullLogo").attr("src",filepathFullLogo);
-                    		$("#fullLogo").css("height","100%");
-                    		$("#fullLogo").css("display","block");
-                    		$("#fullLogo").css("margin-left","auto");
-                    		$("#fullLogo").css("margin-right","auto");
-                    	} else
-                    		filepathFullLogo = '';
-                    	if(result.recordset[0].smallLogo.length > 0){
-                    		filepathSmallLogo = result.recordset[0].smallLogo;
-                    		$("#smallLogo").attr("src",filepathSmallLogo);
-                    		$("#smallLogo").css("height","120%");
-                    		$("#smallLogo").css("display","block");
-                    		$("#smallLogo").css("margin-left","auto");
-                    		$("#smallLogo").css("margin-right","auto");
-                    	} else
-                    		filepathSmallLogo = '';
-                    } else {
-                    	objetoBandera = null;
-                    	filepathFullLogo = '';
-                    	filepathSmallLogo = '';
-                    }
-                });
-            }
-        });
-    }); // fin transaction
+  	ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  	var dataURL = canvas.toDataURL();
+  	return dataURL;
 }
 
 function verifyImg () {
@@ -1061,6 +1025,10 @@ function verifyImg () {
 
 function saveImages () {
 	if(filepathFullLogo.length > 0 || filepathSmallLogo.length > 0) {
+		/*if(filepathFullLogo.length > 0)
+			filepathFullLogo = "data:image/png;base64," + getBase64Image(document.getElementById("fullLogoUpload"));
+		if(filepathSmallLogo.length > 0)
+			filepathSmallLogo = "data:image/png;base64," + getBase64Image(document.getElementById("smallLogoUpload"));*/
 		const transaction = new sql.Transaction( pool1 );
 	    transaction.begin(err => {
 	        var rolledBack = false;
@@ -1069,7 +1037,7 @@ function saveImages () {
 	            rolledBack = true;
 	        });
 	        const request = new sql.Request(transaction);
-	        request.query("insert into Variables (fullLogo, smallLogo, formula, formulaMATHLIVE, montoFosede) values ('"+filepathFullLogo+"','"+filepathSmallLogo+"','','', 0)", (err, result) => {
+	        request.query("insert into Variables (fullLogo, smallLogo, formula, formulaMATHLIVE, minimoRCL) values ('"+filepathFullLogo+"','"+filepathSmallLogo+"','','', 0)", (err, result) => {
 	            if (err) {
 	                if (!rolledBack) {
 	                    transaction.rollback(err => {
@@ -1091,10 +1059,11 @@ function saveImages () {
 						  	type: "success",
 						  	primary: "#40D47E",
 			  				accent: "#27AE60",
-						  	message: "Logo guardados con éxito.",
+						  	message: "Logo guardado con éxito.",
 						  	duration: 2,
 						  	overlay: true
 						});
+						loadVariablesIMG();
 	                });
 	            }
 	        });
@@ -1116,6 +1085,8 @@ function modifyImages () {
 	var noEntro = true;
 	if(filepathFullLogo.length > 0) {
 		noEntro = false;
+		/*if(filepathFullLogo.length > 0)
+			filepathFullLogo = "data:image/png;base64," + getBase64Image(document.getElementById("fullLogoUpload"));*/
 		const transaction = new sql.Transaction( pool1 );
 	    transaction.begin(err => {
 	        var rolledBack = false;
@@ -1145,10 +1116,11 @@ function modifyImages () {
 						  	type: "success",
 						  	primary: "#40D47E",
 			  				accent: "#27AE60",
-						  	message: "Logo modificados con éxito.",
+						  	message: "Logo modificado con éxito.",
 						  	duration: 2,
 						  	overlay: true
 						});
+						loadVariablesIMG();
 	                });
 	            }
 	        });
@@ -1156,6 +1128,8 @@ function modifyImages () {
 	}
 	if(filepathSmallLogo.length > 0) {
 		noEntro = false;
+		/*if(filepathSmallLogo.length > 0)
+			filepathSmallLogo = "data:image/png;base64," + getBase64Image(document.getElementById("smallLogo"));*/
 		const transaction = new sql.Transaction( pool1 );
 	    transaction.begin(err => {
 	        var rolledBack = false;
@@ -1185,10 +1159,11 @@ function modifyImages () {
 						  	type: "success",
 						  	primary: "#40D47E",
 			  				accent: "#27AE60",
-						  	message: "Logo modificados con éxito.",
+						  	message: "Logo modificado con éxito.",
 						  	duration: 2,
 						  	overlay: true
 						});
+						loadVariablesIMG();
 	                });
 	            }
 	        });
@@ -1228,8 +1203,20 @@ function goUsers () {
 
 function logout () {
 	$("#app_root").empty();
-    $("#app_root").load("src/login.html");
 	session.defaultSession.clearStorageData([], (data) => {});
+    $("#app_root").load("src/login.html");
+}
+
+function goConnections () {
+    $("#app_root").empty();
+    //cleanup();
+    $("#app_root").load("src/importaciones.html");
+}
+
+function goConfig () {
+    $("#app_root").empty();
+    //cleanup();
+    $("#app_root").load("src/config.html");
 }
 
 function goRCL () {
@@ -1240,4 +1227,15 @@ function goRCL () {
 function goReports () {
 	$("#app_root").empty();
     $("#app_root").load("src/reportes.html");
+}
+
+function goGraphics () {
+    $("#app_root").empty();
+    $("#app_root").load("src/graficos.html");
+}
+
+function goLists () {
+    $("#app_root").empty();
+    //cleanup();
+    $("#app_root").load("src/variablesLists.html");
 }

@@ -1,13 +1,20 @@
-<link href="src/libs/iCheck/skins/flat/green.css" rel="stylesheet">
 <link href="src/libs/overhang/overhang.min.css" rel="stylesheet">
+<link href="src/libs/custom.min.css" rel="stylesheet">
 <link rel="stylesheet" href="src/variablesStyles.css">
 <link href="src/reportes.css" rel="stylesheet">
+<link href="src/libs/datatables.net-bs/css/dataTables.bootstrap.min.css" rel="stylesheet">
+<link href="src/libs/datatables.net-buttons-bs/css/buttons.bootstrap.min.css" rel="stylesheet">
+<link href="src/libs/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css" rel="stylesheet">
+<link href="src/libs/datatables.net-responsive-bs/css/responsive.bootstrap.min.css" rel="stylesheet">
+<link href="src/libs/datatables.net-scroller-bs/css/scroller.bootstrap.min.css" rel="stylesheet">
+<link href="src/libs/bootstrap-datepicker/datepicker3.css" rel="stylesheet">
+<link href="src/libs/iCheck/skins/flat/green.css" rel="stylesheet">
 <div class="container body">
   <div class="main_container">
     <div class="col-md-3 left_col">
       <div class="left_col scroll-view">
         <div class="navbar nav_title" style="border: 0;" id="wrapper">
-          <a onclick="goHome()" class="site_title cursorHand"><img src="src/img/full-logo-example.png" alt="" class="logo_company"> <img src="src/img/small-logo-example.png" alt="Financiera Finca Honduras" class="logo_company_solo"></a>
+          <a onclick="goHome()" style="height: 100%;" class="site_title cursorHand"><img id="fullLogo" src="src/img/full-logo-example.png" class="logo_company"> <img id="smallLogo" src="src/img/small-logo-example.png" alt="" class="logo_company_solo"></a>
         </div>
 
         <div class="clearfix"></div>
@@ -32,7 +39,9 @@
               </li>
               <li><a onclick="goRCL()"><i class="fa fa-bar-chart"></i> C&aacute;lculo Diario de RCL </a>
               </li>
-              <li class="active"><a onclick="goReports()"><i class="fa fa-list-alt"></i> Reporter&iacute;a </a>
+              <li class="active"><a><i class="fa fa-list-alt"></i> Reporter&iacute;a </a>
+              </li>
+              <li><a onclick="goGraphics()"><i class="fa fa-bar-chart"></i> Gr&aacute;ficos </a>
               </li>
             </ul>
           </div>
@@ -57,9 +66,11 @@
                 <span class=" fa fa-angle-down"></span>
               </a>
               <ul class="dropdown-menu dropdown-usermenu pull-right">
-                <li id="varLabel"><a onclick="goVariables()"> Editar Variables </a></li>
-                <li id="userLabel"><a onclick="goUsers()"> Control de Usuarios </a></li>
+                <li id="varLabel"><a onclick="goVariables()"> Editar Variables de F&oacute;rmula </a></li>
+                <li id="configLabel"><a onclick="goLists()"> Mantenimiento de Listas </a></li>
+                <li id="userLabel"><a onclick="goUsers()"> Control de Usuarios y Logo </a></li>
                 <li id="importLabel"><a onclick="goConnections()"> Importar Tablas </a></li>
+                <li id="configLabel"><a onclick="goConfig()"> Configuraci&oacute;n de Rutina </a></li>
                 <li><a onclick="logout()"><i class="fa fa-sign-out pull-right"></i> Cerrar Sesi&oacute;n</a></li>
               </ul>
             </li>
@@ -161,6 +172,12 @@
                     <div class="row">
                       <div class="col-xs-12" style="border-collapse: separate; border-spacing: 0; min-width: 350px; border: 1px solid #bbb; border-radius: 6px; text-align: center;">
                         <br/>
+                        <div style="position: absolute; right: 10px;">
+                          <label>
+                            <input id="varCheck" type="checkbox" class="flat"> Seleccionar / Deseleccionar
+                          </label>
+                        </div>
+                        <br/>
                         <h7>Variables</h7>
                         <div id="variablesUL" style="margin: 2% 0%;">
                         </div>
@@ -172,6 +189,12 @@
                     <div class="row">
                       <div class="col-xs-12" style="border-collapse: separate; border-spacing: 0; min-width: 350px; border: 1px solid #bbb; border-radius: 6px; text-align: center;">
                         <br/>
+                        <div style="position: absolute; right: 10px;">
+                          <label>
+                            <input id="subvarCheck" type="checkbox" class="flat"> Seleccionar / Deseleccionar
+                          </label>
+                        </div>
+                        <br/>
                         <h7>Sub-Variables</h7>
                         <div id="subvariablesUL" style="margin: 2% 0%;">
                         </div>
@@ -179,10 +202,149 @@
                     </div>
 
                     <br/>
+
+                    <div class="row">
+                      <div class="col-xs-12" style="border-collapse: separate; border-spacing: 0; min-width: 350px; border: 1px solid #bbb; border-radius: 6px; text-align: center;">
+                        <br/>
+                        <div style="position: absolute; right: 10px;">
+                          <label>
+                            <input id="varDeSubVarCheck" type="checkbox" class="flat"> Seleccionar / Deseleccionar
+                          </label>
+                        </div>
+                        <br/>
+                        <h7>Variables de Sub-Variables</h7>
+                        <div id="rulesUL" style="margin: 2% 0%;">
+                        </div>
+                      </div>
+                    </div>
+
+                    <br/>
+
+                    <div class="row">
+                      <div class="col-xs-12" style="border-collapse: separate; border-spacing: 0; min-width: 350px; border: 1px solid #bbb; border-radius: 6px; text-align: center;">
+                        <br/>
+                        <div style="position: absolute; right: 10px;">
+                          <label>
+                            <input id="cuentasCheck" type="checkbox" class="flat"> Seleccionar / Deseleccionar
+                          </label>
+                        </div>
+                        <br/>
+                        <h7>Cuentas</h7>
+                        <div id="cuentasUL" style="margin: 2% 0%;">
+                        </div>
+                      </div>
+                    </div>
+
+                    <br/>
+
+                    <div class="row">
+                      <div class="col-xs-12" style="border-collapse: separate; border-spacing: 0; min-width: 350px; border: 1px solid #bbb; border-radius: 6px; text-align: center;">
+                        <br/>
+                        <h7>Proyecciones</h7>
+                        <div id="proyeccionesUL" style="margin: 2% 0%;">
+                          <span class="boxBorder span1" style="float: left; text-align: center; background: linear-gradient(21deg, #009688, #efebe9); cursor: pointer; margin: 2% 2%;" onclick="selectProyeccion(0, event)"> 
+                            <div id="botProy0" style="background-color: #b3e5fc; width: 100%;">30 D&iacute;as</div>
+                          </span>
+                          <span class="boxBorder span1" style="float: left; text-align: center; background: linear-gradient(21deg, #009688, #efebe9); cursor: pointer; margin: 2% 2%;" onclick="selectProyeccion(1, event)"> 
+                            <div id="botProy1" style="background-color: #b3e5fc; width: 100%;">60 D&iacute;as</div>
+                          </span>
+                          <span class="boxBorder span1" style="float: left; text-align: center; background: linear-gradient(21deg, #009688, #efebe9); cursor: pointer; margin: 2% 2%;" onclick="selectProyeccion(2, event)"> 
+                            <div id="botProy2" style="background-color: #b3e5fc; width: 100%;">90 D&iacute;as</div>
+                          </span>
+                          <span class="boxBorder span1" style="float: left; text-align: center; background: linear-gradient(21deg, #009688, #efebe9); cursor: pointer; margin: 2% 2%;" onclick="selectProyeccion(3, event)"> 
+                            <div id="botProy3" style="background-color: #b3e5fc; width: 100%;">120 D&iacute;as</div>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <br/>
+
+                    <div class="row">
+                      <div class="col-xs-12" style="border-collapse: separate; border-spacing: 0; min-width: 350px; border: 1px solid #bbb; border-radius: 6px; text-align: center;">
+                        <br/>
+                        <h7>Valores</h7>
+                        <div id="proyeccionesUL" style="margin: 2% 0%;">
+                          <div id="wrapper" class="row" style="padding: 0% 5%;">
+                            <label>Campo a filtrar:</label>
+                            <div class="select-style">
+                              <select id="valorCampo">
+                                <option value="1">Total</option>
+                                <option value="2">Peso en F&oacute;rmula</option>
+                                <option value="3">Volumen en F&oacute;rmula</option>
+                              </select>
+                            </div>
+                          </div>
+                          <br/>
+                          <div class="row">
+                            <div class="col-xs-12 col-sm-4">
+                              <input type="text" id="lempiraInputCambio" required="required" class="form-control" data-inputmask-alias="currency" data-inputmask-prefix="L " data-inputmask-clearmaskonlostfocus="true">
+                            </div>
+                            <div class="col-xs-12 col-sm-4">
+                              <div class="row">
+                                <div class="col-xs-2 col-xs-offset-1">
+                                  <label>
+                                    <input id="masOperadorRadio" type="radio" class="flat" name="opRadio" value="+"> +
+                                  </label>
+                                </div>
+                                <div class="col-xs-2 col-xs-offset-1">
+                                  <label>
+                                    <input id="porOperadorRadio" type="radio" class="flat" name="opRadio" value="x"> x
+                                  </label>
+                                </div>
+                                <div class="col-xs-2 col-xs-offset-1">
+                                  <label>
+                                    <input id="menOperadorRadio" type="radio" class="flat" name="opRadio" value="-"> -
+                                  </label>
+                                </div>
+                                <div class="col-xs-2 col-xs-offset-1">
+                                  <label>
+                                    <input id="entOperadorRadio" type="radio" class="flat" name="opRadio" value="/"> /
+                                  </label>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="col-xs-12 col-sm-4">
+                              <input type="text" id="lempiraInputCambio" required="required" class="form-control" data-inputmask-alias="currency" data-inputmask-prefix="L " data-inputmask-clearmaskonlostfocus="true">
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <br/>
+
+                    <div class="row">
+                      <div class="col-xs-12" style="border-collapse: separate; border-spacing: 0; min-width: 350px; border: 1px solid #bbb; border-radius: 6px; text-align: center;">
+                        <br/>
+                        <h7>Fechas a mostrar:</h7>
+                        <div class="row">
+                          <div class="col-xs-6">
+                            <div id="wrapper" class="row">
+                              <label>Inicio</label>
+                            </div>
+                            <div class="row" style="display: flex; justify-content: center;">
+                              <div id="fechaInicioReportes" class="center-block"></div>
+                            </div>
+                          </div>
+                          <div class="col-xs-6">
+                            <div id="wrapper" class="row">
+                              <label>Final</label>
+                            </div>
+                            <div class="row" style="display: flex; justify-content: center;">
+                              <div id="fechaFinalReportes" class="center-block"></div>
+                            </div>
+                          </div>
+                        </div>
+                        <br/>
+                      </div>
+                    </div>
+
+                    <br/>
                     
                     <div class="row">
                       <div id="wrapper">
-                        <button id="filter" onclick="filterReport()" type="button" class="btn btn-warning">Filtrar</button>
+                        <button id="filter" onclick="checkDates()" type="button" class="btn btn-warning">Filtrar</button>
                       </div>
                     </div>
 
@@ -226,9 +388,28 @@
   </div>
 </div>
 
-<script src="src/libs/jquery.inputmask/dist/min/jquery.inputmask.bundle.min.js"></script>
+<!-- Datatables -->
+<script src="src/libs/datatables.net/js/jquery.dataTables.min.js"></script>
+<script src="src/libs/datatables.net/js/jquery.dataTablesEditor.js"></script>
+<script src="src/libs/datatables.net-bs/js/dataTables.bootstrap.min.js"></script>
+<script src="src/libs/datatables.net-buttons/js/dataTables.buttons.min.js"></script>
+<script src="src/libs/datatables.net-buttons-bs/js/buttons.bootstrap.min.js"></script>
+<script src="src/libs/datatables.net-buttons/js/buttons.colVis.min.js"></script>
+<script src="src/libs/datatables.net-buttons/js/buttons.flash.min.js"></script>
+<script src="src/libs/datatables.net-buttons/js/buttons.html5.min.js"></script>
+<script src="src/libs/datatables.net-buttons/js/buttons.print.min.js"></script>
+<script src="src/libs/datatables.net-fixedheader/js/dataTables.fixedHeader.min.js"></script>
+<script src="src/libs/datatables.net-keytable/js/dataTables.keyTable.min.js"></script>
+<script src="src/libs/datatables.net-responsive/js/dataTables.responsive.min.js"></script>
+<script src="src/libs/datatables.net-responsive-bs/js/responsive.bootstrap.js"></script>
+<script src="src/libs/datatables.net-scroller/js/dataTables.scroller.min.js"></script>
+<script src="src/libs/jszip/dist/jszip.min.js"></script>
+<script src="src/libs/pdfmake/build/pdfmake.min.js"></script>
+<script src="src/libs/pdfmake/build/vfs_fonts.js"></script>
 
-<script src="src/libs/jquery-ui/jquery-ui.min.js"></script>
+<script src="src/libs/bootstrap-datepicker/bootstrap-datepicker.js"></script>
+
+<script src="src/libs/bootstrap-datepicker/locales/bootstrap-datepicker.es.js"></script>
 
 <script src="src/libs/overhang/overhang.min.js"></script>
 

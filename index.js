@@ -1,4 +1,4 @@
-$("#app_root").load("src/rcl.html");
+$("#app_root").load("src/login.html");
 //setTimeout(function(){ $("#app_root").empty(); }, 4000);
 
 var variableDeVariableID = null;
@@ -45,4 +45,48 @@ function getVariableDeVariableID () {
 
 function getTablaHijo () {
 	return tablaHijo;
+}
+
+
+
+
+
+
+///////				Variables de Base de Datos
+
+var user = null;
+var password = null;
+var server = null;
+var dataBase = null;
+
+function setUser (object) {
+	user = object;
+}
+
+function setPassword (object) {
+	password = object;
+}
+
+function setServer (object) {
+	server = object;
+}
+
+function setDataBase (object) {
+	dataBase = object;
+}
+
+function getUser () {
+	return user;
+}
+
+function getPassword () {
+	return password;
+}
+
+function getServer () {
+	return server;
+}
+
+function getDataBase () {
+	return dataBase;
 }

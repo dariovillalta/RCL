@@ -4,6 +4,12 @@
 	cursor: pointer;
 }
 
+.formula_styleSub{
+	font-size: 20px;
+	display: inline-block;
+	cursor: pointer;
+}
+
 #wrapper {
   	text-align: center;
 }
@@ -59,4 +65,15 @@ tr.details td.details-control {
 	background-color: white;
 	border-radius: 6px;
 	padding: 1%;
+}
+
+.circle:before {
+  	content: ' \25CF';
+  	font-size: 50px;
+}
+
+.flex_status{
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }

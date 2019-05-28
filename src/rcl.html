@@ -1,4 +1,5 @@
 <link rel="stylesheet" href="src/variablesStyles.css">
+<link href="src/libs/custom.min.css" rel="stylesheet">
 <link rel="stylesheet" href="src/libs/mathlive-master/dist/mathlive.core.css">
 <link rel="stylesheet" href="src/libs/mathlive-master/dist/mathlive.css">
 <link href="src/libs/overhang/overhang.min.css" rel="stylesheet">
@@ -9,7 +10,7 @@
     <div class="col-md-3 left_col">
       <div class="left_col scroll-view">
         <div class="navbar nav_title" style="border: 0;" id="wrapper">
-          <a onclick="goHome()" class="site_title cursorHand"><img src="src/img/full-logo-example.png" alt="Financiera Finca Honduras" class="logo_company"> <img src="src/img/small-logo-example.png" alt="Financiera Finca Honduras" class="logo_company_solo"></a>
+          <a onclick="goHome()" style="height: 100%;" class="site_title cursorHand"><img id="fullLogo" src="src/img/full-logo-example.png" class="logo_company"> <img id="smallLogo" src="src/img/small-logo-example.png" alt="" class="logo_company_solo"></a>
         </div>
 
         <div class="clearfix"></div>
@@ -32,9 +33,11 @@
             <ul class="nav side-menu">
               <li><a onclick="goHome()"><i class="fa fa-home"></i> Home </a>
               </li>
-              <li class="active"><a onclick="goRCL()"><i class="fa fa-bar-chart"></i> C&aacute;lculo Diario de RCL </a>
+              <li class="active"><a><i class="fa fa-bar-chart"></i> C&aacute;lculo Diario de RCL </a>
               </li>
               <li><a onclick="goReports()"><i class="fa fa-list-alt"></i> Reporter&iacute;a </a>
+              </li>
+              <li><a onclick="goGraphics()"><i class="fa fa-bar-chart"></i> Gr&aacute;ficos </a>
               </li>
             </ul>
           </div>
@@ -59,9 +62,11 @@
                 <span class=" fa fa-angle-down"></span>
               </a>
               <ul class="dropdown-menu dropdown-usermenu pull-right">
-                <li id="varLabel"><a onclick="goVariables()"> Editar Variables </a></li>
-                <li id="userLabel"><a onclick="goUsers()"> Control de Usuarios </a></li>
+                <li id="varLabel"><a onclick="goVariables()"> Editar Variables de F&oacute;rmula </a></li>
+                <li id="configLabel"><a onclick="goLists()"> Mantenimiento de Listas </a></li>
+                <li id="userLabel"><a onclick="goUsers()"> Control de Usuarios y Logo </a></li>
                 <li id="importLabel"><a onclick="goConnections()"> Importar Tablas </a></li>
+                <li id="configLabel"><a onclick="goConfig()"> Configuraci&oacute;n de Rutina </a></li>
                 <li><a onclick="logout()"><i class="fa fa-sign-out pull-right"></i> Cerrar Sesi&oacute;n</a></li>
               </ul>
             </li>
@@ -129,6 +134,27 @@
     </div>
     <!-- /page content -->
 
+  </div>
+</div>
+
+<!-- MODAL RESULTADO-->
+<div id="modalTotalRCL" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <div class="text-divider"><h2>Resultados</h2></div>
+      </div>
+      <div class="modal-body">
+        
+        <ul id="totalesRCL" class="list-unstyled top_profiles scroll-view">
+        </ul>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" onclick="$('#modalTotalRCL').modal('toggle');" class="btn btn-info">Cerrar</button>
+      </div>
+    </div>
   </div>
 </div>
 

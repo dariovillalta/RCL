@@ -1,9 +1,24 @@
 const electron = require('electron');
-const path = require('path');
 const remote = require('electron').remote;
 const sql = require('mssql');
 
+var user = getUser();
+var password = getPassword();
+var server = getServer();
+var database = getDataBase();
+
 const config = {
+    user: user,
+    password: password,
+    server: server,
+    database: database,
+    pool: {
+        max: 10,
+        min: 0,
+        idleTimeoutMillis: 30000
+    }
+}
+/*const config = {
     user: 'SA',
     password: 'password111!',
     server: 'localhost',
@@ -13,7 +28,7 @@ const config = {
         min: 0,
         idleTimeoutMillis: 30000
     }
-}
+}*/
 
 const pool1 = new sql.ConnectionPool(config, err => {
 	if(err)
@@ -22,11 +37,54 @@ const pool1 = new sql.ConnectionPool(config, err => {
 		console.log('pool loaded');
 		loadLists();
 		loadText();
+        loadVariablesIMG();
 	}
 });
 
 var variableDeVariableReglaID = null;
 var variableDeVariableObject = null;
+
+/* ******************       LOADING IMG     ********* */
+function loadVariablesIMG () {
+    const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false;
+        transaction.on('rollback', aborted => {
+            // emited with aborted === true
+            rolledBack = true;
+        });
+        const request = new sql.Request(transaction);
+        request.query("select * from Variables", (err, result) => {
+            if (err) {
+                if (!rolledBack) {
+                    transaction.rollback(err => {
+                        $("body").overhang({
+                            type: "error",
+                            primary: "#f84a1d",
+                            accent: "#d94e2a",
+                            message: "Error en conección con la tabla de Variables.",
+                            overlay: true,
+                            closeConfirm: true
+                        });
+                    });
+                }
+            }  else {
+                transaction.commit(err => {
+                    // ... error checks
+                    if(result.recordset.length > 0){
+                        if(result.recordset[0].fullLogo.length > 0) {
+                            $("#fullLogo").attr("src",filepathFullLogo);
+                        }
+                        if(result.recordset[0].smallLogo.length > 0) {
+                            $("#smallLogo").attr("src",filepathSmallLogo);
+                        }
+                    }
+                });
+            }
+        });
+    }); // fin transaction
+}
+/* ******************       END LOADING IMG     ********* */
 
 function loadText () {
 	var nombreHijo = getNombreHijo();
@@ -56,17 +114,32 @@ var tablaPrestamos = [
 	{valor: "tipoPersona",nombre: "Tipo de Persona"},
 	{valor: "tipoSubPersona",nombre: "Tipo de Sub-Persona"},
 	{valor: "saldo",nombre: "Saldo"},
+	{valor: "valorFinanciacion",nombre: "Valor de la Financiación"},
 	/*{valor: "moneda",nombre: "Moneda"},*/
 	{valor: "montoOtorgado",nombre: "Monto Otorgado"},
 	{valor: "tipoCredito",nombre: "Tipo de Crédito"},
 	{valor: "diasMora",nombre: "Días de Mora"},
 	{valor: "utilizable",nombre: "Utilizable"},
-	{valor: "vencimiento",nombre: "Vencimiento"},
-	{valor: "creditosRefinanciados",nombre: "Créditos Refinanciados"},
+	{valor: "vencimiento",nombre: "Fecha de Vencimiento"},
+	//{valor: "vencimiento",nombre: "Vencimiento"},
+	//{valor: "creditosRefinanciados",nombre: "Créditos Refinanciados"},
 	{valor: "clausulasRestrictivas",nombre: "Clausulas Restrictivas"},
+	{valor: "esFinanciacionGarantizada",nombre: "Financiación Garantizada"},
+	{valor: "alac",nombre: "ALAC"}
 	/*{valor: "sucursal",nombre: "Sucursal"},
 	{valor: "columnaExtra1",nombre: "Columna Extra 1"},
 	{valor: "columnaExtra2",nombre: "Columna Extra 2"}*/
+];
+
+var tablaPrestamosAgrupacion = [
+	{valor: "idCliente",nombre: "ID del Cliente"},
+	{valor: "tipoPersona",nombre: "Tipo de Persona"},
+	{valor: "tipoSubPersona",nombre: "Tipo de Sub-Persona"},
+	{valor: "tipoCredito",nombre: "Tipo de Crédito"},
+	{valor: "diasMora",nombre: "Días de Mora"},
+	{valor: "utilizable",nombre: "Utilizable"},
+	{valor: "clausulasRestrictivas",nombre: "Clausulas Restrictivas"},
+	{valor: "esFinanciacionGarantizada",nombre: "Financiación Garantizada"}
 ];
 
 function loadSelectCampoObjetivo (tabla) {
@@ -76,11 +149,18 @@ function loadSelectCampoObjetivo (tabla) {
 		content+='<option value="'+tablaPrestamos[i].valor+'">'+tablaPrestamos[i].nombre+'</option>';
 	};
 	$("#campoCampoInput").append(content);
+	$("#agrupacionCampoInput").empty();
+	var content = '';
+	for (var i = 0; i < tablaPrestamosAgrupacion.length; i++) {
+		content+='<option value="'+tablaPrestamosAgrupacion[i].valor+'">'+tablaPrestamosAgrupacion[i].nombre+'</option>';
+	};
+	$("#agrupacionCampoInput").append(content);
 }
 
 var arregloListas = [];
 var arregloElementosDeListas = [];
 var arregloReglas = [];
+var arregloElementosDeListasValorAgrupacion = [];
 
 function loadRules () {
 	const transaction = new sql.Transaction( pool1 );
@@ -112,7 +192,8 @@ function loadRules () {
                     } else {
                     	arregloReglas = [];
                     }
-                    //renderRules();
+                    renderRules();
+                    renderTable();
                 });
             }
         });
@@ -155,21 +236,318 @@ function loadVariableObject () {
     }); // fin transaction
 }
 
+function renderTable () {
+    if ( $.fn.dataTable.isDataTable( '#tablaReglas' ) )
+        $("#tablaReglas").dataTable().fnDestroy();
+    $( "#tablaReglas tbody").unbind( "click" );
+    var table = $('#tablaReglas').DataTable({
+        "data": arregloReglas,
+        dom: "Bflrtip",
+        "language": {
+            "lengthMenu": '_MENU_ entradas por página',
+            "search": '<i class="fa fa-search"></i>',
+            "paginate": {
+                "previous": '<i class="fa fa-angle-left"></i>',
+                "next": '<i class="fa fa-angle-right"></i>'
+            },
+            "loadingRecords": "Cargando...",
+            "processing":     "Procesando...",
+            "emptyTable":     "No hay información en la tabla",
+            "info":           "Mostrando _START_ a _END_ de un total _TOTAL_ de entradas",
+            "infoEmpty":      "Mostrando 0 a 0 de 0 entradas",
+            "infoFiltered":   "(filtrado de un total de _MAX_ entradas)"
+        },
+        "columns": [
+            { "data": "ID" },
+            { "data": "reglaPadre" },
+            { "data": "campoObjetivo" },
+            { "data": "Guardar" },
+            { "data": "Eliminar" }
+        ],
+        rowCallback: function(row, data, index){
+            $(row).find('td:eq(2)').html(getTextRule(data));
+        },
+        "columnDefs": [ {
+            "targets": -1,
+            "defaultContent": '<a class="btn btn-app deleteRule"> <i class="fa fa-eraser"></i> Eliminar </a>',
+            "className": "text-center"
+        },
+        {
+            "targets": -2,
+            "defaultContent": '<a class="btn btn-app saveRule"> <i class="fa fa-save"></i> Guardar </a>',
+            "className": "text-center"
+        },
+        {
+            "targets": 0,
+            "className": "text-center",
+        },
+        {
+            "targets": 1,
+            "className": "text-center"
+        },
+        {
+            "targets": 2,
+            "className": "text-center"
+        }]
+    });
+    if ( $.fn.dataTable.isDataTable( '#tablaReglas' ) )
+        table.MakeCellsEditable("destroy");
+
+    var content = [];
+    for (var i = 0; i < arregloReglas.length; i++) {
+    	content.push({value: arregloReglas[i].ID, display: arregloReglas[i].ID});
+    };
+
+    table.MakeCellsEditable({
+        "onUpdate": function() { return; },
+        "columns": [1],
+        "confirmationButton": false,
+        "inputTypes": [
+        	{
+                "column": 1,
+                "type":"list",
+                "options": content
+            }
+        ]
+    });
+
+    $('#tablaReglas tbody').on( 'click', 'tr a.saveRule', function () {
+        var data = table.row( $(this).parents('tr') ).data();
+        if(!isNaN(data.reglaPadre)) {
+        	if(data.reglaPadre != data.ID) {
+	            $("body").overhang({
+	                type: "confirm",
+	                primary: "#f5a433",
+	                accent: "#dc9430",
+	                yesColor: "#3498DB",
+	                message: 'Esta seguro que desea guardar los cambios?',
+	                overlay: true,
+	                yesMessage: "Modificar",
+	                noMessage: "Cancelar",
+	                callback: function (value) {
+	                    if(value)
+	                        modifyRule(data.ID, data.reglaPadre);
+	                }
+	            });
+	           } else {
+	            $("body").overhang({
+	                type: "error",
+	                primary: "#f84a1d",
+	                accent: "#d94e2a",
+	                message: "La variable padre no puede ser la misma variable.",
+	                overlay: true,
+	                closeConfirm: true
+	            });
+	        }
+        } else {
+            $("body").overhang({
+                type: "error",
+                primary: "#f84a1d",
+                accent: "#d94e2a",
+                message: "La variable padre solo puede ser un número.",
+                overlay: true,
+                closeConfirm: true
+            });
+        }
+    } );
+
+    $('#tablaReglas tbody').on( 'click', 'tr a.deleteRule', function () {
+        var data = table.row( $(this).parents('tr') ).data();
+        $("body").overhang({
+            type: "confirm",
+            primary: "#f5a433",
+            accent: "#dc9430",
+            yesColor: "#3498DB",
+            message: 'Esta seguro que desea eliminar la variable?',
+            overlay: true,
+            yesMessage: "Eliminar",
+            noMessage: "Cancelar",
+            callback: function (value) {
+                if(value)
+                    deleteRule(data.ID);
+            }
+        });
+    } );
+}
+
+function modifyRule (id, variablePadre) {
+    console.log(variablePadre)
+	const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false;
+        transaction.on('rollback', aborted => {
+            // emited with aborted === true
+            rolledBack = true;
+        });
+        const request = new sql.Request(transaction);
+        request.query("update Reglas set reglaPadre = "+variablePadre+" where id = "+id, (err, result) => {
+            if (err) {
+                console.log(err)
+                if (!rolledBack) {
+                    transaction.rollback(err => {
+                        $("body").overhang({
+                            type: "error",
+                            primary: "#f84a1d",
+                            accent: "#d94e2a",
+                            message: "Error en modificación de Variable.",
+                            overlay: true,
+                            closeConfirm: true
+                        });
+                    });
+                }
+            }  else {
+                transaction.commit(err => {
+                    // ... error checks
+                    $("body").overhang({
+					  	type: "success",
+					  	primary: "#40D47E",
+		  				accent: "#27AE60",
+					  	message: "Variable modificada con éxito.",
+					  	duration: 2,
+					  	overlay: true
+					});
+                    loadRules();
+                });
+            }
+        });
+    }); // fin transaction
+}
+
+function deleteRule (id) {
+	const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false;
+        transaction.on('rollback', aborted => {
+            // emited with aborted === true
+            rolledBack = true;
+        });
+        const request = new sql.Request(transaction);
+        request.query("delete from Reglas where id = "+id, (err, result) => {
+            if (err) {
+                if (!rolledBack) {
+                    transaction.rollback(err => {
+                        $("body").overhang({
+                            type: "error",
+                            primary: "#f84a1d",
+                            accent: "#d94e2a",
+                            message: "Error en eliminación de Variable.",
+                            overlay: true,
+                            closeConfirm: true
+                        });
+                    });
+                }
+            }  else {
+                transaction.commit(err => {
+                    // ... error checks
+                    $("body").overhang({
+					  	type: "success",
+					  	primary: "#40D47E",
+		  				accent: "#27AE60",
+					  	message: "Variable eliminada con éxito.",
+					  	duration: 2,
+					  	overlay: true
+					});
+                    loadRules();
+                });
+            }
+        });
+    }); // fin transaction
+}
+
+function getTextRule (regla) {
+	var reglaTexto = '';
+	if(regla.operacion=="-" || regla.operacion=="+" || (regla.operacion=="*" && !regla.campoObjetivo.includes("FOSEDE")) || regla.operacion=="/") {
+		var campoObjetivo;
+		if(regla.campoObjetivo.split("=").length > 1)
+			campoObjetivo = getCampo(regla.campoObjetivo.split("=")[1]);
+		else
+			campoObjetivo = regla.campoObjetivo;
+		var valor;
+		if(regla.valor.split("=").length > 1)
+			valor = regla.valor.split("=")[1];
+		else
+			valor = regla.valor;
+		reglaTexto+=campoObjetivo +" "+ regla.operacion +" "+ valor;
+	} else if(regla.operacion=="<" || regla.operacion=="<=" || regla.operacion==">" || regla.operacion==">=" || regla.operacion=="==" || regla.operacion=="!=") {
+		var campoObjetivo;
+		if(regla.campoObjetivo.split("=").length > 1)
+			campoObjetivo = getCampo(regla.campoObjetivo.split("=")[1]);
+		else
+			campoObjetivo = regla.campoObjetivo;
+		var valor;
+		if(regla.valor.split("=").length > 1)
+			valor = regla.valor.split("=")[1];
+		else
+			valor = regla.valor;
+		reglaTexto+="Si "+campoObjetivo +" "+ regla.operacion +" "+ valor;
+	} else if(regla.campoObjetivo.includes("NOUAGRUPACION")) {
+		campoObjetivo = "Agrupación";
+		reglaTexto+=campoObjetivo;
+	} else if(regla.operacion == "en" || regla.operacion == "no") {
+		var campoObjetivo;
+		if(regla.campoObjetivo.split("=").length > 1)
+			campoObjetivo = getCampo(regla.campoObjetivo.split("=")[1]);
+		else
+			campoObjetivo = regla.campoObjetivo;
+		var valor;
+		if(regla.valor.split("=").length > 1)
+			valor = regla.valor.split("=")[1];
+		else
+			valor = regla.valor;
+		/*if(regla.operacion)
+			valor = getCampo(regla.valor.split("=")[1]);
+		else
+			valor = regla.valor;*/
+		var operacion;
+		if(regla.operacion == "no")
+			operacion = "NO se encuentra en";
+		else if(regla.operacion == "en")
+			operacion = "se encuentra en";
+		reglaTexto+="Si "+campoObjetivo +" "+ operacion +" "+ valor;
+	}
+	return reglaTexto;
+}
+
+function getCampo (campo) {
+    if(campo.localeCompare("idCliente") == 0)
+        return"ID del Cliente";
+    else if(campo.localeCompare("nombreCliente") == 0)
+        return"Nombre del Cliente";
+    else if(campo.localeCompare("tipoPersona") == 0)
+        return"Tipo de Persona";
+    else if(campo.localeCompare("tipoSubPersona") == 0)
+        return"Tipo de Sub-Persona";
+    else if(campo.localeCompare("saldo") == 0)
+        return"Saldo";
+    else if(campo.localeCompare("valorFinanciacion") == 0)
+        return"Valor de la Financiación";
+    else if(campo.localeCompare("montoOtorgado") == 0)
+        return"Monto Otorgado";
+    else if(campo.localeCompare("tipoCredito") == 0)
+        return"Tipo de Crédito";
+    else if(campo.localeCompare("diasMora") == 0)
+        return"Días de Mora";
+    else if(campo.localeCompare("utilizable") == 0)
+        return"Utilizable";
+    else if(campo.localeCompare("vencimiento") == 0)
+        return"Fecha de Vencimiento";
+    else if(campo.localeCompare("clausulasRestrictivas") == 0)
+        return"Clausulas Restrictivas";
+    else if(campo.localeCompare("esFinanciacionGarantizada") == 0)
+        return"Financiación Garantizada";
+    else if(campo.localeCompare("alac") == 0)
+        return"ALAC";
+}
+
 
 function renderRules () {
 	$("#listRules").empty();
 	var listContent = '';
 	for (var i = 0; i < arregloReglas.length; i++) {
-		var regla = '';
+		var regla = getTextRule(arregloReglas[i]);
 		listContent = '';
-		if(arregloReglas[i].operacion=="-" || arregloReglas[i].operacion=="+" || arregloReglas[i].operacion=="*" || arregloReglas[i].operacion=="/")
-			regla+=arregloReglas[i].campoObjetivo +" "+ arregloReglas[i].operacion +" "+ arregloReglas[i].valor;
-		else
-			regla+="if ( "+arregloReglas[i].campoObjetivo +" "+ arregloReglas[i].operacion +" "+ arregloReglas[i].valor +" )";
-		var clase = '';
-		if(arregloReglas[i].reglaPadre != 0)
-			clase = 'style="padding-left:20%;"';
-		listContent+='<li '+clase+'><p><input type="radio" name="rules" class="flat" value="'+arregloReglas[i].ID+'"> '+ regla +' </p><button style="position: absolute; right: 10px; margin: 0; position: absolute; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%);" onclick="deleteRule(index)">Eliminar</button></li>';
+		//listContent+='<li><p><input type="radio" name="rules" class="flat" value="'+arregloReglas[i].ID+'"> '+ regla +' </p><button style="position: absolute; right: 10px; margin: 0; position: absolute; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%);" onclick="deleteRule('+i+')">Eliminar</button></li>';
+        listContent+='<li><p><input type="radio" name="rules" class="flat" value="'+arregloReglas[i].ID+'"> '+ regla +' </p></li>';
 		$("#listRules").append(listContent);
 	};
 	$("input[name='rules']").iCheck({
@@ -345,12 +723,107 @@ function renderRules () {
 	});
 }
 
-function deleteRule (index) {
-	console.log('arregloReglas[index]');
-	console.log(arregloReglas[index]);
-	/*for (var i = 0; i < arregloReglas.length; i++) {
-	}*/
-}
+/*function deleteRule (index) {
+	$("body").overhang({
+	  	type: "confirm",
+	  	primary: "#f5a433",
+	  	accent: "#dc9430",
+	  	yesColor: "#3498DB",
+	  	message: 'Esta seguro que desea eliminar la variable?',
+	  	overlay: true,
+	  	yesMessage: "Eliminar",
+	  	noMessage: "Cancelar",
+	  	callback: function (value) {
+	    	if(value) {
+	    		var idVar = arregloReglas[index].ID;
+	    		var nuevoArray = arregloReglas.slice();
+				for (var i = 0; i < nuevoArray.length; i++) {
+					if(nuevoArray[i].campoObjetivo.localeCompare("INSTANCIACION") != 0 && (nuevoArray[i].campoObjetivo.split("=")[1].localeCompare(nombreVar) == 0 || nuevoArray[i].valor.split("=")[1].localeCompare(nombreVar) == 0)){
+						var regla = nuevoArray[i];
+						const transaction = new sql.Transaction( pool1 );
+					    transaction.begin(err => {
+					        var rolledBack = false;
+					        transaction.on('rollback', aborted => {
+					            // emited with aborted === true
+					            rolledBack = true;
+					        });
+					        const request = new sql.Request(transaction);
+					        request.query("delete from Reglas where ID = "+regla.ID, (err, result) => {
+					            if (err) {
+					                if (!rolledBack) {
+					                    transaction.rollback(err => {
+					                        $("body").overhang({
+									            type: "error",
+									            primary: "#f84a1d",
+									            accent: "#d94e2a",
+									            message: "Error en eliminación en la tabla de Reglas.",
+									            overlay: true,
+									            closeConfirm: true
+									        });
+					                    });
+					                }
+					            } else {
+					                transaction.commit(err => {
+					                    // ... error checks
+					                    $("body").overhang({
+								            type: "success",
+										  	primary: "#40D47E",
+							  				accent: "#27AE60",
+								            message: "Variable eliminada con éxito.",
+								            overlay: true,
+								            duration: 2
+								        });
+					                    loadRules();
+					                    loadAllRules();
+					                });
+					            }
+					        });
+					    }); // fin transaction
+					}
+				}
+				const transaction = new sql.Transaction( pool1 );
+			    transaction.begin(err => {
+			        var rolledBack = false;
+			        transaction.on('rollback', aborted => {
+			            // emited with aborted === true
+			            rolledBack = true;
+			        });
+			        const request = new sql.Request(transaction);
+			        request.query("delete from Reglas where ID = "+arregloReglas[index].ID, (err, result) => {
+			            if (err) {
+			                if (!rolledBack) {
+			                    transaction.rollback(err => {
+			                        $("body").overhang({
+							            type: "error",
+							            primary: "#f84a1d",
+							            accent: "#d94e2a",
+							            message: "Error en eliminación en la tabla de Reglas.",
+							            overlay: true,
+							            closeConfirm: true
+							        });
+			                    });
+			                }
+			            } else {
+			                transaction.commit(err => {
+			                    // ... error checks
+			                    $("body").overhang({
+						            type: "success",
+								  	primary: "#40D47E",
+					  				accent: "#27AE60",
+						            message: "Variable eliminada con éxito.",
+						            overlay: true,
+						            duration: 2
+						        });
+			                    loadRules();
+			                    loadAllRules();
+			                });
+			            }
+			        });
+			    }); // fin transaction
+	    	}
+	  	}
+	});
+}*/
 
 
 function loadLists () {
@@ -473,6 +946,129 @@ function renderElementsListsValueSelect () {
 	$("#elementoValorOptionSelect").append(selectHTML);
 }
 
+function getElementsListsValueAgrupacion (listaTipo) {
+	const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false
+ 
+        transaction.on('rollback', aborted => {
+            // emited with aborted === true
+     
+            rolledBack = true
+        })
+        const request = new sql.Request(transaction);
+        request.query("select * from Listas", (err, result) => {
+            if (err) {
+                if (!rolledBack) {
+                    console.log('error en rolledBack MainDB Variables');
+                    transaction.rollback(err => {
+                        console.log('error en rolledBack');
+                        console.log(err);
+                    });
+                }
+            }  else {
+                transaction.commit(err => {
+                    // ... error checks
+                    console.log("Transaction committed MainDB Variables");
+                    console.log(result);
+                    if(result.recordset.length > 0){
+                    	var listaID = -1;
+                    	for (var i = result.recordset.length - 1; i >= 0; i--) {
+                    		if(result.recordset[i].tipo == listaTipo) {
+                    			listaID = result.recordset[i].ID;
+                    			break;
+                    		}
+                    	};
+                    	if(listaID != -1) {
+                    		const transaction1 = new sql.Transaction( pool1 );
+						    transaction1.begin(err => {
+						        var rolledBack = false
+						 
+						        transaction1.on('rollback', aborted => {
+						            // emited with aborted === true
+						     
+						            rolledBack = true
+						        })
+						        const request1 = new sql.Request(transaction1);
+						        request1.query("select * from ListasVariables where idLista = "+listaID, (err, result) => {
+						            if (err) {
+						                if (!rolledBack) {
+						                    console.log('error en rolledBack MainDB Variables');
+						                    transaction1.rollback(err => {
+						                        console.log('error en rolledBack');
+						                        console.log(err);
+						                    });
+						                }
+						            }  else {
+						                transaction1.commit(err => {
+						                    // ... error checks
+						                    console.log("Transaction committed MainDB Variables");
+						                    console.log(result);
+						                    if(result.recordset.length > 0){
+						                    	arregloElementosDeListasValorAgrupacion = result.recordset;
+						                    } else {
+						                    	arregloElementosDeListasValorAgrupacion = [];
+						                    }
+						                    renderElementsListsValueSelectAgrupacion();
+						                });
+						            }
+						        });
+						    }); // fin transaction1
+                    	}
+                    }
+                });
+            }
+        });
+    }); // fin transaction
+}
+
+function renderElementsListsValueSelectAgrupacion () {
+	var selectHTML = '';
+	for (var i = 0; i < arregloElementosDeListasValorAgrupacion.length; i++) {
+		selectHTML+='<option value='+arregloElementosDeListasValorAgrupacion[i].valor+'>'+arregloElementosDeListasValorAgrupacion[i].nombre+'</option>';
+	};
+	$("#agrupacionValorOptionSelect").empty();
+	$("#agrupacionValorOptionSelect").append(selectHTML);
+}
+
+function loadAgrupacionSelect () {
+	if($("#agrupacionCampoInput").val().localeCompare("idCliente") == 0) {
+		getElementsListsValueAgrupacion(3);
+		$( "#listaCampoField" ).fadeIn( "slow", function() {
+		});
+		$('#booleanCampoField').hide();
+		$('#manualCampoField').hide();
+	} else if($("#agrupacionCampoInput").val().localeCompare("tipoPersona") == 0) {
+		getElementsListsValueAgrupacion(4);
+		$( "#listaCampoField" ).fadeIn( "slow", function() {
+		});
+		$('#booleanCampoField').hide();
+		$('#manualCampoField').hide();
+	} else if($("#agrupacionCampoInput").val().localeCompare("tipoSubPersona") == 0) {
+		getElementsListsValueAgrupacion(5);
+		$( "#listaCampoField" ).fadeIn( "slow", function() {
+		});
+		$('#booleanCampoField').hide();
+		$('#manualCampoField').hide();
+	} else if($("#agrupacionCampoInput").val().localeCompare("tipoCredito") == 0) {
+		getElementsListsValueAgrupacion(8);
+		$( "#listaCampoField" ).fadeIn( "slow", function() {
+		});
+		$('#booleanCampoField').hide();
+		$('#manualCampoField').hide();
+	} else if($("#agrupacionCampoInput").val().localeCompare("diasMora") == 0 || $("#agrupacionCampoInput").val().localeCompare("utilizable") == 0) {
+		$('#listaCampoField').hide();
+		$('#booleanCampoField').hide();
+		$( "#manualCampoField" ).fadeIn( "slow", function() {
+		});
+	} else if($("#agrupacionCampoInput").val().localeCompare("clausulasRestrictivas") == 0 || $("#agrupacionCampoInput").val().localeCompare("esFinanciacionGarantizada") == 0) {
+		$('#listaCampoField').hide();
+		$( "#booleanCampoField" ).fadeIn( "slow", function() {
+		});
+		$('#manualCampoField').hide();
+	}
+}
+
 /* *************	Radios	************* */
 $("#listaCampoSelect").prop('disabled', true);
 $("#listaCampoOptionsSelect").prop('disabled', true);
@@ -482,61 +1078,49 @@ $("input[name='campoRadio']").on('ifClicked', function(event){
 		$( "#campoField" ).fadeIn( "slow", function() {
 		});
 		$('#variableField').hide();
-		$('#fosedeField').hide();
 		$( "#cuentasOperativasField" ).hide();
 		$( "#multField" ).hide();
-		$("#fosedeField :input").iCheck('uncheck');
+		$( "#porcentajeField" ).hide();
+		$('#listaCampoField').hide();
+		$( "#booleanCampoField" ).hide();
+		$('#manualCampoField').hide();
+		$( "#agrupacionField" ).hide();
 		mostrarFieldsCampoSelect();
-	} else if(event.currentTarget.id == "variablesCampoRadio"){
-		$( "#variableField" ).fadeIn( "slow", function() {
-		});
+	} else if(event.currentTarget.id == "agruparCampoRadio"){
 		$('#campoField').hide();
 		$('#fosedeField').hide();
 		$( "#multField" ).hide();
-	} else if(event.currentTarget.id == "fosedeCampoRadio"){
-		$( "#fosedeField" ).fadeIn( "slow", function() {
+		$( "#porcentajeField" ).fadeIn( "slow", function() {
 		});
-		$("#hastaFOSEDECampoRadio").iCheck('check');
-		$('#campoField').hide();
-		$('#variableField').hide();
-		$( "#cuentasOperativasField" ).hide();
+		$( "#agrupacionField" ).fadeIn( "slow", function() {
+		});
 		$('#relacionalesField').hide();
-		$( "#ln_solidOPERACION" ).hide();
+		$('#algebraicosField').hide();
+		$('#sumarSiField').hide();
+		$('#igualBoolField').hide();
+		$('#multField').hide();
+		$( "#relacionalesField" ).hide();
 		$( "#algebraicosField" ).hide();
-		$( "#manualValorRadioLabel" ).hide();
-		$( "#manualField" ).hide();
-		$( "#factorField" ).fadeIn( "slow", function() {
-		});
-		$( "#factorValorRadioLabel" ).show();
-		$("#factorValorRadio").iCheck('check');
+		$( "#ln_solidOPERACION" ).hide();
 		$( "#elementoValorRadioLabel" ).hide();
 		$( "#listaValorField" ).hide();
-		$( "#sumarSiField" ).hide();
-		$("#multOperadorRadio").iCheck('check');
-		$( "#multField" ).fadeIn( "slow", function() {
-		});
-	} else if(event.currentTarget.id == "cuentasOperativasCampoRadio"){
-		$( "#cuentasOperativasField" ).fadeIn( "slow", function() {
-		});
-		$("#hastaFOSEDECuentasOpCampoRadio").iCheck('check');
-		$('#fosedeField').hide();
-		$('#campoField').hide();
-		$('#variableField').hide();
-		$('#relacionalesField').hide();
-		$( "#ln_solidOPERACION" ).hide();
-		$( "#algebraicosField" ).hide();
 		$( "#manualValorRadioLabel" ).hide();
 		$( "#manualField" ).hide();
+		$( "#factorValorRadioLabel" ).fadeIn( "slow", function() {
+		});
+		$( "#factorManualValorRadioLabel" ).fadeIn( "slow", function() {
+		});
+		$("#factorValorRadioLabel").iCheck('check');
 		$( "#factorField" ).fadeIn( "slow", function() {
 		});
-		$( "#factorValorRadioLabel" ).show();
-		$("#factorValorRadio").iCheck('check');
-		$( "#elementoValorRadioLabel" ).hide();
-		$( "#listaValorField" ).hide();
 		$( "#sumarSiField" ).hide();
-		$("#multOperadorRadio").iCheck('check');
-		$( "#multField" ).fadeIn( "slow", function() {
-		});
+		$( "#moraField" ).hide();
+		$( "#diasField" ).hide();
+		$("#fechaValorRadioLabel").hide();
+		$( "#igualBoolField" ).hide();
+		$( "#booleansField" ).hide();
+		$( "#factorValorFinanciacionField" ).hide();
+		loadAgrupacionSelect();
 	}
 });
 
@@ -555,6 +1139,7 @@ function mostrarFieldsCampoSelect () {
 		$( "#manualField" ).fadeIn( "slow", function() {
 		});
 		$( "#factorValorRadioLabel" ).show();
+		$( "#factorManualValorRadioLabel" ).show();
 		$( "#factorField" ).hide();
 		$( "#sumarSiField" ).hide();
 		$("#meOperadorRadio").iCheck('check');
@@ -564,7 +1149,10 @@ function mostrarFieldsCampoSelect () {
 		$( "#igualBoolField" ).hide();
 		$( "#booleansField" ).hide();
 		$("#manualValorInput").val("");
-	} else if(campo == 'diasMora') {
+		$( "#existeBoolField" ).hide();
+		$( "#factorValorFinanciacionField" ).hide();
+		$( "#booleanValorRadioLabel" ).hide();
+	} else if(campo == 'diasMora' || campo == 'fechaFinal') {
 		$( "#relacionalesField" ).fadeIn( "slow", function() {
 		});
 		$( "#algebraicosField" ).hide();
@@ -574,6 +1162,7 @@ function mostrarFieldsCampoSelect () {
 		$( "#manualValorRadioLabel" ).hide();
 		$( "#manualField" ).hide();
 		$( "#factorValorRadioLabel" ).hide();
+		$( "#factorManualValorRadioLabel" ).hide();
 		$( "#factorField" ).hide();
 		$( "#sumarSiField" ).hide();
 		$("#meOperadorRadio").iCheck('check');
@@ -585,6 +1174,9 @@ function mostrarFieldsCampoSelect () {
 		$( "#igualBoolField" ).hide();
 		$( "#booleansField" ).hide();
 		$("#diaValorInput").val("");
+		$( "#existeBoolField" ).hide();
+		$( "#factorValorFinanciacionField" ).hide();
+		$( "#booleanValorRadioLabel" ).hide();
 	} else if(campo == 'utilizable' || campo == 'vencimiento') {
 		$( "#relacionalesField" ).fadeIn( "slow", function() {
 		});
@@ -595,6 +1187,7 @@ function mostrarFieldsCampoSelect () {
 		$( "#manualValorRadioLabel" ).hide();
 		$( "#manualField" ).hide();
 		$( "#factorValorRadioLabel" ).hide();
+		$( "#factorManualValorRadioLabel" ).hide();
 		$( "#factorField" ).hide();
 		$( "#sumarSiField" ).hide();
 		$("#meOperadorRadio").iCheck('check');
@@ -605,7 +1198,10 @@ function mostrarFieldsCampoSelect () {
 		$("#fechaValorRadio").iCheck('check');
 		$( "#igualBoolField" ).hide();
 		$( "#booleansField" ).hide();
-	} else if(campo == 'creditosRefinanciados' || campo == 'clausulasRestrictivas') {
+		$( "#existeBoolField" ).hide();
+		$( "#factorValorFinanciacionField" ).hide();
+		$( "#booleanValorRadioLabel" ).hide();
+	} else if(campo == 'esFinanciacionGarantizada' || campo == 'clausulasRestrictivas') {
 		$( "#relacionalesField" ).hide();
 		$( "#algebraicosField" ).hide();
 		$( "#ln_solidOPERACION" ).hide();
@@ -614,6 +1210,7 @@ function mostrarFieldsCampoSelect () {
 		$( "#manualValorRadioLabel" ).hide();
 		$( "#manualField" ).hide();
 		$( "#factorValorRadioLabel" ).hide();
+		$( "#factorManualValorRadioLabel" ).hide();
 		$( "#factorField" ).hide();
 		$( "#sumarSiField" ).hide();
 		$("#IgBoolOperadorRadio").iCheck('check');
@@ -626,6 +1223,11 @@ function mostrarFieldsCampoSelect () {
 		});
 		$("#trueOperadorRadio").iCheck('check');
 		$("#manualValorInput").val("");
+		$( "#existeBoolField" ).hide();
+		$( "#factorValorFinanciacionField" ).hide();
+		$( "#booleanValorRadioLabel" ).fadeIn( "slow", function() {
+		});
+		$("#booleanValorRadio").iCheck('check');
 	} else if(campo == 'montoOtorgado') {
 		$( "#relacionalesField" ).fadeIn( "slow", function() {
 		});
@@ -637,15 +1239,71 @@ function mostrarFieldsCampoSelect () {
 		$( "#manualField" ).fadeIn( "slow", function() {
 		});
 		$( "#factorValorRadioLabel" ).hide();
+		$( "#factorManualValorRadioLabel" ).hide();
 		$( "#factorField" ).hide();
 		$( "#sumarSiField" ).hide();
 		$("#meOperadorRadio").iCheck('check');
+		$("#manualValorRadioLabel").iCheck('check');
 		$( "#moraField" ).hide();
 		$( "#diasField" ).hide();
 		$("#fechaValorRadioLabel").hide();
 		$( "#booleansField" ).hide();
 		$( "#igualBoolField" ).hide();
 		$("#manualValorInput").val("");
+		$( "#existeBoolField" ).hide();
+		$( "#factorValorFinanciacionField" ).hide();
+		$( "#booleanValorRadioLabel" ).hide();
+	} else if(campo == 'alac') {
+		$( "#relacionalesField" ).hide();
+		$( "#algebraicosField" ).hide();
+		$( "#ln_solidOPERACION" ).hide();
+		$( "#elementoValorRadioLabel" ).hide();
+		$( "#listaValorField" ).hide();
+		$( "#manualValorRadioLabel" ).hide();
+		$( "#manualField" ).hide();
+		$( "#factorValorRadioLabel" ).hide();
+		$( "#factorManualValorRadioLabel" ).hide();
+		$( "#factorField" ).hide();
+		$( "#sumarSiField" ).hide();
+		$("#ExBoolOperadorRadio").iCheck('check');
+		$( "#moraField" ).hide();
+		$( "#diasField" ).hide();
+		$("#fechaValorRadioLabel").hide();
+		$( "#igualBoolField" ).hide();
+		$( "#booleansField" ).fadeIn( "slow", function() {
+		});
+		$("#trueOperadorRadio").iCheck('check');
+		$("#manualValorInput").val("");
+		$( "#existeBoolField" ).fadeIn( "slow", function() {
+		});
+		$( "#factorValorFinanciacionField" ).hide();
+		$( "#booleanValorRadioLabel" ).hide();
+	} else if(campo == 'valorFinanciacion') {
+		$( "#relacionalesField" ).hide();
+		$( "#algebraicosField" ).fadeIn( "slow", function() {
+		});
+		$( "#ln_solidOPERACION" ).hide();
+		$( "#elementoValorRadioLabel" ).hide();
+		$( "#listaValorField" ).hide();
+		$( "#manualValorRadioLabel" ).hide();
+		$( "#manualField" ).hide();
+		$( "#factorValorRadioLabel" ).show();
+		$( "#factorManualValorRadioLabel" ).hide();
+		$( "#factorField" ).hide();
+		$( "#sumarSiField" ).hide();
+		$("#factorValorRadio").iCheck('check');
+		$( "#moraField" ).hide();
+		$( "#diasField" ).hide();
+		$("#fechaValorRadioLabel").hide();
+		$( "#igualBoolField" ).hide();
+		$( "#booleansField" ).hide();
+		$("#manualValorInput").val("");
+		$( "#existeBoolField" ).hide();
+		$("#masOperadorRadio").iCheck('check');
+		$( "#factorValorFinanciacionField" ).fadeIn( "slow", function() {
+		});
+		$( "#booleanValorRadioLabel" ).hide();
+		mostrarSigno();
 	} else {
 		$( "#sumarSiField" ).fadeIn( "slow", function() {
 		});
@@ -659,6 +1317,9 @@ function mostrarFieldsCampoSelect () {
 		$( "#igualBoolField" ).hide();
 		$( "#booleansField" ).hide();
 		$("#manualValorInput").val("");
+		$( "#existeBoolField" ).hide();
+		$( "#factorValorFinanciacionField" ).hide();
+		$( "#booleanValorRadioLabel" ).hide();
 	}
 	if(campo == 'tipoPersona') {
 		renderListsSelect(4);
@@ -669,6 +1330,7 @@ function mostrarFieldsCampoSelect () {
 		$( "#manualValorRadioLabel" ).hide();
 		$( "#manualField" ).hide();
 		$( "#factorValorRadioLabel" ).hide();
+		$( "#factorManualValorRadioLabel" ).hide();
 		$( "#factorField" ).hide();
 	} else if(campo == 'tipoSubPersona') {
 		renderListsSelect(5);
@@ -679,6 +1341,7 @@ function mostrarFieldsCampoSelect () {
 		$( "#manualValorRadioLabel" ).hide();
 		$( "#manualField" ).hide();
 		$( "#factorValorRadioLabel" ).hide();
+		$( "#factorManualValorRadioLabel" ).hide();
 		$( "#factorField" ).hide();
 	} else if(campo == 'idCliente' || campo == 'nombreCliente') {
 		renderListsSelect(3);
@@ -689,6 +1352,7 @@ function mostrarFieldsCampoSelect () {
 		$( "#manualValorRadioLabel" ).hide();
 		$( "#manualField" ).hide();
 		$( "#factorValorRadioLabel" ).hide();
+		$( "#factorManualValorRadioLabel" ).hide();
 		$( "#factorField" ).hide();
 	} else if(campo == 'tipoCredito') {
 		renderListsSelect(8);
@@ -699,9 +1363,30 @@ function mostrarFieldsCampoSelect () {
 		$( "#manualValorRadioLabel" ).hide();
 		$( "#manualField" ).hide();
 		$( "#factorValorRadioLabel" ).hide();
+		$( "#factorManualValorRadioLabel" ).hide();
 		$( "#factorField" ).hide();
 	}
 }
+
+function mostrarSigno () {
+	var operacion  = '';
+	if( $('#masOperadorRadio').is(':checked') )
+		operacion = '+';
+	else if( $('#porOperadorRadio').is(':checked') )
+		operacion = '*';
+	else if( $('#menOperadorRadio').is(':checked') )
+		operacion = '-';
+	else if( $('#entOperadorRadio').is(':checked') )
+		operacion = '/';
+	$("#signo").text(operacion);
+}
+
+$("input[name='operadorRadio']").on('ifChanged', function(event){
+	if( $('#masOperadorRadio').is(':checked') || $('#porOperadorRadio').is(':checked') || $('#menOperadorRadio').is(':checked') || $('#entOperadorRadio').is(':checked') ) {
+    	mostrarSigno();
+    }
+});
+
 
 $("#date_inline").css('pointer-events', 'none');
 //$("#diaValorInput").prop('disabled', true);
@@ -734,67 +1419,11 @@ function saveRule () {
 	var valor = '';
 	var variables = '';
 	var esFiltro = '0';
-	if( $('#campoCampoRadio').is(':checked') )
+	if( $('#campoCampoRadio').is(':checked') ) {
+		//if($("#campoCampoInput").val().localeCompare("valorFinanciacion") == 0)
 		campoObjetivo = 'COLUMNA='+$("#campoCampoInput").val();
-	else if( $('#listaCampoRadio').is(':checked') ){
-		var aplicarNombre = "1";
-		if($('#valorElementoListaCampoRadio').is(':checked'))
-			aplicarNombre = "0";
-		if( $('#listaCampoOptionsSelect').val() != null ){
-			var idCamposSeleccionas = $('#listaCampoOptionsSelect').val();
-			var valoresCamposSeleccionas =  arregloElementosDeListasCampo.filter(function( object ) {
-												for (var i = 0; i < idCamposSeleccionas.length; i++) {
-													if(idCamposSeleccionas[i] == object.ID)
-														return true;
-												};
-											    return false;
-											});
-			campoObjetivo = 'LISTA='+getSelectOptions(valoresCamposSeleccionas, aplicarNombre);
-		} else {
-			campoObjetivo = 'LISTA='+getSelectOptions(arregloElementosDeListasCampo, aplicarNombre);
-		}
-	} else if( $('#fosedeCampoRadio').is(':checked') ) {
-		if( $('#hastaFOSEDECampoRadio').is(':checked') )
-			campoObjetivo = 'hastaFOSEDE';
-		else
-			campoObjetivo = 'mayorFOSEDE';
-	} else if( $('#cuentasOperativasCampoRadio').is(':checked') ) { 
-		if( $('#hastaFOSEDECuentasOpCampoRadio').is(':checked') )
-			campoObjetivo = 'CUENTAS=hastaFOSEDE';
-		else
-			campoObjetivo = 'CUENTAS=mayorFOSEDE';
-	} else {
-		var valorVariables = $("input[name='variablesCampo']:checked").val();
-		//listaValorVariableRadio
-		if(valorVariables == 1)
-			campoObjetivo = "VARIABLE=RESULTADO";
-		else if(valorVariables == 2) {
-			var valorListaVariable = $("input[name='listaCampoVariableRadioCAMPOOBJETIVO']:checked").val();
-			if(valorListaVariable != null){
-				if(campoObjetivo.length > 0)
-					campoObjetivo += ",OBJETIVO$"+valorListaVariable;
-				else
-					campoObjetivo = "VARIABLE=OBJETIVO$"+valorListaVariable;
-			} else {
-				if(campoObjetivo.length > 0)
-					campoObjetivo += ",OBJETIVO"
-				else
-					campoObjetivo = "VARIABLE=OBJETIVO";
-			}
-		} else {
-			var	valorListaVariable = $("input[name='listaCampoVariableRadioVALOR']:checked").val();
-			if(valorListaVariable != null){
-				if(campoObjetivo.length > 0)
-					campoObjetivo += ",VALOR$"+valorListaVariable;
-				else
-					campoObjetivo = "VARIABLE=VALOR$"+valorListaVariable;
-			} else {
-				if(campoObjetivo.length > 0)
-					campoObjetivo += ",VALOR"
-				else
-					campoObjetivo = "VARIABLE=VALOR";
-			}
-		}
+	}  else {
+		campoObjetivo = 'NOUAGRUPACION='+$("#agrupacionValorOptionSelect").val();
 	}
 	if( $('#meOperadorRadio').is(':checked') )
 		operacion = '<';
@@ -816,88 +1445,56 @@ function saveRule () {
 		operacion = '-';
 	else if( $('#entOperadorRadio').is(':checked') )
 		operacion = '/';
-	else
-		operacion = '=';
-	/*if( $('#listaValorRadio').is(':checked') )
-		valor = getSelectOptions(arregloElementosDeListasCampo);
-	else*/ if( $('#manualValorRadio').is(':checked') )
-		valor = "COLUMNA="+$("#manualValorInput").val().toLowerCase();
+	else if( $('#sumarSiOperadorRadio').is(':checked') )
+		operacion = 'en';
+	else if( $('#sumarSiNoOperadorRadio').is(':checked') )
+		operacion = 'no';
+	else if( $('#IgBoolOperadorRadio').is(':checked') )
+		operacion = '==';
+	else if( $('#ExBoolOperadorRadio').is(':checked') )
+		operacion = '==';
+
+	if( $('#agruparCampoRadio').is(':checked') )
+		variables = $("#porcentajeCampo").val().split(/[_|%]/)[0];
+	
+	if( $('#manualValorRadio').is(':checked') )
+		valor = "MANUAL="+parseInt($("#manualValorInput").val().split(" ")[1]);
 	else if( $('#fechaValorRadio').is(':checked') ) {
-		//valor = $("#date_inline").datepicker( 'getDate' );
-		valor = 'DIA='+$("#diaValorInput").val();
-		//valor += ',MES='+$("#mesValorInput").val();
+		if($('#moraField').is(":visible"))
+			valor = 'MORA='+$("#moraValorInput").val();
+		else
+			valor = 'FECHA';
 	} else if( $('#elementoValorRadio').is(':checked') ) {
 		var elementosSelect = $("#elementoValorOptionSelect").val();
 		var elementos = '';
-		var aplicarNombre = "1";
+		var aplicarNombre = "0";
+		/*var aplicarNombre = "1";
 		if($('#valorElementoListaValorRadio').is(':checked'))
-			aplicarNombre = "0";
+			aplicarNombre = "0";*/
 		if(elementosSelect != null) {
 			for (var i = 0; i < elementosSelect.length; i++) {
-				elementos+=arregloElementosDeListasValor[parseInt(elementosSelect[i])].nombre + "-" + arregloElementosDeListasValor[parseInt(elementosSelect[i])].valor + '$' +aplicarNombre;
+				elementos+=arregloElementosDeListasValor[parseInt(elementosSelect[i])].valor;
 				if( (i+1) < elementosSelect.length )
 					elementos+=',';
 			};
 			valor = 'LISTA=' + elementos;
 		} else 
 			valor = 'LISTA=' + getSelectOptions(arregloElementosDeListasValor, aplicarNombre);
-	} else if( $('#variableValorRadio').is(':checked') ) {
-		var valorVariables = $("input[name='variablesValor']:checked").val();
-		console.log('valorVariables');
-		console.log(valorVariables);
-		if(valorVariables == 1)
-			valor = "VARIABLE=RESULTADO";
-		else if(valorVariables == 2) {
-			var valorListaVariable = $("input[name='listaValorVariableRadioCAMPOOBJETIVO']:checked").val();
-			if(valorListaVariable != null) {
-				if(valor.length > 0)
-					valor += ",OBJETIVO$"+valorListaVariable;
-				else
-					valor = "VARIABLE=OBJETIVO$"+valorListaVariable;
-			} else {
-				if(valor.length > 0)
-					valor += ",OBJETIVO";
-				else
-					valor = "VARIABLE=OBJETIVO";
-			}
-		} else {
-			var	valorListaVariable = $("input[name='listaValorVariableRadioVALOR']:checked").val();
-			if(valorListaVariable != null) {
-				if(valor.length > 0)
-					valor += ",VALOR$"+valorListaVariable;
-				else
-					valor = "VARIABLE=VALOR$"+valorListaVariable;
-			} else {
-				if(valor.length > 0)
-					valor += ",VALOR";
-				else
-					valor = "VARIABLE=VALOR";
-			}
-		}
+	} else if( $('#booleanValorRadio').is(':checked') ) {
+		if( $('#trueOperadorRadio').is(':checked') )
+			valor = 'BOOLEAN=true';
+		else
+			valor = 'BOOLEAN=false';
 	} else
 		valor = "FACTOR="+variableDeVariableObject.factor;
-	if( $('#resultadoGuardarVariable').is(':checked') )
-		variables = 'VARIABLES//RESULTADO';
-	if( $('#campoGuardarVariable').is(':checked') ){
-		if(variables.length == 0)
-			variables = 'VARIABLES//CAMPOOBJETIVO('+campoObjetivo+')';
-		else
-			variables += '#CAMPOOBJETIVO('+campoObjetivo+')';
-	}
-	if( $('#valorGuardarVariable').is(':checked') ){
-		if(variables.length == 0)
-			variables = 'VARIABLES//VALOR('+valor+')';
-		else
-			variables += '#VALOR('+valor+')';
-	}
-	console.log("-_------___----");
-	console.log(reglaPadre);
-	console.log(campoObjetivo);
-	console.log(operacion);
-	console.log(valor);
-	console.log(variables);
-	console.log(variableDeVariableReglaID);
-	console.log("-_------___----");
+	/*console.log("-_------___----");
+	console.log('reglaPadre = '+reglaPadre);
+	console.log('campoObjetivo = '+campoObjetivo);
+	console.log('operacion = '+operacion);
+	console.log('valor = '+valor);
+	console.log('variables = '+variables);
+	console.log('variableDeVariableReglaID = '+variableDeVariableReglaID);
+	console.log("-_------___----");*/
 	if(campoObjetivo.length > 0 && campoObjetivo.length < 1001) {
 		if(operacion.length > 0 && operacion.length < 3) {
 			if(valor.toString().length > 0 && valor.toString().length < 1001) {
@@ -929,7 +1526,7 @@ function saveRule () {
 								  	type: "success",
 								  	primary: "#40D47E",
 					  				accent: "#27AE60",
-								  	message: "Regla creada con exito.",
+								  	message: "Regla creada con éxito.",
 								  	duration: 2,
 								  	overlay: true
 								});
@@ -1022,10 +1619,16 @@ function goConnections () {
     $("#app_root").load("src/importaciones.html");
 }
 
+function goConfig () {
+    $("#app_root").empty();
+    //cleanup();
+    $("#app_root").load("src/config.html");
+}
+
 function logout () {
 	$("#app_root").empty();
+    session.defaultSession.clearStorageData([], (data) => {});
     $("#app_root").load("src/login.html");
-	session.defaultSession.clearStorageData([], (data) => {});
 }
 
 function goRCL () {
@@ -1038,6 +1641,18 @@ function goReports () {
     $("#app_root").load("src/reportes.html");
 }
 
+function goGraphics () {
+    $("#app_root").empty();
+    $("#app_root").load("src/graficos.html");
+}
+
+function goLists () {
+    $("#app_root").empty();
+    //cleanup();
+    $("#app_root").load("src/variablesLists.html");
+}
+
+var aplicarFactores = [];
 
 function showRules () {
 	var rulesArray = [];
@@ -1048,7 +1663,17 @@ function showRules () {
 			/*console.log('---------------');
 			console.log( campoObjetivo(arregloReglas[i], arreglo) );
 			console.log('---------------');*/
+			aplicarFactores = [];
 			var resultado = campoObjetivo(arregloReglas[i], arreglo, 0);
+			for (var j = 0; j < aplicarFactores.length; j++) {
+				if(j == 0) {
+					resultado.push("\nif( i == arregloPrestamos[i].length-1) {\n");
+				}
+				resultado.push("\t"+aplicarFactores[j]);
+				if(j == 0) {
+					resultado.push("\n}");
+				}
+			};
 			//resultado = "\n"+resultado;
 			resultado[0] = "\n"+resultado[0];
 			console.log('---------------');
@@ -1084,8 +1709,7 @@ function showRules () {
 }
 
 function campoObjetivo (regla, arreglo, tabs) {
-	console.log('yeahhhhh');
-	var esCondicion = false;
+	var esCondicion = false, noAgregarFactor = false, noAgregarFecha = false, noAgregarBoolean = false;
 	if(regla.operacion=="-" || regla.operacion=="+" || regla.operacion=="*" || regla.operacion=="/" || regla.operacion=="=")
 		esCondicion = false;
 	else
@@ -1094,538 +1718,202 @@ function campoObjetivo (regla, arreglo, tabs) {
 	var textVariables = [];
 	if(regla.variables.length > 0)
 		hasVariables = true;
-	console.log('regla');
-	console.log(regla);
 	var tabsText = '';
 	for (var i = 0; i < tabs; i++) {
 		tabsText+='\t';
 	};
 	var posicionesIF = [];
 	if(regla.campoObjetivo.indexOf('COLUMNA') == 0) {
-		if(esCondicion) {
+		if(regla.campoObjetivo.split("=")[1].indexOf("valorFinanciacion") != 0 && regla.campoObjetivo.split("=")[1].indexOf("utilizable") != 0 && regla.campoObjetivo.split("=")[1].indexOf("vencimiento") != 0 && regla.campoObjetivo.split("=")[1].indexOf("alac") != 0) {
+			if(esCondicion) {
+				var campo = regla.campoObjetivo.split("=")[1];
+
+				// Agregando campo Operacion
+				if(regla.operacion=="en" || regla.operacion=="no")
+					arreglo.push(tabsText+"if ( arregloPrestamos[i]."+campo+".localeCompare('");
+				else
+					arreglo.push(tabsText+"if ( arregloPrestamos[i]."+campo+" "+regla.operacion);
+				//posicionesIF.push(arreglo.length-1);
+				posicionesIF.push(arreglo.length);
+			} else {
+				var campo = regla.campoObjetivo.split("=")[1];
+
+				// Agregando campo Operacion
+				arreglo.push(tabsText+"var totalPrestamo = arregloPrestamos[i].saldo;");
+				arreglo.push("\n"+tabsText+variableDeVariableObject.nombre+" += totalPrestamo "+regla.operacion);
+			}
+		} else if(regla.campoObjetivo.split("=")[1].indexOf("utilizable") == 0) {
+			noAgregarFecha = true;
 			var campo = regla.campoObjetivo.split("=")[1];
 
+			arreglo.push(tabsText+"var nuevaFecha"+regla.ID+" = new Date();\n");
+			arreglo.push(tabsText+"nuevaFecha"+regla.ID+".addDays(proyecciones[i]);\n");
+			var query, agregarComparator, agregarIsSame;
+			if(regla.operacion.includes("<")) {
+				query = 'isBefore';
+			} else {
+				query = 'isAfter';
+			}
+			if(!regla.operacion.includes("!") && !regla.operacion.includes("==")) {
+				agregarComparator = "moment(nuevaFecha"+regla.ID+")."+query+"(moment(arregloPrestamos[i].fechaFinal), 'day')";
+			} else if(regla.operacion.includes("==")) {
+				agregarComparator = "moment(nuevaFecha"+regla.ID+").isSame(moment(arregloPrestamos[i].fechaFinal), 'day')";
+			} else {
+				agregarComparator = "!moment(nuevaFecha"+regla.ID+").isSame(moment(arregloPrestamos[i].fechaFinal), 'day')";
+			}
+			if(regla.operacion.includes("=") && (regla.operacion.includes("<") || regla.operacion.includes(">")) ) {
+				agregarIsSame = " || moment(nuevaFecha"+regla.ID+").isSame(moment(arregloPrestamos[i].fechaFinal), 'day')";
+			} else {
+				agregarIsSame = "";
+			}
 			// Agregando campo Operacion
-			arreglo.push(tabsText+"if ( "+campo+" "+regla.operacion);
+			arreglo.push(tabsText+"if ( "+agregarComparator+" "+agregarIsSame+" ) {");
+			//posicionesIF.push(arreglo.length-1);
+			posicionesIF.push(arreglo.length);
+		} else if(regla.campoObjetivo.split("=")[1].indexOf("vencimiento") == 0) {
+			noAgregarFecha = true;
+			var campo = regla.campoObjetivo.split("=")[1];
+
+			arreglo.push(tabsText+"var nuevaFecha"+regla.ID+" = new Date();\n");
+			arreglo.push(tabsText+"nuevaFecha"+regla.ID+".addDays(proyecciones[i]);\n");
+			var query, agregarComparator, agregarIsSame;
+			if(regla.operacion.includes("<")) {
+				query = 'isBefore';
+			} else {
+				query = 'isAfter';
+			}
+			if(!regla.operacion.includes("!") && !regla.operacion.includes("==")) {
+				agregarComparator = "moment(arregloPrestamos[i].fechaFinal)."+query+"(moment(nuevaFecha"+regla.ID+"), 'day')";
+			} else if(regla.operacion.includes("==")) {
+				agregarComparator = "moment(arregloPrestamos[i].fechaFinal).isSame(moment(nuevaFecha"+regla.ID+"), 'day')";
+			} else {
+				agregarComparator = "!moment(arregloPrestamos[i].fechaFinal).isSame(moment(nuevaFecha"+regla.ID+"), 'day')";
+			}
+			if(regla.operacion.includes("=") && (regla.operacion.includes("<") || regla.operacion.includes(">")) ) {
+				agregarIsSame = " || moment(arregloPrestamos[i].fechaFinal).isSame(moment(nuevaFecha"+regla.ID+"), 'day')";
+			} else {
+				agregarIsSame = "";
+			}
+			// Agregando campo Operacion
+			arreglo.push(tabsText+"if ( "+agregarComparator+" "+agregarIsSame+" ) {");
+			//posicionesIF.push(arreglo.length-1);
+			posicionesIF.push(arreglo.length);
+		} else if(regla.campoObjetivo.split("=")[1].indexOf("alac") == 0) {
+			noAgregarBoolean = true;
+			var campo = regla.campoObjetivo.split("=")[1];
+			// Agregando campo Operacion
+			arreglo.push(tabsText+"if ( arregloPrestamos[i].alac.length > 0 ) {");
 			//posicionesIF.push(arreglo.length-1);
 			posicionesIF.push(arreglo.length);
 		} else {
-			var campo = regla.campoObjetivo.split("=")[1];
-
-			// Agregando campo Operacion
-			if(regla.operacion=="=")
-				arreglo.push(tabsText+campo+" "+regla.operacion);
-			else
-				arreglo.push(tabsText+campo+" = "+campo+" "+regla.operacion);
+			noAgregarFactor = true;
+			arreglo.push(tabsText+"if (arregloPrestamos[i].alac.length > 0) {\n");
+			arreglo.push(tabsText+"\tvar totalFactor = arregloPrestamos[i].valorFinanciacion - getPriceALAC(arregloPrestamos[i].alac);\n");
+			arreglo.push(tabsText+"\tvar totalPrestamo = arregloPrestamos[i].saldo "+regla.operacion+" totalFactor;\n");
+			arreglo.push(tabsText+"\t"+variableDeVariableObject.nombre+" += totalPrestamo;\n");
+			arreglo.push(tabsText+"}");
 		}
-		if(hasVariables)
-			textVariables.push(campo + " " + regla.operacion);
-	} else if(regla.campoObjetivo.indexOf('LISTA') == 0) {
-		var arregloLista = regla.campoObjetivo.split("=")[1].split(",");
-		if(esCondicion) {
-			// Agregando campo Operacion
-			if(regla.operacion == "!=") {
-				for (var i = 0; i < arregloLista.length; i++) {
-					var opcionAMostrar = arregloLista[i].split("$");
-					var valorElemento = arregloLista[i];
-					if(opcionAMostrar.length > 1) {
-						if(opcionAMostrar[1] == "1")
-							valorElemento = opcionAMostrar[0].split("-")[0];
-						else
-							valorElemento = opcionAMostrar[0].split("-")[1];
-					}
-					arreglo.push("\n"+tabsText+"if ( "+valorElemento+" "+regla.operacion);
-					if(posicionesIF.length>0)
-						posicionesIF.push(posicionesIF[posicionesIF.length-1]+2);
-					else
-						posicionesIF.push(1);
-					if(hasVariables)
-						textVariables.push(valorElemento + " " + regla.operacion);
-				};
-			} else {
-				for (var i = 0; i < arregloLista.length; i++) {
-					var opcionAMostrar = arregloLista[i].split("$");
-					var valorElemento = arregloLista[i];
-					if(opcionAMostrar.length > 1){
-						if(opcionAMostrar[1] == "1")
-							valorElemento = opcionAMostrar[0].split("-")[0];
-						else
-							valorElemento = opcionAMostrar[0].split("-")[1];
-					}
-					arreglo.push("\n"+tabsText+"if ( "+valorElemento+" "+regla.operacion);
-					if(posicionesIF.length>0)
-						posicionesIF.push(posicionesIF[posicionesIF.length-1]+2);
-					else
-						posicionesIF.push(1);
-					if(hasVariables)
-						textVariables.push(valorElemento + " " + regla.operacion);
-				};
-			}
-		} else {
-			// Agregando campo Operacion
-			for (var i = 0; i < arregloLista.length; i++) {
-				var opcionAMostrar = arregloLista[i].split("$");
-				var valorElemento = arregloLista[i];
-				if(opcionAMostrar.length > 1){
-					if(opcionAMostrar[1] == "1")
-						valorElemento = opcionAMostrar[0].split("-")[0];
-					else
-						valorElemento = opcionAMostrar[0].split("-")[1];
-				}
-				if(regla.operacion=="=")
-					arreglo.push("\n"+tabsText+valorElemento+" "+regla.operacion);
-				else
-					arreglo.push("\n"+tabsText+valorElemento+" = "+valorElemento+" "+regla.operacion);
-				if(hasVariables)
-					textVariables.push(valorElemento + " " + regla.operacion);
-			};
-		}
-	} else if(regla.campoObjetivo.indexOf('VARIABLE') == 0) {
-		var arregloVariable = regla.campoObjetivo.split("=")[1].split(",");
-		if(esCondicion) {
-			// Agregando campo Operacion
-			for (var i = 0; i < arregloVariable.length; i++) {
-				var textCreatedVariables = '';
-				if(arregloVariable[i].indexOf("RESULTADO") == 0 )
-					textCreatedVariables = 'variableResultado'+regla.reglaPadre;
-				else if(arregloVariable[i].indexOf("OBJETIVO") == 0 )
-					textCreatedVariables = 'variableObjetivo'+regla.reglaPadre;
-				else if(arregloVariable[i].indexOf("VALOR") == 0 )
-					textCreatedVariables = 'variableValor'+regla.reglaPadre;
-				var valorLista = '';
-				if(arregloVariable[i].indexOf("$") > 0 ) {
-					if(arregloVariable[i].split("$")[1] == "1")
-						valorLista = ".nombre";
-					else
-						valorLista = ".valor";
-				}
-				arreglo.push(tabsText+"if ( "+textCreatedVariables+valorLista+" "+regla.operacion);
-				posicionesIF.push(arreglo.length);
-				if(hasVariables)
-					textVariables.push(textCreatedVariables+valorLista + " " + regla.operacion);
-			};
-		} else {
-			// Agregando campo Operacion
-			for (var i = 0; i < arregloVariable.length; i++) {
-				var textCreatedVariables = '';
-				if(arregloVariable[i].indexOf("RESULTADO") == 0 )
-					textCreatedVariables = 'variableResultado'+regla.reglaPadre;
-				else if(arregloVariable[i].indexOf("OBJETIVO") == 0 )
-					textCreatedVariables = 'variableObjetivo'+regla.reglaPadre;
-				else if(arregloVariable[i].indexOf("VALOR") == 0 )
-					textCreatedVariables = 'variableValor'+regla.reglaPadre;
-				var valorLista = '';
-				if(arregloVariable[i].indexOf("$") > 0 ) {
-					if(arregloVariable[i].split("$")[1] == "1")
-						valorLista = ".nombre";
-					else
-						valorLista = ".valor";
-				}
-				if(regla.operacion=="=")
-					arreglo.push(tabsText+textCreatedVariables+valorLista+" "+regla.operacion);
-				else
-					arreglo.push(tabsText+textCreatedVariables+valorLista+" = "+textCreatedVariables+valorLista+" "+regla.operacion);
-				if(hasVariables)
-					textVariables.push(textCreatedVariables+valorLista + " " + regla.operacion);
-			};
-		}
+	} else if(regla.campoObjetivo.indexOf('NOUAGRUPACION') == 0) {
+		noAgregarFactor = true;
+		arreglo.push(tabsText+"if ( arregloPrestamos[i].tipoCredito.localeCompare('"+regla.campoObjetivo.split("=")[1]+"') == 0 ) {\n");
+		arreglo.push(tabsText+"\tvar totalPrestamo = "+(regla.variables/100)+" * arregloPrestamos[i].saldo;");
+		arreglo.push("\n\t"+tabsText+variableDeVariableObject.nombre+" += totalPrestamo;\n");
+		arreglo.push(tabsText+"}");
+		aplicarFactores.push(variableDeVariableObject.nombre+" = "+variableDeVariableObject.nombre+" * "+(parseInt(regla.valor.split("=")[1])/100)+";");
 	}
-	console.log('arreglo Campo');
-	console.log(arreglo);
-	for (var i = 0; i < arreglo.length; i++) {
-		console.log(arreglo[i]);
-	};
 
-	if(regla.valor.indexOf('COLUMNA') == 0) {
-		if(esCondicion) {
-			var valor = regla.valor.split("=")[1];
-			for (var i = 0; i < arreglo.length; i++) {
-				arreglo[i] += " "+valor+" )  {";
-				textVariables[i] += " " + valor;
-			};
-			/*arreglo[arreglo.length-1] += " "+valor+" )  {";
-			textVariables[textVariables.length-1] += " " + valor;*/
-		} else {
-			var valor = regla.valor.split("=")[1];
-			for (var i = 0; i < arreglo.length; i++) {
-				arreglo[i] += " "+valor+" )  {";
-				textVariables[i] += " " + valor;
-			};
-		}
-	} else if(regla.valor.indexOf('LISTA') == 0) {
+	if(regla.valor.indexOf('LISTA') == 0 && !noAgregarBoolean) {
 		if(esCondicion) {
 			var arregloLista = regla.valor.split("=")[1].split(",");
 			var copiaRegla = arreglo.slice();
-			var copiaTextVariable = textVariables.slice();
 			var tamArreglo = arreglo.length;
-			if(regla.operacion == "!=") {
+			if(regla.operacion == "no") {
 				for (var j = 0; j < tamArreglo; j++) {
 					for (var i = 0; i < arregloLista.length; i++) {
-						var opcionAMostrar = arregloLista[i].split("$");
-						var valorElemento = arregloLista[i];
-						if(opcionAMostrar.length > 1){
-							if(opcionAMostrar[1] == "1")
-								valorElemento = opcionAMostrar[0].split("-")[0];
-							else
-								valorElemento = opcionAMostrar[0].split("-")[1];
-						}
 						if(i==0) {
-							var textoFinal = '';
+							var textoFinal = ' != 0 ';
 							if(i+1 == arregloLista.length)
-								textoFinal = " ) {";
-							arreglo[j] += " "+valorElemento + textoFinal;
-							textVariables[j] += " " + valorElemento;
+								textoFinal += " ) {";
+							arreglo[j] +=arregloLista[i] + "')" + textoFinal;
 						} else {
-							var textoFinal = '';
+							var textoFinal = ' != 0 ';
 							if(i+1 == arregloLista.length)
-								textoFinal = " ) {";
-							arreglo[j] += " && "+copiaRegla[j].split(" ( ")[1]+" "+valorElemento+textoFinal;
-							textVariables[j] += " && " + valorElemento;
+								textoFinal += " ) {";
+							arreglo[j] += " && "+copiaRegla[j].split(" ( ")[1]+arregloLista[i]+"')"+textoFinal;
 						}
 					}
 				};
 			} else {
-				for (var i = 0; i < arregloLista.length; i++) {
-					var opcionAMostrar = arregloLista[i].split("$");
-					var valorElemento = arregloLista[i];
-					if(opcionAMostrar.length > 1){
-						if(opcionAMostrar[1] == "1")
-							valorElemento = opcionAMostrar[0].split("-")[0];
-						else
-							valorElemento = opcionAMostrar[0].split("-")[1];
-					}
-					for (var j = 0; j < tamArreglo; j++) {
+				for (var j = 0; j < tamArreglo; j++) {
+					for (var i = 0; i < arregloLista.length; i++) {
 						if(i==0) {
-							arreglo[j] += " "+valorElemento + " ) {";
-							textVariables[j] += " " + valorElemento;
+							var textoFinal = ' == 0 ';
+							if(i+1 == arregloLista.length)
+								textoFinal += " ) {";
+							arreglo[j] +=arregloLista[i] + "')" + textoFinal;
 						} else {
-							arreglo.push("\n"+copiaRegla[j]+" "+valorElemento+" ) {");
-							posicionesIF.push(posicionesIF[posicionesIF.length-1]+2);
-							textVariables.push(copiaTextVariable[j] + " " + valorElemento);
+							var textoFinal = ' == 0 ';
+							if(i+1 == arregloLista.length)
+								textoFinal += " ) {";
+							arreglo[j] += " || "+copiaRegla[j].split(" ( ")[1]+arregloLista[i]+"')"+textoFinal;
 						}
-					};
+					}
 				};
 			}
-		} else {
-			var arregloLista = regla.valor.split("=")[1].split(",");
-			var copiaRegla = arreglo[arreglo.length-1];
-			var copiaTextVariable = textVariables[textVariables.length-1];
-			var tamArreglo = arreglo.length;
-			for (var i = 0; i < arregloLista.length; i++) {
-				for (var j = 0; j < tamArreglo; j++) {
-					var opcionAMostrar = arregloLista[i].split("$");
-					var valorElemento = arregloLista[i];
-					if(opcionAMostrar.length > 1){
-						if(opcionAMostrar[1] == "1")
-							valorElemento = opcionAMostrar[0].split("-")[0];
-						else
-							valorElemento = opcionAMostrar[0].split("-")[1];
-					}
-					if(i==0) {
-						arreglo[j] += " "+valorElemento + ";";
-						textVariables[j] += " " + valorElemento;
-					} else {
-						arreglo.push("\n"+copiaRegla+" "+valorElemento + ";");
-						textVariables.push(copiaTextVariable + " " + valorElemento);
-					}
-				};
-			};
 		}
-	} else if(regla.valor.indexOf('FACTOR') == 0) {
+	} else if(regla.valor.indexOf('FACTOR') == 0 && !noAgregarFactor) {
 		if(esCondicion) {
-			var factorValor = regla.valor.split("=")[1];
-			for (var i = 0; i < arreglo.length; i++) {
-				arreglo[i] += " "+factorValor + " ) {";
-				textVariables[i] += " " + factorValor;
+			var factorValor = parseInt(regla.valor.split("=")[1]);
+			for (var i = 1; i < arreglo.length; i++) {
+				arreglo[i] += " "+factorValor/100 + " ) {";
 			};
 		} else {
 			var factorValor = regla.valor.split("=")[1];
-			for (var i = 0; i < arreglo.length; i++) {
-				arreglo[i] += " "+factorValor + ";";
-				textVariables[i] += " " + factorValor;
+			for (var i = 1; i < arreglo.length; i++) {
+				arreglo[i] += " "+factorValor/100 + ";";
 			};
 		}
-	} else if(regla.valor.indexOf('DIA') == 0) {
+	} else if(regla.valor.indexOf('COLUMNA') == 0) {
 		if(esCondicion) {
-			var diaValor = regla.valor.split("=")[1];
+			var columnaValor = regla.valor.split("=")[1];
 			for (var i = 0; i < arreglo.length; i++) {
-				arreglo[i] += " "+diaValor + " ) {";
-				textVariables[i] += " " + diaValor;
+				arreglo[i] += " "+columnaValor + " ) {";
 			};
 		} else {
-			var diaValor = regla.valor.split("=")[1];
+			var columnaValor = regla.valor.split("=")[1];
 			for (var i = 0; i < arreglo.length; i++) {
-				arreglo[i] += " "+diaValor + ";";
-				textVariables[i] += " " + diaValor;
+				arreglo[i] += " "+columnaValor + ";";
 			};
 		}
-	} else if(regla.valor.indexOf('VARIABLE') == 0) {
-		var arregloVariable = regla.valor.split("=")[1].split(",");
+	} else if(regla.valor.indexOf('FECHA') == 0 && !noAgregarFecha) {
 		if(esCondicion) {
-			// Agregando campo Operacion
-			for (var i = 0; i < arregloVariable.length; i++) {
-				var textCreatedVariables = '';
-				if(arregloVariable[i].indexOf("RESULTADO") == 0 )
-					textCreatedVariables = 'variableResultado'+regla.reglaPadre;
-				else if(arregloVariable[i].indexOf("OBJETIVO") == 0 )
-					textCreatedVariables = 'variableObjetivo'+regla.reglaPadre;
-				else if(arregloVariable[i].indexOf("VALOR") == 0 )
-					textCreatedVariables = 'variableValor'+regla.reglaPadre;
-				var valorLista = '';
-				if(arregloVariable[i].indexOf("$") > 0 ) {
-					if(arregloVariable[i].split("$")[1] == "1")
-						valorLista = ".nombre";
-					else
-						valorLista = ".valor";
-				}
-				for (var k = 0; k < arreglo.length; k++) {
-					arreglo[k] += " "+textCreatedVariables + valorLista + " ) {";
-				};
+			for (var i = 0; i < arreglo.length; i++) {
+				arreglo[i] += " proyecciones[i] ) {";
 			};
 		} else {
-			// Agregando campo Operacion
-			for (var i = 0; i < arregloVariable.length; i++) {
-				var textCreatedVariables = '';
-				if(arregloVariable[i].indexOf("RESULTADO") == 0 )
-					textCreatedVariables = 'variableResultado'+regla.reglaPadre;
-				else if(arregloVariable[i].indexOf("OBJETIVO") == 0 )
-					textCreatedVariables = 'variableObjetivo'+regla.reglaPadre;
-				else if(arregloVariable[i].indexOf("VALOR") == 0 )
-					textCreatedVariables = 'variableValor'+regla.reglaPadre;
-				var valorLista = '';
-				if(arregloVariable[i].indexOf("$") > 0 ) {
-					if(arregloVariable[i].split("$")[1] == "1")
-						valorLista = ".nombre";
-					else
-						valorLista = ".valor";
-				}
-				for (var k = 0; k < arreglo.length; k++) {
-					arreglo[k] += " "+textCreatedVariables + valorLista + ";";
-				};
+			var columnaValor = regla.valor.split("=")[1];
+			for (var i = 0; i < arreglo.length; i++) {
+				arreglo[i] += " proyecciones[i];";
 			};
 		}
-		if(hasVariables) {
-			for (var i = 0; i < arregloVariable.length; i++) {
-				textVariables.push(arregloVariable[i] + " " + regla.operacion);
+	} else if(regla.valor.indexOf('MANUAL') == 0 || regla.valor.indexOf('MORA') == 0 || (regla.valor.indexOf('BOOLEAN') == 0 && !noAgregarBoolean)) {
+		if(esCondicion) {
+			var columnaValor = regla.valor.split("=")[1];
+			for (var i = 0; i < arreglo.length; i++) {
+				arreglo[i] += " "+columnaValor + " ) {";
+			};
+		} else {
+			var columnaValor = regla.valor.split("=")[1];
+			for (var i = 0; i < arreglo.length; i++) {
+				arreglo[i] += " "+columnaValor + ";";
 			};
 		}
 	}
-	console.log('arreglo Valor');
-	console.log(arreglo);
-	for (var i = 0; i < arreglo.length; i++) {
-		console.log(arreglo[i]);
-	};
-
-	console.log('arreglo posicionesIF');
-	console.log(posicionesIF);
-	for (var i = 0; i < posicionesIF.length; i++) {
-		console.log(posicionesIF[i]);
-	};
 
 	var cuerpo = arregloReglas.filter(function( object ) {
 	    return object.reglaPadre == regla.ID;
 	});
-	if(regla.variables.length > 0){
-		var variables = regla.variables.split("//")[1].split("#");
-		var tamArreglo = arreglo.length;
-		var contador = 0;
-		for (var j = 0; j < tamArreglo; j++) {
-			for (var i = 0; i < variables.length; i++) {
-				if(j == 0)
-					contador = 1;
-				else 
-					contador = 0;
-				if(variables[i].indexOf('RESULTADO') == 0) {
-					var variablesText = '';
-					if(esCondicion) {
-						console.log('textVariables[j]');
-						console.log(textVariables[j]);
-						variablesText = textVariables[j];
-					} else {
-						if( textVariables[j].indexOf(">") > 0 ){
-							variablesText+=textVariables[j].split(">")[0];
-						} else if( textVariables[j].indexOf(">=") > 0 ) {
-							variablesText+=textVariables[j].split(">=")[0];
-						} else if( textVariables[j].indexOf("<") > 0 ) {
-							variablesText+=textVariables[j].split("<")[0];
-						} else if( textVariables[j].indexOf("<=") > 0 ) {
-							variablesText+=textVariables[j].split("<=")[0];
-						} else if( textVariables[j].indexOf("==") > 0 ) {
-							variablesText+=textVariables[j].split("==")[0];
-						} else if( textVariables[j].indexOf("=") > 0 ) {
-							variablesText+=textVariables[j].split("=")[0];
-						} else if( textVariables[j].indexOf("!=") > 0 ) {
-							variablesText+=textVariables[j].split("!=");
-						}  else if( textVariables[j].indexOf("*") > 0 ) {
-							variablesText+=textVariables[j].split("*")[0];
-						} else if( textVariables[j].indexOf("+") > 0 ) {
-							variablesText+=textVariables[j].split("+")[0];
-						} else if( textVariables[j].indexOf("-") > 0 ) {
-							variablesText+=textVariables[j].split("-")[0];
-						} else if( textVariables[j].indexOf("/") > 0) {
-							variablesText+=textVariables[j].split("/")[0];
-						}
-					}
-					variablesText+=";";
-					//arreglo.push("\n"+tabsText+"\t"+"variableResultado"+(regla.ID)+" = "+variablesText);
-					arreglo.splice(j+(j*variables.length)+1, 0, "\n"+tabsText+"var variableResultado"+(regla.ID)+" = "+variablesText);
-					for (var k = j; k < posicionesIF.length; k++) {
-						posicionesIF[k]++;
-					};
-				} else if(variables[i].indexOf('CAMPOOBJETIVO') == 0) {
-					var variablesText = '';
-					for (var k = j; k < j+1; k++) {
-						variablesText = "var variableObjetivo"+(regla.ID)+" = ";
-						if(variables[i].indexOf("$") == -1) {
-							if( textVariables[k].indexOf(">") > 0 ){
-								variablesText+=textVariables[k].split(">")[0];
-							} else if( textVariables[k].indexOf(">=") > 0 ) {
-								variablesText+=textVariables[k].split(">=")[0];
-							} else if( textVariables[k].indexOf("<") > 0 ) {
-								variablesText+=textVariables[k].split("<")[0];
-							} else if( textVariables[k].indexOf("<=") > 0 ) {
-								variablesText+=textVariables[k].split("<=")[0];
-							} else if( textVariables[k].indexOf("==") > 0 ) {
-								variablesText+=textVariables[k].split("==")[0];
-							} else if( textVariables[k].indexOf("=") > 0 ) {
-								variablesText+=textVariables[k].split("=")[0];
-							} else if( textVariables[k].indexOf("!=") > 0 ) {
-								variablesText+=textVariables[k].split("!=");
-							}  else if( textVariables[k].indexOf("*") > 0 ) {
-								variablesText+=textVariables[k].split("*")[0];
-							} else if( textVariables[k].indexOf("+") > 0 ) {
-								variablesText+=textVariables[k].split("+")[0];
-							} else if( textVariables[k].indexOf("-") > 0 ) {
-								variablesText+=textVariables[k].split("-")[0];
-							} else if( textVariables[k].indexOf("/") > 0) {
-								variablesText+=textVariables[k].split("/")[0];
-							}
-						} else {
-							var nombre = '';
-							if( textVariables[k].indexOf(">") > 0 ){
-								nombre+=textVariables[k].split(">")[0];
-							} else if( textVariables[k].indexOf(">=") > 0 ) {
-								nombre+=textVariables[k].split(">=")[0];
-							} else if( textVariables[k].indexOf("<") > 0 ) {
-								nombre+=textVariables[k].split("<")[0];
-							} else if( textVariables[k].indexOf("<=") > 0 ) {
-								nombre+=textVariables[k].split("<=")[0];
-							} else if( textVariables[k].indexOf("==") > 0 ) {
-								nombre+=textVariables[k].split("==")[0];
-							} else if( textVariables[k].indexOf("=") > 0 ) {
-								nombre+=textVariables[k].split("=")[0];
-							} else if( textVariables[k].indexOf("!=") > 0 ) {
-								nombre+=textVariables[k].split("!=");
-								//
-							}  else if( textVariables[k].indexOf("*") > 0 ) {
-								nombre+=textVariables[k].split("*")[0];
-							} else if( textVariables[k].indexOf("+") > 0 ) {
-								nombre+=textVariables[k].split("+")[0];
-							} else if( textVariables[k].indexOf("-") > 0 ) {
-								nombre+=textVariables[k].split("-")[0];
-							} else if( textVariables[k].indexOf("/") > 0) {
-								nombre+=textVariables[k].split("/")[0];
-							}
-							var arregloVariables = variables[i].split("-")[1].split(",");
-							for (var i = 0; i < arregloVariables.length; i++) {
-								if(arregloVariables[i].replace(" ", "").indexOf(nombre).replace(" ", "") > -1){
-									var tipo = arregloVariables[i].split("-")[1].split("$")[1];
-									/*if(tipo == "1")
-										variablesText+=arregloVariables[i].split("-")[0];
-									else
-										variablesText+=arregloVariables[i].split("-")[1].split("$")[0];*/
-									var nombre = arregloVariables[i].split("-")[0], valor = arregloVariables[i].split("-")[1].split("$")[0];
-									variablesText+="{nombre: '"+nombre+"', valor: '"+valor+"'}"
-								}
-							};
-						}
-						variablesText+=";";
-						//arreglo.push("\n"+tabsText+"\t"+variablesText);
-						arreglo.splice(j+(j*variables.length)+1, 0, "\n"+tabsText+"\t"+variablesText);
-						for (var l = j; l < posicionesIF.length; l++) {
-							posicionesIF[l]++;
-						};
-					};
-				} else if(variables[i].indexOf('VALOR') == 0) {
-					var variablesText = '';
-					for (var k = j; k < j+1; k++) {
-						variablesText = "var variableValor"+(regla.ID)+" = ";
-						if(variables[i].indexOf("$") == -1) {
-							if( textVariables[k].indexOf(">") > 0 ){
-								variablesText+=textVariables[k].split(">")[1];
-							} else if( textVariables[k].indexOf(">=") > 0 ) {
-								variablesText+=textVariables[k].split(">=")[1];
-							} else if( textVariables[k].indexOf("<") > 0 ) {
-								variablesText+=textVariables[k].split("<")[1];
-							} else if( textVariables[k].indexOf("<=") > 0 ) {
-								variablesText+=textVariables[k].split("<=")[1];
-							} else if( textVariables[k].indexOf("==") > 0 ) {
-								variablesText+=textVariables[k].split("==")[1];
-							} else if( textVariables[k].indexOf("=") > 0 ) {
-								variablesText+=textVariables[k].split("=")[1];
-							} else if( textVariables[k].indexOf("!=") > 0 ) {
-								variablesText+=textVariables[k].split("!=");
-								//
-							}  else if( textVariables[k].indexOf("*") > 0 ) {
-								variablesText+=textVariables[k].split("*")[1];
-							} else if( textVariables[k].indexOf("+") > 0 ) {
-								variablesText+=textVariables[k].split("+")[1];
-							} else if( textVariables[k].indexOf("-") > 0 ) {
-								variablesText+=textVariables[k].split("-")[1];
-							} else if( textVariables[k].indexOf("/") > 0) {
-								variablesText+=textVariables[k].split("/")[1];
-							}
-						} else {
-							var nombre = '';
-							if( textVariables[k].indexOf(">") > 0 ){
-								nombre+=textVariables[k].split(">")[1];
-							} else if( textVariables[k].indexOf(">=") > 0 ) {
-								nombre+=textVariables[k].split(">=")[1];
-							} else if( textVariables[k].indexOf("<") > 0 ) {
-								nombre+=textVariables[k].split("<")[1];
-							} else if( textVariables[k].indexOf("<=") > 0 ) {
-								nombre+=textVariables[k].split("<=")[1];
-							} else if( textVariables[k].indexOf("==") > 0 ) {
-								nombre+=textVariables[k].split("==")[1];
-							} else if( textVariables[k].indexOf("=") > 0 ) {
-								nombre+=textVariables[k].split("=")[1];
-							} else if( textVariables[k].indexOf("!=") > 0 ) {
-								nombre+=textVariables[k].split("!=");
-								//
-							}  else if( textVariables[k].indexOf("*") > 0 ) {
-								nombre+=textVariables[k].split("*")[1];
-							} else if( textVariables[k].indexOf("+") > 0 ) {
-								nombre+=textVariables[k].split("+")[1];
-							} else if( textVariables[k].indexOf("-") > 0 ) {
-								nombre+=textVariables[k].split("-")[1];
-							} else if( textVariables[k].indexOf("/") > 0) {
-								nombre+=textVariables[k].split("/")[1];
-							}
-							var arregloVariables = variables[i].split("=")[1].split(",");
-							for (var i = 0; i < arregloVariables.length; i++) {
-								if(arregloVariables[i].replace(/( *)/, "").indexOf(nombre.replace(/( *)/, "")) > -1){
-									var tipo = arregloVariables[i].split("-")[1].split("$")[1].replace(")", "");
-									/*if(tipo == "1")
-										variablesText+=arregloVariables[i].split("-")[0];
-									else
-										variablesText+=arregloVariables[i].split("-")[1].split("$")[0];*/
-									var nombre = arregloVariables[i].split("-")[0], valor = arregloVariables[i].split("-")[1].split("$")[0];
-									variablesText+="{nombre: '"+nombre+"', valor: '"+valor+"'}"
-								}
-							};
-						}
-						variablesText+=";";
-						//arreglo.push("\n"+tabsText+"\t"+variablesText);
-						arreglo.splice(j+(j*variables.length)+1, 0, "\n"+tabsText+"\t"+variablesText);
-						for (var l = j; l < posicionesIF.length; l++) {
-							posicionesIF[l]++;
-						};
-					};
-				}
-			};
-		};
-	}
-	if(cuerpo.length > 0){
+	if(cuerpo.length > 0) {
 		var arregloCuerpo = [];
 		for (var i = 0; i < cuerpo.length; i++) {
 			var cuantasTabs = tabs;
@@ -1633,69 +1921,25 @@ function campoObjetivo (regla, arreglo, tabs) {
 				cuantasTabs++;
 			var retorno = campoObjetivo(cuerpo[i], [], cuantasTabs);
 			retorno[0] = "\n"+retorno[0];
-			console.log('retorno');
-			console.log(retorno);
 			$.merge( arregloCuerpo, retorno );
-			/*for (var j = i; j < posicionesIF.length; j++) {
-				console.log("//////////");
-				console.log(arreglo);
-				console.log(retorno);
-				console.log("antes = "+posicionesIF[j]);
-				//posicionesIF[j]+=retorno.length;
-				console.log(arregloCuerpo);
-				console.log("despues = "+posicionesIF[j]);
-			};*/
 		};
-		//arreglo.concat(arregloCuerpo);
 		for (var i = 0; i < posicionesIF.length; i++) {
-			/*console.log("IFF -- "+i);
-			console.log(posicionesIF[i]);
-			console.log("BEFORE -- ");
-			for (var j = 0; j < arreglo.length; j++) {
-				console.log(arreglo[j]);
-			};
-			console.log(arregloCuerpo);*/
 			arreglo.splice(posicionesIF[i], 0, ...arregloCuerpo);
-			/*console.log("AFTER -- ");
-			for (var j = 0; j < arreglo.length; j++) {
-				console.log(arreglo[j]);
-			};*/
 			if(esCondicion)
 				arreglo.splice(posicionesIF[i]+arregloCuerpo.length, 0, "\n"+tabsText+"}");
 			for (var j = i; j < posicionesIF.length; j++) {
 				posicionesIF[j]+=arregloCuerpo.length;
-				/*if(esCondicion)
-					posicionesIF[j]++;*/
 			};
 		};
 		if(posicionesIF.length == 0)
 			$.merge( arreglo, arregloCuerpo );
-		/*if(esCondicion){
-			for (var i = 0; i < posicionesIF.length; i++) {
-				arreglo.splice(posicionesIF[i]+1, 0, "\n}")
-				for (var j = i; j < posicionesIF.length; j++) {
-					posicionesIF[j]++;
-				};
-			};
-		}*/
-		console.log('1');
-		console.log(arreglo);
 		return arreglo;
 	} else {
 		if(esCondicion){
 			for (var i = 0; i < posicionesIF.length; i++) {
-				/*console.log('tabsText');
-				console.log(tabsText);
-				console.log(tabs);
-				console.log('tabsText');*/
-				arreglo.splice(posicionesIF[i], 0, "\n"+tabsText+"}")
-				/*for (var j = i; j < posicionesIF.length; j++) {
-					posicionesIF[j]++;
-				};*/
+				arreglo.splice(posicionesIF[i], 0, "\n"+tabsText+"}");
 			};
 		}
-		console.log('2');
-		console.log(arreglo);
 		return arreglo;
 	}
 }

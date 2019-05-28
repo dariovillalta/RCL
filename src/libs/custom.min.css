@@ -9,11 +9,14 @@
 	min-height: 100vh !important;
 }
 .logo_company{
-	height: 95%;
+	max-height: 100%;
+	display:block;
+	margin:auto;
+	margin-top: 1%;
 }
 .logo_company_solo{
-	height: 95%;
-	margin-top: 5%;
+	max-height: 100%;
+	margin-top: 1%;
 	margin-left: -5%;
 }
 .logo_company_solo{display:none;}

@@ -4,12 +4,13 @@
 <link href="src/libs/datatables.net-responsive-bs/css/responsive.bootstrap.min.css" rel="stylesheet">
 <link href="src/libs/switchery/dist/switchery.min.css" rel="stylesheet">
 <link href="src/libs/overhang/overhang.min.css" rel="stylesheet">
+<link href="src/libs/custom.min.css" rel="stylesheet">
 <div class="container body">
   <div class="main_container">
     <div class="col-md-3 left_col">
       <div class="left_col scroll-view">
         <div class="navbar nav_title" style="border: 0;" id="wrapper">
-          <a onclick="goHome()" class="site_title cursorHand"><img src="src/img/full-logo-example.png" alt="Financiera Finca Honduras" class="logo_company"> <img src="src/img/small-logo-example.png" alt="Financiera Finca Honduras" class="logo_company_solo"></a>
+          <a onclick="goHome()" style="height: 100%;" class="site_title cursorHand"><img id="fullLogo" src="src/img/full-logo-example.png" class="logo_company"> <img id="smallLogo" src="src/img/small-logo-example.png" alt="" class="logo_company_solo"></a>
         </div>
 
         <div class="clearfix"></div>
@@ -36,6 +37,8 @@
               </li>
               <li><a onclick="goReports()"><i class="fa fa-list-alt"></i> Reporter&iacute;a </a>
               </li>
+              <li><a onclick="goGraphics()"><i class="fa fa-bar-chart"></i> Gr&aacute;ficos </a>
+              </li>
             </ul>
           </div>
 
@@ -59,8 +62,11 @@
                 <span class=" fa fa-angle-down"></span>
               </a>
               <ul class="dropdown-menu dropdown-usermenu pull-right">
-                <li id="varLabel"><a onclick="goVariables()"> Editar Variables </a></li>
-                <li id="userLabel"><a onclick="goUsers()"> Control de Usuarios </a></li>
+                <li id="varLabel"><a onclick="goVariables()"> Editar Variables de F&oacute;rmula </a></li>
+                <li id="configLabel"><a onclick="goLists()"> Mantenimiento de Listas </a></li>
+                <li id="userLabel"><a onclick="goUsers()"> Control de Usuarios y Logo </a></li>
+                <li id="importLabel"><a onclick="goConnections()"> Importar Tablas </a></li>
+                <li id="configLabel"><a onclick="goConfig()"> Configuraci&oacute;n de Rutina </a></li>
                 <li><a onclick="logout()"><i class="fa fa-sign-out pull-right"></i> Cerrar Sesi&oacute;n</a></li>
               </ul>
             </li>
@@ -142,7 +148,7 @@
           <h3>Editar Variables <small> design</small></h3>
         </div>
 
-        <div class="title_right">
+        <!-- <div class="title_right">
           <div class="col-md-5 col-sm-5 col-xs-12 form-group pull-right top_search">
             <div class="input-group">
               <input type="text" class="form-control" placeholder="Buscar...">
@@ -151,7 +157,7 @@
               </span>
             </div>
           </div>
-        </div>
+        </div> -->
       </div>
       
       <div class="clearfix"></div>
@@ -198,7 +204,7 @@
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="control-label col-md-3 col-sm-3 col-xs-12">Permiso para editar Formula</label>
+                  <label class="control-label col-md-3 col-sm-3 col-xs-12">Permiso para editar variables de F&oacute;rmula</label>
                   <div class="col-md-6 col-sm-6 col-xs-12">
                     <div class="">
                       <label>
@@ -208,7 +214,7 @@
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="control-label col-md-3 col-sm-3 col-xs-12">Permiso para editar FOSEDE</label>
+                  <label class="control-label col-md-3 col-sm-3 col-xs-12">Permiso para editar monto FOSEDE</label>
                   <div class="col-md-6 col-sm-6 col-xs-12">
                     <div class="">
                       <label>
@@ -401,7 +407,7 @@
 
                 <div class="thumbnail col-sm-4 col-sm-offset-1 col-xs-12">
                   <div class="image view view-first">
-                    <img id="fullLogo" style="height: 80%; display: block; margin-left: auto; margin-right: auto;" src="" alt="image" />
+                    <img id="fullLogoUpload" style="height: 80%; display: block; margin-left: auto; margin-right: auto;" src="" alt="image" />
                     <!-- <div class="mask">
                       <p>Your Text</p>
                       <div class="tools tools-bottom">
@@ -417,7 +423,7 @@
                 </div>
                 <div class="thumbnail col-sm-4 col-sm-offset-1 col-xs-12">
                   <div class="image view view-first">
-                    <img id="smallLogo" style="height: 80%; display: block; margin-left: auto; margin-right: auto;" src="" alt="image" />
+                    <img id="smallLogoUpload" style="height: 80%; display: block; margin-left: auto; margin-right: auto;" src="" alt="image" />
                     <!-- <div class="mask">
                       <p>Your Text</p>
                       <div class="tools tools-bottom">

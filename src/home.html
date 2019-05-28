@@ -1,10 +1,11 @@
+<link href="src/libs/custom.min.css" rel="stylesheet">
 <div>
   <div class="container body">
     <div class="main_container">
       <div class="col-md-3 left_col">
         <div class="left_col scroll-view">
           <div class="navbar nav_title" style="border: 0;" id="wrapper">
-            <a onclick="goHome()" class="site_title cursorHand"><img id="fullLogo" src="src/img/full-logo-example.png" alt="" class="logo_company"> <img id="smallLogo" src="src/img/small-logo-example.png" alt="" class="logo_company_solo"></a>
+            <a onclick="goHome()" style="height: 100%;" class="site_title cursorHand"><img id="fullLogo" src="src/img/full-logo-example.png" class="logo_company"> <img id="smallLogo" src="src/img/small-logo-example.png" alt="" class="logo_company_solo"></a>
           </div>
 
           <div class="clearfix"></div>
@@ -25,11 +26,13 @@
             <div class="menu_section">
               <h3>General</h3>
               <ul class="nav side-menu">
-                <li class="active"><a onclick="goHome()"><i class="fa fa-home"></i> Home </a>
+                <li class="active"><a><i class="fa fa-home"></i> Home </a>
                 </li>
                 <li><a onclick="goRCL()"><i class="fa fa-bar-chart"></i> C&aacute;lculo Diario de RCL </a>
                 </li>
                 <li><a onclick="goReports()"><i class="fa fa-list-alt"></i> Reporter&iacute;a </a>
+                </li>
+                <li><a onclick="goGraphics()"><i class="fa fa-bar-chart"></i> Gr&aacute;ficos </a>
                 </li>
               </ul>
             </div>
@@ -54,9 +57,11 @@
                   <span class=" fa fa-angle-down"></span>
                 </a>
                 <ul class="dropdown-menu dropdown-usermenu pull-right">
-                  <li id="varLabel"><a onclick="goVariables()"> Editar Variables </a></li>
-                  <li id="userLabel"><a onclick="goUsers()"> Control de Usuarios </a></li>
+                  <li id="varLabel"><a onclick="goVariables()"> Editar Variables de F&oacute;rmula </a></li>
+                  <li id="configLabel"><a onclick="goLists()"> Mantenimiento de Listas </a></li>
+                  <li id="userLabel"><a onclick="goUsers()"> Control de Usuarios y Logo </a></li>
                   <li id="importLabel"><a onclick="goConnections()"> Importar Tablas </a></li>
+                  <li id="configLabel"><a onclick="goConfig()"> Configuraci&oacute;n de Rutina </a></li>
                   <li><a onclick="logout()"><i class="fa fa-sign-out pull-right"></i> Cerrar Sesi&oacute;n</a></li>
                 </ul>
               </li>
@@ -182,6 +187,13 @@
                     </div>
                   </div>
                   <div class="clearfix"></div>
+                  <div id="wrapper" class="row">
+                    <div class="col-xs-4">
+                      <select id="selectMoneda" class="form-control">
+                      </select>
+                    </div>
+                  </div>
+                  <div class="clearfix"></div>
                 </div>
                 <div class="x_content">
                   <div class="col-md-12 col-sm-12 col-xs-12">
@@ -189,26 +201,26 @@
                       <div id="calculoRCL" class="demo-placeholder"></div>
                     </div>
                     <div class="tiles">
-                      <div class="col-md-4 tile">
+                      <div class="col-md-4 tile" onclick="goAssets()" style="cursor: pointer;">
                         <div class="tile-stats">
                           <div class="icon"><i class="fa fa-building-o"></i></div>
-                          <div class="count">179</div>
+                          <div id="totalALAC" class="count"></div>
                           <h3>ALAC</h3>
                           <p>Total Activos Líquidos de Alta Calidad</p>
                         </div>
                       </div>
-                      <div class="col-md-4 tile">
+                      <div class="col-md-4 tile" onclick="goDeposits()" style="cursor: pointer;">
                         <div class="tile-stats">
                           <div class="icon"><i class="fa fa-credit-card"></i></div>
-                          <div class="count">179</div>
+                          <div id="totalDepositos" class="count"></div>
                           <h3>SET</h3>
                           <p>Total Salidas de Efectivos Totales</p>
                         </div>
                       </div>
-                      <div class="col-md-4 tile">
+                      <div class="col-md-4 tile" onclick="goLoans()" style="cursor: pointer;">
                         <div class="tile-stats">
                           <div class="icon"><i class="fa fa-money"></i></div>
-                          <div class="count">179</div>
+                          <div id="totalPrestamos" class="count"></div>
                           <h3>EET</h3>
                           <p>Total Entradas de Efectivo Totales</p>
                         </div>
@@ -230,62 +242,12 @@
                   <ul class="nav navbar-right panel_toolbox">
                     <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
                     </li>
-                    <li> <a> <i class="fa fa-external-link" title="Click para ver Activos"></i> </a>
+                    <li> <a onclick="goAssets()"> <i class="fa fa-external-link" title="Click para ver Activos"></i> </a>
                     </li>
                   </ul>
                   <div class="clearfix"></div>
                 </div>
-                <div class="x_content">
-                  <article class="media event">
-                    <a class="pull-left date">
-                      <p class="month">April</p>
-                      <p class="day">23</p>
-                    </a>
-                    <div class="media-body">
-                      <a class="title" href="#">Item One Title</a>
-                      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-                    </div>
-                  </article>
-                  <article class="media event">
-                    <a class="pull-left date">
-                      <p class="month">April</p>
-                      <p class="day">23</p>
-                    </a>
-                    <div class="media-body">
-                      <a class="title" href="#">Item Two Title</a>
-                      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-                    </div>
-                  </article>
-                  <article class="media event">
-                    <a class="pull-left date">
-                      <p class="month">April</p>
-                      <p class="day">23</p>
-                    </a>
-                    <div class="media-body">
-                      <a class="title" href="#">Item Two Title</a>
-                      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-                    </div>
-                  </article>
-                  <article class="media event">
-                    <a class="pull-left date">
-                      <p class="month">April</p>
-                      <p class="day">23</p>
-                    </a>
-                    <div class="media-body">
-                      <a class="title" href="#">Item Two Title</a>
-                      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-                    </div>
-                  </article>
-                  <article class="media event">
-                    <a class="pull-left date">
-                      <p class="month">April</p>
-                      <p class="day">23</p>
-                    </a>
-                    <div class="media-body">
-                      <a class="title" href="#">Item Three Title</a>
-                      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-                    </div>
-                  </article>
+                <div id="listActivos" class="x_content">
                 </div>
               </div>
             </div>
@@ -297,62 +259,12 @@
                   <ul class="nav navbar-right panel_toolbox">
                     <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
                     </li>
-                    <li> <a> <i class="fa fa-external-link" title="Click para ver Salidas de Efectivos Totales"></i> </a>
+                    <li> <a onclick="goDeposits()"> <i class="fa fa-external-link" title="Click para ver Salidas de Efectivos Totales"></i> </a>
                     </li>
                   </ul>
                   <div class="clearfix"></div>
                 </div>
-                <div class="x_content">
-                  <article class="media event">
-                    <a class="pull-left date">
-                      <p class="month">April</p>
-                      <p class="day">23</p>
-                    </a>
-                    <div class="media-body">
-                      <a class="title" href="#">Item One Title</a>
-                      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-                    </div>
-                  </article>
-                  <article class="media event">
-                    <a class="pull-left date">
-                      <p class="month">April</p>
-                      <p class="day">23</p>
-                    </a>
-                    <div class="media-body">
-                      <a class="title" href="#">Item Two Title</a>
-                      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-                    </div>
-                  </article>
-                  <article class="media event">
-                    <a class="pull-left date">
-                      <p class="month">April</p>
-                      <p class="day">23</p>
-                    </a>
-                    <div class="media-body">
-                      <a class="title" href="#">Item Two Title</a>
-                      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-                    </div>
-                  </article>
-                  <article class="media event">
-                    <a class="pull-left date">
-                      <p class="month">April</p>
-                      <p class="day">23</p>
-                    </a>
-                    <div class="media-body">
-                      <a class="title" href="#">Item Two Title</a>
-                      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-                    </div>
-                  </article>
-                  <article class="media event">
-                    <a class="pull-left date">
-                      <p class="month">April</p>
-                      <p class="day">23</p>
-                    </a>
-                    <div class="media-body">
-                      <a class="title" href="#">Item Three Title</a>
-                      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-                    </div>
-                  </article>
+                <div id="listDepositos" class="x_content">
                 </div>
               </div>
             </div>
@@ -364,67 +276,30 @@
                   <ul class="nav navbar-right panel_toolbox">
                     <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
                     </li>
-                    <li> <a> <i class="fa fa-external-link" title="Click para ver Entradas de Efectivo Totales"></i> </a>
+                    <li> <a onclick="goLoans()"> <i class="fa fa-external-link" title="Click para ver Entradas de Efectivo Totales"></i> </a>
                     </li>
                   </ul>
                   <div class="clearfix"></div>
                 </div>
-                <div class="x_content">
-                  <article class="media event">
-                    <a class="pull-left date">
-                      <p class="month">April</p>
-                      <p class="day">23</p>
-                    </a>
-                    <div class="media-body">
-                      <a class="title" href="#">Item One Title</a>
-                      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-                    </div>
-                  </article>
-                  <article class="media event">
-                    <a class="pull-left date">
-                      <p class="month">April</p>
-                      <p class="day">23</p>
-                    </a>
-                    <div class="media-body">
-                      <a class="title" href="#">Item Two Title</a>
-                      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-                    </div>
-                  </article>
-                  <article class="media event">
-                    <a class="pull-left date">
-                      <p class="month">April</p>
-                      <p class="day">23</p>
-                    </a>
-                    <div class="media-body">
-                      <a class="title" href="#">Item Two Title</a>
-                      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-                    </div>
-                  </article>
-                  <article class="media event">
-                    <a class="pull-left date">
-                      <p class="month">April</p>
-                      <p class="day">23</p>
-                    </a>
-                    <div class="media-body">
-                      <a class="title" href="#">Item Two Title</a>
-                      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-                    </div>
-                  </article>
-                  <article class="media event">
-                    <a class="pull-left date">
-                      <p class="month">April</p>
-                      <p class="day">23</p>
-                    </a>
-                    <div class="media-body">
-                      <a class="title" href="#">Item Three Title</a>
-                      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-                    </div>
-                  </article>
+                <div id="listPrestamos" class="x_content">
                 </div>
               </div>
             </div>
 
           </div>
+        </div>
+        
+        <div id="wrapper" class="row">
+          <button onclick="createRowsSelect()">IMPORT!</button>
+        </div>
+        <div id="wrapper" class="row">
+          <button onclick="createRows()">CREATE!</button>
+        </div>
+        <div id="wrapper" class="row">
+          <button onclick="selectRows()">SELECT!</button>
+        </div>
+        <div id="wrapper" class="row">
+          <button onclick="deleteRows()">DELETE!</button>
         </div>
       </div>
       <!-- /page content -->
@@ -432,7 +307,6 @@
       <!-- footer content -->
       <footer>
         <div class="pull-right">
-          Gentelella - Bootstrap Admin Template by <a href="https://colorlib.com">Colorlib</a>
         </div>
         <div class="clearfix"></div>
       </footer>
@@ -441,10 +315,9 @@
   </div>
 </div>
 
-
-<script src="src/libs/Flot/jquery.flot.js"></script>
-<script src="src/libs/Flot/jquery.flot.time.js"></script>
-<script src="src/libs/Flot/jquery.flot.resize.js"></script>
+<script src="src/libs/flot/jquery.flot.min.js"></script>
+<script src="src/libs/flot/jquery.flot.time.min.js"></script>
+<script src="src/libs/flot/jquery.flot.resize.min.js"></script>
 <script src="src/libs/DateJS/build/date.js"></script>
 <script src="src/home.js"></script>
 <script src="src/libs/custom.min.js"></script>

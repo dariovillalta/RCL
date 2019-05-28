@@ -4,12 +4,13 @@
 <link href="src/libs/iCheck/skins/flat/green.css" rel="stylesheet">
 <link href="src/libs/bootstrap-datepicker/datepicker3.css" rel="stylesheet">
 <link href="src/libs/overhang/overhang.min.css" rel="stylesheet">
+<link href="src/libs/custom.min.css" rel="stylesheet">
 <div class="container body">
   <div class="main_container">
     <div class="col-md-3 left_col">
       <div class="left_col scroll-view">
         <div class="navbar nav_title" style="border: 0;" id="wrapper">
-          <a onclick="goHome()" class="site_title cursorHand"><img src="src/img/full-logo-example.png" alt="Financiera Finca Honduras" class="logo_company"> <img src="src/img/small-logo-example.png" alt="Financiera Finca Honduras" class="logo_company_solo"></a>
+          <a onclick="goHome()" style="height: 100%;" class="site_title cursorHand"><img id="fullLogo" src="src/img/full-logo-example.png" class="logo_company"> <img id="smallLogo" src="src/img/small-logo-example.png" alt="" class="logo_company_solo"></a>
         </div>
 
         <div class="clearfix"></div>
@@ -36,6 +37,8 @@
               </li>
               <li><a onclick="goReports()"><i class="fa fa-list-alt"></i> Reporter&iacute;a </a>
               </li>
+              <li><a onclick="goGraphics()"><i class="fa fa-bar-chart"></i> Gr&aacute;ficos </a>
+              </li>
             </ul>
           </div>
 
@@ -59,9 +62,11 @@
                 <span class=" fa fa-angle-down"></span>
               </a>
               <ul class="dropdown-menu dropdown-usermenu pull-right">
-                <li id="varLabel"><a onclick="goVariables()"> Editar Variables </a></li>
-                <li id="userLabel"><a onclick="goUsers()"> Control de Usuarios </a></li>
+                <li id="varLabel"><a onclick="goVariables()"> Editar Variables de F&oacute;rmula </a></li>
+                <li id="configLabel"><a onclick="goLists()"> Mantenimiento de Listas </a></li>
+                <li id="userLabel"><a onclick="goUsers()"> Control de Usuarios y Logo </a></li>
                 <li id="importLabel"><a onclick="goConnections()"> Importar Tablas </a></li>
+                <li id="configLabel"><a onclick="goConfig()"> Configuraci&oacute;n de Rutina </a></li>
                 <li><a onclick="logout()"><i class="fa fa-sign-out pull-right"></i> Cerrar Sesi&oacute;n</a></li>
               </ul>
             </li>
@@ -141,6 +146,12 @@
       
       <div class="clearfix"></div>
 
+      <a onclick="goVariables()" style="margin: 1%;">
+        <div style="border-radius: 15px; background-color: #EDEDED; height: 3em; width: 5vw; text-align: center; cursor: pointer; padding: 1%; display: flex; align-items: center; justify-content: center;">
+          <i class="fa fa-arrow-circle-o-left" style="font-size: 2em;"></i>
+        </div>
+      </a>
+
       <div id="variables_div" class="row">
         <div class="col-md-12">
           <div class="x_panel">
@@ -193,42 +204,23 @@
               <br />
             </div>
 
-            <!-- <div class="row">
+            <div class="row">
               <div class="col-xs-12">
-                <table class="table table-striped">
+                <table id="tablaReglas" class="table table-striped table-bordered">
                   <thead>
                     <tr>
                       <th>#</th>
                       <th>Variable Padre</th>
-                      <th>Regla Padre</th>
-                      <th>Campo Objetivo</th>
-                      <th>Operaci&oacute;n</th>
-                      <th>Valor</th>
-                      <th>Filtro</th>
+                      <th>Descripci&oacute;n</th>
+                      <th>Guardar</th>
+                      <th>Eliminar</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr>
-                      <th scope="row">1</th>
-                      <td>1</td>
-                      <td>1</td>
-                      <td>
-                        <input type="text" id="lempiraInputCambio" required="required" class="form-control">
-                      </td>
-                      <td>
-                        <input type="text" id="lempiraInputCambio" required="required" class="form-control">
-                      </td>
-                      <td>
-                        <input type="text" id="lempiraInputCambio" required="required" class="form-control">
-                      </td>
-                      <td>
-                        <input type="text" id="lempiraInputCambio" required="required" class="form-control">
-                      </td>
-                    </tr>
                   </tbody>
                 </table>
               </div>
-            </div> -->
+            </div>
 
             <div class="row">
               <div class="x_panel" role="tabpanel" data-example-id="togglable-tabs">
@@ -236,15 +228,15 @@
                   <h4>Creaci&oacute;n de Reglas</h4>
                 </div>
                 <div class="clearfix"></div>
-                <ul id="myTab" class="nav nav-tabs bar_tabs" role="tablist">
+                <!-- <ul id="myTab" class="nav nav-tabs bar_tabs" role="tablist">
                   <li role="presentation" class="active"><a href="#tab_content1" id="home-tab" role="tab" data-toggle="tab" aria-expanded="true">Crear Regla</a>
                   </li>
                   <li role="presentation" class=""><a href="#tab_content2" role="tab" id="profile-tab" data-toggle="tab" aria-expanded="false">Crear Filtro</a>
                   </li>
                 </ul>
-                <div id="myTabContent" class="tab-content">
+                <div id="myTabContent" class="tab-content"> -->
 
-                  <div role="tabpanel" class="tab-pane fade active in" id="tab_content1" aria-labelledby="home-tab">
+                  <!-- <div role="tabpanel" class="tab-pane fade active in" id="tab_content1" aria-labelledby="home-tab"> -->
                     <div>
                       <div class="row">
                         <div class="row" style="margin: 0% 5%;">
@@ -260,6 +252,9 @@
                             <label>
                               <input id="campoCampoRadio" type="radio" class="flat" checked name="campoRadio"> Campo
                             </label>
+                            <label>
+                              <input id="agruparCampoRadio" type="radio" class="flat" name="campoRadio"> Agrupaci&oacute;n
+                            </label>
                           </div>
                           <br/>
                         </div>
@@ -267,7 +262,7 @@
                           <div class="col-xs-6 col-xs-offset-3">
                             <form class="form-horizontal form-label-left">
                               <div class="form-group">
-                                <label>Ingrese Campo</label>
+                                <label>Seleccione Campo</label>
                                 <div class="select-style">
                                   <select name="campoCampoInput" id="campoCampoInput" onchange="mostrarFieldsCampoSelect()"></select>
                                 </div>
@@ -275,6 +270,47 @@
                             </form>
                           </div>
                           <br/><br/><br/><br/>
+                        </div>
+
+                        <div class="row">
+                          <div id="agrupacionField" class="col-xs-5 col-xs-offset-1" style="display: none;">
+                            <form class="form-horizontal form-label-left">
+                              <div class="form-group">
+                                <label>Seleccione Campo</label>
+                                <div class="select-style">
+                                  <select name="agrupacionCampoInput" id="agrupacionCampoInput" onchange="loadAgrupacionSelect()"></select>
+                                </div>
+                              </div>
+                            </form>
+                          </div>
+                          <div id="listaCampoField" class="col-xs-5 col-xs-offset-1" style="display: none;">
+                            <div class="row">
+                              <div class="form-group">
+                                <div class="col-xs-12">
+                                  <select id="agrupacionValorOptionSelect" class="select2_multiple form-control" size="4">
+                                  </select>
+                                </div>
+                              </div>
+                            </div>
+                            <br/>
+                          </div>
+                          <div id="booleanCampoField" class="col-xs-5 col-xs-offset-1" id="wrapper" style="display: none;">
+                            <br/>
+                            <label>
+                              <input id="trueOperadorCampo" type="radio" class="flat" name="boolRadio" checked> Verdadero
+                            </label>
+                            <label>
+                              <input id="falseOperadorCampo" type="radio" class="flat" name="boolRadio"> Falso
+                            </label>
+                          </div>
+                          <div id="manualCampoField" class="col-xs-5 col-xs-offset-1" style="display: none;">
+                            <form class="form-horizontal form-label-left">
+                              <div class="form-group">
+                                <label>Ingrese un N&uacute;mero</label>
+                                <input id="manualCampo" type="text" class="form-control" placeholder="Campo" data-inputmask="'mask': '9[9][9]'" data-inputmask-clearmaskonlostfocus="true">
+                              </div>
+                            </form>
+                          </div>
                         </div>
                         <hr class="style11">
                         
@@ -331,22 +367,22 @@
                           <div class="row">
                             <div class="col-xs-2 col-xs-offset-1">
                               <label>
-                                <input id="masOperadorRadio" type="radio" class="flat" name="operadorRadio"> +
+                                <input id="masOperadorRadio" type="radio" class="flat" name="operadorRadio" onchange="mostrarSigno()"> +
                               </label>
                             </div>
                             <div class="col-xs-2 col-xs-offset-1">
                               <label>
-                                <input id="porOperadorRadio" type="radio" class="flat" name="operadorRadio"> x
+                                <input id="porOperadorRadio" type="radio" class="flat" name="operadorRadio" onchange="mostrarSigno()"> x
                               </label>
                             </div>
                             <div class="col-xs-2 col-xs-offset-1">
                               <label>
-                                <input id="menOperadorRadio" type="radio" class="flat" name="operadorRadio"> -
+                                <input id="menOperadorRadio" type="radio" class="flat" name="operadorRadio" onchange="mostrarSigno()"> -
                               </label>
                             </div>
                             <div class="col-xs-2 col-xs-offset-1">
                               <label>
-                                <input id="entOperadorRadio" type="radio" class="flat" name="operadorRadio"> /
+                                <input id="entOperadorRadio" type="radio" class="flat" name="operadorRadio" onchange="mostrarSigno()"> /
                               </label>
                             </div>
                           </div>
@@ -383,6 +419,17 @@
                           </div>
                         </div>
 
+                        <div id="existeBoolField" class="row" style="display: none;">
+                          <div id="wrapper" class="row">
+                            <h5>Existe</h5>
+                          </div>
+                          <div class="row" id="wrapper">
+                            <label>
+                              <input id="ExBoolOperadorRadio" type="radio" class="flat" name="operadorRadio">
+                            </label>
+                          </div>
+                        </div>
+
                         <div id="multField" class="row" style="display: none;">
                           <div id="wrapper" class="row">
                             <h5>Multiplicaci&oacute;n</h5>
@@ -400,6 +447,23 @@
                             <img src="src/img/times.png" alt="" style="height: 8em;">
                           </div>
                         </div>
+
+                        <div id="porcentajeField" class="row" style="display: none;">
+                          <div id="wrapper" class="row">
+                            <h5>Porcentaje del Total a tomar</h5>
+                          </div>
+                          <br/>
+                          <div class="row">
+                            <div id="wrapper" class="col-xs-6 col-xs-offset-3">
+                              <form class="form-horizontal form-label-left">
+                                <div class="form-group">
+                                  <label>Ingrese el Porcentaje</label>
+                                  <input id="porcentajeCampo" type="text" class="form-control" placeholder="Campo" data-inputmask="'mask': '9[9][9]%'" data-inputmask-clearmaskonlostfocus="true">
+                                </div>
+                              </form>
+                            </div>
+                          </div>
+                        </div>
                         <br/>
                         <hr class="style11">
 
@@ -415,8 +479,14 @@
                             <label id="factorValorRadioLabel" style="display: none;">
                               <input id="factorValorRadio" type="radio" class="flat" name="valorRadio"> Factor
                             </label>
+                            <label id="factorManualValorRadioLabel" style="display: none;">
+                              <input id="factorManualValorRadio" type="radio" class="flat" name="valorRadio"> Factor Manual
+                            </label>
                             <label id="fechaValorRadioLabel" style="display: none;">
                               <input id="fechaValorRadio" type="radio" class="flat" name="valorRadio"> Fecha
+                            </label>
+                            <label id="booleanValorRadioLabel" style="display: none;">
+                              <input id="booleanValorRadio" type="radio" class="flat" name="valorRadio"> Fecha
                             </label>
                             <br/>
                           </div>
@@ -449,7 +519,7 @@
                               <br/>
                               <div class="row">
                                 <div id="wrapper">
-                                  <label>Valor a aplicar de Elemento de Lista</label>
+                                  <label>Valor a mostrar de Elemento de Lista</label>
                                 </div>
                               </div>
                               <div class="row">
@@ -504,15 +574,28 @@
                             <br/>
                           </div>
 
+                          <div id="factorValorFinanciacionField" class="row" style="display: none;">
+                            <br/>
+                            <div class="col-xs-6 col-xs-offset-3">
+                              <div id="wrapper" class="row">
+                                <h5>(Valor Financiaci&oacute;n - ALAC) = Factor</h5>
+                              </div>
+                              <div id="wrapper" class="row">
+                                <h5>Saldo <span id="signo"></span> Factor</h5>
+                              </div>
+                            </div>
+                            <br/>
+                          </div>
+
                           <div id="moraField" class="row" style="display: none;">
                             <br/>
                             <div class="col-xs-6 col-xs-offset-3">
                               <div id="wrapper" class="row">
-                                <h5>Fecha</h5>
+                                <h5>D&iacute;as</h5>
                               </div>
                               <div class="row">
                                 <div class="form-group col-sm-8 col-sm-offset-2">
-                                  <input type="text" class="form-control" id="diaValorInput" placeholder="D&iacute;a" data-inputmask="'mask': '9[9][9]'" data-inputmask-clearmaskonlostfocus="true">
+                                  <input type="text" class="form-control" id="moraValorInput" placeholder="D&iacute;a" data-inputmask="'mask': '9[9][9]'" data-inputmask-clearmaskonlostfocus="true">
                                   <span class="fa fa-calendar-o form-control-feedback right" aria-hidden="true"></span>
                                 </div>
                               </div>
@@ -543,7 +626,7 @@
                             <br/>
                             <div class="row" id="wrapper">
                               <label>
-                                <input id="trueOperadorRadio" type="radio" class="flat" name="boolRadio"> Verdadero
+                                <input id="trueOperadorRadio" type="radio" class="flat" name="boolRadio" checked> Verdadero
                               </label>
                               <label>
                                 <input id="falseOperadorRadio" type="radio" class="flat" name="boolRadio"> Falso
@@ -557,19 +640,19 @@
                       <div class="ln_solid"></div>
                       <div id="wrapper">
                         <button onclick="saveRule()" type="button" class="btn btn-success">Guardar</button>
-                        <button onclick="showRules()" type="button" class="btn btn-info">Calcular</button>
+                        <!-- <button onclick="showRules()" type="button" class="btn btn-info">Calcular</button> -->
                       </div>
-                      <div class="row">
+                      <!-- <div class="row">
                         <textarea name="descr1" id="descr1" style="width:100%;" rows="20"></textarea>
-                      </div>
+                      </div> -->
                     </div>
-                  </div>
+                  <!-- </div> -->
 
-                  <div role="tabpanel" class="tab-pane fade" id="tab_content2" aria-labelledby="profile-tab">
+                  <!-- <div role="tabpanel" class="tab-pane fade" id="tab_content2" aria-labelledby="profile-tab">
                     <p>2</p>
-                  </div>
+                  </div> -->
 
-                </div>
+                <!-- </div> -->
               </div>
             </div>
 
@@ -596,6 +679,8 @@
 <script src="src/libs/bootstrap-datepicker/locales/bootstrap-datepicker.es.js"></script>
 
 <script src="src/libs/iCheck/icheck.min.js"></script>
+
+<script src="src/libs/moment/min/moment.min.js"></script>
 
 <script src="src/variableDetailCredito.js"></script>
 

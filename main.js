@@ -1,42 +1,61 @@
 const {app, BrowserWindow} = require('electron')
 const path = require('path')
 const url = require('url')
+const fs = require('fs');
   
   // Keep a global reference of the window object, if you don't, the window will
   // be closed automatically when the JavaScript object is garbage collected.
   let win
   
   function createWindow () {
-    // Create the browser window.
-    win = new BrowserWindow({
-      'minHeight': 690,
-      'minWidth': 1220,
-      'frame': true
-    })
-    //win.setFullScreen(true)
-    win.maximize()
-  
-    // and load the index.html of the app.
-    //win.loadFile('index.html') ó
-    win.loadURL( url.format({
-      pathname: path.join(__dirname, 'index.html'),
-      protocol: 'file:',
-      slashes: true
-    }) )
-    win.openDevTools();
+    /*fs.readFile('./conf.dar', 'utf-8', (err, data) => {
+      if(err) {
+        console.log("No existe");
+        let writeStream = fs.createWriteStream('conf.dar');
+        writeStream.write('aef35ghhjdk74hja83ksnfjk888sfsf', 'base64');
+      } else {
+        //
+      }
+    });*/
+    /*fs.readFile('../keys.txt', 'utf-8', (err, data) => {
+      if(err) {
+        return;
+      }
+      // Change how to handle the file content
+      //console.log("The file content is : " + data);
+      if(data.localeCompare("XBOS-SQWA-IOWQ-QWPO") == 0){*/
+        // Create the browser window.
+        win = new BrowserWindow({
+          'minHeight': 690,
+          'minWidth': 1220,
+          'frame': true
+        })
+        //win.setFullScreen(true)
+        win.maximize()
+      
+        // and load the index.html of the app.
+        //win.loadFile('index.html') ó
+        win.loadURL( url.format({
+          pathname: path.join(__dirname, 'index.html'),
+          protocol: 'file:',
+          slashes: true
+        }) )
+        win.openDevTools();
 
-    //win.setMenu(null)
-  
-    // Open the DevTools.
-    //win.webContents.openDevTools()
-  
-    // Emitted when the window is closed.
-    win.on('closed', () => {
-      // Dereference the window object, usually you would store windows
-      // in an array if your app supports multi windows, this is the time
-      // when you should delete the corresponding element.
-      win = null
-    })
+        //win.setMenu(null)
+      
+        // Open the DevTools.
+        //win.webContents.openDevTools()
+      
+        // Emitted when the window is closed.
+        win.on('closed', () => {
+          // Dereference the window object, usually you would store windows
+          // in an array if your app supports multi windows, this is the time
+          // when you should delete the corresponding element.
+          win = null
+        })
+      //}
+    //});
   }
   
   // This method will be called when Electron has finished

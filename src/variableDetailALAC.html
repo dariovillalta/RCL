@@ -1,13 +1,14 @@
 <link rel="stylesheet" href="src/variablesStyles.css">
 <link href="src/libs/iCheck/skins/flat/green.css" rel="stylesheet">
 <link href="src/libs/overhang/overhang.min.css" rel="stylesheet">
-<link href="src/trip.min.css" rel="stylesheet">
+<link type="text/css" rel="stylesheet" href="src/libs/select2/select2.css" />
+<link href="src/libs/custom.min.css" rel="stylesheet">
 <div class="container body">
   <div class="main_container">
     <div class="col-md-3 left_col">
       <div class="left_col scroll-view">
         <div class="navbar nav_title" style="border: 0;" id="wrapper">
-          <a onclick="goHome()" class="site_title cursorHand"><img src="src/img/full-logo-example.png" alt="" class="logo_company"> <img src="src/img/small-logo-example.png" alt="Financiera Finca Honduras" class="logo_company_solo"></a>
+          <a onclick="goHome()" style="height: 100%;" class="site_title cursorHand"><img id="fullLogo" src="src/img/full-logo-example.png" class="logo_company"> <img id="smallLogo" src="src/img/small-logo-example.png" alt="" class="logo_company_solo"></a>
         </div>
 
         <div class="clearfix"></div>
@@ -34,6 +35,8 @@
               </li>
               <li><a onclick="goReports()"><i class="fa fa-list-alt"></i> Reporter&iacute;a </a>
               </li>
+              <li><a onclick="goGraphics()"><i class="fa fa-bar-chart"></i> Gr&aacute;ficos </a>
+              </li>
             </ul>
           </div>
 
@@ -57,9 +60,11 @@
                 <span class=" fa fa-angle-down"></span>
               </a>
               <ul class="dropdown-menu dropdown-usermenu pull-right">
-                <li id="varLabel"><a onclick="goVariables()"> Editar Variables </a></li>
-                <li id="userLabel"><a onclick="goUsers()"> Control de Usuarios </a></li>
+                <li id="varLabel"><a onclick="goVariables()"> Editar Variables de F&oacute;rmula </a></li>
+                <li id="configLabel"><a onclick="goLists()"> Mantenimiento de Listas </a></li>
+                <li id="userLabel"><a onclick="goUsers()"> Control de Usuarios y Logo </a></li>
                 <li id="importLabel"><a onclick="goConnections()"> Importar Tablas </a></li>
+                <li id="configLabel"><a onclick="goConfig()"> Configuraci&oacute;n de Rutina </a></li>
                 <li><a onclick="logout()"><i class="fa fa-sign-out pull-right"></i> Cerrar Sesi&oacute;n</a></li>
               </ul>
             </li>
@@ -138,6 +143,12 @@
     <div class="right_col" role="main">
       
       <div class="clearfix"></div>
+      
+      <a onclick="goVariables()" style="margin: 1%;">
+        <div style="border-radius: 15px; background-color: #EDEDED; height: 3em; width: 5vw; text-align: center; cursor: pointer; padding: 1%; display: flex; align-items: center; justify-content: center;">
+          <i class="fa fa-arrow-circle-o-left" style="font-size: 2em;"></i>
+        </div>
+      </a>
 
       <div id="variables_div" class="row">
         <div class="col-md-12">
@@ -191,43 +202,6 @@
               <br />
             </div>
 
-            <!-- <div class="row">
-              <div class="col-xs-12">
-                <table class="table table-striped">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Variable Padre</th>
-                      <th>Regla Padre</th>
-                      <th>Campo Objetivo</th>
-                      <th>Operaci&oacute;n</th>
-                      <th>Valor</th>
-                      <th>Filtro</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <th scope="row">1</th>
-                      <td>1</td>
-                      <td>1</td>
-                      <td>
-                        <input type="text" id="lempiraInputCambio" required="required" class="form-control">
-                      </td>
-                      <td>
-                        <input type="text" id="lempiraInputCambio" required="required" class="form-control">
-                      </td>
-                      <td>
-                        <input type="text" id="lempiraInputCambio" required="required" class="form-control">
-                      </td>
-                      <td>
-                        <input type="text" id="lempiraInputCambio" required="required" class="form-control">
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div> -->
-
             <div class="row">
               <div class="x_panel" role="tabpanel" data-example-id="togglable-tabs">
                 <div id="wrapper">
@@ -241,7 +215,7 @@
                       </ul>
                     </div>
                     <div class="row" style="margin: 0% 5%;">
-                      <h2>F&oacute;mula </h2>
+                      <h2>F&oacute;rmula </h2>
                       <ul id="formulaRule" class="to_do text-center" style="word-wrap: break-word;">
                       </ul>
                     </div>
@@ -289,7 +263,7 @@
                             </div>
                           </form>
                           <div class="col-xs-12">
-                            <select id="listaActivosSelect" class="select2_multiple form-control" size="10" multiple="multiple"></select>
+                            <select id="listaActivosSelect" class="select2-list form-control" multiple="multiple"></select>
                           </div>
                           <br/><br/><br/>
                           <div id="wrapper">
@@ -360,13 +334,6 @@
                     </div>
 
                   </div>
-                  <div class="ln_solid"></div>
-                  <div id="wrapper">
-                    <button onclick="showRules()" type="button" class="btn btn-info">Calcular</button>
-                  </div>
-                  <div class="row">
-                    <textarea name="descr1" id="descr1" style="width:100%;" rows="20"></textarea>
-                  </div>
                 </div>
               </div>
             </div>
@@ -382,6 +349,8 @@
 </div>
 
 <script src="src/libs/jquery.inputmask/dist/min/jquery.inputmask.bundle.min.js"></script>
+
+<script src="src/libs/select2/select2.min.js"></script>
 
 <script src="src/libs/jquery-ui/jquery-ui.min.js"></script>
 

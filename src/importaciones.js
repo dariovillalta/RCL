@@ -1,10 +1,29 @@
 const electron = require('electron');
-const path = require('path');
 const remote = require('electron').remote;
 const sql = require('mssql');
 const XLSX = require('xlsx-style');
 
+var user = getUser();
+var password = getPassword();
+var server = getServer();
+var database = getDataBase();
+
 const config = {
+    user: user,
+    password: password,
+    server: server,
+    database: database,
+    stream: true,
+    pool: {
+        max: 10,
+        min: 0,
+        idleTimeoutMillis: 30000
+    },
+    options: {
+        useUTC: false
+    }
+}
+/*const config = {
     user: 'SA',
     password: 'password111!',
     server: 'localhost',
@@ -13,8 +32,11 @@ const config = {
         max: 10,
         min: 0,
         idleTimeoutMillis: 30000
+    },
+    options: {
+        useUTC: false
     }
-}
+}*/
 
 const pool1 = new sql.ConnectionPool(config, err => {
 	if(err) {
@@ -30,6 +52,7 @@ const pool1 = new sql.ConnectionPool(config, err => {
 		console.log('pool loaded');
 		loadConections();
         loadVariablesIMG();
+        loadFOSEDE();
 	}
 });
 
@@ -54,6 +77,14 @@ session.defaultSession.cookies.get({}, (error, cookies) => {
 });
 
 var dialog = remote.dialog;
+
+$('#fechaImportacion').datepicker({
+    format: "dd-mm-yyyy",
+    todayHighlight: true,
+    viewMode: "days", 
+    minViewMode: "days",
+    language: 'es'
+});
 
 /* ******************       SEARCH     ********* */
 function filterDiv () {
@@ -134,19 +165,11 @@ function loadVariablesIMG () {
                     	if(result.recordset[0].fullLogo.length > 0){
                     		filepathFullLogo = result.recordset[0].fullLogo;
                     		$("#fullLogo").attr("src",filepathFullLogo);
-                    		$("#fullLogo").css("height","3.3em");
-                    		/*$("#fullLogo").css("display","block");
-                    		$("#fullLogo").css("margin-left","auto");
-                    		$("#fullLogo").css("margin-right","auto");*/
                     	} else
                     		filepathFullLogo = '';
                     	if(result.recordset[0].smallLogo.length > 0){
                     		filepathSmallLogo = result.recordset[0].smallLogo;
                     		$("#smallLogo").attr("src",filepathSmallLogo);
-                    		$("#smallLogo").css("height","3.4em");
-                    		/*$("#smallLogo").css("display","block");
-                    		$("#smallLogo").css("margin-left","auto");
-                    		$("#smallLogo").css("margin-right","auto");*/
                     	} else
                     		filepathSmallLogo = '';
                     } else {
@@ -160,6 +183,55 @@ function loadVariablesIMG () {
     }); // fin transaction
 }
 /* ****************** 		END LOADING IMG 	********* */
+
+var arregloFOSEDE = [];
+/* ******************       FOSEDE     ********* */
+function loadFOSEDE () {
+    const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false;
+        transaction.on('rollback', aborted => {
+            // emited with aborted === true
+            rolledBack = true;
+        })
+        const request = new sql.Request(transaction);
+        request.query("select * from FOSEDE", (err, result) => {
+            if (err) {
+                if (!rolledBack) {
+                    transaction.rollback(err => {
+                        $("body").overhang({
+                            type: "error",
+                            primary: "#f84a1d",
+                            accent: "#d94e2a",
+                            message: "Error en conección con la tabla de FOSEDE.",
+                            overlay: true,
+                            closeConfirm: true
+                        });
+                    });
+                }
+            }  else {
+                transaction.commit(err => {
+                    // ... error checks
+                    if(result.recordset.length > 0){
+                        arregloFOSEDE = result.recordset;
+                    } else {
+                        arregloFOSEDE = [];
+                    }
+                });
+            }
+        });
+    }); // fin transaction
+}
+/* ******************       END FOSEDE     ********* */
+
+function existeMonedaFOSEDE (moneda) {
+    for (var i = 0; i < arregloFOSEDE.length; i++) {
+        if(arregloFOSEDE[i].moneda.toLowerCase().localeCompare(moneda.toLowerCase()) == 0) {
+            return true;
+        }
+    };
+    return false;
+}
 
 
 
@@ -228,19 +300,19 @@ function saveActivosDB (indexTabla) {
     } else if($.trim($("#sucursalConexionActivos").val()).length == 0) {
         entrar = false;
         campo = 'agencia';
-    } else if($.trim($("#activosUserDB").val()).length == 0 && $("ul#myTabActivos li.active").value == 1) {
+    } else if($.trim($("#activosUserDB").val()).length == 0 && $("ul#myTabActivos li.active")[0].value == 0) {
         entrar = false;
         campo = 'usuario de la base de datos';
-    } else if($.trim($("#activosPasswordDB").val()).length == 0 && $("ul#myTabActivos li.active").value == 1) {
+    } else if($.trim($("#activosPasswordDB").val()).length == 0 && $("ul#myTabActivos li.active")[0].value == 0) {
         entrar = false;
         campo = 'contraseña de la base de datos';
-    } else if($.trim($("#activosServerDB").val()).length == 0 && $("ul#myTabActivos li.active").value == 1) {
+    } else if($.trim($("#activosServerDB").val()).length == 0 && $("ul#myTabActivos li.active")[0].value == 0) {
         entrar = false;
         campo = 'servidor de la base de datos';
-    } else if($.trim($("#activosDataBaseDB").val()).length == 0 && $("ul#myTabActivos li.active").value == 1) {
+    } else if($.trim($("#activosDataBaseDB").val()).length == 0 && $("ul#myTabActivos li.active")[0].value == 0) {
         entrar = false;
         campo = 'nombre de la base de datos';
-    } else if($.trim($("#activosTableDB").val()).length == 0 && $("ul#myTabActivos li.active").value == 1) {
+    } else if($.trim($("#activosTableDB").val()).length == 0 && $("ul#myTabActivos li.active")[0].value == 0) {
         entrar = false;
         campo = 'tabla de la base de datos';
     }
@@ -293,251 +365,396 @@ function saveActivosDB (indexTabla) {
                 });
             }
         } else if(indice == 1) {
-            var cuenta = $.trim($("#cuentaConexionActivos").val());
-            var nombre = $.trim($("#nombreConexionActivos").val());
-            var saldo = $.trim($("#saldoConexionActivos").val());
-            var moneda = $.trim($("#monedaConexionActivos").val());
-            var sucursal = $.trim($("#sucursalConexionActivos").val());
-            var nombreHoja = $.trim($("#activosTableExcel").val());
-            var filaInicial = $.trim($("#activosExcelInicio").val());
-            var filaFinal = $.trim($("#activosExcelFinal").val());
-            if(cuenta.length > 0) {
-                if(isNaN(cuenta)) {
-                    if(nombre.length > 0) {
-                        if(isNaN(nombre)) {
-                            if(moneda.length > 0) {
-                                if(isNaN(moneda)) {
-                                    if(saldo.length > 0) {
-                                        if(isNaN(saldo)) {
-                                            if(sucursal.length > 0) {
-                                                if(isNaN(sucursal)) {
-                                                    if(nombreHoja.length > 0) {
-                                                        if(!isNaN(filaInicial) && filaInicial.length>0) {
-                                                            var file = dialog.showOpenDialog({
-                                                                title: 'Seleccione un archivo',
-                                                                filters: [{
-                                                                    name: "Spreadsheets",
-                                                                    extensions: "xls|xlsx|xlsm|xlsb|xml|xlw|xlc|csv|txt|dif|sylk|slk|prn|ods|fods|uos|dbf|wks|123|wq1|qpw".split("|")
-                                                                }],
-                                                                properties: ['openFile']
-                                                            });
-                                                            var workbook;
-                                                            if(file.length > 0) {
-                                                                workbook = XLSX.readFile(file[0]);
-                                                                var sheet = workbook.Sheets[nombreHoja];
-                                                                if(sheet != null) {
-                                                                    if(filaFinal.length == 0)
-                                                                        filaFinal = 0;
-                                                                    var arregloDeActivos = [];
-                                                                    cuenta = cuenta.toUpperCase();
-                                                                    nombre = nombre.toUpperCase();
-                                                                    saldo = saldo.toUpperCase();
-                                                                    moneda = moneda.toUpperCase();
-                                                                    sucursal = sucursal.toUpperCase();
-                                                                    filaInicial = parseInt(filaInicial);
-                                                                    filaFinal = parseInt(filaFinal);
-                                                                    if(filaFinal != 0) {
-                                                                        for (var i = filaInicial; i <= filaFinal; i++) {
-                                                                            if(sheet[cuenta+i] != undefined && sheet[cuenta+i].v.toString().length > 0 && sheet[nombre+i] != undefined && sheet[nombre+i].v.toString().length > 0 && sheet[saldo+i] != undefined && sheet[saldo+i].v.toString().length > 0 && sheet[moneda+i] != undefined && sheet[moneda+i].v.toString().length > 0 && sheet[sucursal+i] != undefined && sheet[sucursal+i].v.toString().length > 0) {
-                                                                                var activoCuenta = sheet[cuenta+i].v;
-                                                                                var activoNombre = sheet[nombre+i].v;
-                                                                                var activoSaldo = sheet[saldo+i].v;
-                                                                                var activoMoneda = sheet[moneda+i].v;
-                                                                                var activoSucursal = sheet[sucursal+i].v;
-                                                                                activoCuenta = activoCuenta.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
-                                                                                activoNombre = activoNombre.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
-                                                                                activoMoneda = activoMoneda.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
-                                                                                activoSucursal = activoSucursal.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
-                                                                                activoNombre = activoNombre.toLowerCase();
-                                                                                activoNombre = UpperCasefirst(activoNombre);
-                                                                                activoMoneda = activoMoneda.toLowerCase();
-                                                                                activoMoneda = UpperCasefirst(activoMoneda);
-                                                                                arregloDeActivos.push({cuenta: activoCuenta, nombre: activoNombre, saldo: activoSaldo, moneda: activoMoneda, sucursal: activoSucursal});
-                                                                                totalInserciones++;
-                                                                            } else if(sheet[cuenta+i] != undefined || sheet[nombre+i] != undefined|| sheet[saldo+i] != undefined || sheet[moneda+i] != undefined|| sheet[sucursal+i] != undefined)
-                                                                                arregloErroresExcel.push(i);
-                                                                        };
-                                                                    } else {
-                                                                        var finalRow = sheet["!ref"].split(":")[1].replace(/[A-Z]/g, "");
-                                                                        finalRow = parseInt(finalRow);
-                                                                        for (var i = filaInicial; i <= finalRow; i++) {
-                                                                            if(sheet[cuenta+i] != undefined && sheet[cuenta+i].v.toString().length > 0 && sheet[nombre+i] != undefined && sheet[nombre+i].v.toString().length > 0 && sheet[saldo+i] != undefined && sheet[saldo+i].v.toString().length > 0 && sheet[moneda+i] != undefined && sheet[moneda+i].v.toString().length > 0 && sheet[sucursal+i] != undefined && sheet[sucursal+i].v.toString().length > 0) {
-                                                                                var activoCuenta = sheet[cuenta+i].v;
-                                                                                var activoNombre = sheet[nombre+i].v;
-                                                                                var activoSaldo = sheet[saldo+i].v;
-                                                                                var activoMoneda = sheet[moneda+i].v;
-                                                                                var activoSucursal = sheet[sucursal+i].v;
-                                                                                activoCuenta = activoCuenta.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
-                                                                                activoNombre = activoNombre.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
-                                                                                activoSucursal = activoSucursal.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
-                                                                                activoNombre = activoNombre.toLowerCase();
-                                                                                activoNombre = UpperCasefirst(activoNombre);
-                                                                                activoMoneda = activoMoneda.toLowerCase();
-                                                                                activoMoneda = UpperCasefirst(activoMoneda);
-                                                                                arregloDeActivos.push({cuenta: activoCuenta, nombre: activoNombre, saldo: activoSaldo, moneda: activoMoneda, sucursal: activoSucursal});
-                                                                                totalInserciones++;
-                                                                            } else if(sheet[cuenta+i] != undefined || sheet[nombre+i] != undefined|| sheet[saldo+i] != undefined || sheet[moneda+i] != undefined|| sheet[sucursal+i] != undefined)
-                                                                                arregloErroresExcel.push(i);
-                                                                        };
-                                                                    }
-                                                                    for (var i = 0; i < arregloDeActivos.length; i++) {
-                                                                        if(arregloDeActivos[i].cuenta.length < 31) {
-                                                                            if(arregloDeActivos[i].nombre.length < 120) {
-                                                                                if(arregloDeActivos[i].saldo.toString().length < 20) {
-                                                                                    if(arregloDeActivos[i].moneda.length < 30) {
-                                                                                        if(arregloDeActivos[i].sucursal.length < 50) {
-                                                                                            createAsset( arregloDeActivos[i] );
+            if(arregloFOSEDE.length > 0) {
+                var cuenta = $.trim($("#cuentaConexionActivos").val());
+                var nombre = $.trim($("#nombreConexionActivos").val());
+                var saldo = $.trim($("#saldoConexionActivos").val());
+                var moneda = $.trim($("#monedaConexionActivos").val());
+                var sucursal = $.trim($("#sucursalConexionActivos").val());
+                var nombreHoja = $.trim($("#activosTableExcel").val());
+                var fechaImportacion = $.trim($("#fechaImportacionConexionActivos").val());
+                var filaInicial = $.trim($("#activosExcelInicio").val());
+                var filaFinal = $.trim($("#activosExcelFinal").val());
+                myInterval = setInterval(myTimer, 1000);
+                $( ".loadingScreen" ).fadeIn( "slow", function() {
+                });
+                if(cuenta.length > 0) {
+                    if(isNaN(cuenta)) {
+                        if(nombre.length > 0) {
+                            if(isNaN(nombre)) {
+                                if(moneda.length > 0) {
+                                    if(isNaN(moneda)) {
+                                        if(saldo.length > 0) {
+                                            if(isNaN(saldo)) {
+                                                if(sucursal.length > 0) {
+                                                    if(isNaN(sucursal)) {
+                                                        if(fechaImportacion.length > 0) {
+                                                            if(isNaN(fechaImportacion)) {
+                                                                if(nombreHoja.length > 0) {
+                                                                    if(!isNaN(filaInicial) && filaInicial.length>0) {
+                                                                        var file = dialog.showOpenDialog({
+                                                                            title: 'Seleccione un archivo',
+                                                                            filters: [{
+                                                                                name: "Spreadsheets",
+                                                                                extensions: "xls|xlsx|xlsm|xlsb|xml|xlw|xlc|csv|txt|dif|sylk|slk|prn|ods|fods|uos|dbf|wks|123|wq1|qpw".split("|")
+                                                                            }],
+                                                                            properties: ['openFile']
+                                                                        });
+                                                                        var workbook;
+                                                                        if(file.length > 0) {
+                                                                            workbook = XLSX.readFile(file[0]);
+                                                                            var sheet = workbook.Sheets[nombreHoja];
+                                                                            if(sheet != null) {
+                                                                                if(filaFinal.length == 0)
+                                                                                    filaFinal = 0;
+                                                                                var arregloDeActivos = [];
+                                                                                cuenta = cuenta.toUpperCase();
+                                                                                nombre = nombre.toUpperCase();
+                                                                                saldo = saldo.toUpperCase();
+                                                                                moneda = moneda.toUpperCase();
+                                                                                sucursal = sucursal.toUpperCase();
+                                                                                fechaImportacion = fechaImportacion.toUpperCase();
+                                                                                filaInicial = parseInt(filaInicial);
+                                                                                filaFinal = parseInt(filaFinal);
+                                                                                if(filaFinal != 0) {
+                                                                                    for (var i = filaInicial; i <= filaFinal; i++) {
+                                                                                        if(sheet[cuenta+i] != undefined && sheet[cuenta+i].v.toString().length > 0 && sheet[nombre+i] != undefined && sheet[nombre+i].v.toString().length > 0 && sheet[saldo+i] != undefined && sheet[saldo+i].v.toString().length > 0 && sheet[moneda+i] != undefined && sheet[moneda+i].v.toString().length > 0 && sheet[sucursal+i] != undefined && sheet[sucursal+i].v.toString().length > 0 && sheet[fechaImportacion+i] != undefined && sheet[fechaImportacion+i].w.toString().length > 0) {
+                                                                                            var activoCuenta = sheet[cuenta+i].v;
+                                                                                            var activoNombre = sheet[nombre+i].v;
+                                                                                            var activoSaldo = sheet[saldo+i].v;
+                                                                                            var activoMoneda = sheet[moneda+i].v;
+                                                                                            var activoSucursal = sheet[sucursal+i].v;
+                                                                                            var activoFechaImportacion = sheet[fechaImportacion+i].w;
+                                                                                            activoCuenta = activoCuenta.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
+                                                                                            activoNombre = activoNombre.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
+                                                                                            activoMoneda = activoMoneda.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
+                                                                                            activoSucursal = activoSucursal.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
+                                                                                            activoNombre = activoNombre.toLowerCase();
+                                                                                            activoNombre = UpperCasefirst(activoNombre);
+                                                                                            activoMoneda = activoMoneda.toLowerCase();
+                                                                                            activoMoneda = UpperCasefirst(activoMoneda);
+                                                                                            if(existeMonedaFOSEDE(activoMoneda)) {
+                                                                                                arregloDeActivos.push({cuenta: activoCuenta, nombre: activoNombre, saldo: activoSaldo, moneda: activoMoneda, sucursal: activoSucursal, fechaImportacion: activoFechaImportacion});
+                                                                                                totalInserciones++;
+                                                                                            } else 
+                                                                                                arregloErroresInsercion.push({b: "Activo: "+activoCuenta, c: "No existe un monto FOSEDE para el tipo de moneda"});
+                                                                                        } else if(sheet[cuenta+i] != undefined || sheet[nombre+i] != undefined|| sheet[saldo+i] != undefined || sheet[moneda+i] != undefined|| sheet[sucursal+i] != undefined || sheet[fechaImportacion+i] != undefined)
+                                                                                            arregloErroresExcel.push(i);
+                                                                                    };
+                                                                                } else {
+                                                                                    var finalRow = sheet["!ref"].split(":")[1].replace(/[A-Z]/g, "");
+                                                                                    finalRow = parseInt(finalRow);
+                                                                                    for (var i = filaInicial; i <= finalRow; i++) {
+                                                                                        if(sheet[cuenta+i] != undefined && sheet[cuenta+i].v.toString().length > 0 && sheet[nombre+i] != undefined && sheet[nombre+i].v.toString().length > 0 && sheet[saldo+i] != undefined && sheet[saldo+i].v.toString().length > 0 && sheet[moneda+i] != undefined && sheet[moneda+i].v.toString().length > 0 && sheet[sucursal+i] != undefined && sheet[sucursal+i].v.toString().length > 0 && sheet[fechaImportacion+i] != undefined && sheet[fechaImportacion+i].w.toString().length > 0) {
+                                                                                            var activoCuenta = sheet[cuenta+i].v;
+                                                                                            var activoNombre = sheet[nombre+i].v;
+                                                                                            var activoSaldo = sheet[saldo+i].v;
+                                                                                            var activoMoneda = sheet[moneda+i].v;
+                                                                                            var activoSucursal = sheet[sucursal+i].v;
+                                                                                            var activoFechaImportacion = sheet[fechaImportacion+i].w;
+                                                                                            activoCuenta = activoCuenta.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
+                                                                                            activoNombre = activoNombre.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
+                                                                                            activoSucursal = activoSucursal.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
+                                                                                            activoNombre = activoNombre.toLowerCase();
+                                                                                            activoNombre = UpperCasefirst(activoNombre);
+                                                                                            activoMoneda = activoMoneda.toLowerCase();
+                                                                                            activoMoneda = UpperCasefirst(activoMoneda);
+                                                                                            if(existeMonedaFOSEDE(activoMoneda)) {
+                                                                                                arregloDeActivos.push({cuenta: activoCuenta, nombre: activoNombre, saldo: activoSaldo, moneda: activoMoneda, sucursal: activoSucursal, fechaImportacion: activoFechaImportacion});
+                                                                                                totalInserciones++;
+                                                                                            } else 
+                                                                                                arregloErroresInsercion.push({b: "Activo: "+activoCuenta, c: "No existe un monto FOSEDE para el tipo de moneda"});
+                                                                                        } else if(sheet[cuenta+i] != undefined || sheet[nombre+i] != undefined|| sheet[saldo+i] != undefined || sheet[moneda+i] != undefined|| sheet[sucursal+i] != undefined || sheet[fechaImportacion+i] != undefined)
+                                                                                            arregloErroresExcel.push(i);
+                                                                                    };
+                                                                                }
+                                                                                for (var i = 0; i < arregloDeActivos.length; i++) {
+                                                                                    if(arregloDeActivos[i].cuenta.length < 31) {
+                                                                                        if(arregloDeActivos[i].nombre.length < 120) {
+                                                                                            if(arregloDeActivos[i].saldo.toString().length < 20) {
+                                                                                                if(arregloDeActivos[i].moneda.length < 31) {
+                                                                                                    if(arregloDeActivos[i].sucursal.length < 51) {
+                                                                                                        if(Date.parse(new Date(arregloDeActivos[i].fechaImportacion))) {
+                                                                                                            //createAsset( arregloDeActivos[i] );
+                                                                                                        } else {
+                                                                                                            arregloErroresInsercion.push({b: "Activo: "+arregloDeActivos[i].cuenta, c: "La fecha de importación no es valida"});
+                                                                                                            contadorInserciones++;
+                                                                                                        }
+                                                                                                    } else {
+                                                                                                        arregloErroresInsercion.push({b: "Activo: "+arregloDeActivos[i].cuenta, c: "El valor de sucursal es mayor a 50 caracteres"});
+                                                                                                        contadorInserciones++;
+                                                                                                    }
+                                                                                                } else {
+                                                                                                    arregloErroresInsercion.push({b: "Activo: "+arregloDeActivos[i].cuenta, c: "El valor de la moneda es mayor a 30 caracteres"});
+                                                                                                    contadorInserciones++;
+                                                                                                }
+                                                                                            } else {
+                                                                                                arregloErroresInsercion.push({b: "Activo: "+arregloDeActivos[i].cuenta, c: "El valor del saldo es mayor a 20 caracteres"});
+                                                                                                contadorInserciones++;
+                                                                                            }
                                                                                         } else {
-                                                                                            arregloErroresInsercion.push({b: "Activo: "+arregloDeActivos[i].cuenta, c: "El valor de sucursal es mayor a 50 caracteres"});
+                                                                                            arregloErroresInsercion.push({b: "Activo: "+arregloDeActivos[i].cuenta, c: "El valor es mayor a 120 caracteres"});
+                                                                                            contadorInserciones++;
                                                                                         }
                                                                                     } else {
-                                                                                        arregloErroresInsercion.push({b: "Activo: "+arregloDeActivos[i].cuenta, c: "El valor de la moneda es mayor a 30 caracteres"});
+                                                                                        arregloErroresInsercion.push({b: "Activo: "+arregloDeActivos[i].cuenta, c: "El valor de la cuenta es mayor a 30 caracteres"});
+                                                                                        contadorInserciones++;
                                                                                     }
+                                                                                };
+                                                                                if(arregloDeActivos.length == 0) {
+                                                                                    $("body").overhang({
+                                                                                        type: "error",
+                                                                                        primary: "#f84a1d",
+                                                                                        accent: "#d94e2a",
+                                                                                        message: "Error al insertar variable en columna inexistente o el archivo estaba vacio.",
+                                                                                        overlay: true,
+                                                                                        closeConfirm: true
+                                                                                    });
+                                                                                    $(".loadingScreen").hide();
+                                                                                    stopTimer();
+                                                                                    printErrorFile();
                                                                                 } else {
-                                                                                    arregloErroresInsercion.push({b: "Activo: "+arregloDeActivos[i].cuenta, c: "El valor del saldo es mayor a 20 caracteres"});
+                                                                                    if(arregloErroresInsercion.length > 0 || arregloErroresExcel.length > 0) {
+                                                                                        $("body").overhang({
+                                                                                            type: "confirm",
+                                                                                            primary: "#f5a433",
+                                                                                            accent: "#dc9430",
+                                                                                            yesColor: "#3498DB",
+                                                                                            message: 'Se encontrarón errores en el archivo. Desea importar igual?',
+                                                                                            overlay: true,
+                                                                                            yesMessage: "Importar",
+                                                                                            noMessage: "Cancelar",
+                                                                                            callback: function (value) {
+                                                                                                if(value){
+                                                                                                    for (var i = 0; i < arregloDeActivos.length; i++) {
+                                                                                                        if(arregloDeActivos[i].cuenta.length < 31) {
+                                                                                                            if(arregloDeActivos[i].nombre.length < 120) {
+                                                                                                                if(arregloDeActivos[i].saldo.toString().length < 20) {
+                                                                                                                    if(arregloDeActivos[i].moneda.length < 31) {
+                                                                                                                        if(arregloDeActivos[i].sucursal.length < 51) {
+                                                                                                                            if(Date.parse(new Date(arregloDeActivos[i].fechaImportacion))) {
+                                                                                                                                createAsset( arregloDeActivos[i] );
+                                                                                                                            }
+                                                                                                                        }
+                                                                                                                    }
+                                                                                                                }
+                                                                                                            }
+                                                                                                        }
+                                                                                                    };
+                                                                                                } else {
+                                                                                                    $(".loadingScreen").hide();
+                                                                                                    stopTimer();
+                                                                                                }
+                                                                                            }
+                                                                                        });
+                                                                                    } else {
+                                                                                        for (var i = 0; i < arregloDeActivos.length; i++) {
+                                                                                            if(arregloDeActivos[i].cuenta.length < 31) {
+                                                                                                if(arregloDeActivos[i].nombre.length < 120) {
+                                                                                                    if(arregloDeActivos[i].saldo.toString().length < 20) {
+                                                                                                        if(arregloDeActivos[i].moneda.length < 31) {
+                                                                                                            if(arregloDeActivos[i].sucursal.length < 51) {
+                                                                                                                if(Date.parse(new Date(arregloDeActivos[i].fechaImportacion))) {
+                                                                                                                    createAsset( arregloDeActivos[i] );
+                                                                                                                }
+                                                                                                            }
+                                                                                                        }
+                                                                                                    }
+                                                                                                }
+                                                                                            }
+                                                                                        };
+                                                                                    }
                                                                                 }
                                                                             } else {
-                                                                                arregloErroresInsercion.push({b: "Activo: "+arregloDeActivos[i].cuenta, c: "El valor es mayor a 120 caracteres"});
+                                                                                $("body").overhang({
+                                                                                    type: "error",
+                                                                                    primary: "#f84a1d",
+                                                                                    accent: "#d94e2a",
+                                                                                    message: "Error al abrir hoja de excel.",
+                                                                                    overlay: true,
+                                                                                    closeConfirm: true
+                                                                                });
+                                                                                $(".loadingScreen").hide();
+                                                                                stopTimer();
                                                                             }
                                                                         } else {
-                                                                            arregloErroresInsercion.push({b: "Activo: "+arregloDeActivos[i].cuenta, c: "El valor de la cuenta es mayor a 30 caracteres"});
+                                                                            $(".loadingScreen").hide();
+                                                                            stopTimer();
                                                                         }
-                                                                    };
-                                                                    /*$("body").overhang({
-                                                                        type: "success",
-                                                                        primary: "#40D47E",
-                                                                        accent: "#27AE60",
-                                                                        message: "Activos importados con éxito.",
-                                                                        duration: 2,
-                                                                        overlay: true
-                                                                    });*/
+                                                                    } else {
+                                                                        $("body").overhang({
+                                                                            type: "error",
+                                                                            primary: "#f84a1d",
+                                                                            accent: "#d94e2a",
+                                                                            message: "Ingrese un valor para la fila inicial de la hoja de excel.",
+                                                                            overlay: true,
+                                                                            closeConfirm: true
+                                                                        });
+                                                                        $(".loadingScreen").hide();
+                                                                        stopTimer();
+                                                                    }
                                                                 } else {
                                                                     $("body").overhang({
                                                                         type: "error",
                                                                         primary: "#f84a1d",
                                                                         accent: "#d94e2a",
-                                                                        message: "Error al abrir hoja de excel.",
+                                                                        message: "Ingrese un valor para el nombre de la hoja de excel.",
                                                                         overlay: true,
                                                                         closeConfirm: true
                                                                     });
+                                                                    $(".loadingScreen").hide();
+                                                                    stopTimer();
                                                                 }
+                                                            } else {
+                                                                $("body").overhang({
+                                                                    type: "error",
+                                                                    primary: "#f84a1d",
+                                                                    accent: "#d94e2a",
+                                                                    message: "Ingrese una letra para la columna de fecha de importación válida.",
+                                                                    overlay: true,
+                                                                    closeConfirm: true
+                                                                });
+                                                                $(".loadingScreen").hide();
+                                                                stopTimer();
                                                             }
                                                         } else {
                                                             $("body").overhang({
                                                                 type: "error",
                                                                 primary: "#f84a1d",
                                                                 accent: "#d94e2a",
-                                                                message: "Ingrese un valor para la fila inicial de la hoja de excel.",
+                                                                message: "Ingrese un valor para la columna de fecha de importación.",
                                                                 overlay: true,
                                                                 closeConfirm: true
                                                             });
+                                                            $(".loadingScreen").hide();
+                                                            stopTimer();
                                                         }
                                                     } else {
                                                         $("body").overhang({
                                                             type: "error",
                                                             primary: "#f84a1d",
                                                             accent: "#d94e2a",
-                                                            message: "Ingrese un valor para el nombre de la hoja de excel.",
+                                                            message: "Ingrese una letra para la columna del campo de sucursal válida.",
                                                             overlay: true,
                                                             closeConfirm: true
                                                         });
+                                                        $(".loadingScreen").hide();
+                                                        stopTimer();
                                                     }
                                                 } else {
                                                     $("body").overhang({
                                                         type: "error",
                                                         primary: "#f84a1d",
                                                         accent: "#d94e2a",
-                                                        message: "Ingrese una letra para la columna del campo de sucursal válida.",
+                                                        message: "Ingrese un valor para la columna del campo de sucursal.",
                                                         overlay: true,
                                                         closeConfirm: true
                                                     });
+                                                    $(".loadingScreen").hide();
+                                                    stopTimer();
                                                 }
                                             } else {
                                                 $("body").overhang({
                                                     type: "error",
                                                     primary: "#f84a1d",
                                                     accent: "#d94e2a",
-                                                    message: "Ingrese un valor para la columna del campo de sucursal.",
+                                                    message: "Ingrese una letra para la columna del campo de saldo válida.",
                                                     overlay: true,
                                                     closeConfirm: true
                                                 });
+                                                $(".loadingScreen").hide();
+                                                stopTimer();
                                             }
                                         } else {
                                             $("body").overhang({
                                                 type: "error",
                                                 primary: "#f84a1d",
                                                 accent: "#d94e2a",
-                                                message: "Ingrese una letra para la columna del campo de saldo válida.",
+                                                message: "Ingrese un valor para la columna del campo de saldo.",
                                                 overlay: true,
                                                 closeConfirm: true
                                             });
+                                            $(".loadingScreen").hide();
+                                            stopTimer();
                                         }
                                     } else {
                                         $("body").overhang({
                                             type: "error",
                                             primary: "#f84a1d",
                                             accent: "#d94e2a",
-                                            message: "Ingrese un valor para la columna del campo de saldo.",
+                                            message: "Ingrese una letra para la columna del campo de moneda válida.",
                                             overlay: true,
                                             closeConfirm: true
                                         });
+                                        $(".loadingScreen").hide();
+                                        stopTimer();
                                     }
                                 } else {
                                     $("body").overhang({
                                         type: "error",
                                         primary: "#f84a1d",
                                         accent: "#d94e2a",
-                                        message: "Ingrese una letra para la columna del campo de moneda válida.",
+                                        message: "Ingrese un valor para la columna del campo de moneda.",
                                         overlay: true,
                                         closeConfirm: true
                                     });
+                                    $(".loadingScreen").hide();
+                                    stopTimer();
                                 }
                             } else {
                                 $("body").overhang({
                                     type: "error",
                                     primary: "#f84a1d",
                                     accent: "#d94e2a",
-                                    message: "Ingrese un valor para la columna del campo de moneda.",
+                                    message: "Ingrese una letra para la columna del campo de nombre válida.",
                                     overlay: true,
                                     closeConfirm: true
                                 });
+                                $(".loadingScreen").hide();
+                                stopTimer();
                             }
                         } else {
                             $("body").overhang({
                                 type: "error",
                                 primary: "#f84a1d",
                                 accent: "#d94e2a",
-                                message: "Ingrese una letra para la columna del campo de nombre válida.",
+                                message: "Ingrese un valor para la columna del campo de nombre.",
                                 overlay: true,
                                 closeConfirm: true
                             });
+                            $(".loadingScreen").hide();
+                            stopTimer();
                         }
                     } else {
                         $("body").overhang({
                             type: "error",
                             primary: "#f84a1d",
                             accent: "#d94e2a",
-                            message: "Ingrese un valor para la columna del campo de nombre.",
+                            message: "Ingrese una letra para la columna del campo de cuenta válida.",
                             overlay: true,
                             closeConfirm: true
                         });
+                        $(".loadingScreen").hide();
+                        stopTimer();
                     }
                 } else {
                     $("body").overhang({
                         type: "error",
                         primary: "#f84a1d",
                         accent: "#d94e2a",
-                        message: "Ingrese una letra para la columna del campo de cuenta válida.",
+                        message: "Ingrese un valor para la columna del campo de cuenta.",
                         overlay: true,
                         closeConfirm: true
                     });
+                    $(".loadingScreen").hide();
+                    stopTimer();
                 }
             } else {
                 $("body").overhang({
                     type: "error",
                     primary: "#f84a1d",
                     accent: "#d94e2a",
-                    message: "Ingrese un valor para la columna del campo de cuenta.",
+                    message: "No existen valores del monto FOSEDE. Creé un valor antes de importar",
                     overlay: true,
                     closeConfirm: true
                 });
@@ -563,12 +780,12 @@ function createAsset (activo) {
             rolledBack = true;
         });
         const request = new sql.Request(transaction);
-        request.query("insert into Activos (cuenta, nombre, saldo, moneda, sucursal, fecha) values ('"+activo.cuenta+"','"+activo.nombre+"',"+activo.saldo+",'"+activo.moneda+"','"+activo.sucursal+"','"+formatDateCreation(new Date())+"')", (err, result) => {
+        request.query("insert into Activos (cuenta, nombre, saldo, moneda, sucursal, fecha) values ('"+activo.cuenta+"','"+activo.nombre+"',"+activo.saldo+",'"+activo.moneda+"','"+activo.sucursal+"','"+formatDateCreation(new Date(activo.fechaImportacion))+"')", (err, result) => {
             if (err) {
                 if (!rolledBack) {
                     transaction.rollback(err => {
                         contadorInserciones++;
-                        arregloErroresInsercion.push({b: nombre, c: "Error en inserción mssql"});
+                        arregloErroresInsercion.push({b: activo.nombre, c: "Error en inserción mssql"});
                         printErrorFile();
                     });
                 }
@@ -648,7 +865,7 @@ function createConnection (indexTipo, indexTabla) {
                                         }  else {
                                             transaction.commit(err => {
                                                 // ... error checks
-                                                $("body").overhang({
+                                                /*$("body").overhang({
                                                     type: "confirm",
                                                     primary: "#f5a433",
                                                     accent: "#dc9430",
@@ -662,7 +879,7 @@ function createConnection (indexTipo, indexTabla) {
                                                             importAssets(arreglo, usuario, constrasena, server, basedatos, tabla, indexTabla);
                                                         }
                                                     }
-                                                });
+                                                });*/
                                                 loadConections();
                                             });
                                         }
@@ -800,7 +1017,7 @@ function modifyConnection (id, indexTabla) {
                                     }  else {
                                         transaction.commit(err => {
                                             // ... error checks
-                                            $("body").overhang({
+                                            /*$("body").overhang({
                                                 type: "confirm",
                                                 primary: "#f5a433",
                                                 accent: "#dc9430",
@@ -814,7 +1031,7 @@ function modifyConnection (id, indexTabla) {
                                                         importAssets(arreglo, usuario, constrasena, server, basedatos, tabla, indexTabla);
                                                     }
                                                 }
-                                            });
+                                            });*/
                                             loadConections();
                                         });
                                     }
@@ -910,62 +1127,75 @@ function importAssets(arreglo, usuario, constrasena, server, basedatos, tabla, i
         var saldo = $.trim($("#saldoConexionActivos").val());
         var moneda = $.trim($("#monedaConexionActivos").val());
         var sucursal = $.trim($("#sucursalConexionActivos").val());
+        var fechaImportacion = $.trim($("#fechaImportacionConexionActivos").val());
         if(cuenta.length > 0) {
             if(nombre.length > 0) {
                 if(saldo.length > 0) {
                     if(moneda.length > 0) {
                         if(sucursal.length > 0) {
-                            const pool = new sql.ConnectionPool({
-                                user: usuario,
-                                password: constrasena,
-                                server: server,
-                                database: basedatos
-                            });
+                            if(fechaImportacion.length > 0) {
+                                const pool = new sql.ConnectionPool({
+                                    user: usuario,
+                                    password: constrasena,
+                                    server: server,
+                                    database: basedatos
+                                });
 
-                            pool.connect(err => {
-                                pool.request().query("select * from "+tabla, (err, result) => {
-                                    if (err) {
-                                        $("body").overhang({
-                                            type: "error",
-                                            primary: "#f84a1d",
-                                            accent: "#d94e2a",
-                                            message: "Error al conectarse con la tabla "+tabla+" de la base de datos.",
-                                            overlay: true,
-                                            closeConfirm: true
-                                        });
-                                    }  else {
-                                        totalInserciones = result.recordset.length;
-                                        for (var i = 0; i < result.recordset.length; i++) {
-                                            var valorArreglo = result.recordset[i];
-                                            const transaction = new sql.Transaction( pool1 );
-                                            transaction.begin(err => {
-                                                var rolledBack = false;
-                                                transaction.on('rollback', aborted => {
-                                                    rolledBack = true;
-                                                });
-                                                const request = new sql.Request(transaction);
-                                                request.query("insert into Activos (cuenta, nombre, saldo, moneda, sucursal, fecha) values ('"+valorArreglo[cuenta]+"','"+valorArreglo[nombre]+"',"+valorArreglo[saldo]+",'"+valorArreglo[moneda]+"','"+valorArreglo[sucursal]+"','"+formatDateCreation(new Date())+"')", (err, result) => {
-                                                    if (err) {
-                                                        if (!rolledBack) {
-                                                            transaction.rollback(err => {
+                                pool.connect(err => {
+                                    pool.request().query("select * from "+tabla, (err, result) => {
+                                        if (err) {
+                                            $("body").overhang({
+                                                type: "error",
+                                                primary: "#f84a1d",
+                                                accent: "#d94e2a",
+                                                message: "Error al conectarse con la tabla "+tabla+" de la base de datos.",
+                                                overlay: true,
+                                                closeConfirm: true
+                                            });
+                                        }  else {
+                                            totalInserciones = result.recordset.length;
+                                            for (var i = 0; i < result.recordset.length; i++) {
+                                                let valorArreglo = result.recordset[i];
+                                                valorArreglo[fechaImportacion] = new Date(valorArreglo[fechaImportacion].getUTCFullYear(), valorArreglo[fechaImportacion].getUTCMonth(), valorArreglo[fechaImportacion].getUTCDate());
+                                                const transaction = new sql.Transaction( pool1 );
+                                                transaction.begin(err => {
+                                                    var rolledBack = false;
+                                                    transaction.on('rollback', aborted => {
+                                                        rolledBack = true;
+                                                    });
+                                                    const request = new sql.Request(transaction);
+                                                    request.query("insert into Activos (cuenta, nombre, saldo, moneda, sucursal, fecha) values ('"+valorArreglo[cuenta]+"','"+valorArreglo[nombre]+"',"+valorArreglo[saldo]+",'"+valorArreglo[moneda]+"','"+valorArreglo[sucursal]+"','"+formatDateCreation(valorArreglo[fechaImportacion])+"')", (err, result) => {
+                                                        if (err) {
+                                                            if (!rolledBack) {
+                                                                transaction.rollback(err => {
+                                                                    contadorInserciones++;
+                                                                    arregloErroresInsercion.push({b: nombre, c: "Error en inserción mssql"});
+                                                                    printErrorFile();
+                                                                });
+                                                            }
+                                                        }  else {
+                                                            transaction.commit(err => {
                                                                 contadorInserciones++;
-                                                                arregloErroresInsercion.push({b: nombre, c: "Error en inserción mssql"});
+                                                                insertoEnDBListas = true;
                                                                 printErrorFile();
                                                             });
                                                         }
-                                                    }  else {
-                                                        transaction.commit(err => {
-                                                            contadorInserciones++;
-                                                            insertoEnDBListas = true;
-                                                            printErrorFile();
-                                                        });
-                                                    }
-                                                });
-                                            }); // fin transaction
-                                        };
-                                    }
+                                                    });
+                                                }); // fin transaction
+                                            };
+                                        }
+                                    });
+                                }); // fin transaction2
+                            } else {
+                                $("body").overhang({
+                                    type: "error",
+                                    primary: "#f84a1d",
+                                    accent: "#d94e2a",
+                                    message: "Ingrese un valor para la fecha de importación.",
+                                    overlay: true,
+                                    closeConfirm: true
                                 });
-                            }); // fin transaction2
+                            }
                         } else {
                             $("body").overhang({
                                 type: "error",
@@ -1017,15 +1247,17 @@ function importAssets(arreglo, usuario, constrasena, server, basedatos, tabla, i
             });
         }
     } else if(indexTabla == 1 ) {
-        var idcliente = $.trim($("#cuentaConexionActivos").val());
-        var nombrecliente = $.trim($("#nombreConexionActivos").val());
+        var idcliente = $.trim($("#idClienteConexionDepositos").val());
+        var nombrecliente = $.trim($("#nombreClienteConexionDepositos").val());
         var tipoPersona = $.trim($("#tipoPersonaClienteConexionDepositos").val());
         var tipoSubPersona = $.trim($("#tipoSubPersonaClienteConexionDepositos").val());
-        var saldo = $.trim($("#saldoConexionActivos").val());
+        var saldo = $.trim($("#saldoConexionDepositos").val());
         var moneda = $.trim($("#monedaConexionDepositos").val());
         var tipoCuenta = $.trim($("#tipoCuentaConexionDepositos").val());
-        var plazoResidual = $.trim($("#plazoResidualConexionDepositos").val());
-        var sucursal = $.trim($("#sucursalConexionActivos").val());
+        var fechaInicio = $.trim($("#fechaInicioConexionDepositos").val());
+        var fechaFinal = $.trim($("#fechaFinalConexionDepositos").val());
+        var sucursal = $.trim($("#sucursalConexionDepositos").val());
+        var fechaImportacion = $.trim($("#fechaImportacionConexionDepositos").val());
         if(idcliente.length > 0) {
             if(nombrecliente.length > 0) {
                 if(tipoPersona.length > 0) {
@@ -1033,101 +1265,132 @@ function importAssets(arreglo, usuario, constrasena, server, basedatos, tabla, i
                         if(saldo.length > 0) {
                             if(moneda.length > 0) {
                                 if(tipoCuenta.length > 0) {
-                                    if(plazoResidual.length > 0) {
-                                        if(sucursal.length > 0) {
-                                            const pool = new sql.ConnectionPool({
-                                                user: usuario,
-                                                password: constrasena,
-                                                server: server,
-                                                database: basedatos
-                                            });
+                                    if(fechaInicio.length > 0) {
+                                        if(fechaFinal.length > 0) {
+                                            if(sucursal.length > 0) {
+                                                if(fechaImportacion.length > 0) {
+                                                    const pool = new sql.ConnectionPool({
+                                                        user: usuario,
+                                                        password: constrasena,
+                                                        server: server,
+                                                        database: basedatos
+                                                    });
 
-                                            pool.connect(err => {
-                                                pool.request().query("select * from "+tabla, (err, result) => {
-                                                    if (err) {
-                                                        $("body").overhang({
-                                                            type: "error",
-                                                            primary: "#f84a1d",
-                                                            accent: "#d94e2a",
-                                                            message: "Error al conectarse con la tabla "+tabla+" de la base de datos.",
-                                                            overlay: true,
-                                                            closeConfirm: true
-                                                        });
-                                                    }  else {
-                                                        totalInserciones = result.recordset.length;
-                                                        for (var i = 0; i < result.recordset.length; i++) {
-                                                            var valorDepositos = result.recordset[i];
-                                                            if(valorDepositos[idcliente].length < 31) {
-                                                                if(valorDepositos[nombreCliente].length < 81) {
-                                                                    if(valorDepositos[tipoPersona].length < 81) {
-                                                                        if(valorDepositos[tipoSubPersona].length < 81) {
-                                                                            if(valorDepositos[saldo].length < 21) {
-                                                                                if(valorDepositos[moneda].length < 31) {
-                                                                                    if(valorDepositos[tipoCuenta].length < 101) {
-                                                                                        if(!isNaN(valorDepositos[plazoResidual])) {
-                                                                                            if(valorDepositos[sucursal].length < 51) {
-                                                                                                const transaction = new sql.Transaction( pool1 );
-                                                                                                transaction.begin(err => {
-                                                                                                    var rolledBack = false;
-                                                                                                    transaction.on('rollback', aborted => {
-                                                                                                        rolledBack = true;
-                                                                                                    });
-                                                                                                    const request = new sql.Request(transaction);
-                                                                                                    request.query("insert into Depositos (idCliente, nombreCliente, tipoPersona, tipoSubPersona, saldo, moneda, tipoCuenta, plazoResidual, sucursal, fecha) values ('"+valorDepositos[idcliente]+"','"+valorDepositos[nombrecliente]+"','"+valorDepositos[tipoPersona]+"','"+valorDepositos[tipoSubPersona]+"',"+valorDepositos[saldo]+",'"+valorDepositos[moneda]+"','"+valorDepositos[tipoCuenta]+"',"+valorDepositos[plazoResidual]+",'"+valorDepositos[sucursal]+"','"+formatDateCreation(new Date())+"')", (err, result) => {
-                                                                                                        if (err) {
-                                                                                                            if (!rolledBack) {
-                                                                                                                transaction.rollback(err => {
-                                                                                                                    contadorInserciones++;
-                                                                                                                    arregloErroresInsercion.push({b: nombre, c: "Error en inserción mssql"});
-                                                                                                                    printErrorFile();
-                                                                                                                });
+                                                    pool.connect(err => {
+                                                        pool.request().query("select * from "+tabla, (err, result) => {
+                                                            if (err) {
+                                                                $("body").overhang({
+                                                                    type: "error",
+                                                                    primary: "#f84a1d",
+                                                                    accent: "#d94e2a",
+                                                                    message: "Error al conectarse con la tabla "+tabla+" de la base de datos.",
+                                                                    overlay: true,
+                                                                    closeConfirm: true
+                                                                });
+                                                            }  else {
+                                                                totalInserciones = result.recordset.length;
+                                                                for (var i = 0; i < result.recordset.length; i++) {
+                                                                    let valorDepositos = result.recordset[i];
+                                                                    valorDepositos[fechaImportacion] = new Date(valorDepositos[fechaImportacion].getUTCFullYear(), valorDepositos[fechaImportacion].getUTCMonth(), valorDepositos[fechaImportacion].getUTCDate());
+                                                                    if(valorDepositos[idcliente].length < 31) {
+                                                                        if(valorDepositos[nombrecliente].length < 81) {
+                                                                            if(valorDepositos[tipoPersona].length < 81) {
+                                                                                if(valorDepositos[tipoSubPersona].length < 81) {
+                                                                                    if(valorDepositos[saldo].toString().length < 21) {
+                                                                                        if(valorDepositos[moneda].length < 31) {
+                                                                                            if(valorDepositos[tipoCuenta].length < 101) {
+                                                                                                if(Date.parse(valorDepositos[fechaInicio])) {
+                                                                                                    if(Date.parse(valorDepositos[fechaFinal])) {
+                                                                                                        if(valorDepositos[sucursal].length < 51) {
+                                                                                                            if(Date.parse(valorDepositos[fechaImportacion])) {
+                                                                                                                const transaction = new sql.Transaction( pool1 );
+                                                                                                                transaction.begin(err => {
+                                                                                                                    var rolledBack = false;
+                                                                                                                    transaction.on('rollback', aborted => {
+                                                                                                                        rolledBack = true;
+                                                                                                                    });
+                                                                                                                    const request = new sql.Request(transaction);
+                                                                                                                    request.query("insert into Depositos (idCliente, nombreCliente, tipoPersona, tipoSubPersona, saldo, moneda, tipoCuenta, plazoResidual, sucursal, fecha) values ('"+valorDepositos[idcliente]+"','"+valorDepositos[nombrecliente]+"','"+valorDepositos[tipoPersona]+"','"+valorDepositos[tipoSubPersona]+"',"+valorDepositos[saldo]+",'"+valorDepositos[moneda]+"','"+valorDepositos[tipoCuenta]+"',"+valorDepositos[plazoResidual]+",'"+valorDepositos[sucursal]+"','"+formatDateCreation(valorDepositos[fechaImportacion])+"')", (err, result) => {
+                                                                                                                        if (err) {
+                                                                                                                            if (!rolledBack) {
+                                                                                                                                transaction.rollback(err => {
+                                                                                                                                    contadorInserciones++;
+                                                                                                                                    arregloErroresInsercion.push({b: valorDepositos[idcliente], c: "Error en inserción mssql"});
+                                                                                                                                    printErrorFile();
+                                                                                                                                });
+                                                                                                                            }
+                                                                                                                        }  else {
+                                                                                                                            transaction.commit(err => {
+                                                                                                                                contadorInserciones++;
+                                                                                                                                insertoEnDBListas = true;
+                                                                                                                                printErrorFile();
+                                                                                                                            });
+                                                                                                                        }
+                                                                                                                    });
+                                                                                                                }); // fin transaction
+                                                                                                            } else {
+                                                                                                                arregloErroresInsercion.push({b: "Deposito de: "+valorDepositos[idcliente], c: "La fecha de importación no es valida"});
                                                                                                             }
-                                                                                                        }  else {
-                                                                                                            transaction.commit(err => {
-                                                                                                                contadorInserciones++;
-                                                                                                                insertoEnDBListas = true;
-                                                                                                                printErrorFile();
-                                                                                                            });
+                                                                                                        } else {
+                                                                                                            arregloErroresInsercion.push({b: "Deposito de: "+valorDepositos[idcliente], c: "El valor del sucursal es mayor a 50 caracteres"});
                                                                                                         }
-                                                                                                    });
-                                                                                                }); // fin transaction
+                                                                                                    } else {
+                                                                                                        arregloErroresInsercion.push({b: "Deposito de: "+valorDepositos[idcliente], c: "Ingrese una fecha valida para la fecha final"});
+                                                                                                    }
+                                                                                                } else {
+                                                                                                    arregloErroresInsercion.push({b: "Deposito de: "+valorDepositos[idcliente], c: "Ingrese una fecha valida para fecha de inicio"});
+                                                                                                }
                                                                                             } else {
-                                                                                                arregloErroresInsercion.push({b: "Deposito de: "+valorDepositos[idcliente], c: "El valor del sucursal es mayor a 50 caracteres"});
+                                                                                                arregloErroresInsercion.push({b: "Deposito de: "+valorDepositos[idcliente], c: "El valor del tipo de cuenta es mayor a 100 caracteres"});
                                                                                             }
                                                                                         } else {
-                                                                                            arregloErroresInsercion.push({b: "Deposito de: "+valorDepositos[idcliente], c: "Ingrese un número valido para el plazo residual"});
+                                                                                            arregloErroresInsercion.push({b: "Deposito de: "+valorDepositos[idcliente], c: "El valor de la moneda es mayor a 30 caracteres"});
                                                                                         }
                                                                                     } else {
-                                                                                        arregloErroresInsercion.push({b: "Deposito de: "+valorDepositos[idcliente], c: "El valor del tipo de cuenta es mayor a 100 caracteres"});
+                                                                                        arregloErroresInsercion.push({b: "Deposito de: "+valorDepositos[idcliente], c: "El valor del saldo es mayor a 20 caracteres"});
                                                                                     }
                                                                                 } else {
-                                                                                    arregloErroresInsercion.push({b: "Deposito de: "+valorDepositos[idcliente], c: "El valor de la moneda es mayor a 30 caracteres"});
+                                                                                    arregloErroresInsercion.push({b: "Deposito de: "+valorDepositos[idcliente], c: "El valor del tipo de sub-persona es mayor a 80 caracteres"});
                                                                                 }
                                                                             } else {
-                                                                                arregloErroresInsercion.push({b: "Deposito de: "+valorDepositos[idcliente], c: "El valor del saldo es mayor a 20 caracteres"});
+                                                                                arregloErroresInsercion.push({b: "Deposito de: "+valorDepositos[idcliente], c: "El valor del tipo de persona es mayor a 80 caracteres"});
                                                                             }
                                                                         } else {
-                                                                            arregloErroresInsercion.push({b: "Deposito de: "+valorDepositos[idcliente], c: "El valor del tipo de sub-persona es mayor a 80 caracteres"});
+                                                                            arregloErroresInsercion.push({b: "Deposito de: "+valorDepositos[idcliente], c: "El valor del nombre del cliente es mayor a 80 caracteres"});
                                                                         }
                                                                     } else {
-                                                                        arregloErroresInsercion.push({b: "Deposito de: "+valorDepositos[idcliente], c: "El valor del tipo de persona es mayor a 80 caracteres"});
+                                                                        arregloErroresInsercion.push({b: "Deposito de: "+valorDepositos[idcliente], c: "El valor del identificador del cliente es mayor a 30 caracteres"});
                                                                     }
-                                                                } else {
-                                                                    arregloErroresInsercion.push({b: "Deposito de: "+valorDepositos[idcliente], c: "El valor del nombre del cliente es mayor a 80 caracteres"});
-                                                                }
-                                                            } else {
-                                                                arregloErroresInsercion.push({b: "Deposito de: "+valorDepositos[idcliente], c: "El valor del identificador del cliente es mayor a 30 caracteres"});
+                                                                };
                                                             }
-                                                        };
-                                                    }
+                                                        });
+                                                    }); // fin transaction2
+                                                } else {
+                                                    $("body").overhang({
+                                                        type: "error",
+                                                        primary: "#f84a1d",
+                                                        accent: "#d94e2a",
+                                                        message: "Ingrese un valor para la fecha de importación.",
+                                                        overlay: true,
+                                                        closeConfirm: true
+                                                    });
+                                                }
+                                            } else {
+                                                $("body").overhang({
+                                                    type: "error",
+                                                    primary: "#f84a1d",
+                                                    accent: "#d94e2a",
+                                                    message: "Ingrese un valor para el nombre de la sucursal del depósito.",
+                                                    overlay: true,
+                                                    closeConfirm: true
                                                 });
-                                            }); // fin transaction2
+                                            }
                                         } else {
                                             $("body").overhang({
                                                 type: "error",
                                                 primary: "#f84a1d",
                                                 accent: "#d94e2a",
-                                                message: "Ingrese un valor para el nombre de la sucursal del depósito.",
+                                                message: "Ingrese un valor para la fecha final.",
                                                 overlay: true,
                                                 closeConfirm: true
                                             });
@@ -1137,7 +1400,7 @@ function importAssets(arreglo, usuario, constrasena, server, basedatos, tabla, i
                                             type: "error",
                                             primary: "#f84a1d",
                                             accent: "#d94e2a",
-                                            message: "Ingrese un valor para el plazo residual.",
+                                            message: "Ingrese un valor para la fecha de inicio.",
                                             overlay: true,
                                             closeConfirm: true
                                         });
@@ -1220,7 +1483,6 @@ function importAssets(arreglo, usuario, constrasena, server, basedatos, tabla, i
         var numPrestamo = $.trim($("#numPrestamoConexionPrestamos").val());
         var saldo = $.trim($("#saldoConexionPrestamos").val());
         var moneda = $.trim($("#monedaConexionPrestamos").val());
-        var tipoCuenta = $.trim($("#tipoCuentaConexionPrestamos").val());
         var diasMora = $.trim($("#moraConexionPrestamos").val());
         var amortizaciones = $.trim($("#amortizacionesConexionPrestamos").val());
         var sobregiro = $.trim($("#sobregirosConexionPrestamos").val());
@@ -1232,13 +1494,18 @@ function importAssets(arreglo, usuario, constrasena, server, basedatos, tabla, i
         var esperado90 = $.trim($("#esperado90ConexionPrestamos").val());
         var esperado120 = $.trim($("#esperado120ConexionPrestamos").val());
         var clausulasRestrictivas = $.trim($("#clausulasRestrictivasConexionPrestamos").val());
+        var financiacionGarantizada = $.trim($("#financiacionGarantizadaConexionPrestamos").val());
+        var valorFinanciacion = $.trim($("#valorFinanciacionConexionPrestamos").val());
+        var alac = $.trim($("#alacConexionPrestamos").val());
+        var factor = $.trim($("#factorConexionPrestamos").val());
         var fechaInicio = $.trim($("#fechaInicioConexionPrestamos").val());
         var fechaFinal = $.trim($("#fechaExpiracionConexionPrestamos").val());
         var montoOtorgado = $.trim($("#montoOtorgadoConexionPrestamos").val());
         var sucursal = $.trim($("#sucursalConexionPrestamos").val());
-        var nombreHoja = $.trim($("#prestamosTableExcel").val());
+        var fechaImportacion = $.trim($("#fechaImportacionConexionPrestamos").val());
+        /*var nombreHoja = $.trim($("#prestamosTableExcel").val());
         var filaInicial = $.trim($("#prestamosExcelInicio").val());
-        var filaFinal = $.trim($("#prestamosExcelFinal").val());
+        var filaFinal = $.trim($("#prestamosExcelFinal").val());*/
         const pool = new sql.ConnectionPool({
             user: usuario,
             password: constrasena,
@@ -1260,99 +1527,116 @@ function importAssets(arreglo, usuario, constrasena, server, basedatos, tabla, i
                 }  else {
                     totalInserciones = result.recordset.length;
                     for (var i = 0; i < result.recordset.length; i++) {
-                        var valorDepositos = result.recordset[i];
-                        if(valorDepositos[idCliente].length < 31) {
-                            if(valorDepositos[nombreCliente].length < 81) {
-                                if(valorDepositos[tipoPersona].length < 81) {
-                                    if(valorDepositos[tipoSubPersona].length < 81) {
+                        let valorDepositos = result.recordset[i];
+                        valorDepositos[fechaImportacion] = new Date(valorDepositos[fechaImportacion].getUTCFullYear(), valorDepositos[fechaImportacion].getUTCMonth(), valorDepositos[fechaImportacion].getUTCDate());
+                        if(valorDepositos[identificador].toString().length < 31) {
+                            if(valorDepositos[nombre].toString().length < 81) {
+                                if(valorDepositos[tipoPersona].toString().length < 81) {
+                                    if(valorDepositos[tipoSubPersona].toString().length < 81) {
                                         if(valorDepositos[numPrestamo].toString().length < 51) {
                                             if(valorDepositos[saldo].toString().length < 21) {
-                                                if(valorDepositos[moneda].length < 31) {
+                                                if(valorDepositos[moneda].toString().length < 31) {
                                                     if(valorDepositos[montoOtorgado].toString().length < 21) {
-                                                        if(valorDepositos[tipoCuenta].length < 101) {
-                                                            if(valorDepositos[diasMora].toString().length < 21) {
-                                                                if(valorDepositos[amortizacion].toString().length < 21) {
-                                                                    if(valorDepositos[sobregiro].toString().length < 21) {
-                                                                        if(valorDepositos[contingente].toString().length < 21) {
-                                                                            if(valorDepositos[clasificacionCartera].length < 3) {
-                                                                                if(valorDepositos[tipoCredito].length < 81) {
-                                                                                    if(valorDepositos[pago30].toString().length < 21) {
-                                                                                        if(valorDepositos[pago60].toString().length < 21) {
-                                                                                            if(valorDepositos[pago90].toString().length < 21) {
-                                                                                                if(valorDepositos[pago120].toString().length < 21) {
-                                                                                                    if(valorDepositos[clausulasRestrictivas].length > 0) {
-                                                                                                        if(Date.parse(valorDepositos[fechaInicio])) {
-                                                                                                            if(Date.parse(valorDepositos[fechaFinal])) {
-                                                                                                                if(valorDepositos[sucursal].length < 51) {
-                                                                                                                    const transaction = new sql.Transaction( pool1 );
-                                                                                                                    transaction.begin(err => {
-                                                                                                                        var rolledBack = false;
-                                                                                                                        transaction.on('rollback', aborted => {
-                                                                                                                            rolledBack = true;
-                                                                                                                        });
-                                                                                                                        const request = new sql.Request(transaction);
-                                                                                                                        request.query("insert into Prestamos (idCliente, nombreCliente, tipoPersona, tipoSubPersona, numPrestamo, saldo, moneda, montoOtorgado, tipoCuenta, diasMora, amortizacion, sobregiro, contingente, clasificacionCartera, tipoCredito, pago30, pago60, pago90, pago120, clausulasRestrictivas, fechaInicio, fechaFinal, sucursal, fecha) values ('"+valorDepositos[identificador]+"','"+valorDepositos[nombre]+"','"+valorDepositos[tipoPersona]+"','"+valorDepositos[tipoSubPersona]+"',"+valorDepositos[numPrestamo]+","+valorDepositos[saldo]+",'"+valorDepositos[moneda]+"',"+valorDepositos[montoOtorgado]+",'"+valorDepositos[tipoCuenta]+"',"+valorDepositos[diasMora]+","+valorDepositos[amortizaciones]+","+valorDepositos[sobregiro]+","+valorDepositos[contingente]+",'"+valorDepositos[clasificacionCartera]+"','"+valorDepositos[tipoCredito]+"',"+valorDepositos[esperado30]+","+valorDepositos[esperado60]+","+valorDepositos[esperado90]+","+valorDepositos[esperado120]+",'"+valorDepositos[clausulasRestrictivas]+"','"+formatDateCreation(valorDepositos[fechaInicio])+"','"+formatDateCreation(valorDepositos[fechaFinal])+"','"+valorDepositos[sucursal]+"','"+formatDateCreation(new Date())+"')", (err, result) => {
-                                                                                                                            if (err) {
-                                                                                                                                if (!rolledBack) {
-                                                                                                                                    transaction.rollback(err => {
-                                                                                                                                        contadorInserciones++;
-                                                                                                                                        arregloErroresInsercion.push({b: nombre, c: "Error en inserción mssql"});
-                                                                                                                                        printErrorFile();
-                                                                                                                                    });
+                                                        if(valorDepositos[diasMora].toString().length < 21) {
+                                                            if(valorDepositos[amortizaciones].toString().length < 21) {
+                                                                if(valorDepositos[sobregiro].toString().length < 21) {
+                                                                    if(valorDepositos[contingente].toString().length < 21) {
+                                                                        if(valorDepositos[clasificacionCartera].toString().length < 3) {
+                                                                            if(valorDepositos[tipoCredito].toString().length < 81) {
+                                                                                if(valorDepositos[esperado30].toString().length < 21) {
+                                                                                    if(valorDepositos[esperado60].toString().length < 21) {
+                                                                                        if(valorDepositos[esperado90].toString().length < 21) {
+                                                                                            if(valorDepositos[esperado120].toString().length < 21) {
+                                                                                                if(valorDepositos[clausulasRestrictivas] != undefined) {
+                                                                                                    if(valorDepositos[financiacionGarantizada] != undefined) {
+                                                                                                        if(valorDepositos[valorFinanciacion].toString().length < 21) {
+                                                                                                            if(valorDepositos[alac].toString().length < 30) {
+                                                                                                                if(valorDepositos[factor].toString().length > 0) {
+                                                                                                                    if(Date.parse(valorDepositos[fechaInicio])) {
+                                                                                                                        if(Date.parse(valorDepositos[fechaFinal])) {
+                                                                                                                            if(valorDepositos[sucursal].length < 51) {
+                                                                                                                                if(Date.parse(valorDepositos[fechaImportacion])) {
+                                                                                                                                    const transaction = new sql.Transaction( pool1 );
+                                                                                                                                    transaction.begin(err => {
+                                                                                                                                        var rolledBack = false;
+                                                                                                                                        transaction.on('rollback', aborted => {
+                                                                                                                                            rolledBack = true;
+                                                                                                                                        });
+                                                                                                                                        const request = new sql.Request(transaction);
+                                                                                                                                        request.query("insert into Prestamos (idCliente, nombreCliente, tipoPersona, tipoSubPersona, numPrestamo, saldo, moneda, montoOtorgado, diasMora, amortizacion, sobregiro, contingente, clasificacionCartera, tipoCredito, pago30, pago60, pago90, pago120, clausulasRestrictivas, esFinanciacionGarantizada, valorFinanciacion, alac, factor, fechaInicio, fechaFinal, sucursal, fecha) values ('"+valorDepositos[identificador]+"','"+valorDepositos[nombre]+"','"+valorDepositos[tipoPersona]+"','"+valorDepositos[tipoSubPersona]+"',"+valorDepositos[numPrestamo]+","+valorDepositos[saldo]+",'"+valorDepositos[moneda]+"',"+valorDepositos[montoOtorgado]+","+valorDepositos[diasMora]+","+valorDepositos[amortizaciones]+","+valorDepositos[sobregiro]+","+valorDepositos[contingente]+",'"+valorDepositos[clasificacionCartera]+"','"+valorDepositos[tipoCredito]+"',"+valorDepositos[esperado30]+","+valorDepositos[esperado60]+","+valorDepositos[esperado90]+","+valorDepositos[esperado120]+",'"+valorDepositos[clausulasRestrictivas]+"','"+valorDepositos[financiacionGarantizada]+"',"+valorDepositos[valorFinanciacion]+",'"+valorDepositos[alac]+"',"+valorDepositos[factor]+",'"+formatDateCreation(valorDepositos[fechaInicio])+"','"+formatDateCreation(valorDepositos[fechaFinal])+"','"+valorDepositos[sucursal]+"','"+formatDateCreation(valorDepositos[fechaImportacion])+"')", (err, result) => {
+                                                                                                                                            if (err) {
+                                                                                                                                                if (!rolledBack) {
+                                                                                                                                                    transaction.rollback(err => {
+                                                                                                                                                        contadorInserciones++;
+                                                                                                                                                        arregloErroresInsercion.push({b: valorDepositos[identificador], c: "Error en inserción mssql"});
+                                                                                                                                                        printErrorFile();
+                                                                                                                                                    });
+                                                                                                                                                }
+                                                                                                                                            }  else {
+                                                                                                                                                transaction.commit(err => {
+                                                                                                                                                    contadorInserciones++;
+                                                                                                                                                    insertoEnDBListas = true;
+                                                                                                                                                    printErrorFile();
+                                                                                                                                                });
+                                                                                                                                            }
+                                                                                                                                        });
+                                                                                                                                    }); // fin transaction
+                                                                                                                                } else {
+                                                                                                                                    arregloErroresInsercion.push({b: "Prestamo: "+valorDepositos[numPrestamo], c: "La fecha de importación no es valida"});
                                                                                                                                 }
-                                                                                                                            }  else {
-                                                                                                                                transaction.commit(err => {
-                                                                                                                                    contadorInserciones++;
-                                                                                                                                    insertoEnDBListas = true;
-                                                                                                                                    printErrorFile();
-                                                                                                                                });
+                                                                                                                            } else {
+                                                                                                                                arregloErroresInsercion.push({b: "Prestamo: "+valorDepositos[numPrestamo], c: "El valor de sucursal es mayor a 50 caracteres"});
                                                                                                                             }
-                                                                                                                        });
-                                                                                                                    }); // fin transaction
+                                                                                                                        } else {
+                                                                                                                            arregloErroresInsercion.push({b: "Prestamo: "+valorDepositos[numPrestamo], c: "La fecha final no es valida"});
+                                                                                                                        }
+                                                                                                                    } else {
+                                                                                                                        arregloErroresInsercion.push({b: "Prestamo: "+valorDepositos[numPrestamo], c: "La fecha inicial no es valida"});
+                                                                                                                    }
                                                                                                                 } else {
-                                                                                                                    arregloErroresInsercion.push({b: "Prestamo: "+valorDepositos[numPrestamo], c: "El valor de sucursal es mayor a 50 caracteres"});
+                                                                                                                    arregloErroresInsercion.push({b: "Prestamo: "+valorDepositos[numPrestamo], c: "El factor no es valido"});
                                                                                                                 }
                                                                                                             } else {
-                                                                                                                arregloErroresInsercion.push({b: "Prestamo: "+valorDepositos[numPrestamo], c: "La fecha final no es valida"});
+                                                                                                                arregloErroresInsercion.push({b: "Prestamo: "+valorDepositos[numPrestamo], c: "El valor del alac no es valido"});
                                                                                                             }
                                                                                                         } else {
-                                                                                                            arregloErroresInsercion.push({b: "Prestamo: "+valorDepositos[numPrestamo], c: "La fecha inicial no es valida"});
+                                                                                                            arregloErroresInsercion.push({b: "Prestamo: "+valorDepositos[numPrestamo], c: "El valor de la financiación no es valida"});
                                                                                                         }
                                                                                                     } else {
-                                                                                                        arregloErroresInsercion.push({b: "Prestamo: "+valorDepositos[numPrestamo], c: "El valor de clausulas restrictivas tiene que ser mayor a 0 caracteres"});
+                                                                                                        arregloErroresInsercion.push({b: "Prestamo: "+valorDepositos[numPrestamo], c: "La financiacion garantizada no es valida"});
                                                                                                     }
                                                                                                 } else {
-                                                                                                    arregloErroresInsercion.push({b: "Prestamo: "+valorDepositos[numPrestamo], c: "El valor de pago en 120 días es mayor a 20 caracteres"});
+                                                                                                    arregloErroresInsercion.push({b: "Prestamo: "+valorDepositos[numPrestamo], c: "El valor de clausulas restrictivas tiene que ser mayor a 0 caracteres"});
                                                                                                 }
                                                                                             } else {
-                                                                                                arregloErroresInsercion.push({b: "Prestamo: "+valorDepositos[numPrestamo], c: "El valor de pago en 90 días es mayor a 20 caracteres"});
+                                                                                                arregloErroresInsercion.push({b: "Prestamo: "+valorDepositos[numPrestamo], c: "El valor de pago en 120 días es mayor a 20 caracteres"});
                                                                                             }
                                                                                         } else {
-                                                                                            arregloErroresInsercion.push({b: "Prestamo: "+valorDepositos[numPrestamo], c: "El valor de pago en 60 días es mayor a 20 caracteres"});
+                                                                                            arregloErroresInsercion.push({b: "Prestamo: "+valorDepositos[numPrestamo], c: "El valor de pago en 90 días es mayor a 20 caracteres"});
                                                                                         }
                                                                                     } else {
-                                                                                        arregloErroresInsercion.push({b: "Prestamo: "+valorDepositos[numPrestamo], c: "El valor de pago en 30 días es mayor a 20 caracteres"});
+                                                                                        arregloErroresInsercion.push({b: "Prestamo: "+valorDepositos[numPrestamo], c: "El valor de pago en 60 días es mayor a 20 caracteres"});
                                                                                     }
                                                                                 } else {
-                                                                                    arregloErroresInsercion.push({b: "Prestamo: "+valorDepositos[numPrestamo], c: "El valor de tipo de crédito es mayor a 80 caracteres"});
+                                                                                    arregloErroresInsercion.push({b: "Prestamo: "+valorDepositos[numPrestamo], c: "El valor de pago en 30 días es mayor a 20 caracteres"});
                                                                                 }
                                                                             } else {
-                                                                                arregloErroresInsercion.push({b: "Prestamo: "+valorDepositos[numPrestamo], c: "El valor de clasificación de cartera es mayor a 2 caracteres"});
+                                                                                arregloErroresInsercion.push({b: "Prestamo: "+valorDepositos[numPrestamo], c: "El valor de tipo de crédito es mayor a 80 caracteres"});
                                                                             }
                                                                         } else {
-                                                                            arregloErroresInsercion.push({b: "Prestamo: "+valorDepositos[numPrestamo], c: "El valor de contingente es mayor a 20 caracteres"});
+                                                                            arregloErroresInsercion.push({b: "Prestamo: "+valorDepositos[numPrestamo], c: "El valor de clasificación de cartera es mayor a 2 caracteres"});
                                                                         }
                                                                     } else {
-                                                                        arregloErroresInsercion.push({b: "Prestamo: "+valorDepositos[numPrestamo], c: "El valor de sobregiro es mayor a 20 caracteres"});
+                                                                        arregloErroresInsercion.push({b: "Prestamo: "+valorDepositos[numPrestamo], c: "El valor de contingente es mayor a 20 caracteres"});
                                                                     }
                                                                 } else {
-                                                                    arregloErroresInsercion.push({b: "Prestamo: "+valorDepositos[numPrestamo], c: "El valor de amortización es mayor a 20 caracteres"});
+                                                                    arregloErroresInsercion.push({b: "Prestamo: "+valorDepositos[numPrestamo], c: "El valor de sobregiro es mayor a 20 caracteres"});
                                                                 }
                                                             } else {
-                                                                arregloErroresInsercion.push({b: "Prestamo: "+valorDepositos[numPrestamo], c: "El valor de días de mora es mayor a 20 caracteres"});
+                                                                arregloErroresInsercion.push({b: "Prestamo: "+valorDepositos[numPrestamo], c: "El valor de amortización es mayor a 20 caracteres"});
                                                             }
                                                         } else {
-                                                            arregloErroresInsercion.push({b: "Prestamo: "+valorDepositos[numPrestamo], c: "El valor de tipo de cuenta es mayor a 100 caracteres"});
+                                                            arregloErroresInsercion.push({b: "Prestamo: "+valorDepositos[numPrestamo], c: "El valor de días de mora es mayor a 20 caracteres"});
                                                         }
                                                     } else {
                                                         arregloErroresInsercion.push({b: "Prestamo: "+valorDepositos[numPrestamo], c: "El valor de monto otorgado es mayor a 20 caracteres"});
@@ -1408,25 +1692,28 @@ function saveDepositosDB (indexTabla) {
     } else if($.trim($("#tipoCuentaConexionDepositos").val()).length == 0) {
         entrar = false;
         campo = 'tipo de cuenta';
-    } else if($.trim($("#plazoResidualConexionDepositos").val()).length == 0) {
+    } else if($.trim($("#fechaInicioConexionDepositos").val()).length == 0) {
         entrar = false;
-        campo = 'plazo residual';
+        campo = 'fecha de inicio';
+    } else if($.trim($("#fechaFinalConexionDepositos").val()).length == 0) {
+        entrar = false;
+        campo = 'fecha final';
     } else if($.trim($("#sucursalConexionDepositos").val()).length == 0) {
         entrar = false;
         campo = 'agencia';
-    } else if($.trim($("#depositosUserDB").val()).length == 0 && $("ul#myTabDepositos li.active").value == 1) {
+    } else if($.trim($("#depositosUserDB").val()).length == 0 && $("ul#myTabDepositos li.active")[0].value == 0) {
         entrar = false;
         campo = 'usuario de la base de datos';
-    } else if($.trim($("#depositosPasswordDB").val()).length == 0 && $("ul#myTabDepositos li.active").value == 1) {
+    } else if($.trim($("#depositosPasswordDB").val()).length == 0 && $("ul#myTabDepositos li.active")[0].value == 0) {
         entrar = false;
         campo = 'contraseña de la base de datos';
-    } else if($.trim($("#depositosServerDB").val()).length == 0 && $("ul#myTabDepositos li.active").value == 1) {
+    } else if($.trim($("#depositosServerDB").val()).length == 0 && $("ul#myTabDepositos li.active")[0].value == 0) {
         entrar = false;
         campo = 'depositos de la base de datos';
-    } else if($.trim($("#depositosDataBaseDB").val()).length == 0 && $("ul#myTabDepositos li.active").value == 1) {
+    } else if($.trim($("#depositosDataBaseDB").val()).length == 0 && $("ul#myTabDepositos li.active")[0].value == 0) {
         entrar = false;
         campo = 'nombre de la base de datos';
-    } else if($.trim($("#depositosTableDB").val()).length == 0 && $("ul#myTabDepositos li.active").value == 1) {
+    } else if($.trim($("#depositosTableDB").val()).length == 0 && $("ul#myTabDepositos li.active")[0].value == 0) {
         entrar = false;
         campo = 'tabla de la base de datos';
     }
@@ -1479,367 +1766,591 @@ function saveDepositosDB (indexTabla) {
                 });
             }
         } else if(indice == 1) {
-            var identificador = $.trim($("#idClienteConexionDepositos").val());
-            var nombre = $.trim($("#nombreClienteConexionDepositos").val());
-            var tipoPersona = $.trim($("#tipoPersonaClienteConexionDepositos").val());
-            var tipoSubPersona = $.trim($("#tipoSubPersonaClienteConexionDepositos").val());
-            var saldo = $.trim($("#saldoConexionDepositos").val());
-            var moneda = $.trim($("#monedaConexionDepositos").val());
-            var tipoCuenta = $.trim($("#tipoCuentaConexionDepositos").val());
-            var plazoResidual = $.trim($("#plazoResidualConexionDepositos").val());
-            var sucursal = $.trim($("#sucursalConexionDepositos").val());
-            var nombreHoja = $.trim($("#depositosTableExcel").val());
-            var filaInicial = $.trim($("#depositosExcelInicio").val());
-            var filaFinal = $.trim($("#depositosExcelFinal").val());
-            if(identificador.length > 0) {
-                if(isNaN(identificador)) {
-                    if(nombre.length > 0) {
-                        if(isNaN(nombre)) {
-                            if(tipoPersona.length > 0) {
-                                if(isNaN(tipoPersona)) {
-                                    if(tipoSubPersona.length > 0) {
-                                        if(isNaN(tipoSubPersona)) {
-                                            if(saldo.length > 0) {
-                                                if(isNaN(saldo)) {
-                                                    if(moneda.length > 0) {
-                                                        if(isNaN(moneda)) {
-                                                            if(tipoCuenta.length > 0) {
-                                                                if(isNaN(tipoCuenta)) {
-                                                                    if(plazoResidual.length > 0) {
-                                                                        if(isNaN(plazoResidual)) {
-                                                                            if(sucursal.length > 0) {
-                                                                                if(isNaN(sucursal)) {
-                                                                                    if(nombreHoja.length > 0) {
-                                                                                        if(!isNaN(filaInicial) && filaInicial.length>0) {
-                                                                                            var file = dialog.showOpenDialog({
-                                                                                                title: 'Seleccione un archivo',
-                                                                                                filters: [{
-                                                                                                    name: "Spreadsheets",
-                                                                                                    extensions: "xls|xlsx|xlsm|xlsb|xml|xlw|xlc|csv|txt|dif|sylk|slk|prn|ods|fods|uos|dbf|wks|123|wq1|qpw".split("|")
-                                                                                                }],
-                                                                                                properties: ['openFile']
-                                                                                            });
-                                                                                            var workbook;
-                                                                                            if(file.length > 0) {
-                                                                                                workbook = XLSX.readFile(file[0]);
-                                                                                                var sheet = workbook.Sheets[nombreHoja];
-                                                                                                if(sheet != null) {
-                                                                                                    if(filaFinal.length == 0)
-                                                                                                        filaFinal = 0;
-                                                                                                    var arregloDeDepositos = [];
-                                                                                                    identificador = identificador.toUpperCase();
-                                                                                                    nombre = nombre.toUpperCase();
-                                                                                                    tipoPersona = tipoPersona.toUpperCase();
-                                                                                                    tipoSubPersona = tipoSubPersona.toUpperCase();
-                                                                                                    saldo = saldo.toUpperCase();
-                                                                                                    moneda = moneda.toUpperCase();
-                                                                                                    tipoCuenta = tipoCuenta.toUpperCase();
-                                                                                                    plazoResidual = plazoResidual.toUpperCase();
-                                                                                                    sucursal = sucursal.toUpperCase();
-                                                                                                    filaInicial = parseInt(filaInicial);
-                                                                                                    filaFinal = parseInt(filaFinal);
-                                                                                                    if(filaFinal != 0) {
-                                                                                                        for (var i = filaInicial; i <= filaFinal; i++) {
-                                                                                                            if(sheet[identificador+i] != undefined && sheet[identificador+i].v.toString().length > 0 && sheet[nombre+i] != undefined && sheet[nombre+i].v.toString().length > 0 && sheet[tipoPersona+i] != undefined && sheet[tipoPersona+i].v.toString().length > 0 && sheet[tipoSubPersona+i] != undefined && sheet[tipoSubPersona+i].v.toString().length > 0 && sheet[saldo+i] != undefined && sheet[saldo+i].v.toString().length > 0 && sheet[moneda+i] != undefined && sheet[moneda+i].v.toString().length > 0 && sheet[tipoCuenta+i] != undefined && sheet[tipoCuenta+i].v.toString().length > 0 && sheet[plazoResidual+i] != undefined && sheet[plazoResidual+i].v.toString().length > 0 && sheet[sucursal+i] != undefined && sheet[sucursal+i].v.toString().length > 0) {
-                                                                                                                var depositoIDCLiente = sheet[identificador+i].v;
-                                                                                                                var depositoNombreCliente = sheet[nombre+i].v;
-                                                                                                                var depositoTipoPersona = sheet[tipoPersona+i].v;
-                                                                                                                var depositoTipoSubPersona = sheet[tipoSubPersona+i].v;
-                                                                                                                var depositoTotalDepositos = sheet[saldo+i].v;
-                                                                                                                var depositoMoneda = sheet[moneda+i].v;
-                                                                                                                var depositoTipoCuenta = sheet[tipoCuenta+i].v;
-                                                                                                                var depositoPlazoResidual = parseInt(sheet[plazoResidual+i].v);
-                                                                                                                var depositoSucursal = sheet[sucursal+i].v;
-                                                                                                                depositoNombreCliente = depositoNombreCliente.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
-                                                                                                                depositoTipoCuenta = depositoTipoCuenta.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
-                                                                                                                depositoSucursal = depositoSucursal.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
-                                                                                                                depositoNombreCliente = depositoNombreCliente.toLowerCase();
-                                                                                                                depositoNombreCliente = UpperCasefirst(depositoNombreCliente);
-                                                                                                                arregloDeDepositos.push({idCLiente: depositoIDCLiente, nombreCliente: depositoNombreCliente, tipoPersona: depositoTipoPersona, tipoSubPersona: depositoTipoSubPersona, saldo: depositoTotalDepositos, moneda: depositoMoneda, tipoCuenta: depositoTipoCuenta, plazoResidual: depositoPlazoResidual, sucursal: depositoSucursal});
-                                                                                                                totalInserciones++;
-                                                                                                            } else if(sheet[identificador+i] != undefined || sheet[nombre+i] != undefined || sheet[tipoPersona+i] != undefined || sheet[tipoSubPersona+i] != undefined || sheet[saldo+i] != undefined || sheet[moneda+i] != undefined || sheet[tipoCuenta+i] != undefined || sheet[sucursal+i] != undefined)
-                                                                                                                arregloErroresExcel.push(i);
-                                                                                                        };
-                                                                                                    } else {
-                                                                                                        var finalRow = sheet["!ref"].split(":")[1].replace(/[A-Z]/g, "");
-                                                                                                        finalRow = parseInt(finalRow);
-                                                                                                        for (var i = filaInicial; i <= finalRow; i++) {
-                                                                                                            if(sheet[identificador+i] != undefined && sheet[identificador+i].v.toString().length > 0 && sheet[nombre+i] != undefined && sheet[nombre+i].v.toString().length > 0 && sheet[tipoPersona+i] != undefined && sheet[tipoPersona+i].v.toString().length > 0 && sheet[tipoSubPersona+i] != undefined && sheet[tipoSubPersona+i].v.toString().length > 0 && sheet[saldo+i] != undefined && sheet[saldo+i].v.toString().length > 0 && sheet[moneda+i] != undefined && sheet[moneda+i].v.toString().length > 0 && sheet[tipoCuenta+i] != undefined && sheet[tipoCuenta+i].v.toString().length > 0 && sheet[plazoResidual+i] != undefined && sheet[plazoResidual+i].v.toString().length > 0 && sheet[sucursal+i] != undefined && sheet[sucursal+i].v.toString().length > 0) {
-                                                                                                                var depositoIDCLiente = sheet[identificador+i].v;
-                                                                                                                var depositoNombreCliente = sheet[nombre+i].v;
-                                                                                                                var depositoTipoPersona = sheet[tipoPersona+i].v;
-                                                                                                                var depositoTipoSubPersona = sheet[tipoSubPersona+i].v;
-                                                                                                                var depositoTotalDepositos = sheet[saldo+i].v;
-                                                                                                                var depositoMoneda = sheet[moneda+i].v;
-                                                                                                                var depositoTipoCuenta = sheet[tipoCuenta+i].v;
-                                                                                                                var depositoPlazoResidual = sheet[plazoResidual+i].v;
-                                                                                                                var depositoSucursal = sheet[sucursal+i].v;
-                                                                                                                //depositoIDCLiente = depositoIDCLiente.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
-                                                                                                                depositoNombreCliente = depositoNombreCliente.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
-                                                                                                                depositoTipoCuenta = depositoTipoCuenta.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
-                                                                                                                //activoMonto = activoMonto.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
-                                                                                                                depositoSucursal = depositoSucursal.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
-                                                                                                                depositoNombreCliente = depositoNombreCliente.toLowerCase();
-                                                                                                                depositoNombreCliente = UpperCasefirst(depositoNombreCliente);
-                                                                                                                arregloDeDepositos.push({idCLiente: depositoIDCLiente, nombreCliente: depositoNombreCliente, tipoPersona: depositoTipoPersona, tipoSubPersona: depositoTipoSubPersona, saldo: depositoTotalDepositos, moneda: depositoMoneda, tipoCuenta: depositoTipoCuenta, plazoResidual: depositoPlazoResidual, sucursal: depositoSucursal});
-                                                                                                                totalInserciones++;
-                                                                                                            } else if(sheet[identificador+i] != undefined || sheet[nombre+i] != undefined || sheet[tipoPersona+i] != undefined || sheet[tipoSubPersona+i] != undefined || sheet[saldo+i] != undefined || sheet[moneda+i] != undefined || sheet[tipoCuenta+i] != undefined || sheet[sucursal+i] != undefined)
-                                                                                                                arregloErroresExcel.push(i);
-                                                                                                        };
-                                                                                                    }
-                                                                                                    for (var i = 0; i < arregloDeDepositos.length; i++) {
-                                                                                                        if(arregloDeDepositos[i].idCLiente.length < 31) {
-                                                                                                            if(arregloDeDepositos[i].nombreCliente.length < 81) {
-                                                                                                                if(arregloDeDepositos[i].tipoPersona.length < 81) {
-                                                                                                                    if(arregloDeDepositos[i].tipoSubPersona.length < 81) {
-                                                                                                                        if(arregloDeDepositos[i].saldo.length < 21) {
-                                                                                                                            if(arregloDeDepositos[i].moneda.length < 31) {
-                                                                                                                                if(arregloDeDepositos[i].tipoCuenta.length < 101) {
-                                                                                                                                    if(!isNaN(arregloDeDepositos[i].plazoResidual)) {
-                                                                                                                                        if(arregloDeDepositos[i].sucursal.length < 51) {
-                                                                                                                                            createDeposit( arregloDeDepositos[i] );
+            if(arregloFOSEDE.length > 0) {
+                var identificador = $.trim($("#idClienteConexionDepositos").val());
+                var nombre = $.trim($("#nombreClienteConexionDepositos").val());
+                var tipoPersona = $.trim($("#tipoPersonaClienteConexionDepositos").val());
+                var tipoSubPersona = $.trim($("#tipoSubPersonaClienteConexionDepositos").val());
+                var saldo = $.trim($("#saldoConexionDepositos").val());
+                var moneda = $.trim($("#monedaConexionDepositos").val());
+                var tipoCuenta = $.trim($("#tipoCuentaConexionDepositos").val());
+                var fechaInicio = $.trim($("#fechaInicioConexionDepositos").val());
+                var fechaFinal = $.trim($("#fechaFinalConexionDepositos").val());
+                var sucursal = $.trim($("#sucursalConexionDepositos").val());
+                var fechaImportacion = $.trim($("#fechaImportacionConexionDepositos").val());
+                var nombreHoja = $.trim($("#depositosTableExcel").val());
+                var filaInicial = $.trim($("#depositosExcelInicio").val());
+                var filaFinal = $.trim($("#depositosExcelFinal").val());
+                myInterval = setInterval(myTimer, 1000);
+                $( ".loadingScreen" ).fadeIn( "slow", function() {
+                });
+                if(identificador.length > 0) {
+                    if(isNaN(identificador)) {
+                        if(nombre.length > 0) {
+                            if(isNaN(nombre)) {
+                                if(tipoPersona.length > 0) {
+                                    if(isNaN(tipoPersona)) {
+                                        if(tipoSubPersona.length > 0) {
+                                            if(isNaN(tipoSubPersona)) {
+                                                if(saldo.length > 0) {
+                                                    if(isNaN(saldo)) {
+                                                        if(moneda.length > 0) {
+                                                            if(isNaN(moneda)) {
+                                                                if(tipoCuenta.length > 0) {
+                                                                    if(isNaN(tipoCuenta)) {
+                                                                        if(fechaInicio.length > 0) {
+                                                                            if(isNaN(fechaInicio)) {
+                                                                                if(fechaFinal.length > 0) {
+                                                                                    if(isNaN(fechaFinal)) {
+                                                                                        if(sucursal.length > 0) {
+                                                                                            if(isNaN(sucursal)) {
+                                                                                                if(fechaImportacion.length > 0) {
+                                                                                                    if(isNaN(fechaImportacion)) {
+                                                                                                        if(nombreHoja.length > 0) {
+                                                                                                            if(!isNaN(filaInicial) && filaInicial.length>0) {
+                                                                                                                var file = dialog.showOpenDialog({
+                                                                                                                    title: 'Seleccione un archivo',
+                                                                                                                    filters: [{
+                                                                                                                        name: "Spreadsheets",
+                                                                                                                        extensions: "xls|xlsx|xlsm|xlsb|xml|xlw|xlc|csv|txt|dif|sylk|slk|prn|ods|fods|uos|dbf|wks|123|wq1|qpw".split("|")
+                                                                                                                    }],
+                                                                                                                    properties: ['openFile']
+                                                                                                                });
+                                                                                                                var workbook;
+                                                                                                                if(file.length > 0) {
+                                                                                                                    workbook = XLSX.readFile(file[0]);
+                                                                                                                    var sheet = workbook.Sheets[nombreHoja];
+                                                                                                                    if(sheet != null) {
+                                                                                                                        if(filaFinal.length == 0)
+                                                                                                                            filaFinal = 0;
+                                                                                                                        var arregloDeDepositos = [];
+                                                                                                                        identificador = identificador.toUpperCase();
+                                                                                                                        nombre = nombre.toUpperCase();
+                                                                                                                        tipoPersona = tipoPersona.toUpperCase();
+                                                                                                                        tipoSubPersona = tipoSubPersona.toUpperCase();
+                                                                                                                        saldo = saldo.toUpperCase();
+                                                                                                                        moneda = moneda.toUpperCase();
+                                                                                                                        tipoCuenta = tipoCuenta.toUpperCase();
+                                                                                                                        fechaInicio = fechaInicio.toUpperCase();
+                                                                                                                        fechaFinal = fechaFinal.toUpperCase();
+                                                                                                                        sucursal = sucursal.toUpperCase();
+                                                                                                                        fechaImportacion = fechaImportacion.toUpperCase();
+                                                                                                                        filaInicial = parseInt(filaInicial);
+                                                                                                                        filaFinal = parseInt(filaFinal);
+                                                                                                                        if(filaFinal != 0) {
+                                                                                                                            for (var i = filaInicial; i <= filaFinal; i++) {
+                                                                                                                                if(sheet[identificador+i] != undefined && sheet[identificador+i].v.toString().length > 0 && sheet[nombre+i] != undefined && sheet[nombre+i].v.toString().length > 0 && sheet[tipoPersona+i] != undefined && sheet[tipoPersona+i].v.toString().length > 0 && sheet[tipoSubPersona+i] != undefined && sheet[tipoSubPersona+i].v.toString().length > 0 && sheet[saldo+i] != undefined && sheet[saldo+i].v.toString().length > 0 && sheet[moneda+i] != undefined && sheet[moneda+i].v.toString().length > 0 && sheet[tipoCuenta+i] != undefined && sheet[tipoCuenta+i].v.toString().length > 0 && sheet[fechaInicio+i] != undefined && sheet[fechaInicio+i].w.toString().length > 0 && sheet[fechaFinal+i] != undefined && sheet[fechaFinal+i].w.toString().length > 0 && sheet[sucursal+i] != undefined && sheet[sucursal+i].v.toString().length > 0 && sheet[fechaImportacion+i] != undefined && sheet[fechaImportacion+i].w.toString().length > 0) {
+                                                                                                                                    var depositoIDCLiente = sheet[identificador+i].v;
+                                                                                                                                    var depositoNombreCliente = sheet[nombre+i].v;
+                                                                                                                                    var depositoTipoPersona = sheet[tipoPersona+i].v;
+                                                                                                                                    var depositoTipoSubPersona = sheet[tipoSubPersona+i].v;
+                                                                                                                                    var depositoTotalDepositos = sheet[saldo+i].v;
+                                                                                                                                    var depositoMoneda = sheet[moneda+i].v;
+                                                                                                                                    var depositoTipoCuenta = sheet[tipoCuenta+i].v;
+                                                                                                                                    var depositoFechaInicio = sheet[fechaInicio+i].w;
+                                                                                                                                    var depositoFechaFinal = sheet[fechaFinal+i].w;
+                                                                                                                                    var depositoSucursal = sheet[sucursal+i].v;
+                                                                                                                                    var depositoFechaImportacion = sheet[fechaImportacion+i].w;
+                                                                                                                                    depositoNombreCliente = depositoNombreCliente.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
+                                                                                                                                    depositoTipoCuenta = depositoTipoCuenta.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
+                                                                                                                                    depositoSucursal = depositoSucursal.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
+                                                                                                                                    depositoNombreCliente = depositoNombreCliente.toLowerCase();
+                                                                                                                                    depositoNombreCliente = UpperCasefirst(depositoNombreCliente);
+                                                                                                                                    depositoMoneda = depositoMoneda.toLowerCase();
+                                                                                                                                    depositoMoneda = UpperCasefirst(depositoMoneda);
+                                                                                                                                    if(existeMonedaFOSEDE(depositoMoneda)) {
+                                                                                                                                        arregloDeDepositos.push({idCLiente: depositoIDCLiente, nombreCliente: depositoNombreCliente, tipoPersona: depositoTipoPersona, tipoSubPersona: depositoTipoSubPersona, saldo: depositoTotalDepositos, moneda: depositoMoneda, tipoCuenta: depositoTipoCuenta, fechaInicio: depositoFechaInicio, fechaFinal: depositoFechaFinal, sucursal: depositoSucursal, fechaImportacion: depositoFechaImportacion});
+                                                                                                                                        totalInserciones++;
+                                                                                                                                    } else 
+                                                                                                                                        arregloErroresInsercion.push({b: "Deposito de: "+depositoIDCLiente, c: "No existe un monto FOSEDE para el tipo de moneda"});
+                                                                                                                                } else if(sheet[identificador+i] != undefined || sheet[nombre+i] != undefined || sheet[tipoPersona+i] != undefined || sheet[tipoSubPersona+i] != undefined || sheet[saldo+i] != undefined || sheet[moneda+i] != undefined || sheet[tipoCuenta+i] != undefined || sheet[sucursal+i] != undefined || sheet[fechaImportacion+i] != undefined)
+                                                                                                                                    arregloErroresExcel.push(i);
+                                                                                                                            };
+                                                                                                                        } else {
+                                                                                                                            var finalRow = sheet["!ref"].split(":")[1].replace(/[A-Z]/g, "");
+                                                                                                                            finalRow = parseInt(finalRow);
+                                                                                                                            for (var i = filaInicial; i <= finalRow; i++) {
+                                                                                                                                if(sheet[identificador+i] != undefined && sheet[identificador+i].v.toString().length > 0 && sheet[nombre+i] != undefined && sheet[nombre+i].v.toString().length > 0 && sheet[tipoPersona+i] != undefined && sheet[tipoPersona+i].v.toString().length > 0 && sheet[tipoSubPersona+i] != undefined && sheet[tipoSubPersona+i].v.toString().length > 0 && sheet[saldo+i] != undefined && sheet[saldo+i].v.toString().length > 0 && sheet[moneda+i] != undefined && sheet[moneda+i].v.toString().length > 0 && sheet[tipoCuenta+i] != undefined && sheet[tipoCuenta+i].v.toString().length > 0 && sheet[fechaInicio+i] != undefined && sheet[fechaInicio+i].w.toString().length > 0 && sheet[fechaFinal+i] != undefined && sheet[fechaFinal+i].w.toString().length > 0 && sheet[sucursal+i] != undefined && sheet[sucursal+i].v.toString().length > 0 && sheet[fechaImportacion+i] != undefined && sheet[fechaImportacion+i].w.toString().length > 0) {
+                                                                                                                                    var depositoIDCLiente = sheet[identificador+i].v;
+                                                                                                                                    var depositoNombreCliente = sheet[nombre+i].v;
+                                                                                                                                    var depositoTipoPersona = sheet[tipoPersona+i].v;
+                                                                                                                                    var depositoTipoSubPersona = sheet[tipoSubPersona+i].v;
+                                                                                                                                    var depositoTotalDepositos = sheet[saldo+i].v;
+                                                                                                                                    var depositoMoneda = sheet[moneda+i].v;
+                                                                                                                                    var depositoTipoCuenta = sheet[tipoCuenta+i].v;
+                                                                                                                                    var depositoFechaInicio = sheet[fechaInicio+i].w;
+                                                                                                                                    var depositoFechaFinal = sheet[fechaFinal+i].w;
+                                                                                                                                    var depositoSucursal = sheet[sucursal+i].v;
+                                                                                                                                    var depositoFechaImportacion = sheet[fechaImportacion+i].w;
+                                                                                                                                    depositoNombreCliente = depositoNombreCliente.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
+                                                                                                                                    depositoTipoCuenta = depositoTipoCuenta.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
+                                                                                                                                    depositoSucursal = depositoSucursal.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
+                                                                                                                                    depositoNombreCliente = depositoNombreCliente.toLowerCase();
+                                                                                                                                    depositoNombreCliente = UpperCasefirst(depositoNombreCliente);
+                                                                                                                                    depositoMoneda = depositoMoneda.toLowerCase();
+                                                                                                                                    depositoMoneda = UpperCasefirst(depositoMoneda);
+                                                                                                                                    if(existeMonedaFOSEDE(depositoMoneda)) {
+                                                                                                                                        arregloDeDepositos.push({idCLiente: depositoIDCLiente, nombreCliente: depositoNombreCliente, tipoPersona: depositoTipoPersona, tipoSubPersona: depositoTipoSubPersona, saldo: depositoTotalDepositos, moneda: depositoMoneda, tipoCuenta: depositoTipoCuenta, fechaInicio: depositoFechaInicio, fechaFinal: depositoFechaFinal, sucursal: depositoSucursal, fechaImportacion: depositoFechaImportacion});
+                                                                                                                                        totalInserciones++;
+                                                                                                                                    } else 
+                                                                                                                                        arregloErroresInsercion.push({b: "Deposito de: "+depositoIDCLiente, c: "No existe un monto FOSEDE para el tipo de moneda"});
+                                                                                                                                } else if(sheet[identificador+i] != undefined || sheet[nombre+i] != undefined || sheet[tipoPersona+i] != undefined || sheet[tipoSubPersona+i] != undefined || sheet[saldo+i] != undefined || sheet[moneda+i] != undefined || sheet[tipoCuenta+i] != undefined || sheet[sucursal+i] != undefined || sheet[fechaImportacion+i] != undefined)
+                                                                                                                                    arregloErroresExcel.push(i);
+                                                                                                                            };
+                                                                                                                        }
+
+                                                                                                                        for (var i = 0; i < arregloDeDepositos.length; i++) {
+                                                                                                                            if(arregloDeDepositos[i].idCLiente.toString().length < 31) {
+                                                                                                                                if(arregloDeDepositos[i].nombreCliente.length < 81) {
+                                                                                                                                    if(arregloDeDepositos[i].tipoPersona.length < 81) {
+                                                                                                                                        if(arregloDeDepositos[i].tipoSubPersona.length < 81) {
+                                                                                                                                            if(!isNaN(arregloDeDepositos[i].saldo)) {
+                                                                                                                                                if(arregloDeDepositos[i].moneda.length < 31) {
+                                                                                                                                                    if(arregloDeDepositos[i].tipoCuenta.length < 101) {
+                                                                                                                                                        if(Date.parse(new Date(arregloDeDepositos[i].fechaFinal))) {
+                                                                                                                                                            if(Date.parse(new Date(arregloDeDepositos[i].fechaInicio))) {
+                                                                                                                                                                if(arregloDeDepositos[i].sucursal.length < 51) {
+                                                                                                                                                                    if(Date.parse(new Date(arregloDeDepositos[i].fechaImportacion))) {
+                                                                                                                                                                        //createDeposit( arregloDeDepositos[i] );
+                                                                                                                                                                    } else {
+                                                                                                                                                                        arregloErroresInsercion.push({b: "Deposito de: "+arregloDeDepositos[i].idCLiente, c: "El valor fecha de importación no es valido"});
+                                                                                                                                                                        contadorInserciones++;
+                                                                                                                                                                    }
+                                                                                                                                                                } else {
+                                                                                                                                                                    arregloErroresInsercion.push({b: "Deposito de: "+arregloDeDepositos[i].idCLiente, c: "El valor del sucursal es mayor a 50 caracteres"});
+                                                                                                                                                                    contadorInserciones++;
+                                                                                                                                                                }
+                                                                                                                                                            } else {
+                                                                                                                                                                arregloErroresInsercion.push({b: "Deposito de: "+arregloDeDepositos[i].idCLiente, c: "El valor de fecha final no es valido"});
+                                                                                                                                                                contadorInserciones++;
+                                                                                                                                                            }
+                                                                                                                                                        } else {
+                                                                                                                                                            arregloErroresInsercion.push({b: "Deposito de: "+arregloDeDepositos[i].idCLiente, c: "El valor de fecha de inicio no es valido"});
+                                                                                                                                                            contadorInserciones++;
+                                                                                                                                                        }
+                                                                                                                                                    } else {
+                                                                                                                                                        arregloErroresInsercion.push({b: "Deposito de: "+arregloDeDepositos[i].idCLiente, c: "El valor del tipo de cuenta es mayor a 100 caracteres"});
+                                                                                                                                                        contadorInserciones++;
+                                                                                                                                                    }
+                                                                                                                                                } else {
+                                                                                                                                                    arregloErroresInsercion.push({b: "Deposito de: "+arregloDeDepositos[i].idCLiente, c: "El valor de la moneda es mayor a 30 caracteres"});
+                                                                                                                                                    contadorInserciones++;
+                                                                                                                                                }
+                                                                                                                                            } else {
+                                                                                                                                                arregloErroresInsercion.push({b: "Deposito de: "+arregloDeDepositos[i].idCLiente, c: "El valor del saldo es mayor a 20 caracteres"});
+                                                                                                                                                contadorInserciones++;
+                                                                                                                                            }
                                                                                                                                         } else {
-                                                                                                                                            arregloErroresInsercion.push({b: "Deposito de: "+arregloDeDepositos[i].idCLiente, c: "El valor del sucursal es mayor a 50 caracteres"});
+                                                                                                                                            arregloErroresInsercion.push({b: "Deposito de: "+arregloDeDepositos[i].idCLiente, c: "El valor del tipo de sub-persona es mayor a 80 caracteres"});
+                                                                                                                                            contadorInserciones++;
                                                                                                                                         }
                                                                                                                                     } else {
-                                                                                                                                        arregloErroresInsercion.push({b: "Deposito de: "+arregloDeDepositos[i].idCLiente, c: "El valor del plazo residual no es un número valido"});
+                                                                                                                                        arregloErroresInsercion.push({b: "Deposito de: "+arregloDeDepositos[i].idCLiente, c: "El valor del tipo de persona es mayor a 80 caracteres"});
+                                                                                                                                        contadorInserciones++;
                                                                                                                                     }
                                                                                                                                 } else {
-                                                                                                                                    arregloErroresInsercion.push({b: "Deposito de: "+arregloDeDepositos[i].idCLiente, c: "El valor del tipo de cuenta es mayor a 100 caracteres"});
+                                                                                                                                    arregloErroresInsercion.push({b: "Deposito de: "+arregloDeDepositos[i].idCLiente, c: "El valor del nombre del cliente es mayor a 80 caracteres"});
+                                                                                                                                    contadorInserciones++;
                                                                                                                                 }
                                                                                                                             } else {
-                                                                                                                                arregloErroresInsercion.push({b: "Deposito de: "+arregloDeDepositos[i].idCLiente, c: "El valor de la moneda es mayor a 30 caracteres"});
+                                                                                                                                arregloErroresInsercion.push({b: "Deposito de: "+arregloDeDepositos[i].idCLiente, c: "El valor del identificador del cliente es mayor a 30 caracteres"});
+                                                                                                                                contadorInserciones++;
                                                                                                                             }
+                                                                                                                        };
+                                                                                                                        if(arregloDeDepositos.length == 0) {
+                                                                                                                            $("body").overhang({
+                                                                                                                                type: "error",
+                                                                                                                                primary: "#f84a1d",
+                                                                                                                                accent: "#d94e2a",
+                                                                                                                                message: "Error al insertar variable en columna inexistente o el archivo estaba vacio.",
+                                                                                                                                overlay: true,
+                                                                                                                                closeConfirm: true
+                                                                                                                            });
+                                                                                                                            $(".loadingScreen").hide();
+                                                                                                                            stopTimer();
+                                                                                                                            printErrorFile();
                                                                                                                         } else {
-                                                                                                                            arregloErroresInsercion.push({b: "Deposito de: "+arregloDeDepositos[i].idCLiente, c: "El valor del saldo es mayor a 20 caracteres"});
+                                                                                                                            if(arregloErroresExcel.length > 0 || arregloErroresInsercion.length > 0 ) {
+                                                                                                                                $("body").overhang({
+                                                                                                                                    type: "confirm",
+                                                                                                                                    primary: "#f5a433",
+                                                                                                                                    accent: "#dc9430",
+                                                                                                                                    yesColor: "#3498DB",
+                                                                                                                                    message: 'Se encontrarón errores en el archivo. Desea importar igual?',
+                                                                                                                                    overlay: true,
+                                                                                                                                    yesMessage: "Importar",
+                                                                                                                                    noMessage: "Cancelar",
+                                                                                                                                    callback: function (value) {
+                                                                                                                                        if(value) {
+                                                                                                                                            for (var i = 0; i < arregloDeDepositos.length; i++) {
+                                                                                                                                                if(arregloDeDepositos[i].idCLiente.toString().length < 31) {
+                                                                                                                                                    if(arregloDeDepositos[i].nombreCliente.length < 81) {
+                                                                                                                                                        if(arregloDeDepositos[i].tipoPersona.length < 81) {
+                                                                                                                                                            if(arregloDeDepositos[i].tipoSubPersona.length < 81) {
+                                                                                                                                                                if(!isNaN(arregloDeDepositos[i].saldo)) {
+                                                                                                                                                                    if(arregloDeDepositos[i].moneda.length < 31) {
+                                                                                                                                                                        if(arregloDeDepositos[i].tipoCuenta.length < 101) {
+                                                                                                                                                                            if(Date.parse(new Date(arregloDeDepositos[i].fechaFinal))) {
+                                                                                                                                                                                if(Date.parse(new Date(arregloDeDepositos[i].fechaInicio))) {
+                                                                                                                                                                                    if(arregloDeDepositos[i].sucursal.length < 51) {
+                                                                                                                                                                                        if(Date.parse(new Date(arregloDeDepositos[i].fechaImportacion))) {
+                                                                                                                                                                                            createDeposit( arregloDeDepositos[i] );
+                                                                                                                                                                                        }
+                                                                                                                                                                                    }
+                                                                                                                                                                                }
+                                                                                                                                                                            }
+                                                                                                                                                                        }
+                                                                                                                                                                    }
+                                                                                                                                                                }
+                                                                                                                                                            }
+                                                                                                                                                        }
+                                                                                                                                                    }
+                                                                                                                                                }
+                                                                                                                                            };
+                                                                                                                                        } else {
+                                                                                                                                            $(".loadingScreen").hide();
+                                                                                                                                            stopTimer();
+                                                                                                                                        }
+                                                                                                                                    }
+                                                                                                                                });
+                                                                                                                            } else {
+                                                                                                                                for (var i = 0; i < arregloDeDepositos.length; i++) {
+                                                                                                                                    if(arregloDeDepositos[i].idCLiente.toString().length < 31) {
+                                                                                                                                        if(arregloDeDepositos[i].nombreCliente.length < 81) {
+                                                                                                                                            if(arregloDeDepositos[i].tipoPersona.length < 81) {
+                                                                                                                                                if(arregloDeDepositos[i].tipoSubPersona.length < 81) {
+                                                                                                                                                    if(!isNaN(arregloDeDepositos[i].saldo)) {
+                                                                                                                                                        if(arregloDeDepositos[i].moneda.length < 31) {
+                                                                                                                                                            if(arregloDeDepositos[i].tipoCuenta.length < 101) {
+                                                                                                                                                                if(Date.parse(new Date(arregloDeDepositos[i].fechaFinal))) {
+                                                                                                                                                                    if(Date.parse(new Date(arregloDeDepositos[i].fechaInicio))) {
+                                                                                                                                                                        if(arregloDeDepositos[i].sucursal.length < 51) {
+                                                                                                                                                                            if(Date.parse(new Date(arregloDeDepositos[i].fechaImportacion))) {
+                                                                                                                                                                                createDeposit( arregloDeDepositos[i] );
+                                                                                                                                                                            }
+                                                                                                                                                                        }
+                                                                                                                                                                    }
+                                                                                                                                                                }
+                                                                                                                                                            }
+                                                                                                                                                        }
+                                                                                                                                                    }
+                                                                                                                                                }
+                                                                                                                                            }
+                                                                                                                                        }
+                                                                                                                                    }
+                                                                                                                                };
+                                                                                                                            }
                                                                                                                         }
                                                                                                                     } else {
-                                                                                                                        arregloErroresInsercion.push({b: "Deposito de: "+arregloDeDepositos[i].idCLiente, c: "El valor del tipo de sub-persona es mayor a 80 caracteres"});
+                                                                                                                        $("body").overhang({
+                                                                                                                            type: "error",
+                                                                                                                            primary: "#f84a1d",
+                                                                                                                            accent: "#d94e2a",
+                                                                                                                            message: "Error al abrir hoja de excel.",
+                                                                                                                            overlay: true,
+                                                                                                                            closeConfirm: true
+                                                                                                                        });
+                                                                                                                        $(".loadingScreen").hide();
+                                                                                                                        stopTimer();
                                                                                                                     }
                                                                                                                 } else {
-                                                                                                                    arregloErroresInsercion.push({b: "Deposito de: "+arregloDeDepositos[i].idCLiente, c: "El valor del tipo de persona es mayor a 80 caracteres"});
+                                                                                                                    $(".loadingScreen").hide();
+                                                                                                                    stopTimer();
                                                                                                                 }
                                                                                                             } else {
-                                                                                                                arregloErroresInsercion.push({b: "Deposito de: "+arregloDeDepositos[i].idCLiente, c: "El valor del nombre del cliente es mayor a 80 caracteres"});
+                                                                                                                $("body").overhang({
+                                                                                                                    type: "error",
+                                                                                                                    primary: "#f84a1d",
+                                                                                                                    accent: "#d94e2a",
+                                                                                                                    message: "Ingrese un valor para la fila inicial de la hoja de excel.",
+                                                                                                                    overlay: true,
+                                                                                                                    closeConfirm: true
+                                                                                                                });
+                                                                                                                $(".loadingScreen").hide();
+                                                                                                                stopTimer();
                                                                                                             }
                                                                                                         } else {
-                                                                                                            arregloErroresInsercion.push({b: "Deposito de: "+arregloDeDepositos[i].idCLiente, c: "El valor del identificador del cliente es mayor a 30 caracteres"});
+                                                                                                            $("body").overhang({
+                                                                                                                type: "error",
+                                                                                                                primary: "#f84a1d",
+                                                                                                                accent: "#d94e2a",
+                                                                                                                message: "Ingrese un valor para el nombre de la hoja de excel.",
+                                                                                                                overlay: true,
+                                                                                                                closeConfirm: true
+                                                                                                            });
+                                                                                                            $(".loadingScreen").hide();
+                                                                                                            stopTimer();
                                                                                                         }
-                                                                                                    };
-                                                                                                    /*$("body").overhang({
-                                                                                                        type: "success",
-                                                                                                        primary: "#40D47E",
-                                                                                                        accent: "#27AE60",
-                                                                                                        message: "Depositos importados con éxito.",
-                                                                                                        overlay: true
-                                                                                                    });*/
+                                                                                                    } else {
+                                                                                                        $("body").overhang({
+                                                                                                            type: "error",
+                                                                                                            primary: "#f84a1d",
+                                                                                                            accent: "#d94e2a",
+                                                                                                            message: "Ingrese una letra para la fecha de importación.",
+                                                                                                            overlay: true,
+                                                                                                            closeConfirm: true
+                                                                                                        });
+                                                                                                        $(".loadingScreen").hide();
+                                                                                                        stopTimer();
+                                                                                                    }
                                                                                                 } else {
                                                                                                     $("body").overhang({
                                                                                                         type: "error",
                                                                                                         primary: "#f84a1d",
                                                                                                         accent: "#d94e2a",
-                                                                                                        message: "Error al abrir hoja de excel.",
+                                                                                                        message: "Ingrese un valor para la fecha de importación.",
                                                                                                         overlay: true,
                                                                                                         closeConfirm: true
                                                                                                     });
+                                                                                                    $(".loadingScreen").hide();
+                                                                                                    stopTimer();
                                                                                                 }
+                                                                                            } else {
+                                                                                                $("body").overhang({
+                                                                                                    type: "error",
+                                                                                                    primary: "#f84a1d",
+                                                                                                    accent: "#d94e2a",
+                                                                                                    message: "Ingrese una letra para la columna del campo de sucursal.",
+                                                                                                    overlay: true,
+                                                                                                    closeConfirm: true
+                                                                                                });
+                                                                                                $(".loadingScreen").hide();
+                                                                                                stopTimer();
                                                                                             }
                                                                                         } else {
                                                                                             $("body").overhang({
                                                                                                 type: "error",
                                                                                                 primary: "#f84a1d",
                                                                                                 accent: "#d94e2a",
-                                                                                                message: "Ingrese un valor para la fila inicial de la hoja de excel.",
+                                                                                                message: "Ingrese un valor para la columna del campo de sucursal.",
                                                                                                 overlay: true,
                                                                                                 closeConfirm: true
                                                                                             });
+                                                                                            $(".loadingScreen").hide();
+                                                                                            stopTimer();
                                                                                         }
                                                                                     } else {
                                                                                         $("body").overhang({
                                                                                             type: "error",
                                                                                             primary: "#f84a1d",
                                                                                             accent: "#d94e2a",
-                                                                                            message: "Ingrese un valor para el nombre de la hoja de excel.",
+                                                                                            message: "Ingrese una letra para la columna de fecha final.",
                                                                                             overlay: true,
                                                                                             closeConfirm: true
                                                                                         });
+                                                                                        $(".loadingScreen").hide();
+                                                                                        stopTimer();
                                                                                     }
                                                                                 } else {
                                                                                     $("body").overhang({
                                                                                         type: "error",
                                                                                         primary: "#f84a1d",
                                                                                         accent: "#d94e2a",
-                                                                                        message: "Ingrese una letra para la columna del campo de sucursal.",
+                                                                                        message: "Ingrese un valor para la columna de fecha final.",
                                                                                         overlay: true,
                                                                                         closeConfirm: true
                                                                                     });
+                                                                                    $(".loadingScreen").hide();
+                                                                                    stopTimer();
                                                                                 }
                                                                             } else {
                                                                                 $("body").overhang({
                                                                                     type: "error",
                                                                                     primary: "#f84a1d",
                                                                                     accent: "#d94e2a",
-                                                                                    message: "Ingrese un valor para la columna del campo de sucursal.",
+                                                                                    message: "Ingrese una letra para la columna de fecha de inicio.",
                                                                                     overlay: true,
                                                                                     closeConfirm: true
                                                                                 });
+                                                                                $(".loadingScreen").hide();
+                                                                                stopTimer();
                                                                             }
                                                                         } else {
                                                                             $("body").overhang({
                                                                                 type: "error",
                                                                                 primary: "#f84a1d",
                                                                                 accent: "#d94e2a",
-                                                                                message: "Ingrese una letra para la columna del campo de plazo residual.",
+                                                                                message: "Ingrese un valor para la columna de fecha de inicio.",
                                                                                 overlay: true,
                                                                                 closeConfirm: true
                                                                             });
+                                                                            $(".loadingScreen").hide();
+                                                                            stopTimer();
                                                                         }
                                                                     } else {
                                                                         $("body").overhang({
                                                                             type: "error",
                                                                             primary: "#f84a1d",
                                                                             accent: "#d94e2a",
-                                                                            message: "Ingrese un valor para la columna del campo de plazo residual.",
+                                                                            message: "Ingrese una letra para la columna del campo de tipode cuenta.",
                                                                             overlay: true,
                                                                             closeConfirm: true
                                                                         });
+                                                                        $(".loadingScreen").hide();
+                                                                        stopTimer();
                                                                     }
                                                                 } else {
                                                                     $("body").overhang({
                                                                         type: "error",
                                                                         primary: "#f84a1d",
                                                                         accent: "#d94e2a",
-                                                                        message: "Ingrese una letra para la columna del campo de tipode cuenta.",
+                                                                        message: "Ingrese un valor para la columna del campo de tipo de cuenta.",
                                                                         overlay: true,
                                                                         closeConfirm: true
                                                                     });
+                                                                    $(".loadingScreen").hide();
+                                                                    stopTimer();
                                                                 }
                                                             } else {
                                                                 $("body").overhang({
                                                                     type: "error",
                                                                     primary: "#f84a1d",
                                                                     accent: "#d94e2a",
-                                                                    message: "Ingrese un valor para la columna del campo de tipo de cuenta.",
+                                                                    message: "Ingrese una letra para la columna del campo de moneda.",
                                                                     overlay: true,
                                                                     closeConfirm: true
                                                                 });
+                                                                $(".loadingScreen").hide();
+                                                                stopTimer();
                                                             }
                                                         } else {
                                                             $("body").overhang({
                                                                 type: "error",
                                                                 primary: "#f84a1d",
                                                                 accent: "#d94e2a",
-                                                                message: "Ingrese una letra para la columna del campo de moneda.",
+                                                                message: "Ingrese un valor para la columna del campo de moneda.",
                                                                 overlay: true,
                                                                 closeConfirm: true
                                                             });
+                                                            $(".loadingScreen").hide();
+                                                            stopTimer();
                                                         }
                                                     } else {
                                                         $("body").overhang({
                                                             type: "error",
                                                             primary: "#f84a1d",
                                                             accent: "#d94e2a",
-                                                            message: "Ingrese un valor para la columna del campo de moneda.",
+                                                            message: "Ingrese una letra para la columna de saldo de deposito válida.",
                                                             overlay: true,
                                                             closeConfirm: true
                                                         });
+                                                        $(".loadingScreen").hide();
+                                                        stopTimer();
                                                     }
                                                 } else {
                                                     $("body").overhang({
                                                         type: "error",
                                                         primary: "#f84a1d",
                                                         accent: "#d94e2a",
-                                                        message: "Ingrese una letra para la columna de saldo de deposito válida.",
+                                                        message: "Ingrese un valor para la columna de saldo de deposito.",
                                                         overlay: true,
                                                         closeConfirm: true
                                                     });
+                                                    $(".loadingScreen").hide();
+                                                    stopTimer();
                                                 }
                                             } else {
                                                 $("body").overhang({
                                                     type: "error",
                                                     primary: "#f84a1d",
                                                     accent: "#d94e2a",
-                                                    message: "Ingrese un valor para la columna de saldo de deposito.",
+                                                    message: "Ingrese una letra para la columna de saldo de deposito válida.",
                                                     overlay: true,
                                                     closeConfirm: true
                                                 });
+                                                $(".loadingScreen").hide();
+                                                stopTimer();
                                             }
                                         } else {
                                             $("body").overhang({
                                                 type: "error",
                                                 primary: "#f84a1d",
                                                 accent: "#d94e2a",
-                                                message: "Ingrese una letra para la columna de saldo de deposito válida.",
+                                                message: "Ingrese un valor para la columna de saldo de deposito.",
                                                 overlay: true,
                                                 closeConfirm: true
                                             });
+                                            $(".loadingScreen").hide();
+                                            stopTimer();
                                         }
                                     } else {
                                         $("body").overhang({
                                             type: "error",
                                             primary: "#f84a1d",
                                             accent: "#d94e2a",
-                                            message: "Ingrese un valor para la columna de saldo de deposito.",
+                                            message: "Ingrese una letra para la columna de tipo de persona válida.",
                                             overlay: true,
                                             closeConfirm: true
                                         });
+                                        $(".loadingScreen").hide();
+                                        stopTimer();
                                     }
                                 } else {
                                     $("body").overhang({
                                         type: "error",
                                         primary: "#f84a1d",
                                         accent: "#d94e2a",
-                                        message: "Ingrese una letra para la columna de tipo de persona válida.",
+                                        message: "Ingrese un valor para la columna de tipo de persona.",
                                         overlay: true,
                                         closeConfirm: true
                                     });
+                                    $(".loadingScreen").hide();
+                                    stopTimer();
                                 }
                             } else {
                                 $("body").overhang({
                                     type: "error",
                                     primary: "#f84a1d",
                                     accent: "#d94e2a",
-                                    message: "Ingrese un valor para la columna de tipo de persona.",
+                                    message: "Ingrese una letra para la columna del campo de nombre válida.",
                                     overlay: true,
                                     closeConfirm: true
                                 });
+                                $(".loadingScreen").hide();
+                                stopTimer();
                             }
                         } else {
                             $("body").overhang({
                                 type: "error",
                                 primary: "#f84a1d",
                                 accent: "#d94e2a",
-                                message: "Ingrese una letra para la columna del campo de nombre válida.",
+                                message: "Ingrese un valor para la columna del campo de nombre.",
                                 overlay: true,
                                 closeConfirm: true
                             });
+                            $(".loadingScreen").hide();
+                            stopTimer();
                         }
                     } else {
                         $("body").overhang({
                             type: "error",
                             primary: "#f84a1d",
                             accent: "#d94e2a",
-                            message: "Ingrese un valor para la columna del campo de nombre.",
+                            message: "Ingrese una letra para la columna del campo de id del cliente válida.",
                             overlay: true,
                             closeConfirm: true
                         });
+                        $(".loadingScreen").hide();
+                        stopTimer();
                     }
                 } else {
                     $("body").overhang({
                         type: "error",
                         primary: "#f84a1d",
                         accent: "#d94e2a",
-                        message: "Ingrese una letra para la columna del campo de id del cliente válida.",
+                        message: "Ingrese un valor para la columna del campo de id del cliente.",
                         overlay: true,
                         closeConfirm: true
                     });
+                    $(".loadingScreen").hide();
+                    stopTimer();
                 }
             } else {
                 $("body").overhang({
                     type: "error",
                     primary: "#f84a1d",
                     accent: "#d94e2a",
-                    message: "Ingrese un valor para la columna del campo de id del cliente.",
+                    message: "No existen valores del monto FOSEDE. Creé un valor antes de importar",
                     overlay: true,
                     closeConfirm: true
                 });
@@ -1865,12 +2376,12 @@ function createDeposit (deposito) {
             rolledBack = true;
         });
         const request = new sql.Request(transaction);
-        request.query("insert into Depositos (idCliente, nombreCliente, tipoPersona, tipoSubPersona, saldo, moneda, tipoCuenta, plazoResidual, sucursal, fecha) values ('"+deposito.idCliente+"','"+deposito.nombreCliente+"','"+deposito.tipoPersona+"','"+deposito.tipoSubPersona+"',"+deposito.saldo+",'"+deposito.moneda+"','"+deposito.tipoCuenta+"',"+deposito.plazoResidual+",'"+deposito.sucursal+"','"+formatDateCreation(new Date())+"')", (err, result) => {
+        request.query("insert into Depositos (idCliente, nombreCliente, tipoPersona, tipoSubPersona, saldo, moneda, tipoCuenta, fechaInicio, fechaFinal, sucursal, fecha) values ('"+deposito.idCLiente+"','"+deposito.nombreCliente+"','"+deposito.tipoPersona+"','"+deposito.tipoSubPersona+"',"+deposito.saldo+",'"+deposito.moneda+"','"+deposito.tipoCuenta+"','"+formatDateCreation(new Date(deposito.fechaInicio))+"','"+formatDateCreation(new Date(deposito.fechaFinal))+"','"+deposito.sucursal+"','"+formatDateCreation(new Date(deposito.fechaImportacion))+"')", (err, result) => {
             if (err) {
                 if (!rolledBack) {
                     transaction.rollback(err => {
                         contadorInserciones++;
-                        arregloErroresInsercion.push({b: nombre, c: "Error en inserción mssql"});
+                        arregloErroresInsercion.push({b: deposito.idCLiente, c: "Error en inserción mssql"});
                         printErrorFile();
                     });
                 }
@@ -1908,9 +2419,6 @@ function savePrestamosDB (indexTabla) {
     } else if($.trim($("#monedaConexionPrestamos").val()).length == 0) {
         entrar = false;
         campo = 'moneda';
-    } else if($.trim($("#tipoCuentaConexionPrestamos").val()).length == 0) {
-        entrar = false;
-        campo = 'tipo de cuenta';
     } else if($.trim($("#moraConexionPrestamos").val()).length == 0) {
         entrar = false;
         campo = 'días de mora';
@@ -1944,6 +2452,18 @@ function savePrestamosDB (indexTabla) {
     } else if($.trim($("#clausulasRestrictivasConexionPrestamos").val()).length == 0) {
         entrar = false;
         campo = 'clausulas restrictivas';
+    } else if($.trim($("#financiacionGarantizadaConexionPrestamos").val()).length == 0) {
+        entrar = false;
+        campo = 'financiación garantizada';
+    } else if($.trim($("#valorFinanciacionConexionPrestamos").val()).length == 0) {
+        entrar = false;
+        campo = 'valor de la financiación';
+    } else if($.trim($("#alacConexionPrestamos").val()).length == 0) {
+        entrar = false;
+        campo = 'ALAC';
+    } else if($.trim($("#factorConexionPrestamos").val()).length == 0) {
+        entrar = false;
+        campo = 'factor';
     } else if($.trim($("#fechaInicioConexionPrestamos").val()).length == 0) {
         entrar = false;
         campo = 'fecha de inicio del préstamo';
@@ -1953,19 +2473,19 @@ function savePrestamosDB (indexTabla) {
     } else if($.trim($("#sucursalConexionPrestamos").val()).length == 0) {
         entrar = false;
         campo = 'agencia';
-    } else if($.trim($("#prestamosUserDB").val()).length == 0 && $("ul#myTabDepositos li.active")[0].value == 1) {
+    } else if($.trim($("#prestamosUserDB").val()).length == 0 && $("ul#myTabPrestamos li.active")[0].value == 0) {
         entrar = false;
         campo = 'usuario de la base de datos';
-    } else if($.trim($("#prestamosPasswordDB").val()).length == 0 && $("ul#myTabDepositos li.active")[0].value == 1) {
+    } else if($.trim($("#prestamosPasswordDB").val()).length == 0 && $("ul#myTabPrestamos li.active")[0].value == 0) {
         entrar = false;
         campo = 'contraseña de la base de datos';
-    } else if($.trim($("#prestamosServerDB").val()).length == 0 && $("ul#myTabDepositos li.active")[0].value == 1) {
+    } else if($.trim($("#prestamosServerDB").val()).length == 0 && $("ul#myTabPrestamos li.active")[0].value == 0) {
         entrar = false;
         campo = 'servidor de la base de datos';
-    } else if($.trim($("#prestamosDataBaseDB").val()).length == 0 && $("ul#myTabDepositos li.active")[0].value == 1) {
+    } else if($.trim($("#prestamosDataBaseDB").val()).length == 0 && $("ul#myTabPrestamos li.active")[0].value == 0) {
         entrar = false;
         campo = 'nombre de la base de datos';
-    } else if($.trim($("#prestamosTableDB").val()).length == 0 && $("ul#myTabDepositos li.active")[0].value == 1) {
+    } else if($.trim($("#prestamosTableDB").val()).length == 0 && $("ul#myTabPrestamos li.active")[0].value == 0) {
         entrar = false;
         campo = 'tabla de la base de datos';
     }
@@ -1975,7 +2495,7 @@ function savePrestamosDB (indexTabla) {
         contadorInserciones = 0;
         totalInserciones = 0;
         insertoEnDBListas = false;
-        var elemento = $("ul#myTabDepositos li.active");
+        var elemento = $("ul#myTabPrestamos li.active");
         var indice = elemento[0].value;
         //Indice 1 = Excel
         if(indice == 0) {
@@ -2018,40 +2538,47 @@ function savePrestamosDB (indexTabla) {
                 });
             }
         } else if(indice == 1) {
-            var identificador = $.trim($("#idClienteConexionPrestamos").val());
-            var nombre = $.trim($("#nombreClienteConexionPrestamos").val());
-            var tipoPersona = $.trim($("#tipoPersonaClienteConexionPrestamos").val());
-            var tipoSubPersona = $.trim($("#tipoSubPersonaClienteConexionPrestamos").val());
-            var numPrestamo = $.trim($("#numPrestamoConexionPrestamos").val());
-            var saldo = $.trim($("#saldoConexionPrestamos").val());
-            var moneda = $.trim($("#monedaConexionPrestamos").val());
-            var tipoCuenta = $.trim($("#tipoCuentaConexionPrestamos").val());
-            var diasMora = $.trim($("#moraConexionPrestamos").val());
-            var amortizaciones = $.trim($("#amortizacionesConexionPrestamos").val());
-            var sobregiro = $.trim($("#sobregirosConexionPrestamos").val());
-            var contingente = $.trim($("#contingenteConexionPrestamos").val());
-            var clasificacionCartera = $.trim($("#clasificacionCarteraConexionPrestamos").val());
-            var tipoCredito = $.trim($("#tipoCreditoConexionPrestamos").val());
-            var esperado30 = $.trim($("#esperado30ConexionPrestamos").val());
-            var esperado60 = $.trim($("#esperado60ConexionPrestamos").val());
-            var esperado90 = $.trim($("#esperado90ConexionPrestamos").val());
-            var esperado120 = $("#esperado120ConexionPrestamos").val();
-            var clausulasRestrictivas = $.trim($("#clausulasRestrictivasConexionPrestamos").val());
-            var fechaInicio = $.trim($("#fechaInicioConexionPrestamos").val());
-            var fechaFinal = $.trim($("#fechaExpiracionConexionPrestamos").val());
-            var montoOtorgado = $.trim($("#montoOtorgadoConexionPrestamos").val());
-            var sucursal = $.trim($("#sucursalConexionDepositos").val());
-            var nombreHoja = $.trim($("#prestamosTableExcel").val());
-            var filaInicial = $.trim($("#prestamosExcelInicio").val());
-            var filaFinal = $.trim($("#prestamosExcelFinal").val());
-            if(isNaN(identificador)) {
-                if(isNaN(nombre)) {
-                    if(isNaN(tipoPersona)) {
-                        if(isNaN(tipoSubPersona)) {
-                            if(isNaN(numPrestamo)) {
-                                if(isNaN(saldo)) {
-                                    if(isNaN(moneda)) {
-                                        if(isNaN(tipoCuenta)) {
+            if(arregloFOSEDE.length > 0) {
+                myInterval = setInterval(myTimer, 1000);
+                $( ".loadingScreen" ).fadeIn( "slow", function() {
+                });
+                var identificador = $.trim($("#idClienteConexionPrestamos").val());
+                var nombre = $.trim($("#nombreClienteConexionPrestamos").val());
+                var tipoPersona = $.trim($("#tipoPersonaClienteConexionPrestamos").val());
+                var tipoSubPersona = $.trim($("#tipoSubPersonaClienteConexionPrestamos").val());
+                var numPrestamo = $.trim($("#numPrestamoConexionPrestamos").val());
+                var saldo = $.trim($("#saldoConexionPrestamos").val());
+                var moneda = $.trim($("#monedaConexionPrestamos").val());
+                var diasMora = $.trim($("#moraConexionPrestamos").val());
+                var amortizaciones = $.trim($("#amortizacionesConexionPrestamos").val());
+                var sobregiro = $.trim($("#sobregirosConexionPrestamos").val());
+                var contingente = $.trim($("#contingenteConexionPrestamos").val());
+                var clasificacionCartera = $.trim($("#clasificacionCarteraConexionPrestamos").val());
+                var tipoCredito = $.trim($("#tipoCreditoConexionPrestamos").val());
+                var esperado30 = $.trim($("#esperado30ConexionPrestamos").val());
+                var esperado60 = $.trim($("#esperado60ConexionPrestamos").val());
+                var esperado90 = $.trim($("#esperado90ConexionPrestamos").val());
+                var esperado120 = $("#esperado120ConexionPrestamos").val();
+                var clausulasRestrictivas = $.trim($("#clausulasRestrictivasConexionPrestamos").val());
+                var financiacionGarantizada = $.trim($("#financiacionGarantizadaConexionPrestamos").val());
+                var valorFinanciacion = $.trim($("#valorFinanciacionConexionPrestamos").val());
+                var alac = $.trim($("#alacConexionPrestamos").val());
+                var factor = $.trim($("#factorConexionPrestamos").val());
+                var fechaInicio = $.trim($("#fechaInicioConexionPrestamos").val());
+                var fechaFinal = $.trim($("#fechaExpiracionConexionPrestamos").val());
+                var montoOtorgado = $.trim($("#montoOtorgadoConexionPrestamos").val());
+                var sucursal = $.trim($("#sucursalConexionPrestamos").val());
+                var fechaImportacion = $.trim($("#fechaImportacionConexionPrestamos").val());
+                var nombreHoja = $.trim($("#prestamosTableExcel").val());
+                var filaInicial = $.trim($("#prestamosExcelInicio").val());
+                var filaFinal = $.trim($("#prestamosExcelFinal").val());
+                if(isNaN(identificador)) {
+                    if(isNaN(nombre)) {
+                        if(isNaN(tipoPersona)) {
+                            if(isNaN(tipoSubPersona)) {
+                                if(isNaN(numPrestamo)) {
+                                    if(isNaN(saldo)) {
+                                        if(isNaN(moneda)) {
                                             if(isNaN(diasMora)) {
                                                 if(isNaN(amortizaciones)) {
                                                     if(isNaN(sobregiro)) {
@@ -2063,306 +2590,598 @@ function savePrestamosDB (indexTabla) {
                                                                             if(isNaN(esperado90)) {
                                                                                 if(isNaN(esperado120)) {
                                                                                     if(isNaN(clausulasRestrictivas)) {
-                                                                                        if(isNaN(fechaInicio)) {
-                                                                                            if(isNaN(fechaFinal)) {
-                                                                                                if(isNaN(montoOtorgado)) {
-                                                                                                    if(isNaN(sucursal)) {
-                                                                                                        if(nombreHoja.length > 0) {
-                                                                                                            if(!isNaN(filaInicial) && filaInicial.length>0) {
-                                                                                                                var file = dialog.showOpenDialog({
-                                                                                                                    title: 'Seleccione un archivo',
-                                                                                                                    filters: [{
-                                                                                                                        name: "Spreadsheets",
-                                                                                                                        extensions: "xls|xlsx|xlsm|xlsb|xml|xlw|xlc|csv|txt|dif|sylk|slk|prn|ods|fods|uos|dbf|wks|123|wq1|qpw".split("|")
-                                                                                                                    }],
-                                                                                                                    properties: ['openFile']
-                                                                                                                });
-                                                                                                                var workbook;
-                                                                                                                if(file.length > 0) {
-                                                                                                                    workbook = XLSX.readFile(file[0]);
-                                                                                                                    var sheet = workbook.Sheets[nombreHoja];
-                                                                                                                    if(sheet != null) {
-                                                                                                                        if(filaFinal.length == 0)
-                                                                                                                            filaFinal = 0;
-                                                                                                                        var arregloDePrestamos = [];
-                                                                                                                        identificador = identificador.toUpperCase();
-                                                                                                                        nombre = nombre.toUpperCase();
-                                                                                                                        tipoPersona = tipoPersona.toUpperCase();
-                                                                                                                        tipoSubPersona = tipoSubPersona.toUpperCase();
-                                                                                                                        numPrestamo = numPrestamo.toUpperCase();
-                                                                                                                        saldo = saldo.toUpperCase();
-                                                                                                                        moneda = moneda.toUpperCase();
-                                                                                                                        tipoCuenta = tipoCuenta.toUpperCase();
-                                                                                                                        diasMora = diasMora.toUpperCase();
-                                                                                                                        amortizaciones = amortizaciones.toUpperCase();
-                                                                                                                        sobregiro = sobregiro.toUpperCase();
-                                                                                                                        contingente = contingente.toUpperCase();
-                                                                                                                        clasificacionCartera = clasificacionCartera.toUpperCase();
-                                                                                                                        tipoCredito = tipoCredito.toUpperCase();
-                                                                                                                        esperado30 = esperado30.toUpperCase();
-                                                                                                                        esperado60 = esperado60.toUpperCase();
-                                                                                                                        esperado90 = esperado90.toUpperCase();
-                                                                                                                        esperado120 = esperado120.toUpperCase();
-                                                                                                                        clausulasRestrictivas = clausulasRestrictivas.toUpperCase();
-                                                                                                                        fechaInicio = fechaInicio.toUpperCase();
-                                                                                                                        fechaFinal = fechaFinal.toUpperCase();
-                                                                                                                        montoOtorgado = montoOtorgado.toUpperCase();
-                                                                                                                        sucursal = sucursal.toUpperCase();
-                                                                                                                        filaInicial = parseInt(filaInicial);
-                                                                                                                        filaFinal = parseInt(filaFinal);
-                                                                                                                        if(filaFinal != 0) {
-                                                                                                                            for (var i = filaInicial; i <= filaFinal; i++) {
-                                                                                                                                if(sheet[identificador+i] != undefined && sheet[identificador+i].v.toString().length > 0 && sheet[nombre+i] != undefined && sheet[nombre+i].v.toString().length > 0 && sheet[tipoPersona+i] != undefined && sheet[tipoPersona+i].v.toString().length > 0 && sheet[tipoSubPersona+i] != undefined && sheet[tipoSubPersona+i].v.toString().length > 0) {
-                                                                                                                                    var prestamoIDCLiente = sheet[identificador+i].v;
-                                                                                                                                    var prestamoNombreCliente = sheet[nombre+i].v;
-                                                                                                                                    var prestamoTipoPersona = sheet[tipoPersona+i].v;
-                                                                                                                                    var prestamoTipoSubPersona = sheet[tipoSubPersona+i].v;
-                                                                                                                                    var prestamoNumPrestamo = sheet[numPrestamo+i].v;
-                                                                                                                                    var prestamoTotalDepositos = sheet[saldo+i].v;
-                                                                                                                                    var prestamoMoneda = sheet[moneda+i].v;
-                                                                                                                                    var prestamoTipoCuenta = sheet[tipoCuenta+i].v;
-                                                                                                                                    var prestamoDiasMora = sheet[diasMora+i].v;
-                                                                                                                                    var prestamoAmortizaciones = sheet[amortizaciones+i].v;
-                                                                                                                                    var prestamoSobregiro = sheet[sobregiro+i].v;
-                                                                                                                                    var prestamoContingente = sheet[contingente+i].v;
-                                                                                                                                    var prestamoClasificacionCartera = sheet[clasificacionCartera+i].v;
-                                                                                                                                    var prestamoTipoCredito = sheet[tipoCredito+i].v;
-                                                                                                                                    var prestamoEsperado30 = sheet[esperado30+i].v;
-                                                                                                                                    var prestamoEsperado60 = sheet[esperado60+i].v;
-                                                                                                                                    var prestamoEsperado90 = sheet[esperado90+i].v;
-                                                                                                                                    var prestamoEsperado120 = sheet[esperado120+i].v;
-                                                                                                                                    var prestamoClausulasRestrictivas = sheet[clausulasRestrictivas+i].v;
-                                                                                                                                    var prestamoFechaInicio = sheet[fechaInicio+i].v;
-                                                                                                                                    var prestamoFechaFinal = sheet[fechaFinal+i].v;
-                                                                                                                                    var prestamoMontoOtorgado = sheet[montoOtorgado+i].v;
-                                                                                                                                    var prestamoSucursal = sheet[sucursal+i].v;
-                                                                                                                                    prestamoIDCLiente = prestamoIDCLiente.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
-                                                                                                                                    prestamoTipoCuenta = prestamoTipoCuenta.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
-                                                                                                                                    prestamoSucursal = prestamoSucursal.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
-                                                                                                                                    prestamoNombreCliente = prestamoNombreCliente.toLowerCase();
-                                                                                                                                    prestamoNombreCliente = UpperCasefirst(prestamoNombreCliente);
-                                                                                                                                    arregloDePrestamos.push({idCliente: prestamoIDCLiente, nombreCliente: prestamoNombreCliente, tipoPersona: prestamoTipoPersona, tipoSubPersona: prestamoTipoSubPersona, numPrestamo: prestamoNumPrestamo, saldo: prestamoTotalDepositos, moneda: prestamoMoneda, tipoCuenta: prestamoTipoCuenta, montoOtorgado: prestamoMontoOtorgado, diasMora: prestamoDiasMora, amortizacion: prestamoAmortizaciones, sobregiro: prestamoSobregiro, contingente: prestamoContingente, clasificacionCartera: prestamoClasificacionCartera, tipoCredito: prestamoTipoCredito, pago30: prestamoEsperado30, pago60: prestamoEsperado60, pago90: prestamoEsperado90, pago120: prestamoEsperado120, clausulasRestrictivas: prestamoClausulasRestrictivas, fechaInicio: formatDateCreation(prestamoFechaInicio), fechaFinal: formatDateCreation(prestamoFechaFinal), sucursal: prestamoSucursal});
-                                                                                                                                    totalInserciones++;
-                                                                                                                                } else if(sheet[identificador+i] != undefined|| sheet[nombre+i] != undefined|| sheet[tipoPersona+i] != undefined || sheet[tipoSubPersona+i] != undefined)
-                                                                                                                                    arregloErroresExcel.push(i);
-                                                                                                                            };
-                                                                                                                        } else {
-                                                                                                                            var finalRow = sheet["!ref"].split(":")[1].replace(/[A-Z]/g, "");
-                                                                                                                            finalRow = parseInt(finalRow);
-                                                                                                                            for (var i = filaInicial; i <= finalRow; i++) {
-                                                                                                                                if(sheet[identificador+i] != undefined && sheet[identificador+i].v.toString().length > 0 && sheet[nombre+i] != undefined && sheet[nombre+i].v.toString().length > 0 && sheet[tipoPersona+i] != undefined && sheet[tipoPersona+i].v.toString().length > 0 && sheet[tipoSubPersona+i] != undefined && sheet[tipoSubPersona+i].v.toString().length > 0) {
-                                                                                                                                    var prestamoIDCLiente = sheet[identificador+i].v;
-                                                                                                                                    var prestamoNombreCliente = sheet[nombre+i].v;
-                                                                                                                                    var prestamoTipoPersona = sheet[tipoPersona+i].v;
-                                                                                                                                    var prestamoTipoSubPersona = sheet[tipoSubPersona+i].v;
-                                                                                                                                    var prestamoNumPrestamo = sheet[numPrestamo+i].v;
-                                                                                                                                    var prestamoTotalDepositos = sheet[saldo+i].v;
-                                                                                                                                    var prestamoMoneda = sheet[moneda+i].v;
-                                                                                                                                    var prestamoTipoCuenta = sheet[tipoCuenta+i].v;
-                                                                                                                                    var prestamoDiasMora = sheet[diasMora+i].v;
-                                                                                                                                    var prestamoAmortizaciones = sheet[amortizaciones+i].v;
-                                                                                                                                    var prestamoSobregiro = sheet[sobregiro+i].v;
-                                                                                                                                    var prestamoContingente = sheet[contingente+i].v;
-                                                                                                                                    var prestamoClasificacionCartera = sheet[clasificacionCartera+i].v;
-                                                                                                                                    var prestamoTipoCredito = sheet[tipoCredito+i].v;
-                                                                                                                                    var prestamoEsperado30 = sheet[esperado30+i].v;
-                                                                                                                                    var prestamoEsperado60 = sheet[esperado60+i].v;
-                                                                                                                                    var prestamoEsperado90 = sheet[esperado90+i].v;
-                                                                                                                                    var prestamoEsperado120 = sheet[esperado120+i].v;
-                                                                                                                                    var prestamoClausulasRestrictivas = sheet[clausulasRestrictivas+i].v;
-                                                                                                                                    var prestamoFechaInicio = sheet[fechaInicio+i].v;
-                                                                                                                                    var prestamoFechaFinal = sheet[fechaFinal+i].v;
-                                                                                                                                    var prestamoMontoOtorgado = sheet[montoOtorgado+i].v;
-                                                                                                                                    var prestamoSucursal = sheet[sucursal+i].v;
-                                                                                                                                    //depositoIDCLiente = depositoIDCLiente.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
-                                                                                                                                    prestamoIDCLiente = prestamoIDCLiente.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
-                                                                                                                                    prestamoTipoCuenta = prestamoTipoCuenta.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
-                                                                                                                                    //activoMonto = activoMonto.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
-                                                                                                                                    prestamoSucursal = prestamoSucursal.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
-                                                                                                                                    prestamoNombreCliente = prestamoNombreCliente.toLowerCase();
-                                                                                                                                    prestamoNombreCliente = UpperCasefirst(prestamoNombreCliente);
-                                                                                                                                    /*depositoTipoCuenta = depositoTipoCuenta.toLowerCase();
-                                                                                                                                    depositoTipoCuenta = UpperCasefirst(depositoTipoCuenta);
-                                                                                                                                    depositoSucursal = depositoSucursal.toLowerCase();
-                                                                                                                                    depositoSucursal = UpperCasefirst(depositoSucursal);*/
-                                                                                                                                    arregloDePrestamos.push({idCliente: prestamoIDCLiente, nombreCliente: prestamoNombreCliente, tipoPersona: prestamoTipoPersona, tipoSubPersona: prestamoTipoSubPersona, numPrestamo: prestamoNumPrestamo, saldo: prestamoTotalDepositos, moneda: prestamoMoneda, tipoCuenta: prestamoTipoCuenta, montoOtorgado: prestamoMontoOtorgado, diasMora: prestamoDiasMora, amortizacion: prestamoAmortizaciones, sobregiro: prestamoSobregiro, contingente: prestamoContingente, clasificacionCartera: prestamoClasificacionCartera, tipoCredito: prestamoTipoCredito, pago30: prestamoEsperado30, pago60: prestamoEsperado60, pago90: prestamoEsperado90, pago120: prestamoEsperado120, clausulasRestrictivas: prestamoClausulasRestrictivas, fechaInicio: formatDateCreation(prestamoFechaInicio), fechaFinal: formatDateCreation(prestamoFechaFinal), sucursal: prestamoSucursal});
-                                                                                                                                    totalInserciones++;
-                                                                                                                                } else if(sheet[identificador+i] != undefined|| sheet[nombre+i] != undefined|| sheet[tipoPersona+i] != undefined || sheet[tipoSubPersona+i] != undefined)
-                                                                                                                                    arregloErroresExcel.push(i);
-                                                                                                                            };
-                                                                                                                        }
-                                                                                                                        for (var i = 0; i < arregloDePrestamos.length; i++) {
-                                                                                                                            if(arregloDePrestamos[i].idCliente.length < 31) {
-                                                                                                                                if(arregloDePrestamos[i].nombreCliente.length < 81) {
-                                                                                                                                    if(arregloDePrestamos[i].tipoPersona.length < 81) {
-                                                                                                                                        if(arregloDePrestamos[i].tipoSubPersona.length < 81) {
-                                                                                                                                            if(arregloDePrestamos[i].numPrestamo.toString().length < 51) {
-                                                                                                                                                if(arregloDePrestamos[i].saldo.toString().length < 21) {
-                                                                                                                                                    if(arregloDePrestamos[i].moneda.length < 31) {
-                                                                                                                                                        if(arregloDePrestamos[i].montoOtorgado.toString().length < 21) {
-                                                                                                                                                            if(arregloDePrestamos[i].tipoCuenta.length < 101) {
-                                                                                                                                                                if(arregloDePrestamos[i].diasMora.toString().length < 21) {
-                                                                                                                                                                    if(arregloDePrestamos[i].amortizacion.toString().length < 21) {
-                                                                                                                                                                        if(arregloDePrestamos[i].sobregiro.toString().length < 21) {
-                                                                                                                                                                            if(arregloDePrestamos[i].contingente.toString().length < 21) {
-                                                                                                                                                                                if(arregloDePrestamos[i].clasificacionCartera.length < 3) {
-                                                                                                                                                                                    if(arregloDePrestamos[i].tipoCredito.length < 81) {
-                                                                                                                                                                                        if(arregloDePrestamos[i].pago30.toString().length < 21) {
-                                                                                                                                                                                            if(arregloDePrestamos[i].pago60.toString().length < 21) {
-                                                                                                                                                                                                if(arregloDePrestamos[i].pago90.toString().length < 21) {
-                                                                                                                                                                                                    if(arregloDePrestamos[i].pago120.toString().length < 21) {
-                                                                                                                                                                                                        if(arregloDePrestamos[i].clausulasRestrictivas.length > 0) {
-                                                                                                                                                                                                            if(Date.parse(arregloDePrestamos[i].fechaInicio)) {
-                                                                                                                                                                                                                if(Date.parse(arregloDePrestamos[i].fechaFinal)) {
-                                                                                                                                                                                                                    if(arregloDePrestamos[i].sucursal.length < 51) {
-                                                                                                                                                                                                                        createLoan( arregloDePrestamos[i] );
+                                                                                        if(isNaN(financiacionGarantizada)) {
+                                                                                            if(isNaN(valorFinanciacion)) {
+                                                                                                if(isNaN(alac)) {
+                                                                                                    if(isNaN(factor)) {
+                                                                                                        if(isNaN(fechaInicio)) {
+                                                                                                            if(isNaN(fechaFinal)) {
+                                                                                                                if(isNaN(montoOtorgado)) {
+                                                                                                                    if(isNaN(sucursal)) {
+                                                                                                                        if(isNaN(fechaImportacion)) {
+                                                                                                                            if(nombreHoja.length > 0) {
+                                                                                                                                if(!isNaN(filaInicial) && filaInicial.length>0) {
+                                                                                                                                    var file = dialog.showOpenDialog({
+                                                                                                                                        title: 'Seleccione un archivo',
+                                                                                                                                        filters: [{
+                                                                                                                                            name: "Spreadsheets",
+                                                                                                                                            extensions: "xls|xlsx|xlsm|xlsb|xml|xlw|xlc|csv|txt|dif|sylk|slk|prn|ods|fods|uos|dbf|wks|123|wq1|qpw".split("|")
+                                                                                                                                        }],
+                                                                                                                                        properties: ['openFile']
+                                                                                                                                    });
+                                                                                                                                    var workbook;
+                                                                                                                                    if(file.length > 0) {
+                                                                                                                                        workbook = XLSX.readFile(file[0]);
+                                                                                                                                        var sheet = workbook.Sheets[nombreHoja];
+                                                                                                                                        if(sheet != null) {
+                                                                                                                                            if(filaFinal.length == 0)
+                                                                                                                                                filaFinal = 0;
+                                                                                                                                            var arregloDePrestamos = [];
+                                                                                                                                            identificador = identificador.toUpperCase();
+                                                                                                                                            nombre = nombre.toUpperCase();
+                                                                                                                                            tipoPersona = tipoPersona.toUpperCase();
+                                                                                                                                            tipoSubPersona = tipoSubPersona.toUpperCase();
+                                                                                                                                            numPrestamo = numPrestamo.toUpperCase();
+                                                                                                                                            saldo = saldo.toUpperCase();
+                                                                                                                                            moneda = moneda.toUpperCase();
+                                                                                                                                            diasMora = diasMora.toUpperCase();
+                                                                                                                                            amortizaciones = amortizaciones.toUpperCase();
+                                                                                                                                            sobregiro = sobregiro.toUpperCase();
+                                                                                                                                            contingente = contingente.toUpperCase();
+                                                                                                                                            clasificacionCartera = clasificacionCartera.toUpperCase();
+                                                                                                                                            tipoCredito = tipoCredito.toUpperCase();
+                                                                                                                                            esperado30 = esperado30.toUpperCase();
+                                                                                                                                            esperado60 = esperado60.toUpperCase();
+                                                                                                                                            esperado90 = esperado90.toUpperCase();
+                                                                                                                                            esperado120 = esperado120.toUpperCase();
+                                                                                                                                            clausulasRestrictivas = clausulasRestrictivas.toUpperCase();
+                                                                                                                                            financiacionGarantizada = financiacionGarantizada.toUpperCase();
+                                                                                                                                            valorFinanciacion = valorFinanciacion.toUpperCase();
+                                                                                                                                            alac = alac.toUpperCase();
+                                                                                                                                            factor = factor.toUpperCase();
+                                                                                                                                            fechaInicio = fechaInicio.toUpperCase();
+                                                                                                                                            fechaFinal = fechaFinal.toUpperCase();
+                                                                                                                                            montoOtorgado = montoOtorgado.toUpperCase();
+                                                                                                                                            sucursal = sucursal.toUpperCase();
+                                                                                                                                            fechaImportacion = fechaImportacion.toUpperCase();
+                                                                                                                                            filaInicial = parseInt(filaInicial);
+                                                                                                                                            filaFinal = parseInt(filaFinal);
+                                                                                                                                            if(filaFinal != 0) {
+                                                                                                                                                for (var i = filaInicial; i <= filaFinal; i++) {
+                                                                                                                                                    if(sheet[identificador+i] != undefined && sheet[identificador+i].v.toString().length > 0 && sheet[nombre+i] != undefined && sheet[nombre+i].v.toString().length > 0 && sheet[tipoPersona+i] != undefined && sheet[tipoPersona+i].v.toString().length > 0 && sheet[tipoSubPersona+i] != undefined && sheet[tipoSubPersona+i].v.toString().length > 0 && sheet[fechaImportacion+i] != undefined && sheet[fechaImportacion+i].w.toString().length > 0) {
+                                                                                                                                                        var prestamoIDCLiente = sheet[identificador+i].v;
+                                                                                                                                                        var prestamoNombreCliente = sheet[nombre+i].v;
+                                                                                                                                                        var prestamoTipoPersona = sheet[tipoPersona+i].v;
+                                                                                                                                                        var prestamoTipoSubPersona = sheet[tipoSubPersona+i].v;
+                                                                                                                                                        var prestamoNumPrestamo = sheet[numPrestamo+i].v;
+                                                                                                                                                        var prestamoTotalDepositos = sheet[saldo+i].v;
+                                                                                                                                                        var prestamoMoneda = sheet[moneda+i].v;
+                                                                                                                                                        var prestamoDiasMora = sheet[diasMora+i].v;
+                                                                                                                                                        var prestamoAmortizaciones = sheet[amortizaciones+i].v;
+                                                                                                                                                        var prestamoSobregiro = sheet[sobregiro+i].v;
+                                                                                                                                                        var prestamoContingente = sheet[contingente+i].v;
+                                                                                                                                                        var prestamoClasificacionCartera = sheet[clasificacionCartera+i].v;
+                                                                                                                                                        var prestamoTipoCredito = sheet[tipoCredito+i].v;
+                                                                                                                                                        var prestamoEsperado30 = sheet[esperado30+i].v;
+                                                                                                                                                        var prestamoEsperado60 = sheet[esperado60+i].v;
+                                                                                                                                                        var prestamoEsperado90 = sheet[esperado90+i].v;
+                                                                                                                                                        var prestamoEsperado120 = sheet[esperado120+i].v;
+                                                                                                                                                        var prestamoClausulasRestrictivas = sheet[clausulasRestrictivas+i].v;
+                                                                                                                                                        var prestamoFinanciacionGarantizada = sheet[financiacionGarantizada+i].v;
+                                                                                                                                                        var prestamoValorFinanciacion = sheet[valorFinanciacion+i].v;
+                                                                                                                                                        var prestamoALAC;
+                                                                                                                                                        if(sheet[alac+i] != undefined)
+                                                                                                                                                            prestamoALAC = sheet[alac+i].v;
+                                                                                                                                                        else
+                                                                                                                                                            prestamoALAC = '';
+                                                                                                                                                        var prestamoFactor = sheet[factor+i].v;
+                                                                                                                                                        var prestamoFechaInicio = new Date(sheet[fechaInicio+i].w);
+                                                                                                                                                        var prestamoFechaFinal = new Date(sheet[fechaFinal+i].w);
+                                                                                                                                                        var prestamoMontoOtorgado = sheet[montoOtorgado+i].v;
+                                                                                                                                                        var prestamoSucursal = sheet[sucursal+i].v;
+                                                                                                                                                        var prestamoFechaImportacion = new Date(sheet[fechaImportacion+i].w);
+                                                                                                                                                        prestamoIDCLiente = prestamoIDCLiente.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
+                                                                                                                                                        prestamoSucursal = prestamoSucursal.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
+                                                                                                                                                        prestamoNombreCliente = prestamoNombreCliente.toLowerCase();
+                                                                                                                                                        prestamoNombreCliente = UpperCasefirst(prestamoNombreCliente);
+                                                                                                                                                        prestamoSucursal = prestamoSucursal.toLowerCase();
+                                                                                                                                                        prestamoSucursal = UpperCasefirst(prestamoSucursal);
+                                                                                                                                                        prestamoMoneda = prestamoMoneda.toLowerCase();
+                                                                                                                                                        prestamoMoneda = UpperCasefirst(prestamoMoneda);
+                                                                                                                                                        if(existeMonedaFOSEDE(prestamoMoneda)) {
+                                                                                                                                                            arregloDePrestamos.push({idCliente: prestamoIDCLiente, nombreCliente: prestamoNombreCliente, tipoPersona: prestamoTipoPersona, tipoSubPersona: prestamoTipoSubPersona, numPrestamo: prestamoNumPrestamo, saldo: prestamoTotalDepositos, moneda: prestamoMoneda, montoOtorgado: prestamoMontoOtorgado, diasMora: prestamoDiasMora, amortizacion: prestamoAmortizaciones, sobregiro: prestamoSobregiro, contingente: prestamoContingente, clasificacionCartera: prestamoClasificacionCartera, tipoCredito: prestamoTipoCredito, pago30: prestamoEsperado30, pago60: prestamoEsperado60, pago90: prestamoEsperado90, pago120: prestamoEsperado120, clausulasRestrictivas: prestamoClausulasRestrictivas, financiacionGarantizada: prestamoFinanciacionGarantizada, valorFinanciacion: prestamoValorFinanciacion, alac: prestamoALAC, factor: prestamoFactor, fechaInicio: prestamoFechaInicio, fechaFinal: prestamoFechaFinal, sucursal: prestamoSucursal, fechaImportacion: prestamoFechaImportacion});
+                                                                                                                                                            totalInserciones++;
+                                                                                                                                                        } else 
+                                                                                                                                                            arregloErroresInsercion.push({b: "Prestamo: "+prestamoNumPrestamo, c: "No existe un monto FOSEDE para el tipo de moneda"});
+                                                                                                                                                    } else if(sheet[identificador+i] != undefined|| sheet[nombre+i] != undefined|| sheet[tipoPersona+i] != undefined || sheet[tipoSubPersona+i] != undefined || sheet[fechaImportacion+i] != undefined)
+                                                                                                                                                        arregloErroresExcel.push(i);
+                                                                                                                                                };
+                                                                                                                                            } else {
+                                                                                                                                                var finalRow = sheet["!ref"].split(":")[1].replace(/[A-Z]/g, "");
+                                                                                                                                                finalRow = parseInt(finalRow);
+                                                                                                                                                for (var i = filaInicial; i <= finalRow; i++) {
+                                                                                                                                                    if(sheet[identificador+i] != undefined && sheet[identificador+i].v.toString().length > 0 && sheet[nombre+i] != undefined && sheet[nombre+i].v.toString().length > 0 && sheet[tipoPersona+i] != undefined && sheet[tipoPersona+i].v.toString().length > 0 && sheet[tipoSubPersona+i] != undefined && sheet[tipoSubPersona+i].v.toString().length > 0 && sheet[fechaImportacion+i] != undefined && sheet[fechaImportacion+i].w.toString().length > 0) {
+                                                                                                                                                        var prestamoIDCLiente = sheet[identificador+i].v;
+                                                                                                                                                        var prestamoNombreCliente = sheet[nombre+i].v;
+                                                                                                                                                        var prestamoTipoPersona = sheet[tipoPersona+i].v;
+                                                                                                                                                        var prestamoTipoSubPersona = sheet[tipoSubPersona+i].v;
+                                                                                                                                                        var prestamoNumPrestamo = sheet[numPrestamo+i].v;
+                                                                                                                                                        var prestamoTotalDepositos = sheet[saldo+i].v;
+                                                                                                                                                        var prestamoMoneda = sheet[moneda+i].v;
+                                                                                                                                                        var prestamoDiasMora = sheet[diasMora+i].v;
+                                                                                                                                                        var prestamoAmortizaciones = sheet[amortizaciones+i].v;
+                                                                                                                                                        var prestamoSobregiro = sheet[sobregiro+i].v;
+                                                                                                                                                        var prestamoContingente = sheet[contingente+i].v;
+                                                                                                                                                        var prestamoClasificacionCartera = sheet[clasificacionCartera+i].v;
+                                                                                                                                                        var prestamoTipoCredito = sheet[tipoCredito+i].v;
+                                                                                                                                                        var prestamoEsperado30 = sheet[esperado30+i].v;
+                                                                                                                                                        var prestamoEsperado60 = sheet[esperado60+i].v;
+                                                                                                                                                        var prestamoEsperado90 = sheet[esperado90+i].v;
+                                                                                                                                                        var prestamoEsperado120 = sheet[esperado120+i].v;
+                                                                                                                                                        var prestamoClausulasRestrictivas = sheet[clausulasRestrictivas+i].v;
+                                                                                                                                                        var prestamoFinanciacionGarantizada = sheet[financiacionGarantizada+i].v;
+                                                                                                                                                        var prestamoValorFinanciacion = sheet[valorFinanciacion+i].v;
+                                                                                                                                                        var prestamoALAC;
+                                                                                                                                                        if(sheet[alac+i] != undefined)
+                                                                                                                                                            prestamoALAC = sheet[alac+i].v;
+                                                                                                                                                        else
+                                                                                                                                                            prestamoALAC = '';
+                                                                                                                                                        var prestamoFactor = sheet[factor+i].v;
+                                                                                                                                                        var prestamoFechaInicio = new Date(sheet[fechaInicio+i].w);
+                                                                                                                                                        var prestamoFechaFinal = new Date(sheet[fechaFinal+i].w);
+                                                                                                                                                        var prestamoMontoOtorgado = sheet[montoOtorgado+i].v;
+                                                                                                                                                        var prestamoSucursal = sheet[sucursal+i].v;
+                                                                                                                                                        var prestamoFechaImportacion = new Date(sheet[fechaImportacion+i].w);
+                                                                                                                                                        prestamoIDCLiente = prestamoIDCLiente.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
+                                                                                                                                                        prestamoSucursal = prestamoSucursal.toString().replace(/[!@#$%^&*(),.?":{}|<>]*/g, '');
+                                                                                                                                                        prestamoNombreCliente = prestamoNombreCliente.toLowerCase();
+                                                                                                                                                        prestamoNombreCliente = UpperCasefirst(prestamoNombreCliente);
+                                                                                                                                                        prestamoSucursal = prestamoSucursal.toLowerCase();
+                                                                                                                                                        prestamoSucursal = UpperCasefirst(prestamoSucursal);
+                                                                                                                                                        prestamoMoneda = prestamoMoneda.toLowerCase();
+                                                                                                                                                        prestamoMoneda = UpperCasefirst(prestamoMoneda);
+                                                                                                                                                        if(existeMonedaFOSEDE(prestamoMoneda)) {
+                                                                                                                                                            arregloDePrestamos.push({idCliente: prestamoIDCLiente, nombreCliente: prestamoNombreCliente, tipoPersona: prestamoTipoPersona, tipoSubPersona: prestamoTipoSubPersona, numPrestamo: prestamoNumPrestamo, saldo: prestamoTotalDepositos, moneda: prestamoMoneda, montoOtorgado: prestamoMontoOtorgado, diasMora: prestamoDiasMora, amortizacion: prestamoAmortizaciones, sobregiro: prestamoSobregiro, contingente: prestamoContingente, clasificacionCartera: prestamoClasificacionCartera, tipoCredito: prestamoTipoCredito, pago30: prestamoEsperado30, pago60: prestamoEsperado60, pago90: prestamoEsperado90, pago120: prestamoEsperado120, clausulasRestrictivas: prestamoClausulasRestrictivas, financiacionGarantizada: prestamoFinanciacionGarantizada, valorFinanciacion: prestamoValorFinanciacion, alac: prestamoALAC, factor: prestamoFactor, fechaInicio: prestamoFechaInicio, fechaFinal: prestamoFechaFinal, sucursal: prestamoSucursal, fechaImportacion: prestamoFechaImportacion});
+                                                                                                                                                            totalInserciones++;
+                                                                                                                                                        } else 
+                                                                                                                                                            arregloErroresInsercion.push({b: "Prestamo: "+prestamoNumPrestamo, c: "No existe un monto FOSEDE para el tipo de moneda"});
+                                                                                                                                                    } else if(sheet[identificador+i] != undefined|| sheet[nombre+i] != undefined|| sheet[tipoPersona+i] != undefined || sheet[tipoSubPersona+i] != undefined || sheet[fechaImportacion+i] != undefined)
+                                                                                                                                                        arregloErroresExcel.push(i);
+                                                                                                                                                };
+                                                                                                                                            }
+                                                                                                                                            for (var i = 0; i < arregloDePrestamos.length; i++) {
+                                                                                                                                                if(arregloDePrestamos[i].idCliente.length < 31) {
+                                                                                                                                                    if(arregloDePrestamos[i].nombreCliente.length < 81) {
+                                                                                                                                                        if(arregloDePrestamos[i].tipoPersona.length < 81) {
+                                                                                                                                                            if(arregloDePrestamos[i].tipoSubPersona.length < 81) {
+                                                                                                                                                                if(arregloDePrestamos[i].numPrestamo.toString().length < 51) {
+                                                                                                                                                                    if(arregloDePrestamos[i].saldo.toString().length < 21) {
+                                                                                                                                                                        if(arregloDePrestamos[i].moneda.length < 31) {
+                                                                                                                                                                            if(arregloDePrestamos[i].montoOtorgado.toString().length < 21) {
+                                                                                                                                                                                if(arregloDePrestamos[i].diasMora.toString().length < 21) {
+                                                                                                                                                                                    if(arregloDePrestamos[i].amortizacion.toString().length < 21) {
+                                                                                                                                                                                        if(arregloDePrestamos[i].sobregiro.toString().length < 21) {
+                                                                                                                                                                                            if(arregloDePrestamos[i].contingente.toString().length < 21) {
+                                                                                                                                                                                                if(arregloDePrestamos[i].clasificacionCartera.length <= 3) {
+                                                                                                                                                                                                    if(arregloDePrestamos[i].tipoCredito.length < 81) {
+                                                                                                                                                                                                        if(arregloDePrestamos[i].pago30.toString().length < 21) {
+                                                                                                                                                                                                            if(arregloDePrestamos[i].pago60.toString().length < 21) {
+                                                                                                                                                                                                                if(arregloDePrestamos[i].pago90.toString().length < 21) {
+                                                                                                                                                                                                                    if(arregloDePrestamos[i].pago120.toString().length < 21) {
+                                                                                                                                                                                                                        if(arregloDePrestamos[i].clausulasRestrictivas.toString().length > 0) {
+                                                                                                                                                                                                                            if(arregloDePrestamos[i].financiacionGarantizada.toString().length > 0) {
+                                                                                                                                                                                                                                if(arregloDePrestamos[i].valorFinanciacion.toString().length < 21) {
+                                                                                                                                                                                                                                    if(arregloDePrestamos[i].alac.toString().length < 31) {
+                                                                                                                                                                                                                                        if(!isNaN(arregloDePrestamos[i].factor)) {
+                                                                                                                                                                                                                                            if(Date.parse(new Date(arregloDePrestamos[i].fechaInicio))) {
+                                                                                                                                                                                                                                                if(Date.parse(new Date(arregloDePrestamos[i].fechaFinal))) {
+                                                                                                                                                                                                                                                    if(arregloDePrestamos[i].sucursal.length < 51) {
+                                                                                                                                                                                                                                                        if(Date.parse(new Date(arregloDePrestamos[i].fechaImportacion))) {
+                                                                                                                                                                                                                                                            //createLoan( arregloDePrestamos[i] );
+                                                                                                                                                                                                                                                        } else {
+                                                                                                                                                                                                                                                            arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "La fecha de importación no es valida"});
+                                                                                                                                                                                                                                                            contadorInserciones++;
+                                                                                                                                                                                                                                                        }
+                                                                                                                                                                                                                                                    } else {
+                                                                                                                                                                                                                                                        arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de sucursal es mayor a 50 caracteres"});
+                                                                                                                                                                                                                                                        contadorInserciones++;
+                                                                                                                                                                                                                                                    }
+                                                                                                                                                                                                                                                } else {
+                                                                                                                                                                                                                                                    arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "La fecha final no es valida"});
+                                                                                                                                                                                                                                                    contadorInserciones++;
+                                                                                                                                                                                                                                                }
+                                                                                                                                                                                                                                            } else {
+                                                                                                                                                                                                                                                arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "La fecha inicial no es valida"});
+                                                                                                                                                                                                                                                contadorInserciones++;
+                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                        } else {
+                                                                                                                                                                                                                                            arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El factor ingresado no es valido"});
+                                                                                                                                                                                                                                            contadorInserciones++;
+                                                                                                                                                                                                                                        }
+                                                                                                                                                                                                                                    } else {
+                                                                                                                                                                                                                                        arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El número de cuenta del ALAC no es valido"});
+                                                                                                                                                                                                                                        contadorInserciones++;
+                                                                                                                                                                                                                                    }
+                                                                                                                                                                                                                                } else {
+                                                                                                                                                                                                                                    arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor financiacion no es valido"});
+                                                                                                                                                                                                                                    contadorInserciones++;
+                                                                                                                                                                                                                                }
+                                                                                                                                                                                                                            } else {
+                                                                                                                                                                                                                                arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de financiación garantizada tiene que ser mayor a 0 caracteres"});
+                                                                                                                                                                                                                                contadorInserciones++;
+                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                        } else {
+                                                                                                                                                                                                                            arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de clausulas restrictivas tiene que ser mayor a 0 caracteres"});
+                                                                                                                                                                                                                            contadorInserciones++;
+                                                                                                                                                                                                                        }
                                                                                                                                                                                                                     } else {
-                                                                                                                                                                                                                        arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de sucursal es mayor a 50 caracteres"});
+                                                                                                                                                                                                                        arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de pago en 120 días es mayor a 20 caracteres"});
+                                                                                                                                                                                                                        contadorInserciones++;
                                                                                                                                                                                                                     }
                                                                                                                                                                                                                 } else {
-                                                                                                                                                                                                                    arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "La fecha final no es valida"});
+                                                                                                                                                                                                                    arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de pago en 90 días es mayor a 20 caracteres"});
+                                                                                                                                                                                                                    contadorInserciones++;
                                                                                                                                                                                                                 }
                                                                                                                                                                                                             } else {
-                                                                                                                                                                                                                arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "La fecha inicial no es valida"});
+                                                                                                                                                                                                                arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de pago en 60 días es mayor a 20 caracteres"});
+                                                                                                                                                                                                                contadorInserciones++;
                                                                                                                                                                                                             }
                                                                                                                                                                                                         } else {
-                                                                                                                                                                                                            arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de clausulas restrictivas tiene que ser mayor a 0 caracteres"});
+                                                                                                                                                                                                            arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de pago en 30 días es mayor a 20 caracteres"});
+                                                                                                                                                                                                            contadorInserciones++;
                                                                                                                                                                                                         }
                                                                                                                                                                                                     } else {
-                                                                                                                                                                                                        arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de pago en 120 días es mayor a 20 caracteres"});
+                                                                                                                                                                                                        arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de tipo de crédito es mayor a 80 caracteres"});
+                                                                                                                                                                                                        contadorInserciones++;
                                                                                                                                                                                                     }
                                                                                                                                                                                                 } else {
-                                                                                                                                                                                                    arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de pago en 90 días es mayor a 20 caracteres"});
+                                                                                                                                                                                                    arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de clasificación de cartera es mayor a 2 caracteres"});
+                                                                                                                                                                                                    contadorInserciones++;
                                                                                                                                                                                                 }
                                                                                                                                                                                             } else {
-                                                                                                                                                                                                arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de pago en 60 días es mayor a 20 caracteres"});
+                                                                                                                                                                                                arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de contingente es mayor a 20 caracteres"});
+                                                                                                                                                                                                contadorInserciones++;
                                                                                                                                                                                             }
                                                                                                                                                                                         } else {
-                                                                                                                                                                                            arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de pago en 30 días es mayor a 20 caracteres"});
+                                                                                                                                                                                            arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de sobregiro es mayor a 20 caracteres"});
+                                                                                                                                                                                            contadorInserciones++;
                                                                                                                                                                                         }
                                                                                                                                                                                     } else {
-                                                                                                                                                                                        arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de tipo de crédito es mayor a 80 caracteres"});
+                                                                                                                                                                                        arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de amortización es mayor a 20 caracteres"});
+                                                                                                                                                                                        contadorInserciones++;
                                                                                                                                                                                     }
                                                                                                                                                                                 } else {
-                                                                                                                                                                                    arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de clasificación de cartera es mayor a 2 caracteres"});
+                                                                                                                                                                                    arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de días de mora es mayor a 20 caracteres"});
+                                                                                                                                                                                    contadorInserciones++;
                                                                                                                                                                                 }
                                                                                                                                                                             } else {
-                                                                                                                                                                                arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de contingente es mayor a 20 caracteres"});
+                                                                                                                                                                                arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de monto otorgado es mayor a 20 caracteres"});
+                                                                                                                                                                                contadorInserciones++;
                                                                                                                                                                             }
                                                                                                                                                                         } else {
-                                                                                                                                                                            arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de sobregiro es mayor a 20 caracteres"});
+                                                                                                                                                                            arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de moneda es mayor a 30 caracteres"});
+                                                                                                                                                                            contadorInserciones++;
                                                                                                                                                                         }
                                                                                                                                                                     } else {
-                                                                                                                                                                        arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de amortización es mayor a 20 caracteres"});
+                                                                                                                                                                        arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de saldo es mayor a 20 caracteres"});
+                                                                                                                                                                        contadorInserciones++;
                                                                                                                                                                     }
                                                                                                                                                                 } else {
-                                                                                                                                                                    arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de días de mora es mayor a 20 caracteres"});
+                                                                                                                                                                    arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de número de préstamo es mayor a 50 caracteres"});
+                                                                                                                                                                    contadorInserciones++;
                                                                                                                                                                 }
                                                                                                                                                             } else {
-                                                                                                                                                                arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de tipo de cuenta es mayor a 100 caracteres"});
+                                                                                                                                                                arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de tipo de sub-persona es mayor a 80 caracteres"});
+                                                                                                                                                                contadorInserciones++;
                                                                                                                                                             }
                                                                                                                                                         } else {
-                                                                                                                                                            arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de monto otorgado es mayor a 20 caracteres"});
+                                                                                                                                                            arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de tipo de persona es mayor a 80 caracteres"});
+                                                                                                                                                            contadorInserciones++;
                                                                                                                                                         }
                                                                                                                                                     } else {
-                                                                                                                                                        arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de moneda es mayor a 30 caracteres"});
+                                                                                                                                                        arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de nombre del cliente es mayor a 80 caracteres"});
+                                                                                                                                                        contadorInserciones++;
                                                                                                                                                     }
                                                                                                                                                 } else {
-                                                                                                                                                    arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de saldo es mayor a 20 caracteres"});
+                                                                                                                                                    arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de identificador del cliente es mayor a 30 caracteres"});
+                                                                                                                                                    contadorInserciones++;
                                                                                                                                                 }
+                                                                                                                                            };
+                                                                                                                                            if(arregloDePrestamos.length == 0) {
+                                                                                                                                                $("body").overhang({
+                                                                                                                                                    type: "error",
+                                                                                                                                                    primary: "#f84a1d",
+                                                                                                                                                    accent: "#d94e2a",
+                                                                                                                                                    message: "Error al insertar variable en columna inexistente o el archivo estaba vacio.",
+                                                                                                                                                    overlay: true,
+                                                                                                                                                    closeConfirm: true
+                                                                                                                                                });
+                                                                                                                                                $(".loadingScreen").hide();
+                                                                                                                                                stopTimer();
+                                                                                                                                                printErrorFile();
                                                                                                                                             } else {
-                                                                                                                                                arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de número de préstamo es mayor a 50 caracteres"});
+                                                                                                                                                if(arregloErroresExcel.length > 0 || arregloErroresInsercion.length > 0 ) {
+                                                                                                                                                    $("body").overhang({
+                                                                                                                                                        type: "confirm",
+                                                                                                                                                        primary: "#f5a433",
+                                                                                                                                                        accent: "#dc9430",
+                                                                                                                                                        yesColor: "#3498DB",
+                                                                                                                                                        message: 'Se encontrarón errores en el archivo. Desea importar igual?',
+                                                                                                                                                        overlay: true,
+                                                                                                                                                        yesMessage: "Importar",
+                                                                                                                                                        noMessage: "Cancelar",
+                                                                                                                                                        callback: function (value) {
+                                                                                                                                                            if(value) {
+                                                                                                                                                                for (var i = 0; i < arregloDePrestamos.length; i++) {
+                                                                                                                                                                    if(arregloDePrestamos[i].idCliente.length < 31) {
+                                                                                                                                                                        if(arregloDePrestamos[i].nombreCliente.length < 81) {
+                                                                                                                                                                            if(arregloDePrestamos[i].tipoPersona.length < 81) {
+                                                                                                                                                                                if(arregloDePrestamos[i].tipoSubPersona.length < 81) {
+                                                                                                                                                                                    if(arregloDePrestamos[i].numPrestamo.toString().length < 51) {
+                                                                                                                                                                                        if(arregloDePrestamos[i].saldo.toString().length < 21) {
+                                                                                                                                                                                            if(arregloDePrestamos[i].moneda.length < 31) {
+                                                                                                                                                                                                if(arregloDePrestamos[i].montoOtorgado.toString().length < 21) {
+                                                                                                                                                                                                    if(arregloDePrestamos[i].diasMora.toString().length < 21) {
+                                                                                                                                                                                                        if(arregloDePrestamos[i].amortizacion.toString().length < 21) {
+                                                                                                                                                                                                            if(arregloDePrestamos[i].sobregiro.toString().length < 21) {
+                                                                                                                                                                                                                if(arregloDePrestamos[i].contingente.toString().length < 21) {
+                                                                                                                                                                                                                    if(arregloDePrestamos[i].clasificacionCartera.length <= 3) {
+                                                                                                                                                                                                                        if(arregloDePrestamos[i].tipoCredito.length < 81) {
+                                                                                                                                                                                                                            if(arregloDePrestamos[i].pago30.toString().length < 21) {
+                                                                                                                                                                                                                                if(arregloDePrestamos[i].pago60.toString().length < 21) {
+                                                                                                                                                                                                                                    if(arregloDePrestamos[i].pago90.toString().length < 21) {
+                                                                                                                                                                                                                                        if(arregloDePrestamos[i].pago120.toString().length < 21) {
+                                                                                                                                                                                                                                            if(arregloDePrestamos[i].clausulasRestrictivas.toString().length > 0) {
+                                                                                                                                                                                                                                                if(arregloDePrestamos[i].financiacionGarantizada.toString().length > 0) {
+                                                                                                                                                                                                                                                    if(arregloDePrestamos[i].valorFinanciacion.toString().length < 21) {
+                                                                                                                                                                                                                                                        if(arregloDePrestamos[i].alac.toString().length < 31) {
+                                                                                                                                                                                                                                                            if(!isNaN(arregloDePrestamos[i].factor)) {
+                                                                                                                                                                                                                                                                if(Date.parse(new Date(arregloDePrestamos[i].fechaInicio))) {
+                                                                                                                                                                                                                                                                    if(Date.parse(new Date(arregloDePrestamos[i].fechaFinal))) {
+                                                                                                                                                                                                                                                                        if(arregloDePrestamos[i].sucursal.length < 51) {
+                                                                                                                                                                                                                                                                            if(Date.parse(new Date(arregloDePrestamos[i].fechaImportacion))) {
+                                                                                                                                                                                                                                                                                createLoan( arregloDePrestamos[i] );
+                                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                                        }
+                                                                                                                                                                                                                                                                    }
+                                                                                                                                                                                                                                                                }
+                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                        }
+                                                                                                                                                                                                                                                    }
+                                                                                                                                                                                                                                                }
+                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                        }
+                                                                                                                                                                                                                                    }
+                                                                                                                                                                                                                                }
+                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                        }
+                                                                                                                                                                                                                    }
+                                                                                                                                                                                                                }
+                                                                                                                                                                                                            }
+                                                                                                                                                                                                        }
+                                                                                                                                                                                                    }
+                                                                                                                                                                                                }
+                                                                                                                                                                                            }
+                                                                                                                                                                                        }
+                                                                                                                                                                                    }
+                                                                                                                                                                                }
+                                                                                                                                                                            }
+                                                                                                                                                                        }
+                                                                                                                                                                    }
+                                                                                                                                                                };
+                                                                                                                                                            } else {
+                                                                                                                                                                $(".loadingScreen").hide();
+                                                                                                                                                                stopTimer();
+                                                                                                                                                            }
+                                                                                                                                                        }
+                                                                                                                                                    });
+                                                                                                                                                } else {
+                                                                                                                                                    for (var i = 0; i < arregloDePrestamos.length; i++) {
+                                                                                                                                                        if(arregloDePrestamos[i].idCliente.length < 31) {
+                                                                                                                                                            if(arregloDePrestamos[i].nombreCliente.length < 81) {
+                                                                                                                                                                if(arregloDePrestamos[i].tipoPersona.length < 81) {
+                                                                                                                                                                    if(arregloDePrestamos[i].tipoSubPersona.length < 81) {
+                                                                                                                                                                        if(arregloDePrestamos[i].numPrestamo.toString().length < 51) {
+                                                                                                                                                                            if(arregloDePrestamos[i].saldo.toString().length < 21) {
+                                                                                                                                                                                if(arregloDePrestamos[i].moneda.length < 31) {
+                                                                                                                                                                                    if(arregloDePrestamos[i].montoOtorgado.toString().length < 21) {
+                                                                                                                                                                                        if(arregloDePrestamos[i].diasMora.toString().length < 21) {
+                                                                                                                                                                                            if(arregloDePrestamos[i].amortizacion.toString().length < 21) {
+                                                                                                                                                                                                if(arregloDePrestamos[i].sobregiro.toString().length < 21) {
+                                                                                                                                                                                                    if(arregloDePrestamos[i].contingente.toString().length < 21) {
+                                                                                                                                                                                                        if(arregloDePrestamos[i].clasificacionCartera.length <= 3) {
+                                                                                                                                                                                                            if(arregloDePrestamos[i].tipoCredito.length < 81) {
+                                                                                                                                                                                                                if(arregloDePrestamos[i].pago30.toString().length < 21) {
+                                                                                                                                                                                                                    if(arregloDePrestamos[i].pago60.toString().length < 21) {
+                                                                                                                                                                                                                        if(arregloDePrestamos[i].pago90.toString().length < 21) {
+                                                                                                                                                                                                                            if(arregloDePrestamos[i].pago120.toString().length < 21) {
+                                                                                                                                                                                                                                if(arregloDePrestamos[i].clausulasRestrictivas.toString().length > 0) {
+                                                                                                                                                                                                                                    if(arregloDePrestamos[i].financiacionGarantizada.toString().length > 0) {
+                                                                                                                                                                                                                                        if(arregloDePrestamos[i].valorFinanciacion.toString().length < 21) {
+                                                                                                                                                                                                                                            if(arregloDePrestamos[i].alac.toString().length < 31) {
+                                                                                                                                                                                                                                                if(!isNaN(arregloDePrestamos[i].factor)) {
+                                                                                                                                                                                                                                                    if(Date.parse(new Date(arregloDePrestamos[i].fechaInicio))) {
+                                                                                                                                                                                                                                                        if(Date.parse(new Date(arregloDePrestamos[i].fechaFinal))) {
+                                                                                                                                                                                                                                                            if(arregloDePrestamos[i].sucursal.length < 51) {
+                                                                                                                                                                                                                                                                if(Date.parse(new Date(arregloDePrestamos[i].fechaImportacion))) {
+                                                                                                                                                                                                                                                                    createLoan( arregloDePrestamos[i] );
+                                                                                                                                                                                                                                                                }
+                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                        }
+                                                                                                                                                                                                                                                    }
+                                                                                                                                                                                                                                                }
+                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                        }
+                                                                                                                                                                                                                                    }
+                                                                                                                                                                                                                                }
+                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                        }
+                                                                                                                                                                                                                    }
+                                                                                                                                                                                                                }
+                                                                                                                                                                                                            }
+                                                                                                                                                                                                        }
+                                                                                                                                                                                                    }
+                                                                                                                                                                                                }
+                                                                                                                                                                                            }
+                                                                                                                                                                                        }
+                                                                                                                                                                                    }
+                                                                                                                                                                                }
+                                                                                                                                                                            }
+                                                                                                                                                                        }
+                                                                                                                                                                    }
+                                                                                                                                                                }
+                                                                                                                                                            }
+                                                                                                                                                        }
+                                                                                                                                                    };
+                                                                                                                                                }
                                                                                                                                             }
                                                                                                                                         } else {
-                                                                                                                                            arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de tipo de sub-persona es mayor a 80 caracteres"});
+                                                                                                                                            $("body").overhang({
+                                                                                                                                                type: "error",
+                                                                                                                                                primary: "#f84a1d",
+                                                                                                                                                accent: "#d94e2a",
+                                                                                                                                                message: "Error al abrir hoja de excel.",
+                                                                                                                                                overlay: true,
+                                                                                                                                                closeConfirm: true
+                                                                                                                                            });
+                                                                                                                                            $(".loadingScreen").hide();
+                                                                                                                                            stopTimer();
                                                                                                                                         }
                                                                                                                                     } else {
-                                                                                                                                        arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de tipo de persona es mayor a 80 caracteres"});
+                                                                                                                                        $(".loadingScreen").hide();
+                                                                                                                                        stopTimer();
                                                                                                                                     }
                                                                                                                                 } else {
-                                                                                                                                    arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de nombre del cliente es mayor a 80 caracteres"});
+                                                                                                                                    $("body").overhang({
+                                                                                                                                        type: "error",
+                                                                                                                                        primary: "#f84a1d",
+                                                                                                                                        accent: "#d94e2a",
+                                                                                                                                        message: "Ingrese un valor para la fila inicial de la hoja de excel.",
+                                                                                                                                        overlay: true,
+                                                                                                                                        closeConfirm: true
+                                                                                                                                    });
+                                                                                                                                    $(".loadingScreen").hide();
+                                                                                                                                    stopTimer();
                                                                                                                                 }
                                                                                                                             } else {
-                                                                                                                                arregloErroresInsercion.push({b: "Prestamo: "+arregloDePrestamos[i].numPrestamo, c: "El valor de identificador del cliente es mayor a 30 caracteres"});
+                                                                                                                                $("body").overhang({
+                                                                                                                                    type: "error",
+                                                                                                                                    primary: "#f84a1d",
+                                                                                                                                    accent: "#d94e2a",
+                                                                                                                                    message: "Ingrese un valor para el nombre de la hoja de excel.",
+                                                                                                                                    overlay: true,
+                                                                                                                                    closeConfirm: true
+                                                                                                                                });
+                                                                                                                                $(".loadingScreen").hide();
+                                                                                                                                stopTimer();
                                                                                                                             }
-                                                                                                                        };
-                                                                                                                        /*$("body").overhang({
-                                                                                                                            type: "success",
-                                                                                                                            primary: "#40D47E",
-                                                                                                                            accent: "#27AE60",
-                                                                                                                            message: "Préstamos importados con éxito.",
-                                                                                                                            overlay: true
-                                                                                                                        });*/
+                                                                                                                        } else {
+                                                                                                                            $("body").overhang({
+                                                                                                                                type: "error",
+                                                                                                                                primary: "#f84a1d",
+                                                                                                                                accent: "#d94e2a",
+                                                                                                                                message: "Ingrese una letra para la columna de fecha de importación.",
+                                                                                                                                overlay: true,
+                                                                                                                                closeConfirm: true
+                                                                                                                            });
+                                                                                                                            $(".loadingScreen").hide();
+                                                                                                                            stopTimer();
+                                                                                                                        }
                                                                                                                     } else {
                                                                                                                         $("body").overhang({
                                                                                                                             type: "error",
                                                                                                                             primary: "#f84a1d",
                                                                                                                             accent: "#d94e2a",
-                                                                                                                            message: "Error al abrir hoja de excel.",
+                                                                                                                            message: "Ingrese una letra para la columna del campo de sucursal.",
                                                                                                                             overlay: true,
                                                                                                                             closeConfirm: true
                                                                                                                         });
+                                                                                                                        $(".loadingScreen").hide();
+                                                                                                                        stopTimer();
                                                                                                                     }
+                                                                                                                } else {
+                                                                                                                    $("body").overhang({
+                                                                                                                        type: "error",
+                                                                                                                        primary: "#f84a1d",
+                                                                                                                        accent: "#d94e2a",
+                                                                                                                        message: "Ingrese una letra para la columna del monto otorgado.",
+                                                                                                                        overlay: true,
+                                                                                                                        closeConfirm: true
+                                                                                                                    });
+                                                                                                                    $(".loadingScreen").hide();
+                                                                                                                    stopTimer();
                                                                                                                 }
                                                                                                             } else {
                                                                                                                 $("body").overhang({
                                                                                                                     type: "error",
                                                                                                                     primary: "#f84a1d",
                                                                                                                     accent: "#d94e2a",
-                                                                                                                    message: "Ingrese un valor para la fila inicial de la hoja de excel.",
+                                                                                                                    message: "Ingrese una letra para la columna de fecha de final del préstamo.",
                                                                                                                     overlay: true,
                                                                                                                     closeConfirm: true
                                                                                                                 });
+                                                                                                                $(".loadingScreen").hide();
+                                                                                                                stopTimer();
                                                                                                             }
                                                                                                         } else {
                                                                                                             $("body").overhang({
                                                                                                                 type: "error",
                                                                                                                 primary: "#f84a1d",
                                                                                                                 accent: "#d94e2a",
-                                                                                                                message: "Ingrese un valor para el nombre de la hoja de excel.",
+                                                                                                                message: "Ingrese una letra para la columna de fecha de inicio del préstamo.",
                                                                                                                 overlay: true,
                                                                                                                 closeConfirm: true
                                                                                                             });
+                                                                                                            $(".loadingScreen").hide();
+                                                                                                            stopTimer();
                                                                                                         }
                                                                                                     } else {
                                                                                                         $("body").overhang({
                                                                                                             type: "error",
                                                                                                             primary: "#f84a1d",
                                                                                                             accent: "#d94e2a",
-                                                                                                            message: "Ingrese una letra para la columna del campo de sucursal.",
+                                                                                                            message: "Ingrese una letra para la columna de factor.",
                                                                                                             overlay: true,
                                                                                                             closeConfirm: true
                                                                                                         });
+                                                                                                        $(".loadingScreen").hide();
+                                                                                                        stopTimer();
                                                                                                     }
                                                                                                 } else {
                                                                                                     $("body").overhang({
                                                                                                         type: "error",
                                                                                                         primary: "#f84a1d",
                                                                                                         accent: "#d94e2a",
-                                                                                                        message: "Ingrese una letra para la columna del monto otorgado.",
+                                                                                                        message: "Ingrese una letra para la columna de alac.",
                                                                                                         overlay: true,
                                                                                                         closeConfirm: true
                                                                                                     });
+                                                                                                    $(".loadingScreen").hide();
+                                                                                                    stopTimer();
                                                                                                 }
                                                                                             } else {
                                                                                                 $("body").overhang({
                                                                                                     type: "error",
                                                                                                     primary: "#f84a1d",
                                                                                                     accent: "#d94e2a",
-                                                                                                    message: "Ingrese una letra para la columna de fecha de final del préstamo.",
+                                                                                                    message: "Ingrese una letra para la columna de valor de la financiación.",
                                                                                                     overlay: true,
                                                                                                     closeConfirm: true
                                                                                                 });
+                                                                                                $(".loadingScreen").hide();
+                                                                                                stopTimer();
                                                                                             }
                                                                                         } else {
                                                                                             $("body").overhang({
                                                                                                 type: "error",
                                                                                                 primary: "#f84a1d",
                                                                                                 accent: "#d94e2a",
-                                                                                                message: "Ingrese una letra para la columna de fecha de inicio del préstamo.",
+                                                                                                message: "Ingrese una letra para la columna de financiación garantizada.",
                                                                                                 overlay: true,
                                                                                                 closeConfirm: true
                                                                                             });
+                                                                                            $(".loadingScreen").hide();
+                                                                                            stopTimer();
                                                                                         }
                                                                                     } else {
                                                                                         $("body").overhang({
@@ -2373,6 +3192,8 @@ function savePrestamosDB (indexTabla) {
                                                                                             overlay: true,
                                                                                             closeConfirm: true
                                                                                         });
+                                                                                        $(".loadingScreen").hide();
+                                                                                        stopTimer();
                                                                                     }
                                                                                 
                                                                                 } else {
@@ -2384,6 +3205,8 @@ function savePrestamosDB (indexTabla) {
                                                                                         overlay: true,
                                                                                         closeConfirm: true
                                                                                     });
+                                                                                    $(".loadingScreen").hide();
+                                                                                    stopTimer();
                                                                                 }
                                                                             } else {
                                                                                 $("body").overhang({
@@ -2394,6 +3217,8 @@ function savePrestamosDB (indexTabla) {
                                                                                     overlay: true,
                                                                                     closeConfirm: true
                                                                                 });
+                                                                                $(".loadingScreen").hide();
+                                                                                stopTimer();
                                                                             }
                                                                         } else {
                                                                             $("body").overhang({
@@ -2404,6 +3229,8 @@ function savePrestamosDB (indexTabla) {
                                                                                 overlay: true,
                                                                                 closeConfirm: true
                                                                             });
+                                                                            $(".loadingScreen").hide();
+                                                                            stopTimer();
                                                                         }
                                                                     } else {
                                                                         $("body").overhang({
@@ -2414,6 +3241,8 @@ function savePrestamosDB (indexTabla) {
                                                                             overlay: true,
                                                                             closeConfirm: true
                                                                         });
+                                                                        $(".loadingScreen").hide();
+                                                                        stopTimer();
                                                                     }
                                                                 } else {
                                                                     $("body").overhang({
@@ -2424,6 +3253,8 @@ function savePrestamosDB (indexTabla) {
                                                                         overlay: true,
                                                                         closeConfirm: true
                                                                     });
+                                                                    $(".loadingScreen").hide();
+                                                                    stopTimer();
                                                                 }
                                                             } else {
                                                                 $("body").overhang({
@@ -2434,6 +3265,8 @@ function savePrestamosDB (indexTabla) {
                                                                     overlay: true,
                                                                     closeConfirm: true
                                                                 });
+                                                                $(".loadingScreen").hide();
+                                                                stopTimer();
                                                             }
                                                         } else {
                                                             $("body").overhang({
@@ -2444,6 +3277,8 @@ function savePrestamosDB (indexTabla) {
                                                                 overlay: true,
                                                                 closeConfirm: true
                                                             });
+                                                            $(".loadingScreen").hide();
+                                                            stopTimer();
                                                         }
                                                     } else {
                                                         $("body").overhang({
@@ -2454,6 +3289,8 @@ function savePrestamosDB (indexTabla) {
                                                             overlay: true,
                                                             closeConfirm: true
                                                         });
+                                                        $(".loadingScreen").hide();
+                                                        stopTimer();
                                                     }
                                                 } else {
                                                     $("body").overhang({
@@ -2464,6 +3301,8 @@ function savePrestamosDB (indexTabla) {
                                                         overlay: true,
                                                         closeConfirm: true
                                                     });
+                                                    $(".loadingScreen").hide();
+                                                    stopTimer();
                                                 }
                                             } else {
                                                 $("body").overhang({
@@ -2474,83 +3313,99 @@ function savePrestamosDB (indexTabla) {
                                                     overlay: true,
                                                     closeConfirm: true
                                                 });
+                                                $(".loadingScreen").hide();
+                                                stopTimer();
                                             }
                                         } else {
                                             $("body").overhang({
                                                 type: "error",
                                                 primary: "#f84a1d",
                                                 accent: "#d94e2a",
-                                                message: "Ingrese una letra para la columna del campo de tipo de cuenta.",
+                                                message: "Ingrese una letra para la columna del campo de moneda.",
                                                 overlay: true,
                                                 closeConfirm: true
                                             });
+                                            $(".loadingScreen").hide();
+                                            stopTimer();
                                         }
                                     } else {
                                         $("body").overhang({
                                             type: "error",
                                             primary: "#f84a1d",
                                             accent: "#d94e2a",
-                                            message: "Ingrese una letra para la columna del campo de moneda.",
+                                            message: "Ingrese una letra para la columna de saldo de deposito válida.",
                                             overlay: true,
                                             closeConfirm: true
                                         });
+                                        $(".loadingScreen").hide();
+                                        stopTimer();
                                     }
                                 } else {
                                     $("body").overhang({
                                         type: "error",
                                         primary: "#f84a1d",
                                         accent: "#d94e2a",
-                                        message: "Ingrese una letra para la columna de saldo de deposito válida.",
+                                        message: "Ingrese una letra para la columna de saldo de número de prestamo válida.",
                                         overlay: true,
                                         closeConfirm: true
                                     });
+                                    $(".loadingScreen").hide();
+                                    stopTimer();
                                 }
                             } else {
                                 $("body").overhang({
                                     type: "error",
                                     primary: "#f84a1d",
                                     accent: "#d94e2a",
-                                    message: "Ingrese una letra para la columna de saldo de número de prestamo válida.",
+                                    message: "Ingrese una letra para la columna de saldo de deposito válida.",
                                     overlay: true,
                                     closeConfirm: true
                                 });
+                                $(".loadingScreen").hide();
+                                stopTimer();
                             }
                         } else {
                             $("body").overhang({
                                 type: "error",
                                 primary: "#f84a1d",
                                 accent: "#d94e2a",
-                                message: "Ingrese una letra para la columna de saldo de deposito válida.",
+                                message: "Ingrese una letra para la columna de tipo de persona válida.",
                                 overlay: true,
                                 closeConfirm: true
                             });
+                            $(".loadingScreen").hide();
+                            stopTimer();
                         }
                     } else {
                         $("body").overhang({
                             type: "error",
                             primary: "#f84a1d",
                             accent: "#d94e2a",
-                            message: "Ingrese una letra para la columna de tipo de persona válida.",
+                            message: "Ingrese una letra para la columna del campo de nombre válida.",
                             overlay: true,
                             closeConfirm: true
                         });
+                        $(".loadingScreen").hide();
+                        stopTimer();
                     }
                 } else {
                     $("body").overhang({
                         type: "error",
                         primary: "#f84a1d",
                         accent: "#d94e2a",
-                        message: "Ingrese una letra para la columna del campo de nombre válida.",
+                        message: "Ingrese una letra para la columna del campo de id del cliente válida.",
                         overlay: true,
                         closeConfirm: true
                     });
+                    $(".loadingScreen").hide();
+                    stopTimer();
                 }
             } else {
                 $("body").overhang({
                     type: "error",
                     primary: "#f84a1d",
                     accent: "#d94e2a",
-                    message: "Ingrese una letra para la columna del campo de id del cliente válida.",
+                    message: "No existen valores del monto FOSEDE. Creé un valor antes de importar",
                     overlay: true,
                     closeConfirm: true
                 });
@@ -2576,12 +3431,13 @@ function createLoan (prestamo) {
             rolledBack = true;
         });
         const request = new sql.Request(transaction);
-        request.query("insert into Prestamos (idCliente, nombreCliente, tipoPersona, tipoSubPersona, numPrestamo, saldo, moneda, montoOtorgado, tipoCuenta, diasMora, amortizacion, sobregiro, contingente, clasificacionCartera, tipoCredito, pago30, pago60, pago90, pago120, clausulasRestrictivas, fechaInicio, fechaFinal, sucursal, fecha) values ('"+prestamo.idCliente+"','"+prestamo.nombreCliente+"','"+prestamo.tipoPersona+"','"+prestamo.tipoSubPersona+"',"+prestamo.numPrestamo+","+prestamo.saldo+",'"+prestamo.moneda+"',"+prestamo.montoOtorgado+",'"+prestamo.tipoCuenta+"',"+prestamo.diasMora+","+prestamo.amortizacion+","+prestamo.sobregiro+","+prestamo.contingente+",'"+prestamo.clasificacionCartera+"','"+prestamo.tipoCredito+"',"+prestamo.pago30+","+prestamo.pago60+","+prestamo.pago90+","+prestamo.pago120+",'"+prestamo.clausulasRestrictivas+"','"+formatDateCreation(prestamo.fechaInicio)+"','"+formatDateCreation(prestamo.fechaFinal)+"','"+prestamo.sucursal+"','"+formatDateCreation(new Date())+"')", (err, result) => {
+        request.query("insert into Prestamos (idCliente, nombreCliente, tipoPersona, tipoSubPersona, numPrestamo, saldo, moneda, montoOtorgado, diasMora, amortizacion, sobregiro, contingente, clasificacionCartera, tipoCredito, pago30, pago60, pago90, pago120, clausulasRestrictivas, esFinanciacionGarantizada, valorFinanciacion, alac, factor, fechaInicio, fechaFinal, sucursal, fecha) values ('"+prestamo.idCliente+"','"+prestamo.nombreCliente+"','"+prestamo.tipoPersona+"','"+prestamo.tipoSubPersona+"',"+prestamo.numPrestamo+","+prestamo.saldo+",'"+prestamo.moneda+"',"+prestamo.montoOtorgado+","+prestamo.diasMora+","+prestamo.amortizacion+","+prestamo.sobregiro+","+prestamo.contingente+",'"+prestamo.clasificacionCartera+"','"+prestamo.tipoCredito+"',"+prestamo.pago30+","+prestamo.pago60+","+prestamo.pago90+","+prestamo.pago120+",'"+prestamo.clausulasRestrictivas+"','"+prestamo.financiacionGarantizada+"',"+prestamo.valorFinanciacion+",'"+prestamo.alac+"',"+prestamo.factor+",'"+formatDateCreation(prestamo.fechaInicio)+"','"+formatDateCreation(prestamo.fechaFinal)+"','"+prestamo.sucursal+"','"+formatDateCreation(prestamo.fechaImportacion)+"')", (err, result) => {
             if (err) {
+                console.log(err);
                 if (!rolledBack) {
                     transaction.rollback(err => {
                         contadorInserciones++;
-                        arregloErroresInsercion.push({b: nombre, c: "Error en inserción mssql"});
+                        arregloErroresInsercion.push({b: prestamo.numPrestamo, c: "Error en inserción mssql"});
                         printErrorFile();
                     });
                 }
@@ -2603,6 +3459,7 @@ function saveFields (tipoDB, indexTabla) {
         var saldo = $.trim($("#saldoConexionActivos").val());
         var moneda = $.trim($("#monedaConexionActivos").val());
         var sucursal = $.trim($("#sucursalConexionActivos").val());
+        var fechaImportacion = $.trim($("#fechaImportacionConexionActivos").val());
         var tipo = tipoDB;
 
         const transaction = new sql.Transaction( pool1 );
@@ -2634,17 +3491,17 @@ function saveFields (tipoDB, indexTabla) {
                             return object.tipo == tipoDB;
                         });
                         if(existe.length > 0) {
-                            const transaction = new sql.Transaction( pool1 );
-                            transaction.begin(err => {
+                            const transaction2 = new sql.Transaction( pool1 );
+                            transaction2.begin(err => {
                                 var rolledBack = false;
-                                transaction.on('rollback', aborted => {
+                                transaction2.on('rollback', aborted => {
                                     rolledBack = true;
                                 });
-                                const request = new sql.Request(transaction);
-                                request.query("update Activos_Campos set values cuenta = '"+cuenta+"', nombre = '"+nombre+"', saldo = '"+saldo+"', moneda = '"+moneda+"', sucursal = '"+sucursal+"' where ID = "+existe[0].ID, (err, result) => {
+                                const request2 = new sql.Request(transaction2);
+                                request2.query("update Activos_Campos set values cuenta = '"+cuenta+"', nombre = '"+nombre+"', saldo = '"+saldo+"', moneda = '"+moneda+"', sucursal = '"+sucursal+"', fechaImportacion = '"+fechaImportacion+"' where ID = "+existe[0].ID, (err, result) => {
                                     if (err) {
                                         if (!rolledBack) {
-                                            transaction.rollback(err => {
+                                            transaction2.rollback(err => {
                                                 $("body").overhang({
                                                     type: "error",
                                                     primary: "#40D47E",
@@ -2656,25 +3513,33 @@ function saveFields (tipoDB, indexTabla) {
                                             });
                                         }
                                     }  else {
-                                        transaction.commit(err => {
+                                        transaction2.commit(err => {
                                             // ... error checks
                                             console.log("modifico campos activos");
+                                            $("body").overhang({
+                                                type: "success",
+                                                primary: "#40D47E",
+                                                accent: "#27AE60",
+                                                message: "Campos guardados satisfactoriamente.",
+                                                duration: 2,
+                                                overlay: true
+                                            });
                                         });
                                     }
                                 });
-                            }); // fin transaction
+                            }); // fin transaction2
                         } else {
-                            const transaction = new sql.Transaction( pool1 );
-                            transaction.begin(err => {
+                            const transaction2 = new sql.Transaction( pool1 );
+                            transaction2.begin(err => {
                                 var rolledBack = false;
-                                transaction.on('rollback', aborted => {
+                                transaction2.on('rollback', aborted => {
                                     rolledBack = true;
                                 });
-                                const request = new sql.Request(transaction);
-                                request.query("insert into Activos_Campos (cuenta, nombre, saldo, moneda, sucursal, tipo) values ('"+cuenta+"','"+nombre+"','"+saldo+"','"+moneda+"','"+sucursal+"','"+tipo+"')", (err, result) => {
+                                const request = new sql.Request(transaction2);
+                                request.query("insert into Activos_Campos (cuenta, nombre, saldo, moneda, sucursal, fecha, tipo) values ('"+cuenta+"','"+nombre+"','"+saldo+"','"+moneda+"','"+sucursal+"','"+fechaImportacion+"','"+tipo+"')", (err, result) => {
                                     if (err) {
                                         if (!rolledBack) {
-                                            transaction.rollback(err => {
+                                            transaction2.rollback(err => {
                                                 $("body").overhang({
                                                     type: "error",
                                                     primary: "#40D47E",
@@ -2686,13 +3551,21 @@ function saveFields (tipoDB, indexTabla) {
                                             });
                                         }
                                     }  else {
-                                        transaction.commit(err => {
+                                        transaction2.commit(err => {
                                             // ... error checks
                                             console.log("inserto campos activos");
+                                            $("body").overhang({
+                                                type: "success",
+                                                primary: "#40D47E",
+                                                accent: "#27AE60",
+                                                message: "Campos guardados satisfactoriamente.",
+                                                duration: 2,
+                                                overlay: true
+                                            });
                                         });
                                     }
                                 });
-                            }); // fin transaction
+                            }); // fin transaction2
                         }
                     });
                 }
@@ -2706,8 +3579,10 @@ function saveFields (tipoDB, indexTabla) {
         var saldo = $.trim($("#saldoConexionDepositos").val());
         var moneda = $.trim($("#monedaConexionDepositos").val());
         var tipoCuenta = $.trim($("#tipoCuentaConexionDepositos").val());
-        var plazoResidual = $.trim($("#plazoResidualConexionDepositos").val());
+        var fechaInicio = $.trim($("#fechaInicioConexionDepositos").val());
+        var fechaFinal = $.trim($("#fechaFinalConexionDepositos").val());
         var sucursal = $.trim($("#sucursalConexionDepositos").val());
+        var fechaImportacion = $.trim($("#fechaImportacionConexionDepositos").val());
         var tipo = tipoDB;
         const transaction = new sql.Transaction( pool1 );
         transaction.begin(err => {
@@ -2740,17 +3615,19 @@ function saveFields (tipoDB, indexTabla) {
                             return object.tipo == tipoDB;
                         });
                         if(existe.length > 0) {
-                            const transaction = new sql.Transaction( pool1 );
-                            transaction.begin(err => {
+                            console.log(existe)
+                            const transaction2 = new sql.Transaction( pool1 );
+                            transaction2.begin(err => {
                                 var rolledBack = false;
-                                transaction.on('rollback', aborted => {
+                                transaction2.on('rollback', aborted => {
                                     rolledBack = true;
                                 });
-                                const request = new sql.Request(transaction);
-                                request.query("update Depositos_Campos set values idCliente = '"+idCliente+"', nombreCliente = '"+nombreCliente+"', tipoPersona = '"+tipoPersona+"', tipoSubPersona = '"+tipoSubPersona+"', saldo = '"+saldo+"', moneda = '"+moneda+"', tipoCuenta = '"+tipoCuenta+"', plazoResidual = "+plazoResidual+", sucursal = '"+sucursal+"' where ID = "+existe[0].ID, (err, result) => {
+                                const request2 = new sql.Request(transaction2);
+                                request2.query("update Depositos_Campos set idCliente = '"+idCliente+"', nombreCliente = '"+nombreCliente+"', tipoPersona = '"+tipoPersona+"', tipoSubPersona = '"+tipoSubPersona+"', saldo = '"+saldo+"', moneda = '"+moneda+"', tipoCuenta = '"+tipoCuenta+"', fechaInicio = '"+plazoResidual+"' fechaFinal = '"+fechaFinal+"' , sucursal = '"+sucursal+"', fecha = '"+fechaImportacion+"' where ID = "+existe[0].ID, (err, result) => {
                                     if (err) {
+                                        console.log(err)
                                         if (!rolledBack) {
-                                            transaction.rollback(err => {
+                                            transaction2.rollback(err => {
                                                 $("body").overhang({
                                                     type: "error",
                                                     primary: "#40D47E",
@@ -2762,25 +3639,33 @@ function saveFields (tipoDB, indexTabla) {
                                             });
                                         }
                                     }  else {
-                                        transaction.commit(err => {
+                                        transaction2.commit(err => {
                                             // ... error checks
                                             console.log("modifico campos depositos");
+                                            $("body").overhang({
+                                                type: "success",
+                                                primary: "#40D47E",
+                                                accent: "#27AE60",
+                                                message: "Campos guardados satisfactoriamente.",
+                                                duration: 2,
+                                                overlay: true
+                                            });
                                         });
                                     }
                                 });
-                            }); // fin transaction
+                            }); // fin transaction2
                         } else {
-                            const transaction = new sql.Transaction( pool1 );
-                            transaction.begin(err => {
+                            const transaction2 = new sql.Transaction( pool1 );
+                            transaction2.begin(err => {
                                 var rolledBack = false;
-                                transaction.on('rollback', aborted => {
+                                transaction2.on('rollback', aborted => {
                                     rolledBack = true;
                                 });
-                                const request = new sql.Request(transaction);
-                                request.query("insert into Depositos_Campos (idCliente, nombreCliente, tipoPersona, tipoSubPersona, saldo, moneda, tipoCuenta, plazoResidual, sucursal, tipo) values ('"+idCliente+"','"+nombreCliente+"','"+tipoPersona+"','"+tipoSubPersona+"','"+saldo+"','"+moneda+"','"+tipoCuenta+"',"+plazoResidual+",'"+sucursal+"','"+tipo+"')", (err, result) => {
+                                const request2 = new sql.Request(transaction2);
+                                request2.query("insert into Depositos_Campos (idCliente, nombreCliente, tipoPersona, tipoSubPersona, saldo, moneda, tipoCuenta, fechaInicio, fechaFinal, sucursal, fecha, tipo) values ('"+idCliente+"','"+nombreCliente+"','"+tipoPersona+"','"+tipoSubPersona+"','"+saldo+"','"+moneda+"','"+tipoCuenta+"','"+fechaInicio+"','"+fechaFinal+"','"+sucursal+"','"+fechaImportacion+"','"+tipo+"')", (err, result) => {
                                     if (err) {
                                         if (!rolledBack) {
-                                            transaction.rollback(err => {
+                                            transaction2.rollback(err => {
                                                 $("body").overhang({
                                                     type: "error",
                                                     primary: "#40D47E",
@@ -2792,13 +3677,21 @@ function saveFields (tipoDB, indexTabla) {
                                             });
                                         }
                                     }  else {
-                                        transaction.commit(err => {
+                                        transaction2.commit(err => {
                                             // ... error checks
                                             console.log("inserto campos depositos");
+                                            $("body").overhang({
+                                                type: "success",
+                                                primary: "#40D47E",
+                                                accent: "#27AE60",
+                                                message: "Campos guardados satisfactoriamente.",
+                                                duration: 2,
+                                                overlay: true
+                                            });
                                         });
                                     }
                                 });
-                            }); // fin transaction
+                            }); // fin transaction2
                         }
                     });
                 }
@@ -2812,7 +3705,6 @@ function saveFields (tipoDB, indexTabla) {
         var numPrestamo = $.trim($("#numPrestamoConexionPrestamos").val());
         var saldo = $.trim($("#saldoConexionPrestamos").val());
         var moneda = $.trim($("#monedaConexionPrestamos").val());
-        var tipoCuenta = $.trim($("#tipoCuentaConexionPrestamos").val());
         var diasMora = $.trim($("#moraConexionPrestamos").val());
         var amortizaciones = $.trim($("#amortizacionesConexionPrestamos").val());
         var sobregiro = $.trim($("#sobregirosConexionPrestamos").val());
@@ -2824,10 +3716,15 @@ function saveFields (tipoDB, indexTabla) {
         var esperado90 = $.trim($("#esperado90ConexionPrestamos").val());
         var esperado120 = $.trim($("#esperado120ConexionPrestamos").val());
         var clausulasRestrictivas = $.trim($("#clausulasRestrictivasConexionPrestamos").val());
+        var financiacionGarantizada = $.trim($("#financiacionGarantizadaConexionPrestamos").val());
+        var valorFinanciacion = $.trim($("#valorFinanciacionConexionPrestamos").val());
+        var alac = $.trim($("#alacConexionPrestamos").val());
+        var factor = $.trim($("#factorConexionPrestamos").val());
         var fechaInicio = $.trim($("#fechaInicioConexionPrestamos").val());
         var fechaFinal = $.trim($("#fechaExpiracionConexionPrestamos").val());
         var montoOtorgado = $.trim($("#montoOtorgadoConexionPrestamos").val());
         var sucursal = $.trim($("#sucursalConexionPrestamos").val());
+        var fechaImportacion = $.trim($("#fechaImportacionConexionPrestamos").val());
         var tipo = tipoDB;
         const transaction = new sql.Transaction( pool1 );
         transaction.begin(err => {
@@ -2860,17 +3757,17 @@ function saveFields (tipoDB, indexTabla) {
                             return object.tipo == tipoDB;
                         });
                         if(existe.length > 0) {
-                            const transaction = new sql.Transaction( pool1 );
-                            transaction.begin(err => {
+                            const transaction2 = new sql.Transaction( pool1 );
+                            transaction2.begin(err => {
                                 var rolledBack = false;
-                                transaction.on('rollback', aborted => {
+                                transaction2.on('rollback', aborted => {
                                     rolledBack = true;
                                 });
-                                const request = new sql.Request(transaction);
-                                request.query("update Prestamos_Campos set values idCliente = '"+idCliente+"', nombreCliente = '"+nombreCliente+"', tipoPersona = '"+tipoPersona+"', tipoSubPersona = '"+tipoSubPersona+"', numPrestamo = '"+numPrestamo+"', saldo = '"+saldo+"', moneda = '"+moneda+"', montoOtorgado = '"+montoOtorgado+"', tipoCuenta = '"+tipoCuenta+"', diasMora = '"+diasMora+"', amortizacion = '"+amortizaciones+"', sobregiro = '"+sobregiro+"', contingente = '"+contingente+"', clasificacionCartera = '"+clasificacionCartera+"', tipoCredito = '"+tipoCredito+"', pago30 = '"+esperado30+"', pago60 = '"+esperado60+"', pago90 = '"+esperado90+"', pago120 = '"+esperado120+"', clausulasRestrictivas = '"+clausulasRestrictivas+"', fechaInicio = '"+fechaInicio+"', fechaFinal = '"+fechaFinal+"', sucursal = '"+sucursal+"' where ID = "+existe[0].ID, (err, result) => {
+                                const request2 = new sql.Request(transaction2);
+                                request2.query("update Prestamos_Campos set values idCliente = '"+idCliente+"', nombreCliente = '"+nombreCliente+"', tipoPersona = '"+tipoPersona+"', tipoSubPersona = '"+tipoSubPersona+"', numPrestamo = '"+numPrestamo+"', saldo = '"+saldo+"', moneda = '"+moneda+"', montoOtorgado = '"+montoOtorgado+"', diasMora = '"+diasMora+"', amortizacion = '"+amortizaciones+"', sobregiro = '"+sobregiro+"', contingente = '"+contingente+"', clasificacionCartera = '"+clasificacionCartera+"', tipoCredito = '"+tipoCredito+"', pago30 = '"+esperado30+"', pago60 = '"+esperado60+"', pago90 = '"+esperado90+"', pago120 = '"+esperado120+"', clausulasRestrictivas = '"+clausulasRestrictivas+"', esFinanciacionGarantizada = '"+financiacionGarantizada+"', valorFinanciacion = '"+valorFinanciacion+"', alac = '"+alac+"', factor = '"+factor+"', fechaInicio = '"+fechaInicio+"', fechaFinal = '"+fechaFinal+"', sucursal = '"+sucursal+"', fechaImportacion = '"+fechaImportacion+"' where ID = "+existe[0].ID, (err, result) => {
                                     if (err) {
                                         if (!rolledBack) {
-                                            transaction.rollback(err => {
+                                            transaction2.rollback(err => {
                                                 $("body").overhang({
                                                     type: "error",
                                                     primary: "#40D47E",
@@ -2882,25 +3779,33 @@ function saveFields (tipoDB, indexTabla) {
                                             });
                                         }
                                     }  else {
-                                        transaction.commit(err => {
+                                        transaction2.commit(err => {
                                             // ... error checks
                                             console.log("modifico campos prestamos");
+                                            $("body").overhang({
+                                                type: "success",
+                                                primary: "#40D47E",
+                                                accent: "#27AE60",
+                                                message: "Campos guardados satisfactoriamente.",
+                                                duration: 2,
+                                                overlay: true
+                                            });
                                         });
                                     }
                                 });
-                            }); // fin transaction
+                            }); // fin transaction2
                         } else {
-                            const transaction = new sql.Transaction( pool1 );
-                            transaction.begin(err => {
+                            const transaction2 = new sql.Transaction( pool1 );
+                            transaction2.begin(err => {
                                 var rolledBack = false;
-                                transaction.on('rollback', aborted => {
+                                transaction2.on('rollback', aborted => {
                                     rolledBack = true;
                                 });
-                                const request = new sql.Request(transaction);
-                                request.query("insert into Prestamos_Campos (idCliente, nombreCliente, tipoPersona, tipoSubPersona, numPrestamo, saldo, moneda, montoOtorgado, tipoCuenta, diasMora, amortizacion, sobregiro, contingente, clasificacionCartera, tipoCredito, pago30, pago60, pago90, pago120, clausulasRestrictivas, fechaInicio, fechaFinal, sucursal, tipo) values ('"+idCliente+"','"+nombreCliente+"','"+tipoPersona+"','"+tipoSubPersona+"','"+numPrestamo+"','"+saldo+"','"+moneda+"','"+montoOtorgado+"','"+tipoCuenta+"','"+diasMora+"','"+amortizaciones+"','"+sobregiro+"','"+contingente+"','"+clasificacionCartera+"','"+tipoCredito+"','"+esperado30+"','"+esperado60+"','"+esperado90+"','"+esperado120+"','"+clausulasRestrictivas+"','"+fechaInicio+"','"+fechaFinal+"','"+sucursal+"','"+tipo+"')", (err, result) => {
+                                const request2 = new sql.Request(transaction2);
+                                request2.query("insert into Prestamos_Campos (idCliente, nombreCliente, tipoPersona, tipoSubPersona, numPrestamo, saldo, moneda, montoOtorgado, diasMora, amortizacion, sobregiro, contingente, clasificacionCartera, tipoCredito, pago30, pago60, pago90, pago120, clausulasRestrictivas, esFinanciacionGarantizada, valorFinanciacion, alac, factor, fechaInicio, fechaFinal, sucursal, fecha, tipo) values ('"+idCliente+"','"+nombreCliente+"','"+tipoPersona+"','"+tipoSubPersona+"','"+numPrestamo+"','"+saldo+"','"+moneda+"','"+montoOtorgado+"','"+diasMora+"','"+amortizaciones+"','"+sobregiro+"','"+contingente+"','"+clasificacionCartera+"','"+tipoCredito+"','"+esperado30+"','"+esperado60+"','"+esperado90+"','"+esperado120+"','"+clausulasRestrictivas+"','"+financiacionGarantizada+"','"+valorFinanciacion+"','"+alac+"','"+factor+"','"+fechaInicio+"','"+fechaFinal+"','"+sucursal+"','"+fechaImportacion+"','"+tipo+"')", (err, result) => {
                                     if (err) {
                                         if (!rolledBack) {
-                                            transaction.rollback(err => {
+                                            transaction2.rollback(err => {
                                                 $("body").overhang({
                                                     type: "error",
                                                     primary: "#40D47E",
@@ -2912,13 +3817,21 @@ function saveFields (tipoDB, indexTabla) {
                                             });
                                         }
                                     }  else {
-                                        transaction.commit(err => {
+                                        transaction2.commit(err => {
                                             // ... error checks
                                             console.log("inserto campos prestamos");
+                                            $("body").overhang({
+                                                type: "success",
+                                                primary: "#40D47E",
+                                                accent: "#27AE60",
+                                                message: "Campos guardados satisfactoriamente.",
+                                                duration: 2,
+                                                overlay: true
+                                            });
                                         });
                                     }
                                 });
-                            }); // fin transaction
+                            }); // fin transaction2
                         }
                     });
                 }
@@ -2988,7 +3901,7 @@ function connectionTest (indexTabla) {
 									  	type: "success",
 									  	primary: "#40D47E",
 						  				accent: "#27AE60",
-									  	message: "Conexión realizada con exito.",
+									  	message: "Conexión realizada con éxito.",
 									  	overlay: true
 									});
 						    	}
@@ -3062,570 +3975,732 @@ function importFromConnection () {
         overlay: true,
         closeConfirm: true
     });*/
-    var idSeleccionTabla = $("input[name='coneccionesRadio']:checked").val();
-    var nombreArreglo = '', tablaErrorMes = '';
-    if(idSeleccionTabla == 1) {
-        nombreArreglo = 'arregloActivos';
-        tablaErrorMes = 'activos';
-    } else if(idSeleccionTabla == 2) {
-        nombreArreglo = 'arregloDepositos';
-        tablaErrorMes = 'depositos';
-    } else if(idSeleccionTabla == 3) {
-        nombreArreglo = 'arregloPrestamos';
-        tablaErrorMes = 'prestamos';
-    }
-    arregloErroresExcel = [];
-    arregloErroresInsercion = [];
-    contadorInserciones = 0;
-    totalInserciones = 0;
-    insertoEnDBListas = false;
-    var tipoSeleccionConnecion = $("#selectDeConneciones").val();
-    if(idSeleccionTabla == 1) {
-        var existe = arregloConecciones.filter(function(object) {
-                        return object.tipo == tipoSeleccionConnecion && object.arreglo == nombreArreglo;
-                    });
-        if(existe.length > 0) {
-            $("body").overhang({
-                type: "confirm",
-                primary: "#f5a433",
-                accent: "#dc9430",
-                yesColor: "#3498DB",
-                message: 'Esta seguro que desea realizar la Importación?',
-                overlay: true,
-                yesMessage: "Importar",
-                noMessage: "Cancelar",
-                callback: function (value) {
-                    if(value){
-                        var user = existe[0].usuario;
-                        var password = existe[0].constrasena;
-                        var server = existe[0].server;
-                        var database = existe[0].basedatos;
-                        var table = existe[0].tabla;
-                        if(tipoSeleccionConnecion == 'mssql') {
-                            const transactionCampos = new sql.Transaction( pool1 );
-                            transactionCampos.begin(err => {
-                                var rolledBack = false;
-                                transactionCampos.on('rollback', aborted => {
-                                    rolledBack = true;
-                                });
-                                const request = new sql.Request(transactionCampos);
-                                request.query("select * from Activos_Campos", (err, result) => {
-                                    if (err) {
-                                        if (!rolledBack) {
-                                            transactionCampos.rollback(err => {
-                                                $("body").overhang({
-                                                    type: "error",
-                                                    primary: "#f84a1d",
-                                                    accent: "#d94e2a",
-                                                    message: "Error en conneción Activos_Campos.",
-                                                    overlay: true,
-                                                    closeConfirm: true
-                                                });
-                                            });
-                                        }
-                                    }  else {
-                                        transactionCampos.commit(err => {
-                                            // ... error checks
-                                            var campos = result.recordset.filter(function(object) {
-                                                                            return object.tipo == tipoSeleccionConnecion;
-                                                                        });
-                                            const pool = new sql.ConnectionPool({
-                                                user: user,
-                                                password: password,
-                                                server: server,
-                                                database: database
-                                            });
-
-                                            pool.connect(err => {
-                                                pool.request() // or: new sql.Request(pool1)
-                                                .query('select * from '+table, (err, result) => {
-                                                    if(err){
-                                                        $("body").overhang({
-                                                            type: "error",
-                                                            primary: "#f84a1d",
-                                                            accent: "#d94e2a",
-                                                            message: "Intento de conexión fallido activos.",
-                                                            overlay: true,
-                                                            closeConfirm: true
-                                                        });
-                                                    } else {
-                                                        for (var i = 0; i < result.recordset.length; i++) {
-                                                            var valorArreglo = result.recordset[i];
-                                                            if(valorArreglo[campos[0].cuenta].length < 31) {
-                                                                if(valorArreglo[campos[0].nombre].length < 120) {
-                                                                    if(valorArreglo[campos[0].saldo].toString().length < 20) {
-                                                                        if(valorArreglo[campos[0].moneda].length < 30) {
-                                                                            if(valorArreglo[campos[0].sucursal].length < 50) {
-                                                                                const transaction = new sql.Transaction( pool1 );
-                                                                                transaction.begin(err => {
-                                                                                    var rolledBack = false;
-                                                                                    transaction.on('rollback', aborted => {
-                                                                                        rolledBack = true;
-                                                                                    });
-                                                                                    const request = new sql.Request(transaction);
-                                                                                    request.query("insert into Activos (cuenta, nombre, saldo, moneda, sucursal, fecha) values ('"+valorArreglo[campos[0].cuenta]+"','"+valorArreglo[campos[0].nombre]+"',"+valorArreglo[campos[0].saldo]+",'"+valorArreglo[campos[0].moneda]+"','"+valorArreglo[campos[0].sucursal]+"','"+formatDateCreation(new Date())+"')", (err, result) => {
-                                                                                        if (err) {
-                                                                                            if (!rolledBack) {
-                                                                                                transaction.rollback(err => {
-                                                                                                    contadorInserciones++;
-                                                                                                    arregloErroresInsercion.push({b: nombre, c: "Error en inserción mssql"});
-                                                                                                    printErrorFile();
-                                                                                                });
-                                                                                            }
-                                                                                        }  else {
-                                                                                            transaction.commit(err => {
-                                                                                                // ... error checks
-                                                                                                contadorInserciones++;
-                                                                                                insertoEnDBListas = true;
-                                                                                                printErrorFile();
-                                                                                            });
-                                                                                        }
-                                                                                    });
-                                                                                }); // fin transaction
-                                                                            } else {
-                                                                                arregloErroresInsercion.push({b: "Activo: "+valorArreglo[campos[0].cuenta], c: "El valor de sucursal es mayor a 50 caracteres"});
-                                                                            }
-                                                                        } else {
-                                                                            arregloErroresInsercion.push({b: "Activo: "+valorArreglo[campos[0].cuenta], c: "El valor de la moneda es mayor a 30 caracteres"});
-                                                                        }
-                                                                    } else {
-                                                                        arregloErroresInsercion.push({b: "Activo: "+valorArreglo[campos[0].cuenta], c: "El valor del saldo es mayor a 20 caracteres"});
-                                                                    }
-                                                                } else {
-                                                                    arregloErroresInsercion.push({b: "Activo: "+valorArreglo[campos[0].cuenta], c: "El valor es mayor a 120 caracteres"});
-                                                                }
-                                                            } else {
-                                                                arregloErroresInsercion.push({b: "Activo: "+valorArreglo[campos[0].cuenta], c: "El valor de la cuenta es mayor a 30 caracteres"});
-                                                            }
-                                                        };
-                                                    }
-                                                });
-                                            }); // fin pool connect
-                                        });
-                                    }
-                                });
-                            }); // fin transaction
-                        } //fin mssql
-                    }
-                }
-            });
-        } else {
+    var fechaSeleccionada = $("#fechaImportacion").datepicker('getDate');
+    if (Object.prototype.toString.call(fechaSeleccionada) === "[object Date]") {
+        if (isNaN(fechaSeleccionada.getTime())) {
             $("body").overhang({
                 type: "error",
                 primary: "#f84a1d",
                 accent: "#d94e2a",
-                message: "No existe una conneción guardado de tipo "+tipoSeleccionConnecion+" para la tabla de "+tablaErrorMes+".",
+                message: "Seleccione una fecha.",
                 overlay: true,
                 closeConfirm: true
             });
-        }
-    } else if(idSeleccionTabla == 2) {
-        var existe = arregloConecciones.filter(function(object) {
-                        return object.tipo == tipoSeleccionConnecion && object.arreglo == nombreArreglo;
-                    });
-        if(existe.length > 0) {
-            $("body").overhang({
-                type: "confirm",
-                primary: "#f5a433",
-                accent: "#dc9430",
-                yesColor: "#3498DB",
-                message: 'Esta seguro que desea realizar la Importación?',
-                overlay: true,
-                yesMessage: "Importar",
-                noMessage: "Cancelar",
-                callback: function (value) {
-                    if(value){
-                        var user = existe[0].usuario;
-                        var password = existe[0].constrasena;
-                        var server = existe[0].server;
-                        var database = existe[0].basedatos;
-                        var table = existe[0].tabla;
-                        if(tipoSeleccionConnecion == 'mssql') {
-                            const transactionCampos = new sql.Transaction( pool1 );
-                            transactionCampos.begin(err => {
-                                var rolledBack = false;
-                                transactionCampos.on('rollback', aborted => {
-                                    rolledBack = true;
+        } else {
+            var idSeleccionTabla = $("input[name='coneccionesRadio']:checked").val();
+            var nombreArreglo = '', tablaErrorMes = '';
+            if(idSeleccionTabla == 1) {
+                nombreArreglo = 'arregloActivos';
+                tablaErrorMes = 'activos';
+            } else if(idSeleccionTabla == 2) {
+                nombreArreglo = 'arregloDepositos';
+                tablaErrorMes = 'depositos';
+            } else if(idSeleccionTabla == 3) {
+                nombreArreglo = 'arregloPrestamos';
+                tablaErrorMes = 'prestamos';
+            }
+            arregloErroresExcel = [];
+            arregloErroresInsercion = [];
+            contadorInserciones = 0;
+            totalInserciones = 0;
+            insertoEnDBListas = false;
+            var tipoSeleccionConnecion = $("#selectDeConneciones").val();
+            if(idSeleccionTabla == 1) {
+                var existe = arregloConecciones.filter(function(object) {
+                                return object.tipo == tipoSeleccionConnecion && object.arreglo == nombreArreglo;
+                            });
+                if(existe.length > 0) {
+                    $("body").overhang({
+                        type: "confirm",
+                        primary: "#f5a433",
+                        accent: "#dc9430",
+                        yesColor: "#3498DB",
+                        message: 'Esta seguro que desea realizar la Importación?',
+                        overlay: true,
+                        yesMessage: "Importar",
+                        noMessage: "Cancelar",
+                        callback: function (value) {
+                            if(value){
+                                var user = existe[0].usuario;
+                                var password = existe[0].constrasena;
+                                var server = existe[0].server;
+                                var database = existe[0].basedatos;
+                                var table = existe[0].tabla;
+                                myInterval = setInterval(myTimer, 1000);
+                                $( ".loadingScreen" ).fadeIn( "slow", function() {
                                 });
-                                const request = new sql.Request(transactionCampos);
-                                request.query("select * from Depositos_Campos", (err, result) => {
-                                    if (err) {
-                                        if (!rolledBack) {
-                                            transactionCampos.rollback(err => {
-                                                $("body").overhang({
-                                                    type: "error",
-                                                    primary: "#f84a1d",
-                                                    accent: "#d94e2a",
-                                                    message: "Error en conneción Depositos_Campos.",
-                                                    overlay: true,
-                                                    closeConfirm: true
-                                                });
-
-                                            });
-                                        }
-                                    }  else {
-                                        transactionCampos.commit(err => {
-                                            // ... error checks
-                                            var campos = result.recordset.filter(function(object) {
-                                                                            return object.tipo == tipoSeleccionConnecion;
-                                                                        });
-                                            const pool = new sql.ConnectionPool({
-                                                user: user,
-                                                password: password,
-                                                server: server,
-                                                database: database
-                                            });
-
-                                            pool.connect(err => {
-                                                pool.request() // or: new sql.Request(pool1)
-                                                .query('select * from '+table, (err, result) => {
-                                                    if(err){
+                                if(tipoSeleccionConnecion == 'mssql') {
+                                    const transactionCampos = new sql.Transaction( pool1 );
+                                    transactionCampos.begin(err => {
+                                        var rolledBack = false;
+                                        transactionCampos.on('rollback', aborted => {
+                                            rolledBack = true;
+                                        });
+                                        const request = new sql.Request(transactionCampos);
+                                        request.query("select * from Activos_Campos", (err, result) => {
+                                            if (err) {
+                                                if (!rolledBack) {
+                                                    transactionCampos.rollback(err => {
                                                         $("body").overhang({
                                                             type: "error",
                                                             primary: "#f84a1d",
                                                             accent: "#d94e2a",
-                                                            message: "Intento de conexión fallido depósitos.",
+                                                            message: "Error en conneción Activos_Campos.",
                                                             overlay: true,
                                                             closeConfirm: true
                                                         });
-                                                    } else {
-                                                        for (var i = 0; i < result.recordset.length; i++) {
-                                                            var valorArreglo = result.recordset[i];
-                                                            if(valorArreglo[campos[0].idCliente].length < 31) {
-                                                                if(valorArreglo[campos[0].nombreCliente].length < 81) {
-                                                                    if(valorArreglo[campos[0].tipoPersona].length < 81) {
-                                                                        if(valorArreglo[campos[0].tipoSubPersona].length < 81) {
-                                                                            if(valorArreglo[campos[0].saldo].length < 21) {
-                                                                                if(valorArreglo[campos[0].moneda].length < 31) {
-                                                                                    if(valorArreglo[campos[0].tipoCuenta].length < 101) {
-                                                                                        if(!isNaN(valorArreglo[campos[0].plazoResidual])) {
-                                                                                            if(valorArreglo[campos[0].sucursal].length < 51) {
-                                                                                                const transaction = new sql.Transaction( pool1 );
-                                                                                                transaction.begin(err => {
-                                                                                                    var rolledBack = false;
-                                                                                                    transaction.on('rollback', aborted => {
-                                                                                                        rolledBack = true;
-                                                                                                    });
-                                                                                                    const request = new sql.Request(transaction);
-                                                                                                    request.query("insert into Depositos (idCliente, nombreCliente, tipoPersona, tipoSubPersona, saldo, moneda, tipoCuenta, plazoResidual, sucursal, fecha) values ('"+valorArreglo[campos[0].idCliente]+"','"+valorArreglo[campos[0].nombreCliente]+"','"+valorArreglo[campos[0].tipoPersona]+"','"+valorArreglo[campos[0].tipoSubPersona]+"',"+valorArreglo[campos[0].saldo]+",'"+valorArreglo[campos[0].moneda]+"','"+valorArreglo[campos[0].tipoCuenta]+"',"+valorArreglo[campos[0].plazoResidual]+",'"+valorArreglo[campos[0].sucursal]+"','"+formatDateCreation(new Date())+"')", (err, result) => {
-                                                                                                        if (err) {
-                                                                                                            if (!rolledBack) {
-                                                                                                                transaction.rollback(err => {
-                                                                                                                    contadorInserciones++;
-                                                                                                                    arregloErroresInsercion.push({b: nombre, c: "Error en inserción mssql"});
-                                                                                                                    printErrorFile();
-                                                                                                                });
-                                                                                                            }
-                                                                                                        }  else {
-                                                                                                            transaction.commit(err => {
+                                                        $(".loadingScreen").hide();
+                                                        stopTimer();
+                                                    });
+                                                }
+                                            }  else {
+                                                transactionCampos.commit(err => {
+                                                    // ... error checks
+                                                    var campos = result.recordset.filter(function(object) {
+                                                                                    return object.tipo == tipoSeleccionConnecion;
+                                                                                });
+                                                    const pool = new sql.ConnectionPool({
+                                                        user: user,
+                                                        password: password,
+                                                        server: server,
+                                                        database: database
+                                                    });
+
+                                                    pool.connect(err => {
+                                                        pool.request() // or: new sql.Request(pool1)
+                                                        .query("select * from "+table+" where "+campos[0].fecha+" = '"+formatDateCreation(fechaSeleccionada)+"'", (err, result) => {
+                                                            if(err){
+                                                                console.log(err)
+                                                                $("body").overhang({
+                                                                    type: "error",
+                                                                    primary: "#f84a1d",
+                                                                    accent: "#d94e2a",
+                                                                    message: "Intento de conexión fallido activos.",
+                                                                    overlay: true,
+                                                                    closeConfirm: true
+                                                                });
+                                                                $(".loadingScreen").hide();
+                                                                stopTimer();
+                                                            } else {
+                                                                totalInserciones = result.recordset.length;
+                                                                for (var i = 0; i < result.recordset.length; i++) {
+                                                                    let valorArreglo = result.recordset[i];
+                                                                    if(valorArreglo[campos[0].cuenta].length < 31) {
+                                                                        if(valorArreglo[campos[0].nombre].length < 120) {
+                                                                            if(valorArreglo[campos[0].saldo].toString().length < 20) {
+                                                                                if(valorArreglo[campos[0].moneda].length < 30) {
+                                                                                    if(valorArreglo[campos[0].sucursal].length < 50) {
+                                                                                        if(Date.parse(valorArreglo[campos[0].fecha])) {
+                                                                                            valorArreglo[campos[0].fecha] = new Date(valorArreglo[campos[0].fecha].getUTCFullYear(), valorArreglo[campos[0].fecha].getUTCMonth(), valorArreglo[campos[0].fecha].getUTCDate());
+                                                                                            const transaction = new sql.Transaction( pool1 );
+                                                                                            transaction.begin(err => {
+                                                                                                var rolledBack = false;
+                                                                                                transaction.on('rollback', aborted => {
+                                                                                                    rolledBack = true;
+                                                                                                });
+                                                                                                const request = new sql.Request(transaction);
+                                                                                                request.query("insert into Activos (cuenta, nombre, saldo, moneda, sucursal, fecha) values ('"+valorArreglo[campos[0].cuenta]+"','"+valorArreglo[campos[0].nombre]+"',"+valorArreglo[campos[0].saldo]+",'"+valorArreglo[campos[0].moneda]+"','"+valorArreglo[campos[0].sucursal]+"','"+formatDateCreation(valorArreglo[campos[0].fecha])+"')", (err, result) => {
+                                                                                                    if (err) {
+                                                                                                        if (!rolledBack) {
+                                                                                                            transaction.rollback(err => {
                                                                                                                 contadorInserciones++;
-                                                                                                                insertoEnDBListas = true;
+                                                                                                                arregloErroresInsercion.push({b: nombre, c: "Error en inserción mssql"});
                                                                                                                 printErrorFile();
                                                                                                             });
                                                                                                         }
-                                                                                                    });
-                                                                                                }); // fin transaction
-                                                                                            } else {
-                                                                                                arregloErroresInsercion.push({b: "Deposito de: "+valorArreglo[campos[0].idCliente], c: "El valor del sucursal es mayor a 50 caracteres"});
-                                                                                            }
+                                                                                                    }  else {
+                                                                                                        transaction.commit(err => {
+                                                                                                            // ... error checks
+                                                                                                            contadorInserciones++;
+                                                                                                            insertoEnDBListas = true;
+                                                                                                            printErrorFile();
+                                                                                                        });
+                                                                                                    }
+                                                                                                });
+                                                                                            }); // fin transaction
                                                                                         } else {
-                                                                                            arregloErroresInsercion.push({b: "Deposito de: "+valorArreglo[campos[0].idCliente], c: "El valor del plazo residual no es un número valido"});
+                                                                                            arregloErroresInsercion.push({b: "Activo: "+valorArreglo[campos[0].cuenta], c: "El valor de fecha de importación no es valido"});
+                                                                                            contadorInserciones++;
                                                                                         }
                                                                                     } else {
-                                                                                        arregloErroresInsercion.push({b: "Deposito de: "+valorArreglo[campos[0].idCliente], c: "El valor del tipo de cuenta es mayor a 100 caracteres"});
+                                                                                        arregloErroresInsercion.push({b: "Activo: "+valorArreglo[campos[0].cuenta], c: "El valor de sucursal es mayor a 50 caracteres"});
+                                                                                        contadorInserciones++;
                                                                                     }
                                                                                 } else {
-                                                                                    arregloErroresInsercion.push({b: "Deposito de: "+valorArreglo[campos[0].idCliente], c: "El valor de la moneda es mayor a 30 caracteres"});
+                                                                                    arregloErroresInsercion.push({b: "Activo: "+valorArreglo[campos[0].cuenta], c: "El valor de la moneda es mayor a 30 caracteres"});
+                                                                                    contadorInserciones++;
                                                                                 }
                                                                             } else {
-                                                                                arregloErroresInsercion.push({b: "Deposito de: "+valorArreglo[campos[0].idCliente], c: "El valor del saldo es mayor a 20 caracteres"});
+                                                                                arregloErroresInsercion.push({b: "Activo: "+valorArreglo[campos[0].cuenta], c: "El valor del saldo es mayor a 20 caracteres"});
+                                                                                contadorInserciones++;
                                                                             }
                                                                         } else {
-                                                                            arregloErroresInsercion.push({b: "Deposito de: "+valorArreglo[campos[0].idCliente], c: "El valor del tipo de sub-persona es mayor a 80 caracteres"});
+                                                                            arregloErroresInsercion.push({b: "Activo: "+valorArreglo[campos[0].cuenta], c: "El valor es mayor a 120 caracteres"});
+                                                                            contadorInserciones++;
                                                                         }
                                                                     } else {
-                                                                        arregloErroresInsercion.push({b: "Deposito de: "+valorArreglo[campos[0].idCliente], c: "El valor del tipo de persona es mayor a 80 caracteres"});
+                                                                        arregloErroresInsercion.push({b: "Activo: "+valorArreglo[campos[0].cuenta], c: "El valor de la cuenta es mayor a 30 caracteres"});
+                                                                        contadorInserciones++;
                                                                     }
-                                                                } else {
-                                                                    arregloErroresInsercion.push({b: "Deposito de: "+valorArreglo[campos[0].idCliente], c: "El valor del nombre del cliente es mayor a 80 caracteres"});
+                                                                };
+                                                                if(result.recordset.length == 0) {
+                                                                    $(".loadingScreen").hide();
+                                                                    stopTimer();
+                                                                    $("body").overhang({
+                                                                        type: "success",
+                                                                        primary: "#40D47E",
+                                                                        accent: "#27AE60",
+                                                                        message: "No se encontrarón valores para esa fecha.",
+                                                                        duration: 2,
+                                                                        overlay: true
+                                                                    });
                                                                 }
-                                                            } else {
-                                                                arregloErroresInsercion.push({b: "Deposito de: "+valorArreglo[campos[0].idCliente], c: "El valor del identificador del cliente es mayor a 30 caracteres"});
                                                             }
-                                                        };
-                                                    }
+                                                        });
+                                                    }); // fin pool connect
                                                 });
-                                            }); // fin pool connect
+                                            }
                                         });
-                                    }
-                                });
-                            }); // fin transaction
-                        } //fin mssql
-                    }
-                }
-            });
-        } else {
-            $("body").overhang({
-                type: "error",
-                primary: "#f84a1d",
-                accent: "#d94e2a",
-                message: "No existe una conneción guardado de tipo "+tipoSeleccionConnecion+" para la tabla de "+tablaErrorMes+".",
-                overlay: true,
-                closeConfirm: true
-            });
-        }
-    } else if(idSeleccionTabla == 3) {
-        var existe = arregloConecciones.filter(function(object) {
-                        return object.tipo == tipoSeleccionConnecion && object.arreglo == nombreArreglo;
+                                    }); // fin transaction
+                                } //fin mssql
+                            }
+                        }
                     });
-        if(existe.length > 0) {
-            $("body").overhang({
-                type: "confirm",
-                primary: "#f5a433",
-                accent: "#dc9430",
-                yesColor: "#3498DB",
-                message: 'Esta seguro que desea realizar la Importación?',
-                overlay: true,
-                yesMessage: "Importar",
-                noMessage: "Cancelar",
-                callback: function (value) {
-                    if(value){
-                        var user = existe[0].usuario;
-                        var password = existe[0].constrasena;
-                        var server = existe[0].server;
-                        var database = existe[0].basedatos;
-                        var table = existe[0].tabla;
-                        if(tipoSeleccionConnecion == 'mssql') {
-                            const transactionCampos = new sql.Transaction( pool1 );
-                            transactionCampos.begin(err => {
-                                var rolledBack = false;
-                                transactionCampos.on('rollback', aborted => {
-                                    rolledBack = true;
+                } else {
+                    $("body").overhang({
+                        type: "error",
+                        primary: "#f84a1d",
+                        accent: "#d94e2a",
+                        message: "No existe una conneción guardado de tipo "+tipoSeleccionConnecion+" para la tabla de "+tablaErrorMes+".",
+                        overlay: true,
+                        closeConfirm: true
+                    });
+                }
+            } else if(idSeleccionTabla == 2) {
+                var existe = arregloConecciones.filter(function(object) {
+                                return object.tipo == tipoSeleccionConnecion && object.arreglo == nombreArreglo;
+                            });
+                if(existe.length > 0) {
+                    $("body").overhang({
+                        type: "confirm",
+                        primary: "#f5a433",
+                        accent: "#dc9430",
+                        yesColor: "#3498DB",
+                        message: 'Esta seguro que desea realizar la Importación?',
+                        overlay: true,
+                        yesMessage: "Importar",
+                        noMessage: "Cancelar",
+                        callback: function (value) {
+                            if(value){
+                                var user = existe[0].usuario;
+                                var password = existe[0].constrasena;
+                                var server = existe[0].server;
+                                var database = existe[0].basedatos;
+                                var table = existe[0].tabla;
+                                myInterval = setInterval(myTimer, 1000);
+                                $( ".loadingScreen" ).fadeIn( "slow", function() {
                                 });
-                                const request = new sql.Request(transactionCampos);
-                                request.query("select * from Prestamos_Campos", (err, result) => {
-                                    if (err) {
-                                        if (!rolledBack) {
-                                            transactionCampos.rollback(err => {
-                                                $("body").overhang({
-                                                    type: "error",
-                                                    primary: "#f84a1d",
-                                                    accent: "#d94e2a",
-                                                    message: "Error en conneción Prestamos_Campos.",
-                                                    overlay: true,
-                                                    closeConfirm: true
-                                                });
-                                            });
-                                        }
-                                    }  else {
-                                        transactionCampos.commit(err => {
-                                            // ... error checks
-                                            var campos = result.recordset.filter(function(object) {
-                                                                            return object.tipo == tipoSeleccionConnecion;
-                                                                        });
-                                            const pool = new sql.ConnectionPool({
-                                                user: user,
-                                                password: password,
-                                                server: server,
-                                                database: database
-                                            });
-
-                                            pool.connect(err => {
-                                                pool.request() // or: new sql.Request(pool1)
-                                                .query('select * from '+table, (err, result) => {
-                                                    if(err){
+                                if(tipoSeleccionConnecion == 'mssql') {
+                                    const transactionCampos = new sql.Transaction( pool1 );
+                                    transactionCampos.begin(err => {
+                                        var rolledBack = false;
+                                        transactionCampos.on('rollback', aborted => {
+                                            rolledBack = true;
+                                        });
+                                        const request = new sql.Request(transactionCampos);
+                                        request.query("select * from Depositos_Campos", (err, result) => {
+                                            if (err) {
+                                                if (!rolledBack) {
+                                                    transactionCampos.rollback(err => {
                                                         $("body").overhang({
                                                             type: "error",
                                                             primary: "#f84a1d",
                                                             accent: "#d94e2a",
-                                                            message: "Intento de conexión fallido préstamos.",
+                                                            message: "Error en conneción Depositos_Campos.",
                                                             overlay: true,
                                                             closeConfirm: true
                                                         });
-                                                    } else {
-                                                        for (var i = 0; i < result.recordset.length; i++) {
-                                                            var valorArreglo = result.recordset[i];
-                                                            var valorArregloFechaInicio = result.recordset[i].fechaInicio;
-                                                            var valorArregloFechaFinal = result.recordset[i].fechaFinal;
-                                                            console.log(valorArreglo)
-                                                            console.log(valorArreglo[campos[0].idCliente])
-                                                            console.log(campos[0].idCLiente)
-                                                            console.log(campos)
-                                                            console.log(valorArreglo[campos[0].nombreCliente])
-                                                            console.log(valorArreglo[campos[0].tipoPersona])
-                                                            console.log(valorArreglo[campos[0].tipoSubPersona])
-                                                            console.log(valorArreglo[campos[0].numPrestamo])
-                                                            console.log(valorArreglo[campos[0].saldo])
-                                                            console.log(valorArreglo[campos[0].moneda])
-                                                            console.log(valorArreglo[campos[0].montoOtorgado])
-                                                            console.log(valorArreglo[campos[0].tipoCuenta])
-                                                            console.log(valorArreglo[campos[0].diasMora])
-                                                            console.log(campos[0].diasMora)
-                                                            console.log(valorArreglo[campos[0].amortizacion])
-                                                            console.log(valorArreglo[campos[0].sobregiro])
-                                                            console.log(valorArreglo[campos[0].contingente])
-                                                            console.log(valorArreglo[campos[0].clasificacionCartera])
-                                                            console.log(valorArreglo[campos[0].tipoCredito])
-                                                            console.log(valorArreglo[campos[0].pago30])
-                                                            console.log(valorArreglo[campos[0].pago60])
-                                                            console.log(valorArreglo[campos[0].pago90])
-                                                            console.log(valorArreglo[campos[0].pago120])
-                                                            console.log(valorArreglo[campos[0].clausulasRestrictivas])
-                                                            console.log(formatDateCreation(new Date()))
-                                                            console.log(valorArreglo[campos[0].sucursal])
-                                                            if(valorArreglo[campos[0].idCliente].length < 31) {
-                                                                if(valorArreglo[campos[0].nombreCliente].length < 81) {
-                                                                    if(valorArreglo[campos[0].tipoPersona].length < 81) {
-                                                                        if(valorArreglo[campos[0].tipoSubPersona].length < 81) {
-                                                                            if(valorArreglo[campos[0].numPrestamo].toString().length < 51) {
-                                                                                if(valorArreglo[campos[0].saldo].toString().length < 21) {
-                                                                                    if(valorArreglo[campos[0].moneda].length < 31) {
-                                                                                        if(valorArreglo[campos[0].montoOtorgado].toString().length < 21) {
+                                                        $(".loadingScreen").hide();
+                                                        stopTimer();
+                                                    });
+                                                }
+                                            }  else {
+                                                transactionCampos.commit(err => {
+                                                    // ... error checks
+                                                    var campos = result.recordset.filter(function(object) {
+                                                                                    return object.tipo == tipoSeleccionConnecion;
+                                                                                });
+                                                    const pool = new sql.ConnectionPool({
+                                                        user: user,
+                                                        password: password,
+                                                        server: server,
+                                                        database: database
+                                                    });
+
+                                                    pool.connect(err => {
+                                                        pool.request() // or: new sql.Request(pool1)
+                                                        .query("select * from "+table+" where "+campos[0].fecha+" = '"+formatDateCreation(fechaSeleccionada)+"'", (err, result) => {
+                                                            if(err){
+                                                                console.log(err)
+                                                                $("body").overhang({
+                                                                    type: "error",
+                                                                    primary: "#f84a1d",
+                                                                    accent: "#d94e2a",
+                                                                    message: "Intento de conexión fallido depósitos.",
+                                                                    overlay: true,
+                                                                    closeConfirm: true
+                                                                });
+                                                                $(".loadingScreen").hide();
+                                                                stopTimer();
+                                                            } else {
+                                                                totalInserciones = result.recordset.length;
+                                                                for (var i = 0; i < result.recordset.length; i++) {
+                                                                    let valorArreglo = result.recordset[i];
+                                                                    if(valorArreglo[campos[0].idCliente].length < 31) {
+                                                                        if(valorArreglo[campos[0].nombreCliente].length < 81) {
+                                                                            if(valorArreglo[campos[0].tipoPersona].length < 81) {
+                                                                                if(valorArreglo[campos[0].tipoSubPersona].length < 81) {
+                                                                                    if(valorArreglo[campos[0].saldo].toString().length < 21) {
+                                                                                        if(valorArreglo[campos[0].moneda].length < 31) {
                                                                                             if(valorArreglo[campos[0].tipoCuenta].length < 101) {
-                                                                                                if(valorArreglo[campos[0].diasMora].toString().length < 21) {
-                                                                                                    if(valorArreglo[campos[0].amortizacion].toString().length < 21) {
-                                                                                                        if(valorArreglo[campos[0].sobregiro].toString().length < 21) {
-                                                                                                            if(valorArreglo[campos[0].contingente].toString().length < 21) {
-                                                                                                                if(valorArreglo[campos[0].clasificacionCartera].length < 3) {
-                                                                                                                    if(valorArreglo[campos[0].tipoCredito].length < 81) {
-                                                                                                                        if(valorArreglo[campos[0].pago30].toString().length < 21) {
-                                                                                                                            if(valorArreglo[campos[0].pago60].toString().length < 21) {
-                                                                                                                                if(valorArreglo[campos[0].pago90].toString().length < 21) {
-                                                                                                                                    if(valorArreglo[campos[0].pago120].toString().length < 21) {
-                                                                                                                                        if(valorArreglo[campos[0].clausulasRestrictivas].length > 0) {
-                                                                                                                                            if(Date.parse(valorArregloFechaInicio)) {
-                                                                                                                                                if(Date.parse(valorArregloFechaFinal)) {
-                                                                                                                                                    if(valorArreglo[campos[0].sucursal].length < 51) {
-                                                                                                                                                        const transaction = new sql.Transaction( pool1 );
-                                                                                                                                                            transaction.begin(err => {
-                                                                                                                                                                var rolledBack = false;
-                                                                                                                                                                transaction.on('rollback', aborted => {
-                                                                                                                                                                    rolledBack = true;
-                                                                                                                                                                });
-                                                                                                                                                                const request = new sql.Request(transaction);
-                                                                                                                                                                request.query("insert into Prestamos (idCliente, nombreCliente, tipoPersona, tipoSubPersona, numPrestamo, saldo, moneda, montoOtorgado, tipoCuenta, diasMora, amortizacion, sobregiro, contingente, clasificacionCartera, tipoCredito, pago30, pago60, pago90, pago120, clausulasRestrictivas, fechaInicio, fechaFinal, sucursal, fecha) values ('"+valorArreglo[campos[0].idCliente]+"','"+valorArreglo[campos[0].nombreCliente]+"','"+valorArreglo[campos[0].tipoPersona]+"','"+valorArreglo[campos[0].tipoSubPersona]+"',"+valorArreglo[campos[0].numPrestamo]+","+valorArreglo[campos[0].saldo]+",'"+valorArreglo[campos[0].moneda]+"',"+valorArreglo[campos[0].montoOtorgado]+",'"+valorArreglo[campos[0].tipoCuenta]+"',"+valorArreglo[campos[0].diasMora]+","+valorArreglo[campos[0].amortizacion]+","+valorArreglo[campos[0].sobregiro]+","+valorArreglo[campos[0].contingente]+",'"+valorArreglo[campos[0].clasificacionCartera]+"','"+valorArreglo[campos[0].tipoCredito]+"',"+valorArreglo[campos[0].pago30]+","+valorArreglo[campos[0].pago60]+","+valorArreglo[campos[0].pago90]+","+valorArreglo[campos[0].pago120]+",'"+valorArreglo[campos[0].clausulasRestrictivas]+"','"+formatDateCreation(new Date())+"','"+formatDateCreation(new Date())+"','"+valorArreglo[campos[0].sucursal]+"','"+formatDateCreation(new Date())+"')", (err, result) => {
-                                                                                                                                                                    if (err) {
-                                                                                                                                                                        if (!rolledBack) {
-                                                                                                                                                                            console.log('error en rolledBack MainDB Variables');
-                                                                                                                                                                            transaction.rollback(err => {
-                                                                                                                                                                                contadorInserciones++;
-                                                                                                                                                                                arregloErroresInsercion.push({b: nombre, c: "Error en inserción mssql"});
-                                                                                                                                                                                printErrorFile();
-                                                                                                                                                                            });
-                                                                                                                                                                        }
-                                                                                                                                                                    }  else {
-                                                                                                                                                                        transaction.commit(err => {
-                                                                                                                                                                            // ... error checks
-                                                                                                                                                                            contadorInserciones++;
-                                                                                                                                                                            insertoEnDBListas = true;
-                                                                                                                                                                            printErrorFile();
-                                                                                                                                                                        });
-                                                                                                                                                                    }
-                                                                                                                                                                });
-                                                                                                                                                            }); // fin transaction
-                                                                                                                                                    } else {
-                                                                                                                                                        arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de sucursal es mayor a 50 caracteres"});
-                                                                                                                                                    }
-                                                                                                                                                } else {
-                                                                                                                                                    arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "La fecha final no es valida"});
-                                                                                                                                                }
-                                                                                                                                            } else {
-                                                                                                                                                arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "La fecha inicial no es valida"});
-                                                                                                                                            }
-                                                                                                                                        } else {
-                                                                                                                                            arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de clausulas restrictivas tiene que ser mayor a 0 caracteres"});
-                                                                                                                                        }
-                                                                                                                                    } else {
-                                                                                                                                        arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de pago en 120 días es mayor a 20 caracteres"});
-                                                                                                                                    }
-                                                                                                                                } else {
-                                                                                                                                    arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de pago en 90 días es mayor a 20 caracteres"});
-                                                                                                                                }
-                                                                                                                            } else {
-                                                                                                                                arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de pago en 60 días es mayor a 20 caracteres"});
+                                                                                                if(Date.parse(valorArreglo[campos[0].fechaInicio])) {
+                                                                                                    if(Date.parse(valorArreglo[campos[0].fechaFinal])) {
+                                                                                                        if(valorArreglo[campos[0].sucursal].length < 51) {
+                                                                                                            if(Date.parse(valorArreglo[campos[0].fecha])) {
+                                                                                                                valorArreglo[campos[0].fecha] = new Date(valorArreglo[campos[0].fecha].getUTCFullYear(), valorArreglo[campos[0].fecha].getUTCMonth(), valorArreglo[campos[0].fecha].getUTCDate());
+                                                                                                                console.log(valorArreglo)
+                                                                                                                const transaction = new sql.Transaction( pool1 );
+                                                                                                                transaction.begin(err => {
+                                                                                                                    var rolledBack = false;
+                                                                                                                    transaction.on('rollback', aborted => {
+                                                                                                                        rolledBack = true;
+                                                                                                                    });
+                                                                                                                    const request = new sql.Request(transaction);
+                                                                                                                    request.query("insert into Depositos (idCliente, nombreCliente, tipoPersona, tipoSubPersona, saldo, moneda, tipoCuenta, fechaInicio, fechaFinal, sucursal, fecha) values ('"+valorArreglo[campos[0].idCliente]+"','"+valorArreglo[campos[0].nombreCliente]+"','"+valorArreglo[campos[0].tipoPersona]+"','"+valorArreglo[campos[0].tipoSubPersona]+"',"+valorArreglo[campos[0].saldo]+",'"+valorArreglo[campos[0].moneda]+"','"+valorArreglo[campos[0].tipoCuenta]+"','"+formatDateCreation(valorArreglo[campos[0].fechaInicio])+"','"+formatDateCreation(valorArreglo[campos[0].fechaFinal])+"','"+valorArreglo[campos[0].sucursal]+"','"+formatDateCreation(valorArreglo[campos[0].fecha])+"')", (err, result) => {
+                                                                                                                        if (err) {
+                                                                                                                            console.log(err);
+                                                                                                                            if (!rolledBack) {
+                                                                                                                                transaction.rollback(err => {
+                                                                                                                                    contadorInserciones++;
+                                                                                                                                    arregloErroresInsercion.push({b: nombre, c: "Error en inserción mssql"});
+                                                                                                                                    printErrorFile();
+                                                                                                                                });
                                                                                                                             }
-                                                                                                                        } else {
-                                                                                                                            arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de pago en 30 días es mayor a 20 caracteres"});
+                                                                                                                        }  else {
+                                                                                                                            transaction.commit(err => {
+                                                                                                                                contadorInserciones++;
+                                                                                                                                insertoEnDBListas = true;
+                                                                                                                                printErrorFile();
+                                                                                                                            });
                                                                                                                         }
-                                                                                                                    } else {
-                                                                                                                        arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de tipo de crédito es mayor a 80 caracteres"});
-                                                                                                                    }
-                                                                                                                } else {
-                                                                                                                    arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de clasificación de cartera es mayor a 2 caracteres"});
-                                                                                                                }
+                                                                                                                    });
+                                                                                                                }); // fin transaction
                                                                                                             } else {
-                                                                                                                arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de contingente es mayor a 20 caracteres"});
+                                                                                                                arregloErroresInsercion.push({b: "Deposito de: "+valorArreglo[campos[0].idCliente], c: "El valor de la fecha de importación no es valido"});
+                                                                                                                contadorInserciones++;
                                                                                                             }
                                                                                                         } else {
-                                                                                                            arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de sobregiro es mayor a 20 caracteres"});
+                                                                                                            arregloErroresInsercion.push({b: "Deposito de: "+valorArreglo[campos[0].idCliente], c: "El valor del sucursal es mayor a 50 caracteres"});
+                                                                                                            contadorInserciones++;
                                                                                                         }
                                                                                                     } else {
-                                                                                                        arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de amortización es mayor a 20 caracteres"});
+                                                                                                        arregloErroresInsercion.push({b: "Deposito de: "+valorArreglo[campos[0].idCliente], c: "El valor de fecha final no es valido"});
+                                                                                                        contadorInserciones++;
                                                                                                     }
                                                                                                 } else {
-                                                                                                    arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de días de mora es mayor a 20 caracteres"});
+                                                                                                    arregloErroresInsercion.push({b: "Deposito de: "+valorArreglo[campos[0].idCliente], c: "El valor de fecha de inicio no es valido"});
+                                                                                                    contadorInserciones++;
                                                                                                 }
                                                                                             } else {
-                                                                                                arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de tipo de cuenta es mayor a 100 caracteres"});
+                                                                                                arregloErroresInsercion.push({b: "Deposito de: "+valorArreglo[campos[0].idCliente], c: "El valor del tipo de cuenta es mayor a 100 caracteres"});
+                                                                                                contadorInserciones++;
                                                                                             }
                                                                                         } else {
-                                                                                            arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de monto otorgado es mayor a 20 caracteres"});
+                                                                                            arregloErroresInsercion.push({b: "Deposito de: "+valorArreglo[campos[0].idCliente], c: "El valor de la moneda es mayor a 30 caracteres"});
+                                                                                            contadorInserciones++;
                                                                                         }
                                                                                     } else {
-                                                                                        arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de moneda es mayor a 30 caracteres"});
+                                                                                        arregloErroresInsercion.push({b: "Deposito de: "+valorArreglo[campos[0].idCliente], c: "El valor del saldo es mayor a 20 caracteres"});
+                                                                                        contadorInserciones++;
                                                                                     }
                                                                                 } else {
-                                                                                    arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de saldo es mayor a 20 caracteres"});
+                                                                                    arregloErroresInsercion.push({b: "Deposito de: "+valorArreglo[campos[0].idCliente], c: "El valor del tipo de sub-persona es mayor a 80 caracteres"});
+                                                                                    contadorInserciones++;
                                                                                 }
                                                                             } else {
-                                                                                arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de número de préstamo es mayor a 50 caracteres"});
+                                                                                arregloErroresInsercion.push({b: "Deposito de: "+valorArreglo[campos[0].idCliente], c: "El valor del tipo de persona es mayor a 80 caracteres"});
+                                                                                contadorInserciones++;
                                                                             }
                                                                         } else {
-                                                                            arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de tipo de sub-persona es mayor a 80 caracteres"});
+                                                                            arregloErroresInsercion.push({b: "Deposito de: "+valorArreglo[campos[0].idCliente], c: "El valor del nombre del cliente es mayor a 80 caracteres"});
+                                                                            contadorInserciones++;
                                                                         }
                                                                     } else {
-                                                                        arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de tipo de persona es mayor a 80 caracteres"});
+                                                                        arregloErroresInsercion.push({b: "Deposito de: "+valorArreglo[campos[0].idCliente], c: "El valor del identificador del cliente es mayor a 30 caracteres"});
+                                                                        contadorInserciones++;
                                                                     }
-                                                                } else {
-                                                                    arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de nombre del cliente es mayor a 80 caracteres"});
+                                                                };
+                                                                if(result.recordset.length == 0) {
+                                                                    $(".loadingScreen").hide();
+                                                                    stopTimer();
+                                                                    $("body").overhang({
+                                                                        type: "success",
+                                                                        primary: "#40D47E",
+                                                                        accent: "#27AE60",
+                                                                        message: "No se encontrarón valores para esa fecha.",
+                                                                        duration: 2,
+                                                                        overlay: true
+                                                                    });
                                                                 }
-                                                            } else {
-                                                                arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de identificador del cliente es mayor a 30 caracteres"});
                                                             }
-                                                        };
-                                                        $("body").overhang({
-                                                            type: "success",
-                                                            primary: "#40D47E",
-                                                            accent: "#27AE60",
-                                                            message: "Conexión realizada con exito.",
-                                                            overlay: true
                                                         });
-                                                    }
+                                                    }); // fin pool connect
                                                 });
-                                            }); // fin pool connect
+                                            }
                                         });
-                                    }
-                                });
-                            }); // fin transaction
-                        } //fin mssql
-                    }
+                                    }); // fin transaction
+                                } //fin mssql
+                            }
+                        }
+                    });
+                } else {
+                    $("body").overhang({
+                        type: "error",
+                        primary: "#f84a1d",
+                        accent: "#d94e2a",
+                        message: "No existe una conneción guardado de tipo "+tipoSeleccionConnecion+" para la tabla de "+tablaErrorMes+".",
+                        overlay: true,
+                        closeConfirm: true
+                    });
                 }
-            });
-        } else {
-            $("body").overhang({
-                type: "error",
-                primary: "#f84a1d",
-                accent: "#d94e2a",
-                message: "No existe una conneción guardada de tipo "+tipoSeleccionConnecion+" para la tabla de "+tablaErrorMes+".",
-                overlay: true,
-                closeConfirm: true
-            });
+            } else if(idSeleccionTabla == 3) {
+                var existe = arregloConecciones.filter(function(object) {
+                                return object.tipo == tipoSeleccionConnecion && object.arreglo == nombreArreglo;
+                            });
+                if(existe.length > 0) {
+                    $("body").overhang({
+                        type: "confirm",
+                        primary: "#f5a433",
+                        accent: "#dc9430",
+                        yesColor: "#3498DB",
+                        message: 'Esta seguro que desea realizar la Importación?',
+                        overlay: true,
+                        yesMessage: "Importar",
+                        noMessage: "Cancelar",
+                        callback: function (value) {
+                            if(value){
+                                var user = existe[0].usuario;
+                                var password = existe[0].constrasena;
+                                var server = existe[0].server;
+                                var database = existe[0].basedatos;
+                                var table = existe[0].tabla;
+                                myInterval = setInterval(myTimer, 1000);
+                                $( ".loadingScreen" ).fadeIn( "slow", function() {
+                                });
+                                if(tipoSeleccionConnecion == 'mssql') {
+                                    const transactionCampos = new sql.Transaction( pool1 );
+                                    transactionCampos.begin(err => {
+                                        var rolledBack = false;
+                                        transactionCampos.on('rollback', aborted => {
+                                            rolledBack = true;
+                                        });
+                                        const request = new sql.Request(transactionCampos);
+                                        request.query("select * from Prestamos_Campos", (err, result) => {
+                                            if (err) {
+                                                if (!rolledBack) {
+                                                    transactionCampos.rollback(err => {
+                                                        $("body").overhang({
+                                                            type: "error",
+                                                            primary: "#f84a1d",
+                                                            accent: "#d94e2a",
+                                                            message: "Error en conneción Prestamos_Campos.",
+                                                            overlay: true,
+                                                            closeConfirm: true
+                                                        });
+                                                        $(".loadingScreen").hide();
+                                                        stopTimer();
+                                                    });
+                                                }
+                                            }  else {
+                                                transactionCampos.commit(err => {
+                                                    // ... error checks
+                                                    var campos = result.recordset.filter(function(object) {
+                                                                                    return object.tipo == tipoSeleccionConnecion;
+                                                                                });
+                                                    const pool = new sql.ConnectionPool({
+                                                        user: user,
+                                                        password: password,
+                                                        server: server,
+                                                        database: database
+                                                    });
+
+                                                    pool.connect(err => {
+                                                        pool.request() // or: new sql.Request(pool1)
+                                                        .query("select * from "+table+" where "+campos[0].fecha+" = '"+formatDateCreation(fechaSeleccionada)+"'", (err, result) => {
+                                                            if(err){
+                                                                $("body").overhang({
+                                                                    type: "error",
+                                                                    primary: "#f84a1d",
+                                                                    accent: "#d94e2a",
+                                                                    message: "Intento de conexión fallido préstamos.",
+                                                                    overlay: true,
+                                                                    closeConfirm: true
+                                                                });
+                                                                $(".loadingScreen").hide();
+                                                                stopTimer();
+                                                            } else {
+                                                                totalInserciones = result.recordset.length;
+                                                                for (var i = 0; i < result.recordset.length; i++) {
+                                                                    let valorArreglo = result.recordset[i];
+                                                                    /*console.log(valorArreglo)
+                                                                    console.log(valorArreglo[campos[0].idCliente])
+                                                                    console.log(campos[0].idCLiente)
+                                                                    console.log(campos)
+                                                                    console.log(valorArreglo[campos[0].nombreCliente])
+                                                                    console.log(valorArreglo[campos[0].tipoPersona])
+                                                                    console.log(valorArreglo[campos[0].tipoSubPersona])
+                                                                    console.log(valorArreglo[campos[0].numPrestamo])
+                                                                    console.log(valorArreglo[campos[0].saldo])
+                                                                    console.log(valorArreglo[campos[0].moneda])
+                                                                    console.log(valorArreglo[campos[0].montoOtorgado])
+                                                                    console.log(valorArreglo[campos[0].tipoCuenta])
+                                                                    console.log(valorArreglo[campos[0].diasMora])
+                                                                    console.log(campos[0].diasMora)
+                                                                    console.log(valorArreglo[campos[0].amortizacion])
+                                                                    console.log(valorArreglo[campos[0].sobregiro])
+                                                                    console.log(valorArreglo[campos[0].contingente])
+                                                                    console.log(valorArreglo[campos[0].clasificacionCartera])
+                                                                    console.log(valorArreglo[campos[0].tipoCredito])
+                                                                    console.log(valorArreglo[campos[0].pago30])
+                                                                    console.log(valorArreglo[campos[0].pago60])
+                                                                    console.log(valorArreglo[campos[0].pago90])
+                                                                    console.log(valorArreglo[campos[0].pago120])
+                                                                    console.log(valorArreglo[campos[0].clausulasRestrictivas])
+                                                                    console.log(formatDateCreation(new Date()))
+                                                                    console.log(valorArreglo[campos[0].sucursal])*/
+                                                                    if(valorArreglo[campos[0].idCliente].length < 31) {
+                                                                        if(valorArreglo[campos[0].nombreCliente].length < 81) {
+                                                                            if(valorArreglo[campos[0].tipoPersona].length < 81) {
+                                                                                if(valorArreglo[campos[0].tipoSubPersona].length < 81) {
+                                                                                    if(valorArreglo[campos[0].numPrestamo].toString().length < 51) {
+                                                                                        if(valorArreglo[campos[0].saldo].toString().length < 21) {
+                                                                                            if(valorArreglo[campos[0].moneda].length < 31) {
+                                                                                                if(valorArreglo[campos[0].montoOtorgado].toString().length < 21) {
+                                                                                                    if(valorArreglo[campos[0].diasMora].toString().length < 21) {
+                                                                                                        if(valorArreglo[campos[0].amortizacion].toString().length < 21) {
+                                                                                                            if(valorArreglo[campos[0].sobregiro].toString().length < 21) {
+                                                                                                                if(valorArreglo[campos[0].contingente].toString().length < 21) {
+                                                                                                                    if(valorArreglo[campos[0].clasificacionCartera].length < 3) {
+                                                                                                                        if(valorArreglo[campos[0].tipoCredito].length < 81) {
+                                                                                                                            if(valorArreglo[campos[0].pago30].toString().length < 21) {
+                                                                                                                                if(valorArreglo[campos[0].pago60].toString().length < 21) {
+                                                                                                                                    if(valorArreglo[campos[0].pago90].toString().length < 21) {
+                                                                                                                                        if(valorArreglo[campos[0].pago120].toString().length < 21) {
+                                                                                                                                            if(valorArreglo[campos[0].clausulasRestrictivas] != undefined) {
+                                                                                                                                                if(valorArreglo[campos[0].esFinanciacionGarantizada] != undefined) {
+                                                                                                                                                    if(valorArreglo[campos[0].valorFinanciacion].toString().length < 21) {
+                                                                                                                                                        if(valorArreglo[campos[0].alac].toString().length < 30) {
+                                                                                                                                                            if(valorArreglo[campos[0].factor].toString().length > 0) {
+                                                                                                                                                                if(Date.parse(valorArreglo[campos[0].fechaInicio])) {
+                                                                                                                                                                    if(Date.parse(valorArreglo[campos[0].fechaFinal])) {
+                                                                                                                                                                        if(valorArreglo[campos[0].sucursal].length < 51) {
+                                                                                                                                                                            if(Date.parse(valorArreglo[campos[0].fecha])) {
+                                                                                                                                                                                valorArreglo[campos[0].fecha] = new Date(valorArreglo[campos[0].fecha].getUTCFullYear(), valorArreglo[campos[0].fecha].getUTCMonth(), valorArreglo[campos[0].fecha].getUTCDate());
+                                                                                                                                                                                valorArreglo[campos[0].fechaInicio] = new Date(valorArreglo[campos[0].fechaInicio].getUTCFullYear(), valorArreglo[campos[0].fechaInicio].getUTCMonth(), valorArreglo[campos[0].fechaInicio].getUTCDate());
+                                                                                                                                                                                valorArreglo[campos[0].fechaFinal] = new Date(valorArreglo[campos[0].fechaFinal].getUTCFullYear(), valorArreglo[campos[0].fechaFinal].getUTCMonth(), valorArreglo[campos[0].fechaFinal].getUTCDate());
+                                                                                                                                                                                const transaction = new sql.Transaction( pool1 );
+                                                                                                                                                                                transaction.begin(err => {
+                                                                                                                                                                                    var rolledBack = false;
+                                                                                                                                                                                    transaction.on('rollback', aborted => {
+                                                                                                                                                                                        rolledBack = true;
+                                                                                                                                                                                    });
+                                                                                                                                                                                    const request = new sql.Request(transaction);
+                                                                                                                                                                                    request.query("insert into Prestamos (idCliente, nombreCliente, tipoPersona, tipoSubPersona, numPrestamo, saldo, moneda, montoOtorgado, diasMora, amortizacion, sobregiro, contingente, clasificacionCartera, tipoCredito, pago30, pago60, pago90, pago120, clausulasRestrictivas, esFinanciacionGarantizada, valorFinanciacion, alac, factor, fechaInicio, fechaFinal, sucursal, fecha) values ('"+valorArreglo[campos[0].idCliente]+"','"+valorArreglo[campos[0].nombreCliente]+"','"+valorArreglo[campos[0].tipoPersona]+"','"+valorArreglo[campos[0].tipoSubPersona]+"',"+valorArreglo[campos[0].numPrestamo]+","+valorArreglo[campos[0].saldo]+",'"+valorArreglo[campos[0].moneda]+"',"+valorArreglo[campos[0].montoOtorgado]+","+valorArreglo[campos[0].diasMora]+","+valorArreglo[campos[0].amortizacion]+","+valorArreglo[campos[0].sobregiro]+","+valorArreglo[campos[0].contingente]+",'"+valorArreglo[campos[0].clasificacionCartera]+"','"+valorArreglo[campos[0].tipoCredito]+"',"+valorArreglo[campos[0].pago30]+","+valorArreglo[campos[0].pago60]+","+valorArreglo[campos[0].pago90]+","+valorArreglo[campos[0].pago120]+",'"+valorArreglo[campos[0].clausulasRestrictivas]+"','"+valorArreglo[campos[0].esFinanciacionGarantizada]+"',"+valorArreglo[campos[0].valorFinanciacion]+",'"+valorArreglo[campos[0].alac]+"',"+valorArreglo[campos[0].factor]+",'"+formatDateCreation(valorArreglo[campos[0].fechaInicio])+"','"+formatDateCreation(valorArreglo[campos[0].fechaFinal])+"','"+valorArreglo[campos[0].sucursal]+"','"+formatDateCreation(valorArreglo[campos[0].fecha])+"')", (err, result) => {
+                                                                                                                                                                                        if (err) {
+                                                                                                                                                                                            if (!rolledBack) {
+                                                                                                                                                                                                console.log('error en rolledBack MainDB Variables');
+                                                                                                                                                                                                transaction.rollback(err => {
+                                                                                                                                                                                                    contadorInserciones++;
+                                                                                                                                                                                                    arregloErroresInsercion.push({b: nombre, c: "Error en inserción mssql"});
+                                                                                                                                                                                                    printErrorFile();
+                                                                                                                                                                                                });
+                                                                                                                                                                                            }
+                                                                                                                                                                                        }  else {
+                                                                                                                                                                                            transaction.commit(err => {
+                                                                                                                                                                                                // ... error checks
+                                                                                                                                                                                                contadorInserciones++;
+                                                                                                                                                                                                insertoEnDBListas = true;
+                                                                                                                                                                                                printErrorFile();
+                                                                                                                                                                                            });
+                                                                                                                                                                                        }
+                                                                                                                                                                                    });
+                                                                                                                                                                                }); // fin transaction
+                                                                                                                                                                            } else {
+                                                                                                                                                                                arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de sucursal es mayor a 50 caracteres"});
+                                                                                                                                                                                contadorInserciones++;
+                                                                                                                                                                            }
+                                                                                                                                                                        } else {
+                                                                                                                                                                            arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de sucursal es mayor a 50 caracteres"});
+                                                                                                                                                                            contadorInserciones++;
+                                                                                                                                                                        }
+                                                                                                                                                                    } else {
+                                                                                                                                                                        arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "La fecha final no es valida"});
+                                                                                                                                                                        contadorInserciones++;
+                                                                                                                                                                    }
+                                                                                                                                                                } else {
+                                                                                                                                                                    arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "La fecha inicial no es valida"});
+                                                                                                                                                                    contadorInserciones++;
+                                                                                                                                                                }
+                                                                                                                                                            } else {
+                                                                                                                                                                arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor del factor no es valido"});
+                                                                                                                                                                contadorInserciones++;
+                                                                                                                                                            }
+                                                                                                                                                        } else {
+                                                                                                                                                            arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor del alac no es valido"});
+                                                                                                                                                            contadorInserciones++;
+                                                                                                                                                        }
+                                                                                                                                                    } else {
+                                                                                                                                                        arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor la financiación no es valido"});
+                                                                                                                                                        contadorInserciones++;
+                                                                                                                                                    }
+                                                                                                                                                } else {
+                                                                                                                                                    arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de clausulas restrictivas no es valido"});
+                                                                                                                                                    contadorInserciones++;
+                                                                                                                                                }
+                                                                                                                                            } else {
+                                                                                                                                                arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de clausulas restrictivas tiene que ser mayor a 0 caracteres"});
+                                                                                                                                                contadorInserciones++;
+                                                                                                                                            }
+                                                                                                                                        } else {
+                                                                                                                                            arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de pago en 120 días es mayor a 20 caracteres"});
+                                                                                                                                            contadorInserciones++;
+                                                                                                                                        }
+                                                                                                                                    } else {
+                                                                                                                                        arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de pago en 90 días es mayor a 20 caracteres"});
+                                                                                                                                        contadorInserciones++;
+                                                                                                                                    }
+                                                                                                                                } else {
+                                                                                                                                    arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de pago en 60 días es mayor a 20 caracteres"});
+                                                                                                                                    contadorInserciones++;
+                                                                                                                                }
+                                                                                                                            } else {
+                                                                                                                                arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de pago en 30 días es mayor a 20 caracteres"});
+                                                                                                                                contadorInserciones++;
+                                                                                                                            }
+                                                                                                                        } else {
+                                                                                                                            arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de tipo de crédito es mayor a 80 caracteres"});
+                                                                                                                            contadorInserciones++;
+                                                                                                                        }
+                                                                                                                    } else {
+                                                                                                                        arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de clasificación de cartera es mayor a 2 caracteres"});
+                                                                                                                        contadorInserciones++;
+                                                                                                                    }
+                                                                                                                } else {
+                                                                                                                    arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de contingente es mayor a 20 caracteres"});
+                                                                                                                    contadorInserciones++;
+                                                                                                                }
+                                                                                                            } else {
+                                                                                                                arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de sobregiro es mayor a 20 caracteres"});
+                                                                                                                contadorInserciones++;
+                                                                                                            }
+                                                                                                        } else {
+                                                                                                            arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de amortización es mayor a 20 caracteres"});
+                                                                                                            contadorInserciones++;
+                                                                                                        }
+                                                                                                    } else {
+                                                                                                        arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de días de mora es mayor a 20 caracteres"});
+                                                                                                        contadorInserciones++;
+                                                                                                    }
+                                                                                                } else {
+                                                                                                    arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de monto otorgado es mayor a 20 caracteres"});
+                                                                                                    contadorInserciones++;
+                                                                                                }
+                                                                                            } else {
+                                                                                                arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de moneda es mayor a 30 caracteres"});
+                                                                                                contadorInserciones++;
+                                                                                            }
+                                                                                        } else {
+                                                                                            arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de saldo es mayor a 20 caracteres"});
+                                                                                            contadorInserciones++;
+                                                                                        }
+                                                                                    } else {
+                                                                                        arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de número de préstamo es mayor a 50 caracteres"});
+                                                                                        contadorInserciones++;
+                                                                                    }
+                                                                                } else {
+                                                                                    arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de tipo de sub-persona es mayor a 80 caracteres"});
+                                                                                    contadorInserciones++;
+                                                                                }
+                                                                            } else {
+                                                                                arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de tipo de persona es mayor a 80 caracteres"});
+                                                                                contadorInserciones++;
+                                                                            }
+                                                                        } else {
+                                                                            arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de nombre del cliente es mayor a 80 caracteres"});
+                                                                            contadorInserciones++;
+                                                                        }
+                                                                    } else {
+                                                                        arregloErroresInsercion.push({b: "Prestamo: "+valorArreglo[campos[0].numPrestamo], c: "El valor de identificador del cliente es mayor a 30 caracteres"});
+                                                                        contadorInserciones++;
+                                                                    }
+                                                                };
+                                                                if(result.recordset.length == 0) {
+                                                                    $(".loadingScreen").hide();
+                                                                    stopTimer();
+                                                                    $("body").overhang({
+                                                                        type: "success",
+                                                                        primary: "#40D47E",
+                                                                        accent: "#27AE60",
+                                                                        message: "No se encontrarón valores para esa fecha.",
+                                                                        duration: 2,
+                                                                        overlay: true
+                                                                    });
+                                                                }
+                                                                /*$("body").overhang({
+                                                                    type: "success",
+                                                                    primary: "#40D47E",
+                                                                    accent: "#27AE60",
+                                                                    message: "Conexión realizada con éxito.",
+                                                                    overlay: true
+                                                                });*/
+                                                            }
+                                                        });
+                                                    }); // fin pool connect
+                                                });
+                                            }
+                                        });
+                                    }); // fin transaction
+                                } //fin mssql
+                            }
+                        }
+                    });
+                } else {
+                    $("body").overhang({
+                        type: "error",
+                        primary: "#f84a1d",
+                        accent: "#d94e2a",
+                        message: "No existe una conneción guardada de tipo "+tipoSeleccionConnecion+" para la tabla de "+tablaErrorMes+".",
+                        overlay: true,
+                        closeConfirm: true
+                    });
+                }
+            }
         }
+    } else {
+        $("body").overhang({
+            type: "error",
+            primary: "#f84a1d",
+            accent: "#d94e2a",
+            message: "Seleccione una fecha valida.",
+            overlay: true,
+            closeConfirm: true
+        });
     }
 }
 
 function formatDateCreation(date) {
-    console.log(date);
+    //formato si es STRING
+    //dd/mm/aaaa
     var monthNames = [
         "Ene", "Feb", "Mar",
         "Abr", "May", "Jun", "Jul",
@@ -3648,10 +4723,6 @@ function formatDateCreation(date) {
 }
 
 function printErrorFile () {
-    console.log('contadorInserciones')
-    console.log(contadorInserciones)
-    console.log('totalInserciones')
-    console.log(totalInserciones)
     if(contadorInserciones == totalInserciones){
         var altura = arregloErroresExcel.length+2;
         if(altura < arregloErroresInsercion.length+2)
@@ -3730,10 +4801,10 @@ function printErrorFile () {
                 fill: {
                     patternType: "solid",
                     bgColor: {
-                        rgb: "7395bb"
+                        rgb: "e3f2fd"
                     },
                     fgColor: {
-                        rgb: "7395bb"
+                        rgb: "e3f2fd"
                     }
                 },
                 alignment: {
@@ -3755,10 +4826,10 @@ function printErrorFile () {
                 fill: {
                     patternType: "solid",
                     bgColor: {
-                        rgb: "7395bb"
+                        rgb: "e3f2fd"
                     },
                     fgColor: {
-                        rgb: "7395bb"
+                        rgb: "e3f2fd"
                     }
                 },
                 alignment: {
@@ -3821,12 +4892,14 @@ function printErrorFile () {
         };
         workbook.Sheets.Errores["!cols"].push({ wpx: 110 });
         workbook.Sheets.Errores["!cols"].push({ wpx: 450 });
-        workbook.Sheets.Errores["!cols"].push({ wpx: 250 });
+        workbook.Sheets.Errores["!cols"].push({ wpx: 450 });
         if(arregloErroresExcel.length > 0 || arregloErroresInsercion.length > 0) {
             var wbout = XLSX.write(workbook, {bookType:'xlsx', bookSST:false, type: 'binary'});
             XLSX.writeFile(workbook, "ErroresImportacionExcel.xlsx");
             var content = '<div class="row" id="wrapper"> Archivo de error de importaciones creado en directorio del ejecutable del programa. </div>';
             var type = 'error';
+            $(".loadingScreen").hide();
+            stopTimer();
             $("body").overhang({
                 type: "error",
                 primary: "#f84a1d",
@@ -3849,6 +4922,8 @@ function printErrorFile () {
                 closeConfirm: true
             });
         } else if(insertoEnDBListas) {
+            $(".loadingScreen").hide();
+            stopTimer();
             $("body").overhang({
                 type: "success",
                 primary: "#40D47E",
@@ -3868,6 +4943,59 @@ function UpperCasefirst(string) {
         return;
 }
 //	**********		Fin Activos Conexion		**********
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//  **********      Interval      **********
+var myInterval;
+
+function myTimer() {
+    if($(".dots").text().length<3) {
+        $(".dots").text($(".dots").text()+".");
+    } else {
+        $(".dots").text("");
+        $(".dots").text($(".dots").text()+".");
+    }
+}
+
+function stopTimer() {
+    $(".dots").text("");
+    clearInterval(myInterval);
+}
+
+//  **********      Fin interval      **********
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 //	**********		Route Change		**********
@@ -3891,10 +5019,16 @@ function goConnections () {
     $("#app_root").load("src/importaciones.html");
 }
 
+function goConfig () {
+    $("#app_root").empty();
+    //cleanup();
+    $("#app_root").load("src/config.html");
+}
+
 function logout () {
 	$("#app_root").empty();
+    session.defaultSession.clearStorageData([], (data) => {});
     $("#app_root").load("src/login.html");
-	session.defaultSession.clearStorageData([], (data) => {});
 }
 
 function goRCL () {
@@ -3905,4 +5039,15 @@ function goRCL () {
 function goReports () {
     $("#app_root").empty();
     $("#app_root").load("src/reportes.html");
+}
+
+function goGraphics () {
+    $("#app_root").empty();
+    $("#app_root").load("src/graficos.html");
+}
+
+function goLists () {
+    $("#app_root").empty();
+    //cleanup();
+    $("#app_root").load("src/variablesLists.html");
 }
