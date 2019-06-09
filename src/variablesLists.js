@@ -31,6 +31,18 @@ const config = {
     }
 }*/
 
+/*****************TIPO DE LISTAS*****************
+*   1)Manual Contable                           *
+*   2)Cuentas Operativas                        *
+*   3)Exclusiones FOSEDE                        *
+*   4)Tipo de Personas                          *
+*   5)Tipo de Sub-Personas                      *
+*   6)Cuentas Operativas Clientes               *
+*   7)Agencias                                  *
+*   8)Tipos Crédito                             *
+*   9)Tipos Deposito                            *
+************************************************/
+
 const pool1 = new sql.ConnectionPool(config, err => {
 	if(err) {
         console.log(err);
@@ -2291,6 +2303,44 @@ function createElementListExcel (idLista, nombre, valor, saldo, fechaCreacion, f
                     contadorInserciones++;
                     insertoEnDBListas = true;
                     printErrorFile();
+                });
+            }
+        });
+    }); // fin transaction
+}
+
+function cleanList (ID) {
+    const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false;
+        transaction.on('rollback', aborted => {
+            // emited with aborted === true
+            rolledBack = true;
+        });
+        const request = new sql.Request(transaction);
+        request.query("delete * from ListasVariables where idLista = "+ID, (err, result) => {
+            if (err) {
+                console.log(err);
+                if (!rolledBack) {
+                    transaction.rollback(err => {
+                        $("body").overhang({
+                            type: "error",
+                            primary: "#f84a1d",
+                            accent: "#d94e2a",
+                            message: "Error en conección con la tabla de variablePadre.",
+                            overlay: true,
+                            closeConfirm: true
+                        });
+                    });
+                }
+            } else {
+                transaction.commit(err => {
+                    // ... error checks
+                    if(result.recordset.length > 0){
+                        arregloTodasReglas = result.recordset;
+                    } else {
+                        arregloTodasReglas = [];
+                    }
                 });
             }
         });
