@@ -5,643 +5,504 @@
 <link href="src/libs/bootstrap-datepicker/datepicker3.css" rel="stylesheet">
 <link type="text/css" rel="stylesheet" href="src/libs/morris.js/morris.core.css" />
 <link href="src/libs/custom.min.css" rel="stylesheet">
-<div class="container body">
-  <div class="main_container">
-    <div class="col-md-3 left_col">
-      <div class="left_col scroll-view">
-        <div class="navbar nav_title" style="border: 0;" id="wrapper">
-          <a onclick="goHome()" style="height: 100%;" class="site_title cursorHand"><img id="fullLogo" src="src/img/full-logo-example.png" class="logo_company"> <img id="smallLogo" src="src/img/small-logo-example.png" alt="" class="logo_company_solo"></a>
-        </div>
+<!-- page content -->
+<div>
+  
+  <div class="clearfix"></div>
 
-        <div class="clearfix"></div>
+  <div id="variables_div" class="row" style="overflow-x: scroll;">
+    <div class="col-md-12">
 
-        <!-- menu profile quick info -->
-        <div class="profile clearfix">
-          <div class="profile_info">
-            <span>Bienvenido,</span>
-            <h2 id="nameUser"></h2>
-          </div>
-        </div>
-        <!-- /menu profile quick info -->
-
-        <br />
-
-        <!-- sidebar menu -->
-        <div id="sidebar-menu" class="main_menu_side hidden-print main_menu">
-          <div class="menu_section">
-            <h3>General</h3>
-            <ul class="nav side-menu">
-              <li><a onclick="goHome()"><i class="fa fa-home"></i> Home </a>
-              </li>
-              <li><a onclick="goRCL()"><i class="fa fa-bar-chart"></i> C&aacute;lculo Diario de RCL </a>
-              </li>
-              <li><a onclick="goReports()"><i class="fa fa-list-alt"></i> Reporter&iacute;a </a>
-              </li>
-              <li class="active"><a><i class="fa fa-bar-chart"></i> Gr&aacute;ficos </a>
-              </li>
-            </ul>
-          </div>
-
-        </div>
-        <!-- /sidebar menu -->
-      </div>
-    </div>
-
-    <!-- top navigation -->
-    <div class="top_nav">
-      <div class="nav_menu">
-        <nav>
-          <div class="nav toggle">
-            <a id="menu_toggle"><i class="fa fa-bars"></i></a>
-          </div>
-
-          <ul class="nav navbar-nav navbar-right">
-            <li class="">
-              <a href="javascript:;" class="user-profile dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
-                <img src="" alt=""> <span id="navbar_name"></span>
-                <span class=" fa fa-angle-down"></span>
-              </a>
-              <ul class="dropdown-menu dropdown-usermenu pull-right">
-                <li id="varLabel"><a onclick="goVariables()"> Editar Variables de F&oacute;rmula </a></li>
-                <li id="configLabel"><a onclick="goLists()"> Mantenimiento de Listas </a></li>
-                <li id="userLabel"><a onclick="goUsers()"> Control de Usuarios y Logo </a></li>
-                <li id="importLabel"><a onclick="goConnections()"> Importar Tablas </a></li>
-                <li id="configLabel"><a onclick="goConfig()"> Configuraci&oacute;n de Rutina </a></li>
-                <li><a onclick="logout()"><i class="fa fa-sign-out pull-right"></i> Cerrar Sesi&oacute;n</a></li>
-              </ul>
-            </li>
-
-            <!-- <li role="presentation" class="dropdown">
-              <a href="javascript:;" class="dropdown-toggle info-number" data-toggle="dropdown" aria-expanded="false">
-                <i class="fa fa-envelope-o"></i>
-                <span class="badge bg-green">6</span>
-              </a>
-              <ul id="menu1" class="dropdown-menu list-unstyled msg_list" role="menu">
-                <li>
-                  <a>
-                    <span class="image"><img src="" alt="Profile Image" /></span>
-                    <span>
-                      <span>John Smith</span>
-                      <span class="time">3 mins ago</span>
-                    </span>
-                    <span class="message">
-                      Film festivals used to be do-or-die moments for movie makers. They were where...
-                    </span>
-                  </a>
-                </li>
-                <li>
-                  <a>
-                    <span class="image"><img src="" alt="Profile Image" /></span>
-                    <span>
-                      <span>John Smith</span>
-                      <span class="time">3 mins ago</span>
-                    </span>
-                    <span class="message">
-                      Film festivals used to be do-or-die moments for movie makers. They were where...
-                    </span>
-                  </a>
-                </li>
-                <li>
-                  <a>
-                    <span class="image"><img src="" alt="Profile Image" /></span>
-                    <span>
-                      <span>John Smith</span>
-                      <span class="time">3 mins ago</span>
-                    </span>
-                    <span class="message">
-                      Film festivals used to be do-or-die moments for movie makers. They were where...
-                    </span>
-                  </a>
-                </li>
-                <li>
-                  <a>
-                    <span class="image"><img src="" alt="Profile Image" /></span>
-                    <span>
-                      <span>John Smith</span>
-                      <span class="time">3 mins ago</span>
-                    </span>
-                    <span class="message">
-                      Film festivals used to be do-or-die moments for movie makers. They were where...
-                    </span>
-                  </a>
-                </li>
-                <li>
-                  <div class="text-center">
-                    <a>
-                      <strong>See All Alerts</strong>
-                      <i class="fa fa-angle-right"></i>
-                    </a>
-                  </div>
-                </li>
-              </ul>
-            </li> -->
-          </ul>
-        </nav>
-      </div>
-    </div>
-    <!-- /top navigation -->
-
-    <!-- page content -->
-    <div class="right_col" role="main">
-      
-      <div class="clearfix"></div>
-
-      <div id="variables_div" class="row">
+      <div id="lineatiempo_div" class="row filtrarRow">
         <div class="col-md-12">
-
-          <div id="lineatiempo_div" class="row filtrarRow">
-            <div class="col-md-12">
-              <div class="x_panel">
-                <div class="x_title">
-                  <h2>Linea de Tiempo</h2>
-                  <ul class="nav navbar-right panel_toolbox">
-                    <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
-                    </li>
-                  </ul>
-                  <div class="clearfix"></div>
-                </div>
-
-                <div class="x_content">
-
-                  <div class="col-md-12 col-sm-12 col-xs-12">
-
-                    <div class="row" id="wrapper">
-                      <h5>Comparaci&oacute;n de :</h5>
-                    </div>
-                    <br/>
-                    <div class="row" id="wrapper">
-                      <label>
-                        <input id="lineatiempoProyeccion" type="radio" class="flat" checked name="lineatiempoRadio"> Proyecciones
-                      </label>
-                      <label>
-                        <input id="lineatiempoVariable" type="radio" class="flat" name="lineatiempoRadio"> Variables
-                      </label>
-                      <label>
-                        <input id="lineatiempoConsolidado" type="radio" class="flat" name="lineatiempoRadio"> Consolidados
-                      </label>
-                    </div>
-                    <br/>
-
-                    <div id="selectTimeLineProyecciones">
-                      <div id="wrapper" class="row">
-                        <select id="selectLineaTiempoProyecciones" class="form-control select2-list" data-placeholder="Seleccione una variable">
-                        </select>
-                      </div>
-                    </div>
-                    <div id="selectTimeLineVariables" class="row" style="display: none;">
-                      <div class="col-xs-3 text-center">
-                        <select id="selectLineaTiempoVariables1" class="form-control select2-list" data-placeholder="Seleccione una variable">
-                        </select>
-                      </div>
-                      <div class="col-xs-3 text-center">
-                        <select id="selectLineaTiempoVariables2" class="form-control select2-list" data-placeholder="Seleccione una variable">
-                        </select>
-                      </div>
-                      <div class="col-xs-3 text-center">
-                        <select id="selectLineaTiempoVariables3" class="form-control select2-list" data-placeholder="Seleccione una variable">
-                        </select>
-                      </div>
-                      <div class="col-xs-3 text-center">
-                        <select id="selectLineaTiempoVariables4" class="form-control select2-list" data-placeholder="Seleccione una variable">
-                        </select>
-                      </div>
-                      <div class="col-xs-12" id="wrapper">
-                        <label>Proyecciones a mostrar:</label>
-                      </div>
-                      <div class="col-xs-3">
-                        <label>
-                          <input id="selectLineaTiempoVariables1Radio1" type="radio" class="flat" checked name="selectLineaTiempoVariables1"> 30 D&iacute;as
-                        </label>
-                        <label>
-                          <input id="selectLineaTiempoVariables1Radio2" type="radio" class="flat" name="selectLineaTiempoVariables1"> 60 D&iacute;as
-                        </label>
-                        <label>
-                          <input id="selectLineaTiempoVariables1Radio3" type="radio" class="flat" name="selectLineaTiempoVariables1"> 90 D&iacute;as
-                        </label>
-                        <label>
-                          <input id="selectLineaTiempoVariables1Radio4" type="radio" class="flat" name="selectLineaTiempoVariables1"> 120 D&iacute;as
-                        </label>
-                      </div>
-                      <div class="col-xs-3">
-                        <label>
-                          <input id="selectLineaTiempoVariables2Radio1" type="radio" class="flat" checked name="selectLineaTiempoVariables2"> 30 D&iacute;as
-                        </label>
-                        <label>
-                          <input id="selectLineaTiempoVariables2Radio2" type="radio" class="flat" name="selectLineaTiempoVariables2"> 60 D&iacute;as
-                        </label>
-                        <label>
-                          <input id="selectLineaTiempoVariables2Radio3" type="radio" class="flat" name="selectLineaTiempoVariables2"> 90 D&iacute;as
-                        </label>
-                        <label>
-                          <input id="selectLineaTiempoVariables2Radio4" type="radio" class="flat" name="selectLineaTiempoVariables2"> 120 D&iacute;as
-                        </label>
-                      </div>
-                      <div class="col-xs-3">
-                        <label>
-                          <input id="selectLineaTiempoVariables3Radio1" type="radio" class="flat" checked name="selectLineaTiempoVariables3"> 30 D&iacute;as
-                        </label>
-                        <label>
-                          <input id="selectLineaTiempoVariables3Radio2" type="radio" class="flat" name="selectLineaTiempoVariables3"> 60 D&iacute;as
-                        </label>
-                        <label>
-                          <input id="selectLineaTiempoVariables3Radio3" type="radio" class="flat" name="selectLineaTiempoVariables3"> 90 D&iacute;as
-                        </label>
-                        <label>
-                          <input id="selectLineaTiempoVariables3Radio4" type="radio" class="flat" name="selectLineaTiempoVariables3"> 120 D&iacute;as
-                        </label>
-                      </div>
-                      <div class="col-xs-3">
-                        <label>
-                          <input id="selectLineaTiempoVariables4Radio1" type="radio" class="flat" checked name="selectLineaTiempoVariables4"> 30 D&iacute;as
-                        </label>
-                        <label>
-                          <input id="selectLineaTiempoVariables4Radio2" type="radio" class="flat" name="selectLineaTiempoVariables4"> 60 D&iacute;as
-                        </label>
-                        <label>
-                          <input id="selectLineaTiempoVariables4Radio3" type="radio" class="flat" name="selectLineaTiempoVariables4"> 90 D&iacute;as
-                        </label>
-                        <label>
-                          <input id="selectLineaTiempoVariables4Radio4" type="radio" class="flat" name="selectLineaTiempoVariables4"> 120 D&iacute;as
-                        </label>
-                      </div>
-                    </div>
-                    <div id="selectTimeLineConsolidado" style="display: none;">
-                      <div id="wrapper" class="row">
-                        <label>
-                          <input id="selectLineaTiempoConsolidado1" type="radio" class="flat" checked name="selectLineaTiempoConsolidado"> 30 D&iacute;as
-                        </label>
-                        <label>
-                          <input id="selectLineaTiempoConsolidado2" type="radio" class="flat" name="selectLineaTiempoConsolidado"> 60 D&iacute;as
-                        </label>
-                        <label>
-                          <input id="selectLineaTiempoConsolidado3" type="radio" class="flat" name="selectLineaTiempoConsolidado"> 90 D&iacute;as
-                        </label>
-                        <label>
-                          <input id="selectLineaTiempoConsolidado4" type="radio" class="flat" name="selectLineaTiempoConsolidado"> 120 D&iacute;as
-                        </label>
-                      </div>
-                    </div>
-                    <br/>
-
-                    <div id="wrapper">
-                      <label>Fechas a mostrar:</label>
-                    </div>
-                    <div class="row">
-                      <div class="col-xs-6">
-                        <div id="wrapper" class="row">
-                          <label>Inicio</label>
-                        </div>
-                        <div class="row" style="display: flex; justify-content: center;">
-                          <div id="fechaInicioLineaTiempo" class="center-block"></div>
-                        </div>
-                      </div>
-                      <div class="col-xs-6">
-                        <div id="wrapper" class="row">
-                          <label>Final</label>
-                        </div>
-                        <div class="row" style="display: flex; justify-content: center;">
-                          <div id="fechaFinalLineaTiempo" class="center-block"></div>
-                        </div>
-                      </div>
-                    </div>
-                    <br/>
-
-                    <div id="wrapper">
-                      <button onclick="filterTimeLine()" type="button" class="btn btn-info">Filtrar</button>
-                    </div>
-                    <br/>
-
-                    <div class="row">
-                      <div id="lineChart" data-title="Totales" style="height: 50vh;" data-color="#9C27B0,#0aa89e,#e53935,#ffeb3b"></div>
-                    </div>
-
-                  </div>
-
-                </div>
-              </div>
+          <div class="x_panel">
+            <div class="x_title">
+              <h2>Linea de Tiempo</h2>
+              <ul class="nav navbar-right panel_toolbox">
+                <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                </li>
+              </ul>
+              <div class="clearfix"></div>
             </div>
-          </div> <!-- /end lineatiempo -->
 
-          <div id="lineatiempo_div" class="row filtrarRow">
-            <div class="col-md-12">
-              <div class="x_panel">
-                <div class="x_title">
-                  <h2>Comparaci&oacute;n de Proyecciones</h2>
-                  <ul class="nav navbar-right panel_toolbox">
-                    <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
-                    </li>
-                  </ul>
-                  <div class="clearfix"></div>
+            <div class="x_content">
+
+              <div class="col-md-12 col-sm-12 col-xs-12">
+
+                <div class="row" id="wrapper">
+                  <h5>Comparaci&oacute;n de :</h5>
                 </div>
+                <br/>
+                <div class="row" id="wrapper">
+                  <label>
+                    <input id="lineatiempoProyeccion" type="radio" class="flat" checked name="lineatiempoRadio"> Proyecciones
+                  </label>
+                  <label>
+                    <input id="lineatiempoVariable" type="radio" class="flat" name="lineatiempoRadio"> Variables
+                  </label>
+                  <label>
+                    <input id="lineatiempoConsolidado" type="radio" class="flat" name="lineatiempoRadio"> Consolidados
+                  </label>
+                </div>
+                <br/>
 
-                <div class="x_content">
-
-                  <div class="col-md-12 col-sm-12 col-xs-12">
-
-                    <div class="row" id="wrapper">
-                      <h5>Comparaci&oacute;n de :</h5>
-                    </div>
-                    <br/>
-                    <div class="row" id="wrapper">
-                      <label>
-                        <input id="barchartVariable" type="radio" class="flat" checked name="barchartRadio"> Variables
-                      </label>
-                      <label>
-                        <input id="barchartConsolidado" type="radio" class="flat" name="barchartRadio"> Consolidados
-                      </label>
-                    </div>
-                    <br/>
-                    
-                    <div id="selectBarChart" class="row">
-                      <div class="col-xs-3 text-center">
-                        <select id="selectBarChartVariables1" class="form-control select2-list" data-placeholder="Seleccione una variable">
-                        </select>
-                      </div>
-                      <div class="col-xs-3 text-center">
-                        <select id="selectBarChartVariables2" class="form-control select2-list" data-placeholder="Seleccione una variable">
-                        </select>
-                      </div>
-                      <div class="col-xs-3 text-center">
-                        <select id="selectBarChartVariables3" class="form-control select2-list" data-placeholder="Seleccione una variable">
-                        </select>
-                      </div>
-                      <div class="col-xs-3 text-center">
-                        <select id="selectBarChartVariables4" class="form-control select2-list" data-placeholder="Seleccione una variable">
-                        </select>
-                      </div>
-                    </div>
-                    <br/>
-
-                    <div id="wrapper">
-                      <label>Fecha a mostrar:</label>
-                    </div>
-                    <div class="row">
-                      <div id="wrapper" class="row">
-                        <label>Inicio</label>
-                      </div>
-                      <div class="row" style="display: flex; justify-content: center;">
-                        <div id="fechaBarChart" class="center-block"></div>
-                      </div>
-                    </div>
-                    <br/>
-
-                    <div id="wrapper">
-                      <button onclick="filterBarChart()" type="button" class="btn btn-info">Filtrar</button>
-                    </div>
-                    <br/>
-
-                    <div class="row">
-                      <div id="barChart" style="height: 50vh;" data-colors="#9C27B0,#2196F3,#0aa89e,#ff8a65"></div>
-                    </div>
-
+                <div id="selectTimeLineProyecciones">
+                  <div id="wrapper" class="row">
+                    <select id="selectLineaTiempoProyecciones" class="form-control select2-list" data-placeholder="Seleccione una variable">
+                    </select>
                   </div>
-
                 </div>
-              </div>
-            </div>
-          </div> <!-- /end barchart -->
-
-
-          <div id="donut_div" class="row filtrarRow">
-            <div class="col-md-12">
-              <div class="x_panel">
-                <div class="x_title">
-                  <h2>Composici&oacute;n de Variables</h2>
-                  <ul class="nav navbar-right panel_toolbox">
-                    <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
-                    </li>
-                  </ul>
-                  <div class="clearfix"></div>
+                <div id="selectTimeLineVariables" class="row" style="display: none;">
+                  <div class="col-xs-3 text-center">
+                    <select id="selectLineaTiempoVariables1" class="form-control select2-list" data-placeholder="Seleccione una variable">
+                    </select>
+                  </div>
+                  <div class="col-xs-3 text-center">
+                    <select id="selectLineaTiempoVariables2" class="form-control select2-list" data-placeholder="Seleccione una variable">
+                    </select>
+                  </div>
+                  <div class="col-xs-3 text-center">
+                    <select id="selectLineaTiempoVariables3" class="form-control select2-list" data-placeholder="Seleccione una variable">
+                    </select>
+                  </div>
+                  <div class="col-xs-3 text-center">
+                    <select id="selectLineaTiempoVariables4" class="form-control select2-list" data-placeholder="Seleccione una variable">
+                    </select>
+                  </div>
+                  <div class="col-xs-12" id="wrapper">
+                    <label>Proyecciones a mostrar:</label>
+                  </div>
+                  <div class="col-xs-3">
+                    <label>
+                      <input id="selectLineaTiempoVariables1Radio1" type="radio" class="flat" checked name="selectLineaTiempoVariables1"> 30 D&iacute;as
+                    </label>
+                    <label>
+                      <input id="selectLineaTiempoVariables1Radio2" type="radio" class="flat" name="selectLineaTiempoVariables1"> 60 D&iacute;as
+                    </label>
+                    <label>
+                      <input id="selectLineaTiempoVariables1Radio3" type="radio" class="flat" name="selectLineaTiempoVariables1"> 90 D&iacute;as
+                    </label>
+                    <label>
+                      <input id="selectLineaTiempoVariables1Radio4" type="radio" class="flat" name="selectLineaTiempoVariables1"> 120 D&iacute;as
+                    </label>
+                  </div>
+                  <div class="col-xs-3">
+                    <label>
+                      <input id="selectLineaTiempoVariables2Radio1" type="radio" class="flat" checked name="selectLineaTiempoVariables2"> 30 D&iacute;as
+                    </label>
+                    <label>
+                      <input id="selectLineaTiempoVariables2Radio2" type="radio" class="flat" name="selectLineaTiempoVariables2"> 60 D&iacute;as
+                    </label>
+                    <label>
+                      <input id="selectLineaTiempoVariables2Radio3" type="radio" class="flat" name="selectLineaTiempoVariables2"> 90 D&iacute;as
+                    </label>
+                    <label>
+                      <input id="selectLineaTiempoVariables2Radio4" type="radio" class="flat" name="selectLineaTiempoVariables2"> 120 D&iacute;as
+                    </label>
+                  </div>
+                  <div class="col-xs-3">
+                    <label>
+                      <input id="selectLineaTiempoVariables3Radio1" type="radio" class="flat" checked name="selectLineaTiempoVariables3"> 30 D&iacute;as
+                    </label>
+                    <label>
+                      <input id="selectLineaTiempoVariables3Radio2" type="radio" class="flat" name="selectLineaTiempoVariables3"> 60 D&iacute;as
+                    </label>
+                    <label>
+                      <input id="selectLineaTiempoVariables3Radio3" type="radio" class="flat" name="selectLineaTiempoVariables3"> 90 D&iacute;as
+                    </label>
+                    <label>
+                      <input id="selectLineaTiempoVariables3Radio4" type="radio" class="flat" name="selectLineaTiempoVariables3"> 120 D&iacute;as
+                    </label>
+                  </div>
+                  <div class="col-xs-3">
+                    <label>
+                      <input id="selectLineaTiempoVariables4Radio1" type="radio" class="flat" checked name="selectLineaTiempoVariables4"> 30 D&iacute;as
+                    </label>
+                    <label>
+                      <input id="selectLineaTiempoVariables4Radio2" type="radio" class="flat" name="selectLineaTiempoVariables4"> 60 D&iacute;as
+                    </label>
+                    <label>
+                      <input id="selectLineaTiempoVariables4Radio3" type="radio" class="flat" name="selectLineaTiempoVariables4"> 90 D&iacute;as
+                    </label>
+                    <label>
+                      <input id="selectLineaTiempoVariables4Radio4" type="radio" class="flat" name="selectLineaTiempoVariables4"> 120 D&iacute;as
+                    </label>
+                  </div>
                 </div>
+                <div id="selectTimeLineConsolidado" style="display: none;">
+                  <div id="wrapper" class="row">
+                    <label>
+                      <input id="selectLineaTiempoConsolidado1" type="radio" class="flat" checked name="selectLineaTiempoConsolidado"> 30 D&iacute;as
+                    </label>
+                    <label>
+                      <input id="selectLineaTiempoConsolidado2" type="radio" class="flat" name="selectLineaTiempoConsolidado"> 60 D&iacute;as
+                    </label>
+                    <label>
+                      <input id="selectLineaTiempoConsolidado3" type="radio" class="flat" name="selectLineaTiempoConsolidado"> 90 D&iacute;as
+                    </label>
+                    <label>
+                      <input id="selectLineaTiempoConsolidado4" type="radio" class="flat" name="selectLineaTiempoConsolidado"> 120 D&iacute;as
+                    </label>
+                  </div>
+                </div>
+                <br/>
 
-                <div class="x_content">
-
-                  <div class="col-md-12 col-sm-12 col-xs-12">
-                    
-                    <div id="selectBarChart" class="row">
-                      <div id="wrapper" class="row">
-                        <select id="selectDonutVariables" class="form-control select2-list" data-placeholder="Seleccione una variable">
-                        </select>
-                      </div>
-                    </div>
-                    <br/>
-
-                    <div class="row" id="wrapper">
-                      <label>Proyecci&oacute;n a mostrar:</label>
-                    </div>
+                <div id="wrapper">
+                  <label>Fechas a mostrar:</label>
+                </div>
+                <div class="row">
+                  <div class="col-xs-6">
                     <div id="wrapper" class="row">
-                      <label>
-                        <input id="selectDonut1" type="radio" class="flat" checked name="selectDonut"> 30 D&iacute;as
-                      </label>
-                      <label>
-                        <input id="selectDonut2" type="radio" class="flat" name="selectDonut"> 60 D&iacute;as
-                      </label>
-                      <label>
-                        <input id="selectDonut3" type="radio" class="flat" name="selectDonut"> 90 D&iacute;as
-                      </label>
-                      <label>
-                        <input id="selectDonut4" type="radio" class="flat" name="selectDonut"> 120 D&iacute;as
-                      </label>
+                      <label>Inicio</label>
                     </div>
-                    <br/>
-
-                    <div class="row" id="wrapper">
-                      <label>Comparaci&oacute;n de:</label>
+                    <div class="row" style="display: flex; justify-content: center;">
+                      <div id="fechaInicioLineaTiempo" class="center-block"></div>
                     </div>
+                  </div>
+                  <div class="col-xs-6">
                     <div id="wrapper" class="row">
-                      <label>
-                        <input id="selectDonutTotal" type="radio" class="flat" checked name="selectDonutType"> Total
-                      </label>
-                      <label>
-                        <input id="selectDonutInfluencia" type="radio" class="flat" name="selectDonutType"> Influencia de Variable
-                      </label>
-                      <label>
-                        <input id="selectDonutVolumen" type="radio" class="flat" name="selectDonutType"> Volumen de Variable
-                      </label>
+                      <label>Final</label>
                     </div>
-                    <br/>
-
-                    <div id="rowDonutTipo" style="display: none;">
-                      <div class="row" id="wrapper">
-                        <label>Tipo:</label>
-                      </div>
-                      <div id="wrapper" class="row">
-                        <label>
-                          <input id="selectDonutNumerador" type="radio" class="flat" checked name="selectDonutSubType"> Numerador
-                        </label>
-                        <label>
-                          <input id="selectDonutDenominador" type="radio" class="flat" name="selectDonutSubType"> Denominador
-                        </label>
-                      </div>
-                      <br/>
+                    <div class="row" style="display: flex; justify-content: center;">
+                      <div id="fechaFinalLineaTiempo" class="center-block"></div>
                     </div>
-
-                    <div id="wrapper">
-                      <label>Fecha a mostrar:</label>
-                    </div>
-                    <div class="row">
-                      <div class="row" style="display: flex; justify-content: center;">
-                        <div id="fechaDonut" class="center-block"></div>
-                      </div>
-                    </div>
-                    <br/>
-
-                    <div id="wrapper">
-                      <button onclick="filterDonut()" type="button" class="btn btn-info">Filtrar</button>
-                    </div>
-                    <br/>
-
-                    <div class="row">
-                      <div id="donutChart" style="height: 50vh;" data-colors="#9C27B0,#2196F3,#0aa89e,#FF9800,#ffebee,#fafafa,#aa00ff,#ede7f6,#bf360c,#f9fbe7,#e3f2fd,#ffe0b2,#fff8e1,#004d40,#ffee58,#e8eaf6"></div>
-                    </div>
-
                   </div>
-
                 </div>
+                <br/>
+
+                <div id="wrapper">
+                  <button onclick="filterTimeLine()" type="button" class="btn btn-info">Filtrar</button>
+                </div>
+                <br/>
+
+                <div class="row">
+                  <div id="lineChart" data-title="Totales" style="height: 50vh;" data-color="#9C27B0,#0aa89e,#e53935,#ffeb3b"></div>
+                </div>
+
               </div>
+
             </div>
-          </div> <!-- /end donut -->
-
-
-          <div id="radar_div" class="row filtrarRow">
-            <div class="col-md-12">
-              <div class="x_panel">
-                <div class="x_title">
-                  <h2>Comparaci&oacute;n de Variables</h2>
-                  <ul class="nav navbar-right panel_toolbox">
-                    <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
-                    </li>
-                  </ul>
-                  <div class="clearfix"></div>
-                </div>
-
-                <div class="x_content">
-
-                  <div class="col-md-12 col-sm-12 col-xs-12">
-
-                    <div class="row" id="wrapper">
-                      <label>Comparaci&oacute;n de:</label>
-                    </div>
-                    <div id="wrapper" class="row">
-                      <label>
-                        <input id="radioRadarVariables" type="radio" class="flat" checked name="radioRadar"> Variables
-                      </label>
-                      <label>
-                        <input id="radioRadarConsolidados" type="radio" class="flat" name="radioRadar"> Consolidados
-                      </label>
-                    </div>
-                    <br/>
-
-                    <div id="selectRadar" class="row">
-                      <div class="col-xs-3 text-center">
-                        <select id="selectRadar1" class="form-control select2-list" data-placeholder="Seleccione una variable">
-                        </select>
-                      </div>
-                      <div class="col-xs-3 text-center">
-                        <select id="selectRadar2" class="form-control select2-list" data-placeholder="Seleccione una variable">
-                        </select>
-                      </div>
-                      <div class="col-xs-3 text-center">
-                        <select id="selectRadar3" class="form-control select2-list" data-placeholder="Seleccione una variable">
-                        </select>
-                      </div>
-                      <div class="col-xs-3 text-center">
-                        <select id="selectRadar4" class="form-control select2-list" data-placeholder="Seleccione una variable">
-                        </select>
-                      </div>
-                    </div>
-                    <br/>
-
-                    <div id="wrapper">
-                      <label>Fecha a mostrar:</label>
-                    </div>
-                    <div class="row">
-                      <div class="row" style="display: flex; justify-content: center;">
-                        <div id="fechaRadar" class="center-block"></div>
-                      </div>
-                    </div>
-                    <br/>
-
-                    <div id="wrapper">
-                      <button onclick="filterRadar()" type="button" class="btn btn-info">Filtrar</button>
-                    </div>
-                    <br/>
-
-                    <div class="row">
-                      <canvas id="radarChart" style="height: 60vh;"></canvas>
-                    </div>
-
-                  </div>
-
-                </div>
-              </div>
-            </div>
-          </div> <!-- /end radar -->
-
-
-
-          <!-- <div id="radar_div" class="row filtrarRow">
-            <div class="col-md-12">
-              <div class="x_panel">
-                <div class="x_title">
-                  <h2>Distribuci&oacute;n de Variables</h2>
-                  <ul class="nav navbar-right panel_toolbox">
-                    <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
-                    </li>
-                  </ul>
-                  <div class="clearfix"></div>
-                </div>
-
-                <div class="x_content">
-
-                  <div class="col-md-12 col-sm-12 col-xs-12">
-                    
-                    <div id="selectBarChart" class="row">
-                      <div id="wrapper" class="row">
-                        <select id="selectDonutVariables" class="form-control select2-list" data-placeholder="Seleccione una variable">
-                        </select>
-                      </div>
-                    </div>
-                    <br/>
-
-                    <div id="wrapper">
-                      <label>Fecha a mostrar:</label>
-                    </div>
-                    <div class="row">
-                      <div id="wrapper" class="row">
-                        <label>Inicio</label>
-                      </div>
-                      <div class="row" style="display: flex; justify-content: center;">
-                        <div id="fechaDonut" class="center-block"></div>
-                      </div>
-                    </div>
-                    <br/>
-
-                    <div id="wrapper">
-                      <button onclick="filterRadar()" type="button" class="btn btn-info">Filtrar</button>
-                    </div>
-                    <br/>
-
-                    <div class="row">
-                      <div id="scatterChart" style="height: 50vh;"></div>
-                    </div>
-
-                  </div>
-
-                </div>
-              </div>
-            </div>
-          </div> --> <!-- /end radar -->
-
-
+          </div>
         </div>
-      </div> <!-- /end VARIABLES -->
+      </div> <!-- /end lineatiempo -->
+
+      <div id="lineatiempo_div" class="row filtrarRow">
+        <div class="col-md-12">
+          <div class="x_panel">
+            <div class="x_title">
+              <h2>Comparaci&oacute;n de Proyecciones</h2>
+              <ul class="nav navbar-right panel_toolbox">
+                <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                </li>
+              </ul>
+              <div class="clearfix"></div>
+            </div>
+
+            <div class="x_content">
+
+              <div class="col-md-12 col-sm-12 col-xs-12">
+
+                <div class="row" id="wrapper">
+                  <h5>Comparaci&oacute;n de :</h5>
+                </div>
+                <br/>
+                <div class="row" id="wrapper">
+                  <label>
+                    <input id="barchartVariable" type="radio" class="flat" checked name="barchartRadio"> Variables
+                  </label>
+                  <label>
+                    <input id="barchartConsolidado" type="radio" class="flat" name="barchartRadio"> Consolidados
+                  </label>
+                </div>
+                <br/>
+                
+                <div id="selectBarChart" class="row">
+                  <div class="col-xs-3 text-center">
+                    <select id="selectBarChartVariables1" class="form-control select2-list" data-placeholder="Seleccione una variable">
+                    </select>
+                  </div>
+                  <div class="col-xs-3 text-center">
+                    <select id="selectBarChartVariables2" class="form-control select2-list" data-placeholder="Seleccione una variable">
+                    </select>
+                  </div>
+                  <div class="col-xs-3 text-center">
+                    <select id="selectBarChartVariables3" class="form-control select2-list" data-placeholder="Seleccione una variable">
+                    </select>
+                  </div>
+                  <div class="col-xs-3 text-center">
+                    <select id="selectBarChartVariables4" class="form-control select2-list" data-placeholder="Seleccione una variable">
+                    </select>
+                  </div>
+                </div>
+                <br/>
+
+                <div id="wrapper">
+                  <label>Fecha a mostrar:</label>
+                </div>
+                <div class="row">
+                  <div id="wrapper" class="row">
+                    <label>Inicio</label>
+                  </div>
+                  <div class="row" style="display: flex; justify-content: center;">
+                    <div id="fechaBarChart" class="center-block"></div>
+                  </div>
+                </div>
+                <br/>
+
+                <div id="wrapper">
+                  <button onclick="filterBarChart()" type="button" class="btn btn-info">Filtrar</button>
+                </div>
+                <br/>
+
+                <div class="row">
+                  <div id="barChart" style="height: 50vh;" data-colors="#9C27B0,#2196F3,#0aa89e,#ff8a65"></div>
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div> <!-- /end barchart -->
+
+
+      <div id="donut_div" class="row filtrarRow">
+        <div class="col-md-12">
+          <div class="x_panel">
+            <div class="x_title">
+              <h2>Composici&oacute;n de Variables</h2>
+              <ul class="nav navbar-right panel_toolbox">
+                <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                </li>
+              </ul>
+              <div class="clearfix"></div>
+            </div>
+
+            <div class="x_content">
+
+              <div class="col-md-12 col-sm-12 col-xs-12">
+                
+                <div id="selectBarChart" class="row">
+                  <div id="wrapper" class="row">
+                    <select id="selectDonutVariables" class="form-control select2-list" data-placeholder="Seleccione una variable">
+                    </select>
+                  </div>
+                </div>
+                <br/>
+
+                <div class="row" id="wrapper">
+                  <label>Proyecci&oacute;n a mostrar:</label>
+                </div>
+                <div id="wrapper" class="row">
+                  <label>
+                    <input id="selectDonut1" type="radio" class="flat" checked name="selectDonut"> 30 D&iacute;as
+                  </label>
+                  <label>
+                    <input id="selectDonut2" type="radio" class="flat" name="selectDonut"> 60 D&iacute;as
+                  </label>
+                  <label>
+                    <input id="selectDonut3" type="radio" class="flat" name="selectDonut"> 90 D&iacute;as
+                  </label>
+                  <label>
+                    <input id="selectDonut4" type="radio" class="flat" name="selectDonut"> 120 D&iacute;as
+                  </label>
+                </div>
+                <br/>
+
+                <div class="row" id="wrapper">
+                  <label>Comparaci&oacute;n de:</label>
+                </div>
+                <div id="wrapper" class="row">
+                  <label>
+                    <input id="selectDonutTotal" type="radio" class="flat" checked name="selectDonutType"> Total
+                  </label>
+                  <label>
+                    <input id="selectDonutInfluencia" type="radio" class="flat" name="selectDonutType"> Influencia de Variable
+                  </label>
+                  <label>
+                    <input id="selectDonutVolumen" type="radio" class="flat" name="selectDonutType"> Volumen de Variable
+                  </label>
+                </div>
+                <br/>
+
+                <div id="rowDonutTipo" style="display: none;">
+                  <div class="row" id="wrapper">
+                    <label>Tipo:</label>
+                  </div>
+                  <div id="wrapper" class="row">
+                    <label>
+                      <input id="selectDonutNumerador" type="radio" class="flat" checked name="selectDonutSubType"> Numerador
+                    </label>
+                    <label>
+                      <input id="selectDonutDenominador" type="radio" class="flat" name="selectDonutSubType"> Denominador
+                    </label>
+                  </div>
+                  <br/>
+                </div>
+
+                <div id="wrapper">
+                  <label>Fecha a mostrar:</label>
+                </div>
+                <div class="row">
+                  <div class="row" style="display: flex; justify-content: center;">
+                    <div id="fechaDonut" class="center-block"></div>
+                  </div>
+                </div>
+                <br/>
+
+                <div id="wrapper">
+                  <button onclick="filterDonut()" type="button" class="btn btn-info">Filtrar</button>
+                </div>
+                <br/>
+
+                <div class="row">
+                  <div id="donutChart" style="height: 50vh;" data-colors="#9C27B0,#2196F3,#0aa89e,#FF9800,#ffebee,#fafafa,#aa00ff,#ede7f6,#bf360c,#f9fbe7,#e3f2fd,#ffe0b2,#fff8e1,#004d40,#ffee58,#e8eaf6"></div>
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div> <!-- /end donut -->
+
+
+      <div id="radar_div" class="row filtrarRow">
+        <div class="col-md-12">
+          <div class="x_panel">
+            <div class="x_title">
+              <h2>Comparaci&oacute;n de Variables</h2>
+              <ul class="nav navbar-right panel_toolbox">
+                <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                </li>
+              </ul>
+              <div class="clearfix"></div>
+            </div>
+
+            <div class="x_content">
+
+              <div class="col-md-12 col-sm-12 col-xs-12">
+
+                <div class="row" id="wrapper">
+                  <label>Comparaci&oacute;n de:</label>
+                </div>
+                <div id="wrapper" class="row">
+                  <label>
+                    <input id="radioRadarVariables" type="radio" class="flat" checked name="radioRadar"> Variables
+                  </label>
+                  <label>
+                    <input id="radioRadarConsolidados" type="radio" class="flat" name="radioRadar"> Consolidados
+                  </label>
+                </div>
+                <br/>
+
+                <div id="selectRadar" class="row">
+                  <div class="col-xs-3 text-center">
+                    <select id="selectRadar1" class="form-control select2-list" data-placeholder="Seleccione una variable">
+                    </select>
+                  </div>
+                  <div class="col-xs-3 text-center">
+                    <select id="selectRadar2" class="form-control select2-list" data-placeholder="Seleccione una variable">
+                    </select>
+                  </div>
+                  <div class="col-xs-3 text-center">
+                    <select id="selectRadar3" class="form-control select2-list" data-placeholder="Seleccione una variable">
+                    </select>
+                  </div>
+                  <div class="col-xs-3 text-center">
+                    <select id="selectRadar4" class="form-control select2-list" data-placeholder="Seleccione una variable">
+                    </select>
+                  </div>
+                </div>
+                <br/>
+
+                <div id="wrapper">
+                  <label>Fecha a mostrar:</label>
+                </div>
+                <div class="row">
+                  <div class="row" style="display: flex; justify-content: center;">
+                    <div id="fechaRadar" class="center-block"></div>
+                  </div>
+                </div>
+                <br/>
+
+                <div id="wrapper">
+                  <button onclick="filterRadar()" type="button" class="btn btn-info">Filtrar</button>
+                </div>
+                <br/>
+
+                <div class="row">
+                  <canvas id="radarChart" style="height: 60vh;"></canvas>
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div> <!-- /end radar -->
+
+
+
+      <!-- <div id="radar_div" class="row filtrarRow">
+        <div class="col-md-12">
+          <div class="x_panel">
+            <div class="x_title">
+              <h2>Distribuci&oacute;n de Variables</h2>
+              <ul class="nav navbar-right panel_toolbox">
+                <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                </li>
+              </ul>
+              <div class="clearfix"></div>
+            </div>
+
+            <div class="x_content">
+
+              <div class="col-md-12 col-sm-12 col-xs-12">
+                
+                <div id="selectBarChart" class="row">
+                  <div id="wrapper" class="row">
+                    <select id="selectDonutVariables" class="form-control select2-list" data-placeholder="Seleccione una variable">
+                    </select>
+                  </div>
+                </div>
+                <br/>
+
+                <div id="wrapper">
+                  <label>Fecha a mostrar:</label>
+                </div>
+                <div class="row">
+                  <div id="wrapper" class="row">
+                    <label>Inicio</label>
+                  </div>
+                  <div class="row" style="display: flex; justify-content: center;">
+                    <div id="fechaDonut" class="center-block"></div>
+                  </div>
+                </div>
+                <br/>
+
+                <div id="wrapper">
+                  <button onclick="filterRadar()" type="button" class="btn btn-info">Filtrar</button>
+                </div>
+                <br/>
+
+                <div class="row">
+                  <div id="scatterChart" style="height: 50vh;"></div>
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div> --> <!-- /end radar -->
+
 
     </div>
-    <!-- /page content -->
+  </div> <!-- /end VARIABLES -->
 
-  </div>
 </div>
+<!-- /page content -->
 
 <script src="src/libs/iCheck/icheck.min.js"></script>
 
@@ -676,4 +537,4 @@
 <script src="src/graficos.js"></script>
 
 <!-- Custom Theme Scripts -->
-<script src="src/libs/custom.min.js"></script>
+<!-- <script src="src/libs/custom.min.js"></script> -->

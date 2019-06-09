@@ -35,10 +35,6 @@ fs.readFile('./conf.dar', 'utf-8', (err, data) => {
                 database = despues.toString();
             }
         };
-        console.log(user)
-        console.log(password)
-        console.log(server)
-        console.log(database)
         setUser(user);
         setPassword(password);
         setServer(server);
@@ -235,9 +231,9 @@ function login () {
                 }
             );
             entrar = false;
-            $("#app_root").empty();
+            $("#app_full").empty();
             cleanup();
-            $("#app_root").load("src/home.html");
+            $("#app_full").load("src/template.html");
         }
     }
     //password = md5(password);
@@ -321,9 +317,9 @@ function login () {
                                         console.log(err);
                                     }
                                 );
-                                $("#app_root").empty();
                                 cleanup();
-                                $("#app_root").load("src/home.html");
+                                $("#app_full").empty();
+                                $("#app_full").load("src/template.html");
                             } else {
                                 $("body").overhang({
                                     type: "error",

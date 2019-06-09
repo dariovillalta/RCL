@@ -13,6 +13,7 @@ const config = {
     password: password,
     server: server,
     database: database,
+    stream: true,
     pool: {
         max: 10,
         min: 0,
@@ -47,10 +48,13 @@ const pool1 = new sql.ConnectionPool(config, err => {
 		loadVariables();
 		loadVariableVariables();
 		loadVariablesMainDB();
+        loadFosede();
+        loadLists();
+        loadListListsExcelAll();
 	}
 });
 
-var session = remote.session;
+/*var session = remote.session;
 
 session.defaultSession.cookies.get({}, (error, cookies) => {
 	for (var i = 0; i < cookies.length; i++) {
@@ -68,7 +72,7 @@ session.defaultSession.cookies.get({}, (error, cookies) => {
 				$("#userLabel").hide();
 		}
 	};
-});
+});*/
 
 
 /*****************TIPO DE LISTAS*****************
@@ -80,7 +84,7 @@ session.defaultSession.cookies.get({}, (error, cookies) => {
 *   6)Cuentas Operativas Clientes               *
 *   7)Agencias                                  *
 *   8)Tipos Crédito                             *
-*   8)Tipos Deposito                            *
+*   9)Tipos Deposito                            *
 ************************************************/
 
 /* ******************       SEARCH     ********* */
@@ -142,6 +146,7 @@ function loadVariablesMainDB () {
         const request = new sql.Request(transaction);
         request.query("select * from Variables", (err, result) => {
             if (err) {
+                console.log(err);
                 if (!rolledBack) {
                     transaction.rollback(err => {
                         $("body").overhang({
@@ -170,7 +175,7 @@ function loadVariablesMainDB () {
                             $("#salida").text("f(x)");
                         mathfield = MathLive.makeMathField('salida');
 
-                        if(result.recordset[0].fullLogo.length > 0){
+                        /*if(result.recordset[0].fullLogo.length > 0){
                             filepathFullLogo = result.recordset[0].fullLogo;
                             $("#fullLogo").attr("src",result.recordset[0].fullLogo);
                         } else
@@ -178,8 +183,131 @@ function loadVariablesMainDB () {
                         if(result.recordset[0].smallLogo.length > 0){
                             filepathSmallLogo = result.recordset[0].smallLogo;
                             $("#smallLogo").attr("src",result.recordset[0].smallLogo);
-                        }
+                        }*/
                     }
+                });
+            }
+        });
+    }); // fin transaction
+}
+
+var montoFosedeGlobal = null;
+
+function loadFosede () {
+    const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false;
+        transaction.on('rollback', aborted => {
+            // emited with aborted === true
+            rolledBack = true;
+        })
+        const request = new sql.Request(transaction);
+        request.query("select * from FOSEDE", (err, result) => {
+            if (err) {
+                console.log(err);
+                if (!rolledBack) {
+                    transaction.rollback(err => {
+                        $("body").overhang({
+                            type: "error",
+                            primary: "#f84a1d",
+                            accent: "#d94e2a",
+                            message: "Error en conección con la tabla de FOSEDE.",
+                            overlay: true,
+                            closeConfirm: true
+                        });
+                    });
+                }
+            }  else {
+                transaction.commit(err => {
+                    // ... error checks
+                    if(result.recordset.length > 0){
+                        if(result.recordset[0].montoFosede > 1)
+                            montoFosedeGlobal = result.recordset;
+                        else
+                            montoFosedeGlobal = 0.00;
+                    } else {
+                        montoFosedeGlobal = 0.00;
+                    }
+                });
+            }
+        });
+    }); // fin transaction
+}
+
+var arregloListas = [];
+var arregloListasVariablesTotes = [];
+
+function loadLists () {
+    const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false;
+        transaction.on('rollback', aborted => {
+            // emited with aborted === true
+            rolledBack = true;
+        });
+        const request = new sql.Request(transaction);
+        request.query("select * from Listas", (err, result) => {
+            if (err) {
+                console.log(err);
+                if (!rolledBack) {
+                    transaction.rollback(err => {
+                        $("body").overhang({
+                            type: "error",
+                            primary: "#f84a1d",
+                            accent: "#d94e2a",
+                            message: "Error en conección con la tabla de Listas.",
+                            overlay: true,
+                            closeConfirm: true
+                        });
+                    });
+                }
+            }  else {
+                transaction.commit(err => {
+                    // ... error checks
+                    if(result.recordset.length > 0){
+                        arregloListas = result.recordset;
+                    } else {
+                        arregloListas = [];
+                    }
+                });
+            }
+        });
+    }); // fin transaction
+}
+
+function loadListListsExcelAll () {
+    const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false;
+        transaction.on('rollback', aborted => {
+            // emited with aborted === true
+            rolledBack = true;
+        });
+        const request = new sql.Request(transaction);
+        request.query("select distinct idLista from ListasVariables", (err, result) => {
+            if (err) {
+                console.log(err);
+                if (!rolledBack) {
+                    transaction.rollback(err => {
+                        $("body").overhang({
+                            type: "error",
+                            primary: "#f84a1d",
+                            accent: "#d94e2a",
+                            message: "Error en conección con la tabla de ListasVariables.",
+                            overlay: true,
+                            closeConfirm: true
+                        });
+                    });
+                }
+            }  else {
+                transaction.commit(err => {
+                    // ... error checks
+                    if(result.recordset.length > 0){
+                        arregloListasVariablesTotes = result.recordset;
+                    } else {
+                        arregloListasVariablesTotes = [];
+                    }
+                    console.log(arregloListasVariablesTotes)
                 });
             }
         });
@@ -415,8 +543,9 @@ function createFormulaVariablesDB (equacion, formulaMATHLIVE) {
             rolledBack = true;
         });
         const request = new sql.Request(transaction);
-        request.query("insert into Variables (fullLogo, smallLogo, formula, formulaMATHLIVE, minimoRCL) values ('', '', '"+equacion+"', '"+formulaMATHLIVE+"', 0)", (err, result) => {
+        request.query("insert into Variables (fullLogo, smallLogo, formula, formulaMATHLIVE, minimoRCL, permisoInicio, horaProgramada) values ('', '', '"+equacion+"', '"+formulaMATHLIVE+"', 0, 'false', 0)", (err, result) => {
             if (err) {
+                console.log(err);
                 if (!rolledBack) {
                     transaction.rollback(err => {
                         $("body").overhang({
@@ -437,7 +566,7 @@ function createFormulaVariablesDB (equacion, formulaMATHLIVE) {
                         primary: "#40D47E",
                         accent: "#27AE60",
                         message: "Formula guardada con exito.",
-                        duration: 2,
+                        duration: 1,
                         overlay: true
                     });
                     loadVariablesMainDB();
@@ -459,6 +588,7 @@ function updateFormulaVariablesDB (equacion, formulaMATHLIVE) {
         request.query("update Variables set formula = '"+equacion+"', formulaMATHLIVE = '"+formulaMATHLIVE+"' where ID = 1", (err, result) => {
             if (err) {
                 if (!rolledBack) {
+                    console.log(err);
                     transaction.rollback(err => {
                         $("body").overhang({
                             type: "error",
@@ -478,7 +608,7 @@ function updateFormulaVariablesDB (equacion, formulaMATHLIVE) {
 					  	primary: "#40D47E",
 		  				accent: "#27AE60",
 					  	message: "Formula guardada con exito.",
-					  	duration: 2,
+					  	duration: 1,
 					  	overlay: true
 					});
                     loadVariablesMainDB();
@@ -508,6 +638,7 @@ function loadVariables () {
         const request = new sql.Request(transaction);
         request.query("select * from FormulaVariables", (err, result) => {
             if (err) {
+                console.log(err);
                 if (!rolledBack) {
                     transaction.rollback(err => {
                         $("body").overhang({
@@ -718,53 +849,75 @@ function loadVariablesTable () {
 
 	$('#datatable_variables tbody').on( 'click', 'tr a.updateVariable', function () {
         var data = table.row( $(this).parents('tr') ).data();
-		if(data.nombre.length > 0 && data.nombre.length < 61){
-			if(data.variables.length > 0 && data.variables.length < 11){
-				if(data.descripcion.length < 701){
-					$("body").overhang({
-					  	type: "confirm",
-					  	primary: "#f5a433",
-					  	accent: "#dc9430",
-					  	yesColor: "#3498DB",
-					  	message: 'Esta seguro que desea guardar los cambios?',
-					  	overlay: true,
-					  	yesMessage: "Modificar",
-					  	noMessage: "Cancelar",
-					  	callback: function (value) {
-					    	if(value)
-					    		modifyVariable(data);
-					  	}
-					});
-				} else {
-					$("body").overhang({
-					  	type: "error",
-					  	primary: "#f84a1d",
-						accent: "#d94e2a",
-					  	message: "La descripción de la variable debe tener una longitud menor a 701.",
-					  	overlay: true,
+        if(!/\s/.test(data.variables)) {
+            if(!/_/.test(data.variables)) {
+        		if(data.nombre.length > 0 && data.nombre.length < 61){
+        			if(data.variables.length > 0 && data.variables.length < 11){
+        				if(data.descripcion.length < 701){
+        					$("body").overhang({
+        					  	type: "confirm",
+        					  	primary: "#f5a433",
+        					  	accent: "#dc9430",
+        					  	yesColor: "#3498DB",
+        					  	message: 'Esta seguro que desea guardar los cambios?',
+        					  	overlay: true,
+        					  	yesMessage: "Modificar",
+        					  	noMessage: "Cancelar",
+        					  	callback: function (value) {
+        					    	if(value)
+        					    		modifyVariable(data);
+        					  	}
+        					});
+        				} else {
+        					$("body").overhang({
+        					  	type: "error",
+        					  	primary: "#f84a1d",
+        						accent: "#d94e2a",
+        					  	message: "La descripción de la variable debe tener una longitud menor a 701.",
+        					  	overlay: true,
+                                closeConfirm: true
+        					});
+        				}
+        			} else {
+        				$("body").overhang({
+        				  	type: "error",
+        				  	primary: "#f84a1d",
+        					accent: "#d94e2a",
+        				  	message: "La representación de la variable en la formula debe tener más de una letra y menos de 11.",
+        				  	overlay: true,
+                            closeConfirm: true
+        				});
+        			}
+        		} else {
+        			$("body").overhang({
+        			  	type: "error",
+        			  	primary: "#f84a1d",
+        				accent: "#d94e2a",
+        			  	message: "El nombre de la variable debe tener una longitud mayor a 0 y menor a 61.",
+        			  	overlay: true,
                         closeConfirm: true
-					});
-				}
-			} else {
-				$("body").overhang({
-				  	type: "error",
-				  	primary: "#f84a1d",
-					accent: "#d94e2a",
-				  	message: "La representación de la variable en la formula debe tener más de una letra y menos de 11.",
-				  	overlay: true,
+        			});
+        		}
+            } else {
+                $("body").overhang({
+                    type: "error",
+                    primary: "#f84a1d",
+                    accent: "#d94e2a",
+                    message: "El campo de variables no puede contener el caracter: '_'.",
+                    overlay: true,
                     closeConfirm: true
-				});
-			}
-		} else {
-			$("body").overhang({
-			  	type: "error",
-			  	primary: "#f84a1d",
-				accent: "#d94e2a",
-			  	message: "El nombre de la variable debe tener una longitud mayor a 0 y menor a 61.",
-			  	overlay: true,
+                });
+            }
+        } else {
+            $("body").overhang({
+                type: "error",
+                primary: "#f84a1d",
+                accent: "#d94e2a",
+                message: "El campo de variables no puede contener espacios.",
+                overlay: true,
                 closeConfirm: true
-			});
-		}
+            });
+        }
     } );
 
 	$('#datatable_variables tbody').on( 'click', 'tr a.deleteVariable', function () {
@@ -1087,6 +1240,7 @@ function updateVariableFormula (formula, formulaMATHLIVE, id) {
         const request = new sql.Request(transaction);
         request.query("update FormulaVariables set formula = '"+formula+"', formulaMATHLIVE = '"+formulaMATHLIVE+"' where ID = '"+id+"'", (err, result) => {
             if (err) {
+                console.log(err);
                 if (!rolledBack) {
                     transaction.rollback(err => {
                         $("body").overhang({
@@ -1108,7 +1262,7 @@ function updateVariableFormula (formula, formulaMATHLIVE, id) {
                         primary: "#40D47E",
                         accent: "#27AE60",
                         message: "Variable modificada con éxito.",
-                        duration: 2,
+                        duration: 1,
                         overlay: true
                     });
                 });
@@ -1121,85 +1275,108 @@ function saveNewVariable (index) {
 	var nombre = $("#nombre"+index).val();
 	var variables = $("#variables"+index).val();
 	var descripcion = $("#descripcion"+index).val();
-    if(!existeArregloVariables(variables)) {
-        if(!existeArregloVariablesDeVariables(variables)) {
-        	if(nombre.length > 0 && nombre.length < 61){
-        		if(variables.length > 0 && variables.length < 11){
-        			if(descripcion.length < 701){
-        				const transaction = new sql.Transaction( pool1 );
-        			    transaction.begin(err => {
-        			        var rolledBack = false;
-        			        transaction.on('rollback', aborted => {
-        			            // emited with aborted === true
-        			            rolledBack = true;
-        			        });
-        			        const request = new sql.Request(transaction);
-        			        request.query("insert into FormulaVariables (nombre, variables, descripcion, formula, formulaMATHLIVE) values ('"+nombre+"', '"+variables+"', '"+descripcion+"', '', '')", (err, result) => {
-        			            if (err) {
-        			                if (!rolledBack) {
-        			                    transaction.rollback(err => {
-        			                        $("body").overhang({
-                                                type: "error",
-                                                primary: "#f84a1d",
-                                                accent: "#d94e2a",
-                                                message: "Error en inserción en la tabla de FormulaVariables.",
-                                                overlay: true,
-                                                closeConfirm: true
-                                            });
-        			                    });
-        			                }
-        			            }  else {
-        			                transaction.commit(err => {
-        			                    // ... error checks
-        			                    loadVariables();
-        			                    $("body").overhang({
-        								  	type: "success",
-        								  	primary: "#40D47E",
-        					  				accent: "#27AE60",
-        								  	message: "Variable creada con exito.",
-        								  	duration: 2,
-        								  	overlay: true
-        								});
-        			                });
-        			            }
-        			        });
-        			    }); // fin transaction
-        			} else {
-        				$("body").overhang({
-        				  	type: "error",
-        				  	primary: "#f84a1d",
-        					accent: "#d94e2a",
-        				  	message: "La descripción de la variable debe tener una longitud menor a 701.",
-        				  	overlay: true,
+    if(!/\s/.test(variables)) {
+        if(!/_/.test(variables)) {
+            if(!existeArregloVariables(variables)) {
+                if(!existeArregloVariablesDeVariables(variables)) {
+                	if(nombre.length > 0 && nombre.length < 61){
+                		if(variables.length > 0 && variables.length < 11){
+                			if(descripcion.length < 701){
+                				const transaction = new sql.Transaction( pool1 );
+                			    transaction.begin(err => {
+                			        var rolledBack = false;
+                			        transaction.on('rollback', aborted => {
+                			            // emited with aborted === true
+                			            rolledBack = true;
+                			        });
+                			        const request = new sql.Request(transaction);
+                			        request.query("insert into FormulaVariables (nombre, variables, descripcion, formula, formulaMATHLIVE) values ('"+nombre+"', '"+variables+"', '"+descripcion+"', '', '')", (err, result) => {
+                			            if (err) {
+                                            console.log(err);
+                			                if (!rolledBack) {
+                			                    transaction.rollback(err => {
+                			                        $("body").overhang({
+                                                        type: "error",
+                                                        primary: "#f84a1d",
+                                                        accent: "#d94e2a",
+                                                        message: "Error en inserción en la tabla de FormulaVariables.",
+                                                        overlay: true,
+                                                        closeConfirm: true
+                                                    });
+                			                    });
+                			                }
+                			            }  else {
+                			                transaction.commit(err => {
+                			                    // ... error checks
+                			                    loadVariables();
+                			                    $("body").overhang({
+                								  	type: "success",
+                								  	primary: "#40D47E",
+                					  				accent: "#27AE60",
+                								  	message: "Variable creada con exito.",
+                								  	duration: 1,
+                								  	overlay: true
+                								});
+                			                });
+                			            }
+                			        });
+                			    }); // fin transaction
+                			} else {
+                				$("body").overhang({
+                				  	type: "error",
+                				  	primary: "#f84a1d",
+                					accent: "#d94e2a",
+                				  	message: "La descripción de la variable debe tener una longitud menor a 701.",
+                				  	overlay: true,
+                                    closeConfirm: true
+                				});
+                			}
+                		} else {
+                			$("body").overhang({
+                			  	type: "error",
+                			  	primary: "#f84a1d",
+                				accent: "#d94e2a",
+                			  	message: "La representación de la variable en la formula debe tener más de una letra y menos de 11.",
+                			  	overlay: true,
+                                closeConfirm: true
+                			});
+                		}
+                	} else {
+                		$("body").overhang({
+                		  	type: "error",
+                		  	primary: "#f84a1d",
+                			accent: "#d94e2a",
+                		  	message: "El nombre de la variable debe tener longitud mayor a 0 y menor a 61.",
+                		  	overlay: true,
                             closeConfirm: true
-        				});
-        			}
-        		} else {
-        			$("body").overhang({
-        			  	type: "error",
-        			  	primary: "#f84a1d",
-        				accent: "#d94e2a",
-        			  	message: "La representación de la variable en la formula debe tener más de una letra y menos de 11.",
-        			  	overlay: true,
+                		});
+                	}
+                } else {
+                    $("body").overhang({
+                        type: "error",
+                        primary: "#f84a1d",
+                        accent: "#d94e2a",
+                        message: "La variable "+variables+" ya existe en la tabla de sub-variables.",
+                        overlay: true,
                         closeConfirm: true
-        			});
-        		}
-        	} else {
-        		$("body").overhang({
-        		  	type: "error",
-        		  	primary: "#f84a1d",
-        			accent: "#d94e2a",
-        		  	message: "El nombre de la variable debe tener longitud mayor a 0 y menor a 61.",
-        		  	overlay: true,
+                    });
+                }
+            } else {
+                $("body").overhang({
+                    type: "error",
+                    primary: "#f84a1d",
+                    accent: "#d94e2a",
+                    message: "La variable "+variables+" ya existe en la tabla de variables.",
+                    overlay: true,
                     closeConfirm: true
-        		});
-        	}
+                });
+            }
         } else {
             $("body").overhang({
                 type: "error",
                 primary: "#f84a1d",
                 accent: "#d94e2a",
-                message: "La variable "+variables+" ya existe en la tabla de sub-variables.",
+                message: "El campo de variables no puede contener el caracter: '_'.",
                 overlay: true,
                 closeConfirm: true
             });
@@ -1209,7 +1386,7 @@ function saveNewVariable (index) {
             type: "error",
             primary: "#f84a1d",
             accent: "#d94e2a",
-            message: "La variable "+variables+" ya existe en la tabla de variables.",
+            message: "El campo de variables no puede contener espacios.",
             overlay: true,
             closeConfirm: true
         });
@@ -1227,6 +1404,7 @@ function modifyVariable (row) {
         const request = new sql.Request(transaction);
         request.query("update FormulaVariables set nombre = '"+row.nombre+"', variables = '"+row.variables+"', descripcion = '"+row.descripcion+"' where ID = '"+row.ID+"'", (err, result) => {
             if (err) {
+                console.log(err);
                 if (!rolledBack) {
                     transaction.rollback(err => {
                         $("body").overhang({
@@ -1248,7 +1426,7 @@ function modifyVariable (row) {
 					  	primary: "#40D47E",
 		  				accent: "#27AE60",
 					  	message: "Variable modificada con éxito.",
-					  	duration: 2,
+					  	duration: 1,
 					  	overlay: true
 					});
                 });
@@ -1268,6 +1446,7 @@ function deleteVariable (row) {
         const request = new sql.Request(transaction);
         request.query("delete from FormulaVariables where ID = '"+row.ID+"' ", (err, result) => {
             if (err) {
+                console.log(err);
                 if (!rolledBack) {
                     transaction.rollback(err => {
                         $("body").overhang({
@@ -1289,7 +1468,7 @@ function deleteVariable (row) {
 					  	primary: "#40D47E",
 		  				accent: "#27AE60",
 					  	message: "Variable eliminada con exito.",
-					  	duration: 2,
+					  	duration: 1,
 					  	overlay: true
 					});
                 });
@@ -1309,6 +1488,7 @@ function loadVariableVariables () {
         const request = new sql.Request(transaction);
         request.query("select * from VariablesdeVariablesFormula", (err, result) => {
             if (err) {
+                console.log(err);
                 if (!rolledBack) {
                     transaction.rollback(err => {
                         $("body").overhang({
@@ -1344,51 +1524,197 @@ function createVariableDeVariable (rowdataID) {
 	var descripcion = $("#variablesdeVariablesDescripcion"+rowdataID).val();
 	var factor = $("#variablesdeVariablesFactor"+rowdataID).val().split(/[ |%]/)[0];
     var tabla = $("#variablesdeVariablesTabla"+rowdataID).val();
-    if(!existeArregloVariablesDeVariables(nombre)) {
-        if(!existeArregloVariables(nombre)) {
+    if(!/\s/.test(nombre)) {
+        if(!/_/.test(nombre)) {
+            if(!existeArregloVariablesDeVariables(nombre)) {
+                if(!existeArregloVariables(nombre)) {
+                	if(nombre.length > 0 && nombre.length < 41){
+                		if(descripcion.length < 701){
+                			if(factor.length > 0){
+                				if(!isNaN(factor)){
+                                    if(tabla.length > 0 && !isNaN(tabla)) {
+                    					const transaction = new sql.Transaction( pool1 );
+                    				    transaction.begin(err => {
+                    				        var rolledBack = false;
+                    				        transaction.on('rollback', aborted => {
+                    				            // emited with aborted === true
+                    				            rolledBack = true;
+                    				        });
+                    				        const request = new sql.Request(transaction);
+                    				        request.query("insert into VariablesdeVariablesFormula (nombre, descripcion, factor, tablaAplicar) values ('"+nombre+"', '"+descripcion+"', "+factor+", "+tabla+")", (err, result) => {
+                    				            if (err) {
+                                                    console.log(err);
+                    				                if (!rolledBack) {
+                    				                    transaction.rollback(err => {
+                    				                        $("body").overhang({
+                                                                type: "error",
+                                                                primary: "#f84a1d",
+                                                                accent: "#d94e2a",
+                                                                message: "Error en inserción a la tabla VariablesdeVariablesFormula.",
+                                                                overlay: true,
+                                                                closeConfirm: true
+                                                            });
+                    				                    });
+                    				                }
+                    				            }  else {
+                    				                transaction.commit(err => {
+                    				                    // ... error checks
+                    				                    $("body").overhang({
+                    									  	type: "success",
+                    									  	primary: "#40D47E",
+                    						  				accent: "#27AE60",
+                    									  	message: "Variable creada con exito.",
+                    									  	duration: 1,
+                    									  	overlay: true
+                    									});
+                    				                    loadVariableVariables();
+                    				                });
+                    				            }
+                    				        });
+                    				    }); // fin transaction
+                                    } else {
+                                        $("body").overhang({
+                                            type: "error",
+                                            primary: "#f84a1d",
+                                            accent: "#d94e2a",
+                                            message: "Ingrese un número válido para la tabla.",
+                                            overlay: true,
+                                            closeConfirm: true
+                                        });
+                                    }
+                				} else {
+                					$("body").overhang({
+                					  	type: "error",
+                					  	primary: "#f84a1d",
+                						accent: "#d94e2a",
+                					  	message: "Ingrese un número válido para el factor.",
+                					  	overlay: true,
+                                        closeConfirm: true
+                					});
+                				}
+                			} else {
+                				$("body").overhang({
+                				  	type: "error",
+                				  	primary: "#f84a1d",
+                					accent: "#d94e2a",
+                				  	message: "Ingrese un valor numérico para el factor.",
+                				  	overlay: true,
+                                    closeConfirm: true
+                				});
+                			}
+                		} else {
+                			$("body").overhang({
+                			  	type: "error",
+                			  	primary: "#f84a1d",
+                				accent: "#d94e2a",
+                			  	message: "La descripción de la variable debe tener longitud menor a 701.",
+                			  	overlay: true,
+                                closeConfirm: true
+                			});
+                		}
+                	} else {
+                		$("body").overhang({
+                		  	type: "error",
+                		  	primary: "#f84a1d",
+                			accent: "#d94e2a",
+                		  	message: "El nombre de la variable debe tener longitud mayor a 0 y menor a 41.",
+                		  	overlay: true,
+                            closeConfirm: true
+                		});
+                	}
+                } else {
+                    $("body").overhang({
+                        type: "error",
+                        primary: "#f84a1d",
+                        accent: "#d94e2a",
+                        message: "La variable "+nombre+" ya existe en la tabla de variables.",
+                        overlay: true,
+                        closeConfirm: true
+                    });
+                }
+            } else {
+                $("body").overhang({
+                    type: "error",
+                    primary: "#f84a1d",
+                    accent: "#d94e2a",
+                    message: "La variable "+nombre+" ya existe en la tabla de sub-variables.",
+                    overlay: true,
+                    closeConfirm: true
+                });
+            }
+        } else {
+            $("body").overhang({
+                type: "error",
+                primary: "#f84a1d",
+                accent: "#d94e2a",
+                message: "El nombre de la variable no puede contener el caracter: '_'.",
+                overlay: true,
+                closeConfirm: true
+            });
+        }
+    } else {
+        $("body").overhang({
+            type: "error",
+            primary: "#f84a1d",
+            accent: "#d94e2a",
+            message: "El nombre de la variable no puede contener espacios.",
+            overlay: true,
+            closeConfirm: true
+        });
+    }
+}
+
+function updateVariableDeVariable (row) {
+	var nombre = row.nombre;
+	var descripcion = row.descripcion;
+	var factor = row.factor;
+    var tabla = row.tablaAplicar;
+    if(!/\s/.test(nombre)) {
+        if(!/_/.test(nombre)) {
         	if(nombre.length > 0 && nombre.length < 41){
         		if(descripcion.length < 701){
-        			if(factor.length > 0){
+        			if(factor.toString().length > 0){
         				if(!isNaN(factor)){
-                            if(tabla.length > 0 && !isNaN(tabla)) {
-            					const transaction = new sql.Transaction( pool1 );
-            				    transaction.begin(err => {
-            				        var rolledBack = false;
-            				        transaction.on('rollback', aborted => {
-            				            // emited with aborted === true
-            				            rolledBack = true;
-            				        });
-            				        const request = new sql.Request(transaction);
-            				        request.query("insert into VariablesdeVariablesFormula (nombre, descripcion, factor, tablaAplicar) values ('"+nombre+"', '"+descripcion+"', "+factor+", "+tabla+")", (err, result) => {
-            				            if (err) {
-            				                if (!rolledBack) {
-            				                    transaction.rollback(err => {
-            				                        $("body").overhang({
+                            if(!isNaN(tabla) && tabla.toString().length > 0){
+        			    		const transaction = new sql.Transaction( pool1 );
+        					    transaction.begin(err => {
+        					        var rolledBack = false;
+        					        transaction.on('rollback', aborted => {
+        					            // emited with aborted === true
+        					            rolledBack = true;
+        					        });
+        					        const request = new sql.Request(transaction);
+        					        request.query("update VariablesdeVariablesFormula set nombre = '"+nombre+"', descripcion = '"+descripcion+"', factor = "+factor+", tablaAplicar = "+tabla+" where ID = "+row.ID+" ", (err, result) => {
+        					            if (err) {
+                                            console.log(err);
+        					                if (!rolledBack) {
+        					                    transaction.rollback(err => {
+        					                        $("body").overhang({
                                                         type: "error",
                                                         primary: "#f84a1d",
                                                         accent: "#d94e2a",
-                                                        message: "Error en inserción a la tabla VariablesdeVariablesFormula.",
+                                                        message: "Error en modificación en la tabla de VariablesdeVariablesFormula.",
                                                         overlay: true,
                                                         closeConfirm: true
                                                     });
-            				                    });
-            				                }
-            				            }  else {
-            				                transaction.commit(err => {
-            				                    // ... error checks
-            				                    $("body").overhang({
-            									  	type: "success",
-            									  	primary: "#40D47E",
-            						  				accent: "#27AE60",
-            									  	message: "Variable creada con exito.",
-            									  	duration: 2,
-            									  	overlay: true
-            									});
-            				                    loadVariableVariables();
-            				                });
-            				            }
-            				        });
-            				    }); // fin transaction
+        					                    });
+        					                }
+        					            }  else {
+        					                transaction.commit(err => {
+        					                    // ... error checks
+        					                    $("body").overhang({
+        										  	type: "success",
+        										  	primary: "#40D47E",
+        							  				accent: "#27AE60",
+        										  	message: "Variable modificada con éxito.",
+        										  	duration: 1,
+        										  	overlay: true
+        										});
+        					                    loadVariableVariables();
+        					                });
+        					            }
+        					        });
+        					    }); // fin transaction
                             } else {
                                 $("body").overhang({
                                     type: "error",
@@ -1444,7 +1770,7 @@ function createVariableDeVariable (rowdataID) {
                 type: "error",
                 primary: "#f84a1d",
                 accent: "#d94e2a",
-                message: "La variable "+nombre+" ya existe en la tabla de variables.",
+                message: "El nombre de la variable no puede contener el caracter: '_'.",
                 overlay: true,
                 closeConfirm: true
             });
@@ -1454,111 +1780,11 @@ function createVariableDeVariable (rowdataID) {
             type: "error",
             primary: "#f84a1d",
             accent: "#d94e2a",
-            message: "La variable "+nombre+" ya existe en la tabla de sub-variables.",
+            message: "El nombre de la variable no puede contener espacios.",
             overlay: true,
             closeConfirm: true
         });
     }
-}
-
-function updateVariableDeVariable (row) {
-	var nombre = row.nombre;
-	var descripcion = row.descripcion;
-	var factor = row.factor;
-    var tabla = row.tablaAplicar;
-	if(nombre.length > 0 && nombre.length < 41){
-		if(descripcion.length < 701){
-			if(factor.toString().length > 0){
-				if(!isNaN(factor)){
-                    if(!isNaN(tabla) && tabla.toString().length > 0){
-			    		const transaction = new sql.Transaction( pool1 );
-					    transaction.begin(err => {
-					        var rolledBack = false;
-					        transaction.on('rollback', aborted => {
-					            // emited with aborted === true
-					            rolledBack = true;
-					        });
-					        const request = new sql.Request(transaction);
-					        request.query("update VariablesdeVariablesFormula set nombre = '"+nombre+"', descripcion = '"+descripcion+"', factor = "+factor+", tablaAplicar = "+tabla+" where ID = "+row.ID+" ", (err, result) => {
-					            if (err) {
-					                if (!rolledBack) {
-					                    transaction.rollback(err => {
-					                        $("body").overhang({
-                                                type: "error",
-                                                primary: "#f84a1d",
-                                                accent: "#d94e2a",
-                                                message: "Error en modificación en la tabla de VariablesdeVariablesFormula.",
-                                                overlay: true,
-                                                closeConfirm: true
-                                            });
-					                    });
-					                }
-					            }  else {
-					                transaction.commit(err => {
-					                    // ... error checks
-					                    $("body").overhang({
-										  	type: "success",
-										  	primary: "#40D47E",
-							  				accent: "#27AE60",
-										  	message: "Variable modificada con éxito.",
-										  	duration: 2,
-										  	overlay: true
-										});
-					                    loadVariableVariables();
-					                });
-					            }
-					        });
-					    }); // fin transaction
-                    } else {
-                        $("body").overhang({
-                            type: "error",
-                            primary: "#f84a1d",
-                            accent: "#d94e2a",
-                            message: "Ingrese un número válido para la tabla.",
-                            overlay: true,
-                            closeConfirm: true
-                        });
-                    }
-				} else {
-					$("body").overhang({
-					  	type: "error",
-					  	primary: "#f84a1d",
-						accent: "#d94e2a",
-					  	message: "Ingrese un número válido para el factor.",
-					  	overlay: true,
-                        closeConfirm: true
-					});
-				}
-			} else {
-				$("body").overhang({
-				  	type: "error",
-				  	primary: "#f84a1d",
-					accent: "#d94e2a",
-				  	message: "Ingrese un valor numérico para el factor.",
-				  	overlay: true,
-                    closeConfirm: true
-				});
-			}
-		} else {
-			$("body").overhang({
-			  	type: "error",
-			  	primary: "#f84a1d",
-				accent: "#d94e2a",
-			  	message: "La descripción de la variable debe tener longitud menor a 701.",
-			  	overlay: true,
-                closeConfirm: true
-			});
-		}
-	} else {
-		$("body").overhang({
-		  	type: "error",
-		  	primary: "#f84a1d",
-			accent: "#d94e2a",
-		  	message: "El nombre de la variable debe tener longitud mayor a 0 y menor a 41.",
-		  	overlay: true,
-            closeConfirm: true
-		});
-	}
 }
 
 function deleteVariableDeVariable (variableID, variableNombre) {
@@ -1583,6 +1809,7 @@ function deleteVariableDeVariable (variableID, variableNombre) {
 			        const request = new sql.Request(transaction);
 			        request.query("delete from VariablesdeVariablesFormula where ID = "+variableID+" ", (err, result) => {
 			            if (err) {
+                            console.log(err);
 			                if (!rolledBack) {
 			                    transaction.rollback(err => {
 			                        $("body").overhang({
@@ -1603,7 +1830,7 @@ function deleteVariableDeVariable (variableID, variableNombre) {
 								  	primary: "#40D47E",
 					  				accent: "#27AE60",
 								  	message: "Variable eliminada con exito.",
-								  	duration: 2,
+								  	duration: 1,
 								  	overlay: true
 								});
 			                    loadVariableVariables();
@@ -1867,44 +2094,75 @@ function deleteVariableOfVariable (id, nombre) {
 	  	noMessage: "Cancelar",
 	  	callback: function (value) {
 	    	if(value){
-	    		const transaction = new sql.Transaction( pool1 );
-			    transaction.begin(err => {
-			        var rolledBack = false;
-			        transaction.on('rollback', aborted => {
-			            // emited with aborted === true
-			            rolledBack = true;
-			        });
-			        const request = new sql.Request(transaction);
-			        request.query("delete from VariablesdeVariablesFormula where ID = "+id+" ", (err, result) => {
-			            if (err) {
-			                if (!rolledBack) {
-			                    transaction.rollback(err => {
-			                        $("body").overhang({
+                const transaction = new sql.Transaction( pool1 );
+                transaction.begin(err => {
+                    var rolledBack = false;
+                    transaction.on('rollback', aborted => {
+                        // emited with aborted === true
+                        rolledBack = true;
+                    });
+                    const request = new sql.Request(transaction);
+                    request.query("delete from Reglas where variablePadre = "+id+" ", (err, result) => {
+                        if (err) {
+                            console.log(err);
+                            if (!rolledBack) {
+                                transaction.rollback(err => {
+                                    $("body").overhang({
                                         type: "error",
                                         primary: "#f84a1d",
                                         accent: "#d94e2a",
-                                        message: "Error en eliminación de la variable "+nombre+".",
+                                        message: "Error en eliminación sub-variables de: "+nombre+".",
                                         overlay: true,
                                         closeConfirm: true
                                     });
-			                    });
-			                }
-			            }  else {
-			                transaction.commit(err => {
-			                    // ... error checks
-			                    $("body").overhang({
-								  	type: "success",
-								  	primary: "#40D47E",
-					  				accent: "#27AE60",
-								  	message: "Variable eliminada con exito.",
-								  	duration: 2,
-								  	overlay: true
-								});
-			                    loadVariableVariables();
-			                });
-			            }
-			        });
-			    }); // fin transaction
+                                });
+                            }
+                        }  else {
+                            transaction.commit(err => {
+                                // ... error checks
+                                const transaction1 = new sql.Transaction( pool1 );
+                                transaction1.begin(err => {
+                                    var rolledBack1 = false;
+                                    transaction1.on('rollback', aborted => {
+                                        // emited with aborted === true
+                                        rolledBack1 = true;
+                                    });
+                                    const request1 = new sql.Request(transaction1);
+                                    request1.query("delete from VariablesdeVariablesFormula where ID = "+id+" ", (err, result) => {
+                                        if (err) {
+                                            console.log(err);
+                                            if (!rolledBack1) {
+                                                transaction1.rollback(err => {
+                                                    $("body").overhang({
+                                                        type: "error",
+                                                        primary: "#f84a1d",
+                                                        accent: "#d94e2a",
+                                                        message: "Error en eliminación de la variable "+nombre+".",
+                                                        overlay: true,
+                                                        closeConfirm: true
+                                                    });
+                                                });
+                                            }
+                                        }  else {
+                                            transaction1.commit(err => {
+                                                // ... error checks
+                                                $("body").overhang({
+                                                    type: "success",
+                                                    primary: "#40D47E",
+                                                    accent: "#27AE60",
+                                                    message: "Variable eliminada con exito.",
+                                                    duration: 1,
+                                                    overlay: true
+                                                });
+                                                loadVariableVariables();
+                                            });
+                                        }
+                                    });
+                                }); // fin sub-transaction
+                            });
+                        }
+                    });
+                }); // fin transaction
 	    	}
 	  	}
 	});
@@ -1923,51 +2181,51 @@ function deleteVariableOfVariable (id, nombre) {
 
 //	**********		Route Change		**********
 function goVariables () {
-	$("#app_root").empty();
     cleanup();
+	$("#app_root").empty();
     $("#app_root").load("src/variables.html");
 }
 
 function goHome () {
-	$("#app_root").empty();
     cleanup();
+	$("#app_root").empty();
     $("#app_root").load("src/home.html");
 }
 
 function goUsers () {
-	$("#app_root").empty();
     cleanup();
+	$("#app_root").empty();
     $("#app_root").load("src/users.html");
 }
 
 function goConnections () {
-    $("#app_root").empty();
     cleanup();
+    $("#app_root").empty();
     $("#app_root").load("src/importaciones.html");
 }
 
 function goConfig () {
-    $("#app_root").empty();
     cleanup();
+    $("#app_root").empty();
     $("#app_root").load("src/config.html");
 }
 
 function logout () {
-	$("#app_root").empty();
     session.defaultSession.clearStorageData([], (data) => {});
     cleanup();
-    $("#app_root").load("src/login.html");
+    $("#app_full").empty();
+    $("#app_full").load("src/login.html");
 }
 
 function goReports () {
-    $("#app_root").empty();
     cleanup();
+    $("#app_root").empty();
     $("#app_root").load("src/reportes.html");
 }
 
 function goGraphics () {
-    $("#app_root").empty();
     cleanup();
+    $("#app_root").empty();
     $("#app_root").load("src/graficos.html");
 }
 
@@ -1996,8 +2254,8 @@ function goRules (index) {
             }
         };
         if(encontroElementoDeLista) {
-            $("#app_root").empty();
             cleanup();
+            $("#app_root").empty();
             $("#app_root").load("src/variableDetailALAC.html");
         } else {
             $("body").overhang({
@@ -2011,8 +2269,8 @@ function goRules (index) {
         }
     } else if(tablaHijo == 2) {
         if(montoFosedeGlobal != null && montoFosedeGlobal != 0) {
-            $("#app_root").empty();
             cleanup();
+            $("#app_root").empty();
             $("#app_root").load("src/variableDetail.html");
         } else {
             $("body").overhang({
@@ -2025,15 +2283,15 @@ function goRules (index) {
             });
         }
     } else if(tablaHijo == 3) {
-        $("#app_root").empty();
         cleanup();
+        $("#app_root").empty();
         $("#app_root").load("src/variableDetailCredito.html");
     }
 }
 
 function goRCL () {
-	$("#app_root").empty();
     cleanup();
+	$("#app_root").empty();
     $("#app_root").load("src/rcl.html");
 }
 
@@ -2048,8 +2306,8 @@ var cleanup = function () {
     delete window.session;
     delete window.filterDiv;
     delete window.loadVariablesIMG;
-    delete window.filepathFullLogo;
-    delete window.filepathSmallLogo;
+    /*delete window.filepathFullLogo;
+    delete window.filepathSmallLogo;*/
     delete window.loadVariablesIMG;
     delete window.variablesDBGlobal;
     delete window.montoFosedeGlobal;

@@ -8,653 +8,930 @@
 <link href="src/libs/bootstrap-datepicker/datepicker3.css" rel="stylesheet">
 <link href="src/libs/overhang/overhang.min.css" rel="stylesheet">
 <link href="src/libs/custom.min.css" rel="stylesheet">
-<div class="container body">
-  <div class="main_container">
-    <div class="col-md-3 left_col">
-      <div class="left_col scroll-view">
-        <div class="navbar nav_title" style="border: 0;" id="wrapper">
-          <a onclick="goHome()" style="height: 100%;" class="site_title cursorHand"><img id="fullLogo" src="src/img/full-logo-example.png" class="logo_company"> <img id="smallLogo" src="src/img/small-logo-example.png" alt="" class="logo_company_solo"></a>
-        </div>
+<!-- page content -->
+<div>
+  
+  <div class="clearfix"></div>
 
-        <div class="clearfix"></div>
-
-        <!-- menu profile quick info -->
-        <div class="profile clearfix">
-          <div class="profile_info">
-            <span>Bienvenido,</span>
-            <h2 id="nameUser"></h2>
-          </div>
-        </div>
-        <!-- /menu profile quick info -->
-
-        <br />
-
-        <!-- sidebar menu -->
-        <div id="sidebar-menu" class="main_menu_side hidden-print main_menu">
-          <div class="menu_section">
-            <h3>General</h3>
-            <ul class="nav side-menu">
-              <li><a onclick="goHome()"><i class="fa fa-home"></i> Home </a>
-              </li>
-              <li><a onclick="goRCL()"><i class="fa fa-bar-chart"></i> C&aacute;lculo Diario de RCL </a>
-              </li>
-              <li><a onclick="goReports()"><i class="fa fa-list-alt"></i> Reporter&iacute;a </a>
-              </li>
-              <li><a onclick="goGraphics()"><i class="fa fa-bar-chart"></i> Gr&aacute;ficos </a>
-              </li>
-            </ul>
-          </div>
-
-        </div>
-        <!-- /sidebar menu -->
-      </div>
+  <a onclick="goVariables()" style="margin: 1%;">
+    <div style="border-radius: 15px; background-color: #EDEDED; height: 3em; width: 5vw; text-align: center; cursor: pointer; padding: 1%; display: flex; align-items: center; justify-content: center;">
+      <i class="fa fa-arrow-circle-o-left" style="font-size: 2em;"></i>
     </div>
+  </a>
 
-    <!-- top navigation -->
-    <div class="top_nav">
-      <div class="nav_menu">
-        <nav>
-          <div class="nav toggle">
-            <a id="menu_toggle"><i class="fa fa-bars"></i></a>
-          </div>
-
-          <ul class="nav navbar-nav navbar-right">
-            <li class="">
-              <a href="javascript:;" class="user-profile dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
-                <img src="" alt=""> <span id="navbar_name"></span>
-                <span class=" fa fa-angle-down"></span>
-              </a>
-              <ul class="dropdown-menu dropdown-usermenu pull-right">
-                <li id="varLabel"><a onclick="goVariables()"> Editar Variables de F&oacute;rmula </a></li>
-                <li id="configLabel"><a onclick="goLists()"> Mantenimiento de Listas </a></li>
-                <li id="userLabel"><a onclick="goUsers()"> Control de Usuarios y Logo </a></li>
-                <li id="importLabel"><a onclick="goConnections()"> Importar Tablas </a></li>
-                <li id="configLabel"><a onclick="goConfig()"> Configuraci&oacute;n de Rutina </a></li>
-                <li><a onclick="logout()"><i class="fa fa-sign-out pull-right"></i> Cerrar Sesi&oacute;n</a></li>
-              </ul>
-            </li>
-
-            <!-- <li role="presentation" class="dropdown">
-              <a href="javascript:;" class="dropdown-toggle info-number" data-toggle="dropdown" aria-expanded="false">
-                <i class="fa fa-envelope-o"></i>
-                <span class="badge bg-green">6</span>
-              </a>
-              <ul id="menu1" class="dropdown-menu list-unstyled msg_list" role="menu">
-                <li>
-                  <a>
-                    <span class="image"><img src="" alt="Profile Image" /></span>
-                    <span>
-                      <span>John Smith</span>
-                      <span class="time">3 mins ago</span>
-                    </span>
-                    <span class="message">
-                      Film festivals used to be do-or-die moments for movie makers. They were where...
-                    </span>
-                  </a>
-                </li>
-                <li>
-                  <a>
-                    <span class="image"><img src="" alt="Profile Image" /></span>
-                    <span>
-                      <span>John Smith</span>
-                      <span class="time">3 mins ago</span>
-                    </span>
-                    <span class="message">
-                      Film festivals used to be do-or-die moments for movie makers. They were where...
-                    </span>
-                  </a>
-                </li>
-                <li>
-                  <a>
-                    <span class="image"><img src="" alt="Profile Image" /></span>
-                    <span>
-                      <span>John Smith</span>
-                      <span class="time">3 mins ago</span>
-                    </span>
-                    <span class="message">
-                      Film festivals used to be do-or-die moments for movie makers. They were where...
-                    </span>
-                  </a>
-                </li>
-                <li>
-                  <a>
-                    <span class="image"><img src="" alt="Profile Image" /></span>
-                    <span>
-                      <span>John Smith</span>
-                      <span class="time">3 mins ago</span>
-                    </span>
-                    <span class="message">
-                      Film festivals used to be do-or-die moments for movie makers. They were where...
-                    </span>
-                  </a>
-                </li>
-                <li>
-                  <div class="text-center">
-                    <a>
-                      <strong>See All Alerts</strong>
-                      <i class="fa fa-angle-right"></i>
-                    </a>
-                  </div>
-                </li>
-              </ul>
-            </li> -->
-          </ul>
-        </nav>
-      </div>
-    </div>
-    <!-- /top navigation -->
-
-    <!-- page content -->
-    <div class="right_col" role="main">
-      
-      <div class="clearfix"></div>
-
-      <a onclick="goVariables()" style="margin: 1%;">
-        <div style="border-radius: 15px; background-color: #EDEDED; height: 3em; width: 5vw; text-align: center; cursor: pointer; padding: 1%; display: flex; align-items: center; justify-content: center;">
-          <i class="fa fa-arrow-circle-o-left" style="font-size: 2em;"></i>
-        </div>
-      </a>
-
-      <div id="variables_div" class="row">
-        <div class="col-md-12">
-          <div class="x_panel">
-            
-            <div class="message_wrapper">
-              <blockquote class="message">
-                <div class="row">
-                  <div class="col-xs-12 tile_stats_count" id="wrapper">
-                    <div class="row">
-                      <div class="col-xs-4">
-                        <div style='font-family:"Helvetica Neue",Roboto,Arial,"Droid Sans",sans-serif; font-size:30px;line-height:47px;'>Nombre:</div>
-                      </div>
-                      <div class="col-xs-8">
-                        <div id="variableOfVariableName" style='font-size:30px;line-height:47px;' class="count"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="ln_solid"></div>
-                <div class="row">
-                  <div class="col-xs-12 tile_stats_count" id="wrapper">
-                    <div class="row">
-                      <div class="col-xs-4">
-                        <div style='font-family:"Helvetica Neue",Roboto,Arial,"Droid Sans",sans-serif; font-size:30px;line-height:47px;'>Descripci&oacute;n:</div>
-                      </div>
-                      <div class="col-xs-8">
-                        <div id="variableOfVariableDescription" style='font-size:30px;line-height:47px;' class="count"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="ln_solid"></div>
-                <div class="row">
-                  <div class="col-xs-12 tile_stats_count" id="wrapper">
-                    <div class="row">
-                      <div class="col-xs-4">
-                        <div style='font-family:"Helvetica Neue",Roboto,Arial,"Droid Sans",sans-serif; font-size:30px;line-height:47px;'>Factor:</div>
-                      </div>
-                      <div class="col-xs-8">
-                        <div id="variableOfVariableFactor" style='font-size:30px;line-height:47px;' class="count"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <br/>
-                <!-- <div class="row" id="wrapper">
-                  <button type="button" onclick="importExcel()" class="btn btn-success">Guardar</button>
-                </div> -->
-              </blockquote>
-              <br />
-            </div>
-
+  <div id="variables_div" class="row">
+    <div class="col-md-12">
+      <div class="x_panel">
+        
+        <div class="message_wrapper">
+          <blockquote class="message">
             <div class="row">
-              <div class="col-xs-12">
-                <table id="tablaReglas" class="table table-striped table-bordered">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Variable Padre</th>
-                      <th>Descripci&oacute;n</th>
-                      <th>Guardar</th>
-                      <th>Eliminar</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                  </tbody>
-                </table>
+              <div class="col-xs-12 tile_stats_count" id="wrapper">
+                <div class="row">
+                  <div class="col-xs-4">
+                    <div style='font-family:"Helvetica Neue",Roboto,Arial,"Droid Sans",sans-serif; font-size:30px;line-height:47px;'>Nombre:</div>
+                  </div>
+                  <div class="col-xs-8">
+                    <div id="variableOfVariableName" style='font-size:30px;line-height:47px;' class="count"></div>
+                  </div>
+                </div>
               </div>
             </div>
-
+            <div class="ln_solid"></div>
             <div class="row">
-              <div class="x_panel" role="tabpanel" data-example-id="togglable-tabs">
-                <div id="wrapper">
-                  <h4>Creaci&oacute;n de Reglas</h4>
+              <div class="col-xs-12 tile_stats_count" id="wrapper">
+                <div class="row">
+                  <div class="col-xs-4">
+                    <div style='font-family:"Helvetica Neue",Roboto,Arial,"Droid Sans",sans-serif; font-size:30px;line-height:47px;'>Descripci&oacute;n:</div>
+                  </div>
+                  <div class="col-xs-8">
+                    <div id="variableOfVariableDescription" style='font-size:30px;line-height:47px;' class="count"></div>
+                  </div>
                 </div>
-                <div class="clearfix"></div>
-                <!-- <ul id="myTab" class="nav nav-tabs bar_tabs" role="tablist">
-                  <li role="presentation" class="active"><a href="#tab_content1" id="home-tab" role="tab" data-toggle="tab" aria-expanded="true">Crear Regla</a>
-                  </li>
-                  <li role="presentation" class=""><a href="#tab_content2" role="tab" id="profile-tab" data-toggle="tab" aria-expanded="false">Crear Filtro</a>
-                  </li>
-                </ul> -->
-                <!-- <div id="myTabContent" class="tab-content"> -->
+              </div>
+            </div>
+            <div class="ln_solid"></div>
+            <div class="row">
+              <div class="col-xs-12 tile_stats_count" id="wrapper">
+                <div class="row">
+                  <div class="col-xs-4">
+                    <div style='font-family:"Helvetica Neue",Roboto,Arial,"Droid Sans",sans-serif; font-size:30px;line-height:47px;'>Factor:</div>
+                  </div>
+                  <div class="col-xs-8">
+                    <div id="variableOfVariableFactor" style='font-size:30px;line-height:47px;' class="count"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <br/>
+            <!-- <div class="row" id="wrapper">
+              <button type="button" onclick="importExcel()" class="btn btn-success">Guardar</button>
+            </div> -->
+          </blockquote>
+          <br />
+        </div>
 
-                  <!-- <div role="tabpanel" class="tab-pane fade active in" id="tab_content1" aria-labelledby="home-tab"> -->
-                    <div>
-                      <div class="row">
-                        <div class="row" style="margin: 0% 5%;">
-                          <h2>Condici&oacute;n </h2>
-                          <ul id="listRules" class="to_do text-center">
-                            <!-- <li>
-                              <p><input type="radio" name="rules" class="flat"> Schedule meeting with new client </p>
-                            </li>
-                            <li>
-                              <p><input type="radio" name="rules" class="flat"> Schedule meeting with new client </p>
-                            </li> -->
-                          </ul>
-                        </div>
-                        <hr class="style11">
+        <div class="row">
+          <div class="col-xs-12">
+            <table id="tablaReglas" class="table table-striped table-bordered">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Variable Padre</th>
+                  <th>Descripci&oacute;n</th>
+                  <th>Guardar</th>
+                  <th>Modificar</th>
+                </tr>
+              </thead>
+              <tbody>
+              </tbody>
+            </table>
+          </div>
+        </div>
 
-                        <!-- <div class="row" style="margin: 0% 5%;">
-                          <h2>Guardar Variables <small>Se guardan las variables de una regla por si una regla siguiente ocupa acceder a un valor de esta regla.</small></h2>
-                          <ul id="listRules" class="to_do text-center" style="display: flex; justify-content: center;">
-                            <li style="float: right; margin: 0% 1%;">
-                              <p><input id="resultadoGuardarVariable" type="checkbox" name="variables" class="flat"> Resultado de Operaci&oacute;n </p>
-                            </li>
-                            <li style="float: right; margin: 0% 1%;">
-                              <p><input id="campoGuardarVariable" type="checkbox" name="variables" class="flat"> Campo Objetivo </p>
-                            </li>
-                            <li style="float: right; margin: 0% 1%;">
-                              <p><input id="valorGuardarVariable" type="checkbox" name="variables" class="flat"> Valor a Aplicar </p>
-                            </li>
-                          </ul>
-                        </div>
-                        <hr class="style11"> -->
+        <div class="row">
+          <div class="x_panel" role="tabpanel" data-example-id="togglable-tabs">
+            <div id="wrapper">
+              <h4>Creaci&oacute;n de Reglas</h4>
+            </div>
+            <div class="clearfix"></div>
+            <ul id="myTab" class="nav nav-tabs bar_tabs" role="tablist">
+              <li role="presentation" class="active"><a href="#tab_content1" id="home-tab" role="tab" data-toggle="tab" aria-expanded="true">Crear Regla</a>
+              </li>
+              <li role="presentation" class=""><a href="#tab_content2" role="tab" id="profile-tab" data-toggle="tab" aria-expanded="false">Crear Filtro</a>
+              </li>
+            </ul>
+            <div id="myTabContent" class="tab-content">
 
-                        <div class="row">
-                          <h2 style="padding-left: 5%;">Campo Objetivo </h2>
-                          <div id="wrapper" class="row">
-                            <label>
-                              <input id="campoCampoRadio" type="radio" class="flat" checked name="campoRadio"> Campo
-                            </label>
-                            <!-- <label>
-                              <input id="variablesCampoRadio" type="radio" class="flat" onclick="setCampoRadio(false)" name="campoRadio"> Variables
-                            </label> -->
-                            <label>
-                              <input id="fosedeCampoRadio" type="radio" class="flat" name="campoRadio"> FOSEDE
-                            </label>
-                            <label>
-                              <input id="cuentasOperativasCampoRadio" type="radio" class="flat" name="campoRadio"> Cuentas Operativas
-                            </label>
+              <div role="tabpanel" class="tab-pane fade active in" id="tab_content1" aria-labelledby="home-tab">
+                <div>
+                  <div class="row">
+                    <div class="row" style="margin: 0% 5%;">
+                      <h2>Filtros </h2>
+                      <ul id="listFilters" class="to_do text-center">
+                      </ul>
+                    </div>
+                    <hr class="style11">
+
+                    <div class="row" style="margin: 0% 5%;">
+                      <h2>Condici&oacute;n </h2>
+                      <ul id="listRules" class="to_do text-center">
+                        <!-- <li>
+                          <p><input type="radio" name="rules" class="flat"> Schedule meeting with new client </p>
+                        </li>
+                        <li>
+                          <p><input type="radio" name="rules" class="flat"> Schedule meeting with new client </p>
+                        </li> -->
+                      </ul>
+                    </div>
+                    <hr class="style11">
+
+                    <!-- <div class="row" style="margin: 0% 5%;">
+                      <h2>Guardar Variables <small>Se guardan las variables de una regla por si una regla siguiente ocupa acceder a un valor de esta regla.</small></h2>
+                      <ul id="listRules" class="to_do text-center" style="display: flex; justify-content: center;">
+                        <li style="float: right; margin: 0% 1%;">
+                          <p><input id="resultadoGuardarVariable" type="checkbox" name="variables" class="flat"> Resultado de Operaci&oacute;n </p>
+                        </li>
+                        <li style="float: right; margin: 0% 1%;">
+                          <p><input id="campoGuardarVariable" type="checkbox" name="variables" class="flat"> Campo Objetivo </p>
+                        </li>
+                        <li style="float: right; margin: 0% 1%;">
+                          <p><input id="valorGuardarVariable" type="checkbox" name="variables" class="flat"> Valor a Aplicar </p>
+                        </li>
+                      </ul>
+                    </div>
+                    <hr class="style11"> -->
+
+                    <div class="row">
+                      <h2 style="padding-left: 5%;">Campo Objetivo </h2>
+                      <div id="wrapper" class="row">
+                        <label>
+                          <input id="campoCampoRadio" type="radio" class="flat" checked name="campoRadio"> Campo
+                        </label>
+                        <!-- <label>
+                          <input id="variablesCampoRadio" type="radio" class="flat" onclick="setCampoRadio(false)" name="campoRadio"> Variables
+                        </label> -->
+                        <label>
+                          <input id="fosedeCampoRadio" type="radio" class="flat" name="campoRadio"> FOSEDE
+                        </label>
+                        <label>
+                          <input id="cuentasOperativasCampoRadio" type="radio" class="flat" name="campoRadio"> Cuentas Operativas
+                        </label>
+                      </div>
+                      <br/>
+                    </div>
+                    <div id="campoField" class="row">
+                      <div class="col-xs-6 col-xs-offset-3">
+                        <form class="form-horizontal form-label-left">
+                          <div class="form-group">
+                            <label>Ingrese Campo</label>
+                            <div class="select-style">
+                              <select name="campoCampoInput" id="campoCampoInput" onchange="mostrarFieldsCampoSelect()"></select>
+                            </div>
                           </div>
-                          <br/>
+                        </form>
+                      </div>
+                      <br/><br/><br/><br/>
+                    </div>
+                    <div id="variableField" class="row" style="display: none;">
+                      <div class="col-xs-6 col-xs-offset-3">
+                        <label>Seleccionar Variables</label>
+                        <ul id="variablesCampoUL" class="to_do">
+                          <li> <p><input id="resultadoDisable" type="radio" name="variablesCampo" class="flat" value="1"> Nueva Variable </p> </li>
+                        </ul>
+                      </div>
+                      <br/><br/><br/><br/>
+                    </div>
+                    <div id="fosedeField" class="row" style="display: none;">
+                      <div id="wrapper">
+                        <label>FOSEDE</label>
+                      </div>
+                      <div id="wrapper">
+                        <label>
+                          <input id="hastaFOSEDECampoRadio" type="radio" class="flat" name="fosedeRadio">HASTA FOSEDE
+                        </label>
+                        <label>
+                          <input id="mayorFOSEDECCampoRadio" type="radio" class="flat" name="fosedeRadio">MAYOR FOSEDE
+                        </label>
+                      </div>
+                    </div>
+                    <div id="cuentasOperativasField" class="row" style="display: none;">
+                      <div id="wrapper">
+                        <label>Cuentas Operativas</label>
+                      </div>
+                      <div id="wrapper">
+                        <label style="display: block; margin-left: auto; margin-right: auto;">
+                          <input id="hastaFOSEDECuentasOpCampoRadio" type="radio" class="flat" name="fosedeRadio">&nbsp;HASTA FOSEDE A CUENTAS OPERATIVAS
+                        </label>
+                        <label style="display: block; margin-left: auto; margin-right: auto;">
+                          <input id="mayorFOSEDECuentasOpCampoRadio" type="radio" class="flat" name="fosedeRadio">&nbsp;SOBRE FOSEDE A CUENTAS OPERATIVAS
+                        </label>
+                        <label style="display: block; margin-left: auto; margin-right: auto;">
+                          <input id="hastaFOSEDENoCuentasOpCampoRadio" type="radio" class="flat" name="fosedeRadio">&nbsp;HASTA FOSEDE A LAS CUENTAS NO OPERATIVAS
+                        </label>
+                        <label style="display: block; margin-left: auto; margin-right: auto;">
+                          <input id="mayorFOSEDENoCuentasOpCampoRadio" type="radio" class="flat" name="fosedeRadio">&nbsp;SOBRE FOSEDE A LAS CUENTAS NO OPERATIVAS
+                        </label>
+                      </div>
+                    </div>
+                    <hr class="style11">
+                    
+                    <h2 style="padding-left: 5%;">Operaci&oacute;n a Aplicar</h2>
+                    <div id="relacionalesField" class="row" style="display: none;">
+                      <div id="wrapper" class="row">
+                        <h5>Relacionales</h5>
+                      </div>
+                      <br/>
+                      <div class="row">
+                        <div class="col-xs-2 col-xs-offset-1">
+                          <label>
+                            <input id="meOperadorRadio" type="radio" class="flat" name="operadorRadio"> &#60;
+                          </label>
                         </div>
-                        <div id="campoField" class="row">
-                          <div class="col-xs-6 col-xs-offset-3">
+                        <div class="col-xs-2 col-xs-offset-1">
+                          <label>
+                            <input id="meigOperadorRadio" type="radio" class="flat" name="operadorRadio"> &le;
+                          </label>
+                        </div>
+                        <div class="col-xs-2 col-xs-offset-1">
+                          <label>
+                            <input id="maOperadorRadio" type="radio" class="flat" name="operadorRadio"> &#62;
+                          </label>
+                        </div>
+                        <div class="col-xs-2 col-xs-offset-1">
+                          <label>
+                            <input id="maigOperadorRadio" type="radio" class="flat" name="operadorRadio"> &ge;
+                          </label>
+                        </div>
+                      </div>
+                      <br/>
+                      <div class="row">
+                        <div class="col-xs-3 col-xs-offset-3">
+                          <label>
+                            <input id="igOperadorRadio" type="radio" class="flat" name="operadorRadio"> =
+                          </label>
+                        </div>
+                        <div class="col-xs-3 col-xs-offset-3">
+                          <label>
+                            <input id="noigOperadorRadio" type="radio" class="flat" name="operadorRadio"> &#8800;
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div id="ln_solidOPERACION" class="ln_solid" style="display: none;"></div>
+                    
+                    <div id="algebraicosField" class="row" style="display: none;">
+                      <div id="wrapper" class="row">
+                        <h5>Algebraicos</h5>
+                      </div>
+                      <br/>
+                      <div class="row">
+                        <div class="col-xs-2 col-xs-offset-1">
+                          <label>
+                            <input id="masOperadorRadio" type="radio" class="flat" name="operadorRadio"> +
+                          </label>
+                        </div>
+                        <div class="col-xs-2 col-xs-offset-1">
+                          <label>
+                            <input id="porOperadorRadio" type="radio" class="flat" name="operadorRadio"> x
+                          </label>
+                        </div>
+                        <div class="col-xs-2 col-xs-offset-1">
+                          <label>
+                            <input id="menOperadorRadio" type="radio" class="flat" name="operadorRadio"> -
+                          </label>
+                        </div>
+                        <div class="col-xs-2 col-xs-offset-1">
+                          <label>
+                            <input id="entOperadorRadio" type="radio" class="flat" name="operadorRadio"> /
+                          </label>
+                        </div>
+                      </div>
+                      <!-- <br/>
+                      <div class="row">
+                        <div id="wrapper">
+                          <label>
+                            <input id="asiOperadorRadio" type="radio" class="flat" name="operadorRadio"> =
+                          </label>
+                        </div>
+                      </div> -->
+                    </div>
+
+                    <div id="sumarSiField" class="row">
+                      <div id="wrapper" class="row">
+                        <h5>Agrupaci&oacute;n</h5>
+                      </div>
+                      <br/>
+                      <div class="row">
+                        <div class="col-xs-4 col-xs-offset-2">
+                          <label>
+                            <input id="sumarSiOperadorRadio" type="radio" class="flat" name="operadorRadio" checked> Sumar si se encuentra en
+                          </label>
+                        </div>
+                        <div class="col-xs-4 col-xs-offset-2">
+                          <label>
+                            <input id="sumarSiNoOperadorRadio" type="radio" class="flat" name="operadorRadio"> Sumar si NO se encuentra en
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div id="multField" class="row" style="display: none;">
+                      <div id="wrapper" class="row">
+                        <h5>Multiplicaci&oacute;n</h5>
+                      </div>
+                      <br/>
+                      <div class="row">
+                        <div id="wrapper">
+                          <label>
+                            <input id="multOperadorRadio" type="radio" class="flat" name="operadorRadio"> x
+                          </label>
+                        </div>
+                      </div>
+                      <br/>
+                      <div class="row" id="wrapper">
+                        <img src="src/img/times.png" alt="" style="height: 8em;">
+                      </div>
+                    </div>
+                    <br/>
+                    <hr class="style11">
+
+                    <div class="row">
+                      <h2 style="padding-left: 5%;">Valor a Aplicar <small>Valor a aplicar a un Campo Objetivo.</small></h2>
+                      <div id="wrapper" class="row">
+                        <label id="elementoValorRadioLabel">
+                          <input id="elementoValorRadio" type="radio" class="flat" name="valorRadio" checked> Agrupaci&oacute;n de una Lista
+                        </label>
+                        <label id="manualValorRadioLabel" style="display: none;">
+                          <input id="manualValorRadio" type="radio" class="flat" name="valorRadio"> N&uacute;mero
+                        </label>
+                        <!-- <label>
+                          <input id="fechaValorRadio" type="radio" class="flat" name="valorRadio"> Fecha
+                        </label> -->
+                        <!-- <label>
+                          <input id="variableValorRadio" type="radio" class="flat" name="valorRadio"> Variable
+                        </label> -->
+                        <label id="factorValorRadioLabel" style="display: none;">
+                          <input id="factorValorRadio" type="radio" class="flat" name="valorRadio"> Factor
+                        </label>
+                        <label id="fechaValorRadioLabel" style="display: none;">
+                          <input id="fechaValorRadio" type="radio" class="flat" name="valorRadio"> Fecha
+                        </label>
+                        <br/>
+                      </div>
+
+                      <div id="listaValorField" class="row">
+                        <br/>
+                        <div class="col-xs-6 col-xs-offset-3">
+                          <div id="wrapper" class="row">
+                            <h5>Agrupaci&oacute;n de Listas</h5>
+                          </div>
+                          <div class="row">
                             <form class="form-horizontal form-label-left">
                               <div class="form-group">
-                                <label>Ingrese Campo</label>
+                                <label>Seleccionar Lista</label>
                                 <div class="select-style">
-                                  <select name="campoCampoInput" id="campoCampoInput" onchange="mostrarFieldsCampoSelect()"></select>
+                                  <select id="elementoValorSelect" onchange="getElementsListsValue($('#elementoValorSelect').val())">
+                                  </select>
                                 </div>
                               </div>
                             </form>
                           </div>
-                          <br/><br/><br/><br/>
-                        </div>
-                        <div id="variableField" class="row" style="display: none;">
-                          <div class="col-xs-6 col-xs-offset-3">
-                            <label>Seleccionar Variables</label>
-                            <ul id="variablesCampoUL" class="to_do">
-                              <li> <p><input id="resultadoDisable" type="radio" name="variablesCampo" class="flat" value="1"> Nueva Variable </p> </li>
-                            </ul>
-                          </div>
-                          <br/><br/><br/><br/>
-                        </div>
-                        <div id="fosedeField" class="row" style="display: none;">
-                          <div id="wrapper">
-                            <label>FOSEDE</label>
-                          </div>
-                          <div id="wrapper">
-                            <label>
-                              <input id="hastaFOSEDECampoRadio" type="radio" class="flat" name="fosedeRadio">HASTA FOSEDE
-                            </label>
-                            <label>
-                              <input id="mayorFOSEDECCampoRadio" type="radio" class="flat" name="fosedeRadio">MAYOR FOSEDE
-                            </label>
-                          </div>
-                        </div>
-                        <div id="cuentasOperativasField" class="row" style="display: none;">
-                          <div id="wrapper">
-                            <label>Cuentas Operativas</label>
-                          </div>
-                          <div id="wrapper">
-                            <label style="display: block; margin-left: auto; margin-right: auto;">
-                              <input id="hastaFOSEDECuentasOpCampoRadio" type="radio" class="flat" name="fosedeRadio">&nbsp;HASTA FOSEDE A CUENTAS OPERATIVAS
-                            </label>
-                            <label style="display: block; margin-left: auto; margin-right: auto;">
-                              <input id="mayorFOSEDECuentasOpCampoRadio" type="radio" class="flat" name="fosedeRadio">&nbsp;SOBRE FOSEDE A CUENTAS OPERATIVAS
-                            </label>
-                            <label style="display: block; margin-left: auto; margin-right: auto;">
-                              <input id="hastaFOSEDENoCuentasOpCampoRadio" type="radio" class="flat" name="fosedeRadio">&nbsp;HASTA FOSEDE A LAS CUENTAS NO OPERATIVAS
-                            </label>
-                            <label style="display: block; margin-left: auto; margin-right: auto;">
-                              <input id="mayorFOSEDENoCuentasOpCampoRadio" type="radio" class="flat" name="fosedeRadio">&nbsp;SOBRE FOSEDE A LAS CUENTAS NO OPERATIVAS
-                            </label>
-                          </div>
-                        </div>
-                        <hr class="style11">
-                        
-                        <h2 style="padding-left: 5%;">Operaci&oacute;n a Aplicar</h2>
-                        <div id="relacionalesField" class="row" style="display: none;">
-                          <div id="wrapper" class="row">
-                            <h5>Relacionales</h5>
-                          </div>
-                          <br/>
                           <div class="row">
-                            <div class="col-xs-2 col-xs-offset-1">
-                              <label>
-                                <input id="meOperadorRadio" type="radio" class="flat" name="operadorRadio"> &#60;
-                              </label>
+                            <div class="form-group">
+                              <div class="col-xs-12">
+                                <select id="elementoValorOptionSelect" class="select2_multiple form-control" size="4" multiple="multiple">
+                                </select>
+                              </div>
                             </div>
-                            <div class="col-xs-2 col-xs-offset-1">
-                              <label>
-                                <input id="meigOperadorRadio" type="radio" class="flat" name="operadorRadio"> &le;
-                              </label>
-                            </div>
-                            <div class="col-xs-2 col-xs-offset-1">
-                              <label>
-                                <input id="maOperadorRadio" type="radio" class="flat" name="operadorRadio"> &#62;
-                              </label>
-                            </div>
-                            <div class="col-xs-2 col-xs-offset-1">
-                              <label>
-                                <input id="maigOperadorRadio" type="radio" class="flat" name="operadorRadio"> &ge;
-                              </label>
-                            </div>
-                          </div>
-                          <br/>
-                          <div class="row">
-                            <div class="col-xs-3 col-xs-offset-3">
-                              <label>
-                                <input id="igOperadorRadio" type="radio" class="flat" name="operadorRadio"> =
-                              </label>
-                            </div>
-                            <div class="col-xs-3 col-xs-offset-3">
-                              <label>
-                                <input id="noigOperadorRadio" type="radio" class="flat" name="operadorRadio"> &#8800;
-                              </label>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div id="ln_solidOPERACION" class="ln_solid" style="display: none;"></div>
-                        
-                        <div id="algebraicosField" class="row" style="display: none;">
-                          <div id="wrapper" class="row">
-                            <h5>Algebraicos</h5>
-                          </div>
-                          <br/>
-                          <div class="row">
-                            <div class="col-xs-2 col-xs-offset-1">
-                              <label>
-                                <input id="masOperadorRadio" type="radio" class="flat" name="operadorRadio"> +
-                              </label>
-                            </div>
-                            <div class="col-xs-2 col-xs-offset-1">
-                              <label>
-                                <input id="porOperadorRadio" type="radio" class="flat" name="operadorRadio"> x
-                              </label>
-                            </div>
-                            <div class="col-xs-2 col-xs-offset-1">
-                              <label>
-                                <input id="menOperadorRadio" type="radio" class="flat" name="operadorRadio"> -
-                              </label>
-                            </div>
-                            <div class="col-xs-2 col-xs-offset-1">
-                              <label>
-                                <input id="entOperadorRadio" type="radio" class="flat" name="operadorRadio"> /
-                              </label>
-                            </div>
-                          </div>
-                          <!-- <br/>
-                          <div class="row">
-                            <div id="wrapper">
-                              <label>
-                                <input id="asiOperadorRadio" type="radio" class="flat" name="operadorRadio"> =
-                              </label>
-                            </div>
-                          </div> -->
-                        </div>
-
-                        <div id="sumarSiField" class="row">
-                          <div id="wrapper" class="row">
-                            <h5>Agrupaci&oacute;n</h5>
-                          </div>
-                          <br/>
-                          <div class="row">
-                            <div class="col-xs-4 col-xs-offset-2">
-                              <label>
-                                <input id="sumarSiOperadorRadio" type="radio" class="flat" name="operadorRadio" checked> Sumar si se encuentra en
-                              </label>
-                            </div>
-                            <div class="col-xs-4 col-xs-offset-2">
-                              <label>
-                                <input id="sumarSiNoOperadorRadio" type="radio" class="flat" name="operadorRadio"> Sumar si NO se encuentra en
-                              </label>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div id="multField" class="row" style="display: none;">
-                          <div id="wrapper" class="row">
-                            <h5>Multiplicaci&oacute;n</h5>
                           </div>
                           <br/>
                           <div class="row">
                             <div id="wrapper">
+                              <label>Mostrar:</label>
+                            </div>
+                          </div>
+                          <div class="row">
+                            <div id="wrapper">
                               <label>
-                                <input id="multOperadorRadio" type="radio" class="flat" name="operadorRadio"> x
+                                <input id="nombreElementoListaValorRadio" type="radio" class="flat" name="listaValorRadio" checked/> Campo Nombre de Elemento
+                              </label>
+                              <label>
+                                <input id="valorElementoListaValorRadio" type="radio" class="flat" name="listaValorRadio"/> Campo Valor de Elemento
                               </label>
                             </div>
                           </div>
-                          <br/>
-                          <div class="row" id="wrapper">
-                            <img src="src/img/times.png" alt="" style="height: 8em;">
+                        </div>
+                      </div>
+
+                      <div id="ln_solidValor1" class="ln_solid" style="display: none;"></div>
+
+                      <div id="manualField" class="row" style="display: none;">
+                        <br/>
+                        <div class="col-xs-6 col-xs-offset-3">
+                          <div id="wrapper" class="row">
+                            <h5>Manual</h5>
+                          </div>
+                          <div class="row">
+                            <form class="form-horizontal form-label-left">
+                              <div class="form-group">
+                                <label>Ingrese un N&uacute;mero</label>
+                                <input id="manualValorInput" type="text" class="form-control" placeholder="Campo" data-inputmask-alias="currency" data-inputmask-prefix="L " data-inputmask-clearmaskonlostfocus="true">
+                              </div>
+                            </form>
                           </div>
                         </div>
                         <br/>
-                        <hr class="style11">
+                      </div>
 
-                        <div class="row">
-                          <h2 style="padding-left: 5%;">Valor a Aplicar <small>Valor a aplicar a un Campo Objetivo.</small></h2>
+                      <div id="ln_solidValor2" class="ln_solid" style="display: none;"></div>
+
+                      <div id="factorField" class="row" style="display: none;">
+                        <br/>
+                        <div class="col-xs-6 col-xs-offset-3">
                           <div id="wrapper" class="row">
-                            <label id="elementoValorRadioLabel">
-                              <input id="elementoValorRadio" type="radio" class="flat" name="valorRadio" checked> Agrupaci&oacute;n de una Lista
-                            </label>
-                            <label id="manualValorRadioLabel" style="display: none;">
-                              <input id="manualValorRadio" type="radio" class="flat" name="valorRadio"> N&uacute;mero
-                            </label>
-                            <!-- <label>
-                              <input id="fechaValorRadio" type="radio" class="flat" name="valorRadio"> Fecha
-                            </label> -->
-                            <!-- <label>
-                              <input id="variableValorRadio" type="radio" class="flat" name="valorRadio"> Variable
-                            </label> -->
-                            <label id="factorValorRadioLabel" style="display: none;">
-                              <input id="factorValorRadio" type="radio" class="flat" name="valorRadio"> Factor
-                            </label>
-                            <label id="fechaValorRadioLabel" style="display: none;">
-                              <input id="fechaValorRadio" type="radio" class="flat" name="valorRadio"> Fecha
-                            </label>
-                            <br/>
+                            <h5>Factor</h5>
                           </div>
-
-                          <div id="listaValorField" class="row">
-                            <br/>
-                            <div class="col-xs-6 col-xs-offset-3">
-                              <div id="wrapper" class="row">
-                                <h5>Agrupaci&oacute;n de Listas</h5>
-                              </div>
-                              <div class="row">
-                                <form class="form-horizontal form-label-left">
-                                  <div class="form-group">
-                                    <label>Seleccionar Lista</label>
-                                    <div class="select-style">
-                                      <select id="elementoValorSelect" onchange="getElementsListsValue($('#elementoValorSelect').val())">
-                                      </select>
-                                    </div>
-                                  </div>
-                                </form>
-                              </div>
-                              <div class="row">
-                                <div class="form-group">
-                                  <div class="col-xs-12">
-                                    <select id="elementoValorOptionSelect" class="select2_multiple form-control" size="4" multiple="multiple">
-                                    </select>
-                                  </div>
-                                </div>
-                              </div>
-                              <br/>
-                              <div class="row">
-                                <div id="wrapper">
-                                  <label>Mostrar:</label>
-                                </div>
-                              </div>
-                              <div class="row">
-                                <div id="wrapper">
-                                  <label>
-                                    <input id="nombreElementoListaValorRadio" type="radio" class="flat" name="listaValorRadio" checked/> Campo Nombre de Elemento
-                                  </label>
-                                  <label>
-                                    <input id="valorElementoListaValorRadio" type="radio" class="flat" name="listaValorRadio"/> Campo Valor de Elemento
-                                  </label>
-                                </div>
+                          <div class="row">
+                            <div class="row tile_count">
+                              <div class="tile_stats_count">
+                                <div id="factorText" class="count text-center"></div>
                               </div>
                             </div>
                           </div>
-
-                          <div id="ln_solidValor1" class="ln_solid" style="display: none;"></div>
-
-                          <div id="manualField" class="row" style="display: none;">
-                            <br/>
-                            <div class="col-xs-6 col-xs-offset-3">
-                              <div id="wrapper" class="row">
-                                <h5>Manual</h5>
-                              </div>
-                              <div class="row">
-                                <form class="form-horizontal form-label-left">
-                                  <div class="form-group">
-                                    <label>Ingrese un N&uacute;mero</label>
-                                    <input id="manualValorInput" type="text" class="form-control" placeholder="Campo" data-inputmask-alias="currency" data-inputmask-prefix="L " data-inputmask-clearmaskonlostfocus="true">
-                                  </div>
-                                </form>
-                              </div>
-                            </div>
-                            <br/>
-                          </div>
-
-                          <div id="ln_solidValor2" class="ln_solid" style="display: none;"></div>
-
-                          <div id="factorField" class="row" style="display: none;">
-                            <br/>
-                            <div class="col-xs-6 col-xs-offset-3">
-                              <div id="wrapper" class="row">
-                                <h5>Factor</h5>
-                              </div>
-                              <div class="row">
-                                <div class="row tile_count">
-                                  <div class="tile_stats_count">
-                                    <div id="factorText" class="count text-center"></div>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                            <br/>
-                          </div>
-
-                          <div id="diasField" class="row" style="display: none;">
-                            <br/>
-                            <div class="col-xs-6 col-xs-offset-3">
-                              <div id="wrapper" class="row">
-                                <h5>Fecha</h5>
-                              </div>
-                              <div class="row">
-                                <div class="form-group col-sm-8 col-sm-offset-2">
-                                  <input type="text" class="form-control" id="diaValorInput" placeholder="D&iacute;a" value="D&iacute;as de Proyeccci&oacute;n" readonly>
-                                  <span class="fa fa-calendar-o form-control-feedback right" aria-hidden="true"></span>
-                                </div>
-                              </div>
-                            </div>
-                            <br/>
-                          </div>
-                          
-                          <!-- <div class="row">
-                            <br/>
-                            <div class="col-xs-6 col-xs-offset-3">
-                              <div id="wrapper" class="row">
-                                <h5>Fecha</h5>
-                              </div>
-                              <div class="row">
-                                <div class="form-group col-sm-8 col-sm-offset-2">
-                                  <input type="text" class="form-control" id="diaValorInput" placeholder="D&iacute;a" data-inputmask="'mask': '9[9][9]'" data-inputmask-clearmaskonlostfocus="true">
-                                  <span class="fa fa-calendar-o form-control-feedback right" aria-hidden="true"></span>
-                                </div>
-                              </div>
-                            </div>
-                            <br/>
-                          </div> -->
-  
-                          <!-- <div class="row">
-                            <div class="col-xs-6 col-xs-offset-3">
-                              <div id="wrapper" class="row">
-                                <label>Seleccionar Variables</label>
-                              </div>
-                              <ul id="variablesValorUL" class="to_do text-center">
-                              </ul>
-                            </div>
-                          </div> -->
-
-                          <!-- <div class="row">
-                            <br/>
-                            <div id="wrapper">
-                              <label>Seleccionar Variables</label>
-                            </div>
-                            <ul id="variablesValorUL" class="to_do text-center" style="display: flex; justify-content: center;">
-                            </ul>
-                          </div> -->
-
                         </div>
+                        <br/>
+                      </div>
 
+                      <div id="diasField" class="row" style="display: none;">
+                        <br/>
+                        <div class="col-xs-6 col-xs-offset-3">
+                          <div id="wrapper" class="row">
+                            <h5>Fecha</h5>
+                          </div>
+                          <div class="row">
+                            <div class="form-group col-sm-8 col-sm-offset-2">
+                              <input type="text" class="form-control" id="diaValorInput" placeholder="D&iacute;a" value="D&iacute;as de Proyeccci&oacute;n" readonly>
+                              <span class="fa fa-calendar-o form-control-feedback right" aria-hidden="true"></span>
+                            </div>
+                          </div>
+                        </div>
+                        <br/>
                       </div>
-                      <div class="ln_solid"></div>
-                      <div id="wrapper">
-                        <button onclick="saveRule()" type="button" class="btn btn-success">Guardar</button>
-                        <!-- <button onclick="showRules()" type="button" class="btn btn-info">Calcular</button> -->
-                      </div>
+                      
                       <!-- <div class="row">
-                        <textarea name="descr1" id="descr1" style="width:100%;" rows="20"></textarea>
+                        <br/>
+                        <div class="col-xs-6 col-xs-offset-3">
+                          <div id="wrapper" class="row">
+                            <h5>Fecha</h5>
+                          </div>
+                          <div class="row">
+                            <div class="form-group col-sm-8 col-sm-offset-2">
+                              <input type="text" class="form-control" id="diaValorInput" placeholder="D&iacute;a" data-inputmask="'mask': '9[9][9]'" data-inputmask-clearmaskonlostfocus="true">
+                              <span class="fa fa-calendar-o form-control-feedback right" aria-hidden="true"></span>
+                            </div>
+                          </div>
+                        </div>
+                        <br/>
                       </div> -->
+
+                      <!-- <div class="row">
+                        <div class="col-xs-6 col-xs-offset-3">
+                          <div id="wrapper" class="row">
+                            <label>Seleccionar Variables</label>
+                          </div>
+                          <ul id="variablesValorUL" class="to_do text-center">
+                          </ul>
+                        </div>
+                      </div> -->
+
+                      <!-- <div class="row">
+                        <br/>
+                        <div id="wrapper">
+                          <label>Seleccionar Variables</label>
+                        </div>
+                        <ul id="variablesValorUL" class="to_do text-center" style="display: flex; justify-content: center;">
+                        </ul>
+                      </div> -->
+
                     </div>
-                  <!-- </div> -->
 
-                  <!-- <div role="tabpanel" class="tab-pane fade" id="tab_content2" aria-labelledby="profile-tab">
-                    <p>2</p>
+                  </div>
+                  <div class="ln_solid"></div>
+                  <div id="wrapper">
+                    <button onclick="saveRule()" type="button" class="btn btn-success">Guardar</button>
+                    <!-- <button onclick="showRules()" type="button" class="btn btn-info">Calcular</button> -->
+                  </div>
+                  <!-- <div class="row">
+                    <textarea name="descr1" id="descr1" style="width:100%;" rows="20"></textarea>
                   </div> -->
-
-                <!-- </div> -->
+                </div>
               </div>
-            </div>
 
+              <div role="tabpanel" class="tab-pane fade" id="tab_content2" aria-labelledby="profile-tab">
+                
+                <div class="row">
+                  <div id="agrupacionFiltroField" class="col-xs-6 col-xs-offset-3">
+                    <form class="form-horizontal form-label-left">
+                      <div class="form-group">
+                        <label>Agrupar elementos por: </label>
+                        <div class="select-style">
+                          <select name="agrupacionFiltro" id="agrupacionFiltro"></select>
+                        </div>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="form-group col-sm-6 col-sm-offset-3">
+                    <input type="text" class="form-control" id="nombreFilter" placeholder="Nombre del Filtro">
+                    <span class="fa fa-filter form-control-feedback right" aria-hidden="true"></span>
+                  </div>
+                </div>
+                
+                <div class="ln_solid"></div>
+                <div class="row">
+                  <div id="wrapper">
+                    <button onclick="saveFilter()" type="button" class="btn btn-success">Guardar</button>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
           </div>
         </div>
-      </div> <!-- /end VARIABLES -->
 
+      </div>
     </div>
-    <!-- /page content -->
+  </div> <!-- /end VARIABLES -->
 
+</div>
+<!-- /page content -->
+
+
+<!-- MODAL ELEMENTO LISTA-->
+<div id="modalEdit" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <div class="text-divider"><h2>Modificar Variable</h2></div>
+      </div>
+      <div class="modal-body">
+        <form id="" data-parsley-validate class="form-horizontal form-label-left">
+
+          <div>
+            <div class="row">
+              <div class="row" style="margin: 0% 5%;">
+                <h2>Filtros </h2>
+                <ul id="listFiltersEdit" class="to_do text-center">
+                </ul>
+              </div>
+              <hr class="style11">
+
+              <div class="row">
+                <h2 style="padding-left: 5%;">Campo Objetivo </h2>
+                <div id="wrapper" class="row">
+                  <label>
+                    <input id="campoCampoRadioEdit" type="radio" class="flat" checked name="campoRadioEdit"> Campo
+                  </label>
+                  <label>
+                    <input id="fosedeCampoRadioEdit" type="radio" class="flat" name="campoRadioEdit"> FOSEDE
+                  </label>
+                  <label>
+                    <input id="cuentasOperativasCampoRadioEdit" type="radio" class="flat" name="campoRadioEdit"> Cuentas Operativas
+                  </label>
+                </div>
+                <br/>
+              </div>
+              <div id="campoFieldEdit" class="row">
+                <div class="col-xs-6 col-xs-offset-3">
+                  <form class="form-horizontal form-label-left">
+                    <div class="form-group">
+                      <label>Ingrese Campo</label>
+                      <div class="select-style">
+                        <select name="campoCampoInputEdit" id="campoCampoInputEdit" onchange="mostrarFieldsCampoSelectEdit()"></select>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+                <br/><br/><br/><br/>
+              </div>
+              <div id="variableFieldEdit" class="row" style="display: none;">
+                <div class="col-xs-6 col-xs-offset-3">
+                  <label>Seleccionar Variables</label>
+                  <ul id="variablesCampoULEdit" class="to_do">
+                    <li> <p><input id="resultadoDisableEdit" type="radio" name="variablesCampo" class="flat" value="1"> Nueva Variable </p> </li>
+                  </ul>
+                </div>
+                <br/><br/><br/><br/>
+              </div>
+              <div id="fosedeFieldEdit" class="row" style="display: none;">
+                <div id="wrapper">
+                  <label>FOSEDE</label>
+                </div>
+                <div id="wrapper">
+                  <label>
+                    <input id="hastaFOSEDECampoRadioEdit" type="radio" class="flat" name="fosedeRadioEdit">HASTA FOSEDE
+                  </label>
+                  <label>
+                    <input id="mayorFOSEDECCampoRadioEdit" type="radio" class="flat" name="fosedeRadioEdit">MAYOR FOSEDE
+                  </label>
+                </div>
+              </div>
+              <div id="cuentasOperativasFieldEdit" class="row" style="display: none;">
+                <div id="wrapper">
+                  <label>Cuentas Operativas</label>
+                </div>
+                <div id="wrapper">
+                  <label style="display: block; margin-left: auto; margin-right: auto;">
+                    <input id="hastaFOSEDECuentasOpCampoRadioEdit" type="radio" class="flat" name="fosedeRadioEdit">&nbsp;HASTA FOSEDE A CUENTAS OPERATIVAS
+                  </label>
+                  <label style="display: block; margin-left: auto; margin-right: auto;">
+                    <input id="mayorFOSEDECuentasOpCampoRadioEdit" type="radio" class="flat" name="fosedeRadioEdit">&nbsp;SOBRE FOSEDE A CUENTAS OPERATIVAS
+                  </label>
+                  <label style="display: block; margin-left: auto; margin-right: auto;">
+                    <input id="hastaFOSEDENoCuentasOpCampoRadioEdit" type="radio" class="flat" name="fosedeRadioEdit">&nbsp;HASTA FOSEDE A LAS CUENTAS NO OPERATIVAS
+                  </label>
+                  <label style="display: block; margin-left: auto; margin-right: auto;">
+                    <input id="mayorFOSEDENoCuentasOpCampoRadioEdit" type="radio" class="flat" name="fosedeRadioEdit">&nbsp;SOBRE FOSEDE A LAS CUENTAS NO OPERATIVAS
+                  </label>
+                </div>
+              </div>
+              <hr class="style11">
+              
+              <h2 style="padding-left: 5%;">Operaci&oacute;n a Aplicar</h2>
+              <div id="relacionalesFieldEdit" class="row" style="display: none;">
+                <div id="wrapper" class="row">
+                  <h5>Relacionales</h5>
+                </div>
+                <br/>
+                <div class="row">
+                  <div class="col-xs-2 col-xs-offset-1">
+                    <label>
+                      <input id="meOperadorRadioEdit" type="radio" class="flat" name="operadorRadioEdit"> &#60;
+                    </label>
+                  </div>
+                  <div class="col-xs-2 col-xs-offset-1">
+                    <label>
+                      <input id="meigOperadorRadioEdit" type="radio" class="flat" name="operadorRadioEdit"> &le;
+                    </label>
+                  </div>
+                  <div class="col-xs-2 col-xs-offset-1">
+                    <label>
+                      <input id="maOperadorRadioEdit" type="radio" class="flat" name="operadorRadioEdit"> &#62;
+                    </label>
+                  </div>
+                  <div class="col-xs-2 col-xs-offset-1">
+                    <label>
+                      <input id="maigOperadorRadioEdit" type="radio" class="flat" name="operadorRadioEdit"> &ge;
+                    </label>
+                  </div>
+                </div>
+                <br/>
+                <div class="row">
+                  <div class="col-xs-3 col-xs-offset-3">
+                    <label>
+                      <input id="igOperadorRadioEdit" type="radio" class="flat" name="operadorRadioEdit"> =
+                    </label>
+                  </div>
+                  <div class="col-xs-3 col-xs-offset-3">
+                    <label>
+                      <input id="noigOperadorRadioEdit" type="radio" class="flat" name="operadorRadioEdit"> &#8800;
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div id="ln_solidOPERACIONEdit" class="ln_solid" style="display: none;"></div>
+              
+              <div id="algebraicosFieldEdit" class="row" style="display: none;">
+                <div id="wrapper" class="row">
+                  <h5>Algebraicos</h5>
+                </div>
+                <br/>
+                <div class="row">
+                  <div class="col-xs-2 col-xs-offset-1">
+                    <label>
+                      <input id="masOperadorRadioEdit" type="radio" class="flat" name="operadorRadioEdit"> +
+                    </label>
+                  </div>
+                  <div class="col-xs-2 col-xs-offset-1">
+                    <label>
+                      <input id="porOperadorRadioEdit" type="radio" class="flat" name="operadorRadioEdit"> x
+                    </label>
+                  </div>
+                  <div class="col-xs-2 col-xs-offset-1">
+                    <label>
+                      <input id="menOperadorRadioEdit" type="radio" class="flat" name="operadorRadioEdit"> -
+                    </label>
+                  </div>
+                  <div class="col-xs-2 col-xs-offset-1">
+                    <label>
+                      <input id="entOperadorRadioEdit" type="radio" class="flat" name="operadorRadioEdit"> /
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div id="sumarSiFieldEdit" class="row">
+                <div id="wrapper" class="row">
+                  <h5>Agrupaci&oacute;n</h5>
+                </div>
+                <br/>
+                <div class="row">
+                  <div class="col-xs-5 col-xs-offset-1">
+                    <label>
+                      <input id="sumarSiOperadorRadioEdit" type="radio" class="flat" name="operadorRadioEdit" checked> Sumar si se encuentra en
+                    </label>
+                  </div>
+                  <div class="col-xs-5 col-xs-offset-1">
+                    <label>
+                      <input id="sumarSiNoOperadorRadioEdit" type="radio" class="flat" name="operadorRadioEdit"> Sumar si NO se encuentra en
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div id="multFieldEdit" class="row" style="display: none;">
+                <div id="wrapper" class="row">
+                  <h5>Multiplicaci&oacute;n</h5>
+                </div>
+                <br/>
+                <div class="row">
+                  <div id="wrapper">
+                    <label>
+                      <input id="multOperadorRadioEdit" type="radio" class="flat" name="operadorRadioEdit"> x
+                    </label>
+                  </div>
+                </div>
+                <br/>
+                <div class="row" id="wrapper">
+                  <img src="src/img/times.png" alt="" style="height: 8em;">
+                </div>
+              </div>
+              <br/>
+              <hr class="style11">
+
+              <div class="row">
+                <h2 style="padding-left: 5%;">Valor a Aplicar <small>Valor a aplicar a un Campo Objetivo.</small></h2>
+                <div id="wrapper" class="row">
+                  <label id="elementoValorRadioLabelEdit">
+                    <input id="elementoValorRadioEdit" type="radio" class="flat" name="valorRadioEdit" checked> Agrupaci&oacute;n de una Lista
+                  </label>
+                  <label id="manualValorRadioLabelEdit" style="display: none;">
+                    <input id="manualValorRadioEdit" type="radio" class="flat" name="valorRadioEdit"> N&uacute;mero
+                  </label>
+                  <label id="factorValorRadioLabelEdit" style="display: none;">
+                    <input id="factorValorRadioEdit" type="radio" class="flat" name="valorRadioEdit"> Factor
+                  </label>
+                  <label id="fechaValorRadioLabelEdit" style="display: none;">
+                    <input id="fechaValorRadioEdit" type="radio" class="flat" name="valorRadioEdit"> Fecha
+                  </label>
+                  <br/>
+                </div>
+
+                <div id="listaValorFieldEdit" class="row">
+                  <br/>
+                  <div class="col-xs-6 col-xs-offset-3">
+                    <div id="wrapper" class="row">
+                      <h5>Agrupaci&oacute;n de Listas</h5>
+                    </div>
+                    <div class="row">
+                      <form class="form-horizontal form-label-left">
+                        <div class="form-group">
+                          <label>Seleccionar Lista</label>
+                          <div class="select-style">
+                            <select id="elementoValorSelectEdit" onchange="getElementsListsValue($('#elementoValorSelect').val())">
+                            </select>
+                          </div>
+                        </div>
+                      </form>
+                    </div>
+                    <div class="row">
+                      <div class="form-group">
+                        <div class="col-xs-12">
+                          <select id="elementoValorOptionSelectEdit" class="select2_multiple form-control" size="4" multiple="multiple">
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                    <br/>
+                    <div class="row">
+                      <div id="wrapper">
+                        <label>Mostrar:</label>
+                      </div>
+                    </div>
+                    <div class="row">
+                      <div id="wrapper">
+                        <label>
+                          <input id="nombreElementoListaValorRadioEdit" type="radio" class="flat" name="listaValorRadioEdit" checked/> Campo Nombre de Elemento
+                        </label>
+                        <label>
+                          <input id="valorElementoListaValorRadioEdit" type="radio" class="flat" name="listaValorRadioEdit"/> Campo Valor de Elemento
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div id="ln_solidValor1Edit" class="ln_solid" style="display: none;"></div>
+
+                <div id="manualFieldEdit" class="row" style="display: none;">
+                  <br/>
+                  <div class="col-xs-6 col-xs-offset-3">
+                    <div id="wrapper" class="row">
+                      <h5>Manual</h5>
+                    </div>
+                    <div class="row">
+                      <form class="form-horizontal form-label-left">
+                        <div class="form-group">
+                          <label>Ingrese un N&uacute;mero</label>
+                          <input id="manualValorInputEdit" type="text" class="form-control" placeholder="Campo" data-inputmask-alias="currency" data-inputmask-prefix="L " data-inputmask-clearmaskonlostfocus="true">
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                  <br/>
+                </div>
+
+                <div id="ln_solidValor2Edit" class="ln_solid" style="display: none;"></div>
+
+                <div id="factorFieldEdit" class="row" style="display: none;">
+                  <br/>
+                  <div class="col-xs-6 col-xs-offset-3">
+                    <div id="wrapper" class="row">
+                      <h5>Factor</h5>
+                    </div>
+                    <div class="row">
+                      <div class="row tile_count">
+                        <div class="tile_stats_count">
+                          <div id="factorTextEdit" class="count text-center"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <br/>
+                </div>
+
+                <div id="diasFieldEdit" class="row" style="display: none;">
+                  <br/>
+                  <div class="col-xs-6 col-xs-offset-3">
+                    <div id="wrapper" class="row">
+                      <h5>Fecha</h5>
+                    </div>
+                    <div class="row">
+                      <div class="form-group col-sm-8 col-sm-offset-2">
+                        <input type="text" class="form-control" id="diaValorInputEdit" placeholder="D&iacute;a" value="D&iacute;as de Proyeccci&oacute;n" readonly>
+                        <span class="fa fa-calendar-o form-control-feedback right" aria-hidden="true"></span>
+                      </div>
+                    </div>
+                  </div>
+                  <br/>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+        </form>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" onclick="$('#modalEdit').modal('toggle');" class="btn btn-info">Cancelar</button>
+        <button type="button" onclick="deleteRule()" class="btn btn-danger">Eliminar</button>
+        <button type="button" onclick="modifyRule()" class="btn btn-success">Guardar</button>
+      </div>
+    </div>
   </div>
 </div>
+
+<!-- MODAL FILTRO-->
+<div id="modalFilter" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <div class="text-divider"><h2>Modificar Filtro</h2></div>
+      </div>
+      <div class="modal-body">
+        <form id="" data-parsley-validate class="form-horizontal form-label-left">
+
+          <div class="row">
+            <div id="agrupacionFiltroEditField" class="col-xs-6 col-xs-offset-3">
+              <form class="form-horizontal form-label-left">
+                <div class="form-group">
+                  <label>Agrupar elementos por: </label>
+                  <div class="select-style">
+                    <select name="agrupacionFiltroEdit" id="agrupacionFiltroEdit"></select>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="form-group col-sm-6 col-sm-offset-3">
+              <input type="text" class="form-control" id="nombreFilterEdit" placeholder="Nombre del Filtro">
+              <span class="fa fa-filter form-control-feedback right" aria-hidden="true"></span>
+            </div>
+          </div>
+
+        </form>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" onclick="$('#modalFilter').modal('toggle');" class="btn btn-info">Cancelar</button>
+        <button type="button" onclick="deleteFilter()" class="btn btn-danger">Eliminar</button>
+        <button type="button" onclick="modifyFilter()" class="btn btn-success">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 
 <!-- Datatables -->
 <script src="src/libs/datatables.net/js/jquery.dataTables.min.js"></script>

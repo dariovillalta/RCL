@@ -1,4 +1,4 @@
-
+const electron = require('electron');
 const remote = require('electron').remote;
 const sql = require('mssql');
 
@@ -43,10 +43,10 @@ const pool1 = new sql.ConnectionPool(config, err => {
         });
 	} else {
 		console.log('pool loaded');
-		loadVariablesIMG();
+		//loadVariablesIMG();
 		var hoy = new Date();
         loadTotalsFilter(hoy, hoy);
-        loadVariablesMainDB();
+        //loadVariablesMainDB();
 	}
 });
 
@@ -72,7 +72,7 @@ session.defaultSession.cookies.get({}, (error, cookies) => {
 
 
 /* ******************       LOADING IMG     ********* */
-var filepathFullLogo = '';
+/*var filepathFullLogo = '';
 var filepathSmallLogo = '';
 function loadVariablesMainDB () {
     const transaction = new sql.Transaction( pool1 );
@@ -100,17 +100,11 @@ function loadVariablesMainDB () {
                         if(result.recordset[0].fullLogo.length > 0){
                             filepathFullLogo = result.recordset[0].fullLogo;
                             $("#fullLogo").attr("src",filepathFullLogo);
-                            /*$("#fullLogo").css("display","block");
-                            $("#fullLogo").css("margin-left","auto");
-                            $("#fullLogo").css("margin-right","auto");*/
                         } else
                             filepathFullLogo = '';
                         if(result.recordset[0].smallLogo.length > 0){
                             filepathSmallLogo = result.recordset[0].smallLogo;
                             $("#smallLogo").attr("src",filepathSmallLogo);
-                            /*$("#smallLogo").css("display","block");
-                            $("#smallLogo").css("margin-left","auto");
-                            $("#smallLogo").css("margin-right","auto");*/
                         } else
                             filepathSmallLogo = '';
                     } else {
@@ -121,7 +115,7 @@ function loadVariablesMainDB () {
             }
         });
     }); // fin transaction
-}
+}*/
 /* ******************       END LOADING IMG     ********* */
 
 
@@ -138,13 +132,32 @@ var arregloProyecciones = [{tipo: 30, seleccionada: true}, {tipo: 60, selecciona
 
 
 
+$("#varCheck").iCheck({
+    checkboxClass: 'icheckbox_flat-green',
+    radioClass: 'iradio_flat-green'
+});
+$("#subvarCheck").iCheck({
+    checkboxClass: 'icheckbox_flat-green',
+    radioClass: 'iradio_flat-green'
+});
+$("#varDeSubVarCheck").iCheck({
+    checkboxClass: 'icheckbox_flat-green',
+    radioClass: 'iradio_flat-green'
+});
+$("#cuentasCheck").iCheck({
+    checkboxClass: 'icheckbox_flat-green',
+    radioClass: 'iradio_flat-green'
+});
+
+
+
 
 
 
 
 
 /* ****************** 		LOADING IMG 	****************** */
-var filepathFullLogo = '';
+/*var filepathFullLogo = '';
 var filepathSmallLogo = '';
 function loadVariablesIMG () {
 	const transaction = new sql.Transaction( pool1 );
@@ -178,18 +191,12 @@ function loadVariablesIMG () {
                     		filepathFullLogo = result.recordset[0].fullLogo;
                     		$("#fullLogo").attr("src",filepathFullLogo);
                     		$("#fullLogo").css("height","3.3em");
-                    		/*$("#fullLogo").css("display","block");
-                    		$("#fullLogo").css("margin-left","auto");
-                    		$("#fullLogo").css("margin-right","auto");*/
                     	} else
                     		filepathFullLogo = '';
                     	if(result.recordset[0].smallLogo.length > 0){
                     		filepathSmallLogo = result.recordset[0].smallLogo;
                     		$("#smallLogo").attr("src",filepathSmallLogo);
                     		$("#smallLogo").css("height","3.4em");
-                    		/*$("#smallLogo").css("display","block");
-                    		$("#smallLogo").css("margin-left","auto");
-                    		$("#smallLogo").css("margin-right","auto");*/
                     	} else
                     		filepathSmallLogo = '';
                     } else {
@@ -201,7 +208,7 @@ function loadVariablesIMG () {
             }
         });
     }); // fin transaction
-}
+}*/
 /* ****************** 		END LOADING IMG 	****************** */
 
 /* ****************** 		LOADING VARIABLES 	****************** */
@@ -374,7 +381,7 @@ function loadTotalsFilter (inicioF, finalF) {
                                 else
                                     estado = 0;
                             }
-                            if(result.recordset[i].esNumerador){
+                            /*if(result.recordset[i].esNumerador){
                                 if(result.recordset[i].denominador != 1) {
                                     result.recordset[i].influenciaFormula = ((result.recordset[i].influenciaFormula/result.recordset[i].denominador)*100).toFixed(2)+"%";
                                     result.recordset[i].volumenFormula = ((result.recordset[i].volumenFormula/result.recordset[i].denominador)*100).toFixed(2)+"%";
@@ -385,7 +392,7 @@ function loadTotalsFilter (inicioF, finalF) {
                             } else {
                                 result.recordset[i].influenciaFormula = (((result.recordset[i].influenciaFormula/result.recordset[i].denominador)*result.recordset[i].totalRCL)*100).toFixed(2)+"%";
                                 result.recordset[i].volumenFormula = (((result.recordset[i].volumenFormula/result.recordset[i].denominador)*result.recordset[i].totalRCL)*100).toFixed(2)+"%";
-                            }
+                            }*/
                             result.recordset[i].fecha =  new Date(result.recordset[i].fecha.getUTCFullYear(), result.recordset[i].fecha.getUTCMonth(), result.recordset[i].fecha.getUTCDate());
                             arregloTotales.push({nombreVariable: result.recordset[i].nombreVariable, fecha: result.recordset[i].fecha, tipoProyeccion: result.recordset[i].tipoProyeccion, volumenFormula: result.recordset[i].volumenFormula, influenciaFormula: result.recordset[i].influenciaFormula, numerador: result.recordset[i].numerador, denominador: result.recordset[i].denominador, total: result.recordset[i].total, tipo: result.recordset[i].tipo, estado: estado, variablePadre: result.recordset[i].varPadre})
                         };
@@ -1164,6 +1171,7 @@ function formatDateCreation(date) {
 //	**********		Route Change		**********
 function goVariables () {
 	$("#app_root").empty();
+    cleanupSelectedList();
     //cleanup();
     $("#app_root").load("src/variables.html");
 }
@@ -1176,27 +1184,30 @@ function goHome () {
 
 function goUsers () {
 	$("#app_root").empty();
+    cleanupSelectedList();
     //cleanup();
     $("#app_root").load("src/users.html");
 }
 
 function goConnections () {
     $("#app_root").empty();
+    cleanupSelectedList();
     //cleanup();
     $("#app_root").load("src/importaciones.html");
 }
 
 function goConfig () {
     $("#app_root").empty();
+    cleanupSelectedList();
     //cleanup();
     $("#app_root").load("src/config.html");
 }
 
 function logout () {
-	$("#app_root").empty();
+    $("#app_full").empty();
     session.defaultSession.clearStorageData([], (data) => {});
     //cleanup();
-    $("#app_root").load("src/login.html");
+    $("#app_full").load("src/login.html");
 }
 
 function goRCL () {
@@ -1219,6 +1230,14 @@ function goGraphics () {
 
 function goLists () {
     $("#app_root").empty();
+    cleanupSelectedList();
     //cleanup();
     $("#app_root").load("src/variablesLists.html");
+}
+
+function cleanupSelectedList () {
+    $(".side-menu li").each(function( i ) {
+        if ($(this).hasClass("active"))
+            $(this).removeClass("active")
+    });
 }

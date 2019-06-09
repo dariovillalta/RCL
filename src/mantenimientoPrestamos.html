@@ -8,261 +8,122 @@
 <link href="src/libs/datatables.net-responsive-bs/css/responsive.bootstrap.min.css" rel="stylesheet">
 <link href="src/libs/datatables.net-scroller-bs/css/scroller.bootstrap.min.css" rel="stylesheet">
 <link href="src/libs/bootstrap-datepicker/datepicker3.css" rel="stylesheet">
-<div class="container body">
-  <div class="main_container">
-    <div class="col-md-3 left_col">
-      <div class="left_col scroll-view">
-        <div class="navbar nav_title" style="border: 0;" id="wrapper">
-          <a onclick="goHome()" style="height: 100%;" class="site_title cursorHand"><img id="fullLogo" src="src/img/full-logo-example.png" class="logo_company"> <img id="smallLogo" src="src/img/small-logo-example.png" alt="" class="logo_company_solo"></a>
-        </div>
+<!-- page content -->
+<div>
+  
+  <div class="clearfix"></div>
 
-        <div class="clearfix"></div>
+  <div id="variables_div" class="row">
+    <div class="col-md-12">
 
-        <!-- menu profile quick info -->
-        <div class="profile clearfix">
-          <div class="profile_info">
-            <span>Bienvenido,</span>
-            <h2 id="nameUser"></h2>
-          </div>
-        </div>
-        <!-- /menu profile quick info -->
-
-        <br />
-
-        <!-- sidebar menu -->
-        <div id="sidebar-menu" class="main_menu_side hidden-print main_menu">
-          <div class="menu_section">
-            <h3>General</h3>
-            <ul class="nav side-menu">
-              <li><a onclick="goHome()"><i class="fa fa-home"></i> Home </a>
-              </li>
-              <li><a onclick="goRCL()"><i class="fa fa-bar-chart"></i> C&aacute;lculo Diario de RCL </a>
-              </li>
-              <li><a><i class="fa fa-list-alt"></i> Reporter&iacute;a </a>
-              </li>
-              <li><a onclick="goGraphics()"><i class="fa fa-bar-chart"></i> Gr&aacute;ficos </a>
-              </li>
-            </ul>
-          </div>
-
-        </div>
-        <!-- /sidebar menu -->
-      </div>
-    </div>
-
-    <!-- top navigation -->
-    <div class="top_nav">
-      <div class="nav_menu">
-        <nav>
-          <div class="nav toggle">
-            <a id="menu_toggle"><i class="fa fa-bars"></i></a>
-          </div>
-
-          <ul class="nav navbar-nav navbar-right">
-            <li class="">
-              <a href="javascript:;" class="user-profile dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
-                <img src="" alt=""> <span id="navbar_name"></span>
-                <span class=" fa fa-angle-down"></span>
-              </a>
-              <ul class="dropdown-menu dropdown-usermenu pull-right">
-                <li id="varLabel"><a onclick="goVariables()"> Editar Variables de F&oacute;rmula </a></li>
-                <li id="configLabel"><a onclick="goLists()"> Mantenimiento de Listas </a></li>
-                <li id="userLabel"><a onclick="goUsers()"> Control de Usuarios y Logo </a></li>
-                <li id="importLabel"><a onclick="goConnections()"> Importar Tablas </a></li>
-                <li id="configLabel"><a onclick="goConfig()"> Configuraci&oacute;n de Rutina </a></li>
-                <li><a onclick="logout()"><i class="fa fa-sign-out pull-right"></i> Cerrar Sesi&oacute;n</a></li>
-              </ul>
-            </li>
-
-            <!-- <li role="presentation" class="dropdown">
-              <a href="javascript:;" class="dropdown-toggle info-number" data-toggle="dropdown" aria-expanded="false">
-                <i class="fa fa-envelope-o"></i>
-                <span class="badge bg-green">6</span>
-              </a>
-              <ul id="menu1" class="dropdown-menu list-unstyled msg_list" role="menu">
-                <li>
-                  <a>
-                    <span class="image"><img src="" alt="Profile Image" /></span>
-                    <span>
-                      <span>John Smith</span>
-                      <span class="time">3 mins ago</span>
-                    </span>
-                    <span class="message">
-                      Film festivals used to be do-or-die moments for movie makers. They were where...
-                    </span>
-                  </a>
-                </li>
-                <li>
-                  <a>
-                    <span class="image"><img src="" alt="Profile Image" /></span>
-                    <span>
-                      <span>John Smith</span>
-                      <span class="time">3 mins ago</span>
-                    </span>
-                    <span class="message">
-                      Film festivals used to be do-or-die moments for movie makers. They were where...
-                    </span>
-                  </a>
-                </li>
-                <li>
-                  <a>
-                    <span class="image"><img src="" alt="Profile Image" /></span>
-                    <span>
-                      <span>John Smith</span>
-                      <span class="time">3 mins ago</span>
-                    </span>
-                    <span class="message">
-                      Film festivals used to be do-or-die moments for movie makers. They were where...
-                    </span>
-                  </a>
-                </li>
-                <li>
-                  <a>
-                    <span class="image"><img src="" alt="Profile Image" /></span>
-                    <span>
-                      <span>John Smith</span>
-                      <span class="time">3 mins ago</span>
-                    </span>
-                    <span class="message">
-                      Film festivals used to be do-or-die moments for movie makers. They were where...
-                    </span>
-                  </a>
-                </li>
-                <li>
-                  <div class="text-center">
-                    <a>
-                      <strong>See All Alerts</strong>
-                      <i class="fa fa-angle-right"></i>
-                    </a>
-                  </div>
-                </li>
-              </ul>
-            </li> -->
-          </ul>
-        </nav>
-      </div>
-    </div>
-    <!-- /top navigation -->
-
-    <!-- page content -->
-    <div class="right_col" role="main">
-      
-      <div class="clearfix"></div>
-
-      <div id="variables_div" class="row">
+      <div id="variables_div" class="row filtrarRow">
         <div class="col-md-12">
-
-          <div id="variables_div" class="row filtrarRow">
-            <div class="col-md-12">
-              <div class="x_panel">
-                <div class="x_title">
-                  <h2>Reporter&iacute;a</h2>
-                  <ul class="nav navbar-right panel_toolbox">
-                    <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
-                    </li>
-                  </ul>
-                  <div class="clearfix"></div>
-                </div>
-
-                <div class="x_content">
-
-                  <div class="col-md-12 col-sm-12 col-xs-12">
-
-                    <div class="row">
-                      <div class="col-xs-12" style="border-collapse: separate; border-spacing: 0; min-width: 350px; border: 1px solid #bbb; border-radius: 6px; text-align: center;">
-                        <br/>
-                        <h7>Fechas a mostrar:</h7>
-                        <div class="row">
-                          <div class="col-xs-6">
-                            <div id="wrapper" class="row">
-                              <label>Inicio</label>
-                            </div>
-                            <div class="row" style="display: flex; justify-content: center;">
-                              <div id="fechaInicioPrestamos" class="center-block"></div>
-                            </div>
-                          </div>
-                          <div class="col-xs-6">
-                            <div id="wrapper" class="row">
-                              <label>Final</label>
-                            </div>
-                            <div class="row" style="display: flex; justify-content: center;">
-                              <div id="fechaFinalPrestamos" class="center-block"></div>
-                            </div>
-                          </div>
-                        </div>
-                        <br/>
-                      </div>
-                    </div>
-
-                    <br/>
-                    
-                    <div class="row">
-                      <div id="wrapper">
-                        <button id="filter" onclick="checkDates()" type="button" class="btn btn-warning">Filtrar</button>
-                      </div>
-                    </div>
-
-                    <br/>
-
-                    <div class="card-box table-responsive">
-                      <table id="datatable_prestamos" class="table table-striped table-bordered">
-                        <thead>
-                          <tr>
-                            <th>ID</th>
-                            <th>ID Cliente</th>
-                            <th>Nombre Cliente</th>
-                            <th>Tipo Persona</th>
-                            <th>Tipo Sub-Persona</th>
-                            <th>N&uacute;mero Pr&eacute;stamo</th>
-                            <th>Saldo</th>
-                            <th>Moneda</th>
-                            <th>D&iacute;as Mora</th>
-                            <th>Amortizaci&oacute;n</th>
-                            <th>Sobregiro</th>
-                            <th>Contingente</th>
-                            <th>Clasificaci&oacute;n Cartera</th>
-                            <th>Tipo Cr&eacute;dito</th>
-                            <th>Pago 30</th>
-                            <th>Pago 60</th>
-                            <th>Pago 90</th>
-                            <th>Pago 120</th>
-                            <th>Clausulas Restrictivas</th>
-                            <th>Financiaci&oacute;n Garantizada</th>
-                            <th>Valor Financiaci&oacute;n</th>
-                            <th>ALAC</th>
-                            <th>Factor</th>
-                            <th>Fecha Inicio</th>
-                            <th>Fecha Final</th>
-                            <th>Monto Otorgado</th>
-                            <th>Sucursal</th>
-                            <th>Fecha</th>
-                            <th>Borrar</th>
-                          </tr>
-                        </thead>
-
-                        <tbody>
-                        </tbody>
-                      </table>
-                    </div>
-
-                    <br/>
-
-                  </div>
-
-                </div>
-              </div>
+          <div class="x_panel">
+            <div class="x_title">
+              <h2>Reporter&iacute;a</h2>
+              <ul class="nav navbar-right panel_toolbox">
+                <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                </li>
+              </ul>
+              <div class="clearfix"></div>
             </div>
-          </div> <!-- /end VARIABLES -->
 
+            <div class="x_content">
 
+              <div class="col-md-12 col-sm-12 col-xs-12">
+
+                <div class="row">
+                  <div class="col-xs-12" style="border-collapse: separate; border-spacing: 0; min-width: 350px; border: 1px solid #bbb; border-radius: 6px; text-align: center;">
+                    <br/>
+                    <h7>Fechas a mostrar:</h7>
+                    <div class="row">
+                      <div class="col-xs-6">
+                        <div id="wrapper" class="row">
+                          <label>Inicio</label>
+                        </div>
+                        <div class="row" style="display: flex; justify-content: center;">
+                          <div id="fechaInicioPrestamos" class="center-block"></div>
+                        </div>
+                      </div>
+                      <div class="col-xs-6">
+                        <div id="wrapper" class="row">
+                          <label>Final</label>
+                        </div>
+                        <div class="row" style="display: flex; justify-content: center;">
+                          <div id="fechaFinalPrestamos" class="center-block"></div>
+                        </div>
+                      </div>
+                    </div>
+                    <br/>
+                  </div>
+                </div>
+
+                <br/>
+                
+                <div class="row">
+                  <div id="wrapper">
+                    <button id="filter" onclick="checkDates()" type="button" class="btn btn-warning">Filtrar</button>
+                  </div>
+                </div>
+
+                <br/>
+
+                <div class="card-box table-responsive">
+                  <table id="datatable_prestamos" class="table table-striped table-bordered">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>ID Cliente</th>
+                        <th>Nombre Cliente</th>
+                        <th>Tipo Persona</th>
+                        <th>Tipo Sub-Persona</th>
+                        <th>N&uacute;mero Pr&eacute;stamo</th>
+                        <th>Saldo</th>
+                        <th>Moneda</th>
+                        <th>D&iacute;as Mora</th>
+                        <th>Amortizaci&oacute;n</th>
+                        <th>Sobregiro</th>
+                        <th>Contingente</th>
+                        <th>Clasificaci&oacute;n Cartera</th>
+                        <th>Tipo Cr&eacute;dito</th>
+                        <th>Pago 30</th>
+                        <th>Pago 60</th>
+                        <th>Pago 90</th>
+                        <th>Pago 120</th>
+                        <th>Clausulas Restrictivas</th>
+                        <th>Financiaci&oacute;n Garantizada</th>
+                        <th>Valor Financiaci&oacute;n</th>
+                        <th>ALAC</th>
+                        <th>Factor</th>
+                        <th>Fecha Inicio</th>
+                        <th>Fecha Final</th>
+                        <th>Monto Otorgado</th>
+                        <th>Sucursal</th>
+                        <th>Fecha</th>
+                        <th>Borrar</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                    </tbody>
+                  </table>
+                </div>
+
+                <br/>
+
+              </div>
+
+            </div>
+          </div>
         </div>
       </div> <!-- /end VARIABLES -->
 
-    </div>
-    <!-- /page content -->
 
-  </div>
+    </div>
+  </div> <!-- /end VARIABLES -->
+
 </div>
+<!-- /page content -->
 
 <!-- Datatables -->
 <script src="src/libs/datatables.net/js/jquery.dataTables.min.js"></script>
@@ -292,4 +153,4 @@
 <script src="src/mantenimientoPrestamos.js"></script>
 
 <!-- Custom Theme Scripts -->
-<script src="src/libs/custom.min.js"></script>
+<!-- <script src="src/libs/custom.min.js"></script> -->

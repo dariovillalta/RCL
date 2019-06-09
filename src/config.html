@@ -4,284 +4,175 @@
 <link href="src/libs/overhang/overhang.min.css" rel="stylesheet">
 <link href="src/libs/clockpicker-gh-pages/dist/bootstrap-clockpicker.min.css" rel="stylesheet">
 <link href="src/libs/custom.min.css" rel="stylesheet">
-<div class="container body">
-  <div class="main_container" style="z-index: -1;">
-    <div class="col-md-3 left_col">
-      <div class="left_col scroll-view">
-        <div class="navbar nav_title" style="border: 0;" id="wrapper">
-          <a onclick="goHome()" style="height: 100%;" class="site_title cursorHand"><img id="fullLogo" src="src/img/full-logo-example.png" class="logo_company"> <img id="smallLogo" src="src/img/small-logo-example.png" alt="" class="logo_company_solo"></a>
-        </div>
-
-        <div class="clearfix"></div>
-
-        <!-- menu profile quick info -->
-        <div class="profile clearfix">
-          <div class="profile_info">
-            <span>Bienvenido,</span>
-            <h2 id="nameUser"></h2>
-          </div>
-        </div>
-        <!-- /menu profile quick info -->
-
-        <br />
-
-        <!-- sidebar menu -->
-        <div id="sidebar-menu" class="main_menu_side hidden-print main_menu">
-          <div class="menu_section">
-            <h3>General</h3>
-            <ul class="nav side-menu">
-              <li><a onclick="goHome()"><i class="fa fa-home"></i> Home</a>
-              </li>
-              <li><a onclick="goRCL()"><i class="fa fa-bar-chart"></i> C&aacute;lculo Diario de RCL </a>
-              </li>
-              <li><a onclick="goReports()"><i class="fa fa-list-alt"></i> Reporter&iacute;a </a>
-              </li>
-              <li><a onclick="goGraphics()"><i class="fa fa-bar-chart"></i> Gr&aacute;ficos </a>
-              </li>
-            </ul>
-          </div>
-
-        </div>
-        <!-- /sidebar menu -->
-      </div>
+<!-- page content -->
+<div>
+  <div class="page-title">
+    <div class="title_left">
+      <h3>Configuraci&oacute;n del Sistema </h3>
     </div>
 
-    <!-- top navigation -->
-    <div class="top_nav">
-      <div class="nav_menu">
-        <nav>
-          <div class="nav toggle">
-            <a id="menu_toggle"><i class="fa fa-bars"></i></a>
-          </div>
+    <!-- <div class="title_right">
+      <div class="col-md-5 col-sm-5 col-xs-12 form-group pull-right top_search">
+        <div class="input-group">
+          <input id="buscarDiv" type="text" class="form-control" placeholder="Buscar...">
+          <span class="input-group-btn">
+            <button class="btn btn-default" type="button" onclick="filterDiv()">Filtrar</button>
+          </span>
+        </div>
+      </div>
+    </div> -->
+  </div>
+  
+  <div class="clearfix"></div>
 
-          <ul class="nav navbar-nav navbar-right">
-            <li class="">
-              <a href="javascript:;" class="user-profile dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
-                <img src="" alt=""> <span id="navbar_name"></span>
-                <span class=" fa fa-angle-down"></span>
-              </a>
-              <ul class="dropdown-menu dropdown-usermenu pull-right">
-                <li id="varLabel"><a onclick="goVariables()"> Editar Variables de F&oacute;rmula </a></li>
-                <li id="configLabel"><a onclick="goLists()"> Mantenimiento de Listas </a></li>
-                <li id="userLabel"><a onclick="goUsers()"> Control de Usuarios y Logo </a></li>
-                <li id="importLabel"><a onclick="goConnections()"> Importar Tablas </a></li>
-                <li id="configLabel"><a onclick="goConfig()"> Configuraci&oacute;n de Rutina </a></li>
-                <li><a onclick="logout()"><i class="fa fa-sign-out pull-right"></i> Cerrar Sesi&oacute;n</a></li>
-              </ul>
+  <div id="minimo_div" class="row filtrarRow">
+    <div class="col-md-12">
+      <div class="x_panel">
+        <div class="x_title">
+          <h2>Porcentaje M&iacute;nimo de RCL</h2>
+          <ul class="nav navbar-right panel_toolbox">
+            <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
             </li>
           </ul>
-        </nav>
+          <div class="clearfix"></div>
+        </div>
+
+        <div class="x_content">
+
+          <div class="col-md-12 col-sm-12 col-xs-12">
+            <h4>Porcentaje M&iacute;nimo de RCL <span class="pull-right">Porcentaje Actual: <span id="porcentajeActual"></span></span></h4>
+            <br/>
+            <form class="form-horizontal form-label-left">
+
+              <div class="form-group">
+                <label class="control-label col-md-4 col-sm-4 col-xs-12" for="minimoRCL">Monto M&iacute;nimo de RCL:</label>
+                <div class="col-md-6 col-sm-6 col-xs-12">
+                  <input type="text" id="minimoRCL" required="required" class="form-control col-xs-12" data-inputmask="'mask': '9[9][9] %'" data-inputmask-clearmaskonlostfocus="true">
+                </div>
+              </div>
+
+            </form>
+            <br/>
+            <div id="wrapper">
+              <button id="mostrar" onclick="checkMinRCL()" type="button" class="btn btn-success">Guardar M&iacute;nimo RCL</button>
+            </div>
+
+          </div>
+
+        </div>
       </div>
     </div>
-    <!-- /top navigation -->
+  </div> <!-- /end MINIMO RCL -->
 
-    <!-- page content -->
-    <div class="right_col" role="main">
-      <div class="page-title">
-        <div class="title_left">
-          <h3>Configuraci&oacute;n del Sistema </h3>
+  <div id="correos_div" class="row filtrarRow">
+    <div class="col-md-12">
+      <div class="x_panel">
+        <div class="x_title">
+          <h2>Correos</h2>
+          <ul class="nav navbar-right panel_toolbox">
+            <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+            </li>
+          </ul>
+          <div class="clearfix"></div>
         </div>
 
-        <!-- <div class="title_right">
-          <div class="col-md-5 col-sm-5 col-xs-12 form-group pull-right top_search">
-            <div class="input-group">
-              <input id="buscarDiv" type="text" class="form-control" placeholder="Buscar...">
-              <span class="input-group-btn">
-                <button class="btn btn-default" type="button" onclick="filterDiv()">Filtrar</button>
-              </span>
+        <div class="x_content">
+
+          <div class="col-md-12 col-sm-12 col-xs-12">
+
+            <h4>Ingresar Correo Electr&oacute;nico <small>Correos a donde enviar los porcentajes de RCL</small> </h4>
+            <form class="form-horizontal form-label-left">
+              <div id="wrapper">
+                <input id="correoValue" class="form-control col-md-7" required="required" type="text">
+              </div>
+            </form>
+            <br/>
+        
+            <h4>Porcentaje <small>Porcentaje de RCL al cual enviar correo a esta direcci&oacute;n</small> </h4>
+
+            <form class="form-horizontal form-label-left">
+              <div id="wrapper">
+                <input id="porcentajeCorreoValue" class="form-control col-md-7" required="required" type="text" data-inputmask="'mask': '9[9][9] %'" data-inputmask-clearmaskonlostfocus="true">
+              </div>
+            </form>
+            <br/>
+
+            <div id="wrapper">
+              <button id="mostrar" onclick="createEmail()" type="button" class="btn btn-success">Guardar</button>
             </div>
+            <div class="ln_solid"></div>
+            <br/>
+
+            <h4>Lista de Correos Electr&oacute;nicos</h4>
+
+            <ul id="listaCorreos" class="to_do text-center">
+            </ul>
+            <br/>
+
           </div>
-        </div> -->
+
+        </div>
       </div>
-      
-      <div class="clearfix"></div>
-
-      <div id="minimo_div" class="row filtrarRow">
-        <div class="col-md-12">
-          <div class="x_panel">
-            <div class="x_title">
-              <h2>Porcentaje M&iacute;nimo de RCL</h2>
-              <ul class="nav navbar-right panel_toolbox">
-                <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
-                </li>
-              </ul>
-              <div class="clearfix"></div>
-            </div>
-
-            <div class="x_content">
-
-              <div class="col-md-12 col-sm-12 col-xs-12">
-                <h4>Porcentaje M&iacute;nimo de RCL <span class="pull-right">Porcentaje Actual: <span id="porcentajeActual"></span></span></h4>
-                <br/>
-                <form class="form-horizontal form-label-left">
-
-                  <div class="form-group">
-                    <label class="control-label col-md-4 col-sm-4 col-xs-12" for="minimoRCL">Monto M&iacute;nimo de RCL:</label>
-                    <div class="col-md-6 col-sm-6 col-xs-12">
-                      <input type="text" id="minimoRCL" required="required" class="form-control col-xs-12" data-inputmask="'mask': '9[9][9] %'" data-inputmask-clearmaskonlostfocus="true">
-                    </div>
-                  </div>
-
-                </form>
-                <br/>
-                <div id="wrapper">
-                  <button id="mostrar" onclick="checkMinRCL()" type="button" class="btn btn-success">Guardar M&iacute;nimo RCL</button>
-                </div>
-
-              </div>
-
-            </div>
-          </div>
-        </div>
-      </div> <!-- /end MINIMO RCL -->
-
-      <div id="correos_div" class="row filtrarRow">
-        <div class="col-md-12">
-          <div class="x_panel">
-            <div class="x_title">
-              <h2>Correos</h2>
-              <ul class="nav navbar-right panel_toolbox">
-                <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
-                </li>
-              </ul>
-              <div class="clearfix"></div>
-            </div>
-
-            <div class="x_content">
-
-              <div class="col-md-12 col-sm-12 col-xs-12">
-
-                <h4>Ingresar Correo Electr&oacute;nico <small>Correos a donde enviar los porcentajes de RCL</small> </h4>
-
-                <form class="form-horizontal form-label-left">
-                  <div id="wrapper">
-                    <input id="correoValue" class="form-control col-md-7" required="required" type="text">
-                  </div>
-                </form>
-
-                <br/>
-                <div id="wrapper">
-                  <button id="mostrar" onclick="createEmail()" type="button" class="btn btn-success">Guardar</button>
-                </div>
-                <div class="ln_solid"></div>
-                <br/>
-
-                <h4>Lista de Correos Electr&oacute;nicos</h4>
-
-                <ul id="listaCorreos" class="to_do text-center">
-                </ul>
-                <br/>
-
-              </div>
-
-            </div>
-          </div>
-        </div>
-      </div> <!-- /end CORREOS -->
-
-      <div id="progra_div" class="row filtrarRow">
-        <div class="col-md-12">
-          <div class="x_panel">
-            <div class="x_title">
-              <h2>Programaci&oacute;n</h2>
-              <ul class="nav navbar-right panel_toolbox">
-                <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
-                </li>
-              </ul>
-              <div class="clearfix"></div>
-            </div>
-
-            <div class="x_content">
-
-              <div class="col-md-12 col-sm-12 col-xs-12">
-
-                <h4>Permiso <small>Abrir el programa al iniciar la computadora</small> </h4>
-
-                <div id="wrapper">
-                  <label>
-                    <input id="initIsChecked" type="checkbox" class="js-switch" checked/> <span id="initSpan"> Permitir</span> <span id="initNoSpan" style="display:none;"> No Permitir</span>
-                  </label>
-                </div>
-
-                <br/><br/>
-                <div id="wrapper">
-                  <button id="mostrar" onclick="createEmail()" type="button" class="btn btn-success">Guardar</button>
-                </div>
-                <div class="ln_solid"></div>
-                <br/>
-
-                <h4>Programar hora para el c&aacute;lculo del RCL</h4>
-
-                <div class="row" style="display: flex; justify-content: center;">
-                  <div class="input-group clockpicker" data-placement="top" data-align="top" data-autoclose="true">
-                    <input id="hora" type="text" class="form-control">
-                    <span class="input-group-addon">
-                      <span class="glyphicon glyphicon-time"></span>
-                    </span>
-                  </div>
-                </div>
-                <div id="wrapper">
-                  <button onclick="saveHour()" type="button" class="btn btn-success">Guardar</button>
-                </div>
-                <br/>
-
-              </div>
-
-            </div>
-          </div>
-        </div>
-      </div> <!-- /end PROGRAMACION -->
-
     </div>
-    <!-- /page content -->
+  </div> <!-- /end CORREOS -->
 
-  </div>
+  <div id="progra_div" class="row filtrarRow">
+    <div class="col-md-12">
+      <div class="x_panel">
+        <div class="x_title">
+          <h2>Programaci&oacute;n</h2>
+          <ul class="nav navbar-right panel_toolbox">
+            <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+            </li>
+          </ul>
+          <div class="clearfix"></div>
+        </div>
+
+        <div class="x_content">
+
+          <div class="col-md-12 col-sm-12 col-xs-12">
+
+            <h4>Permiso <small>Abrir el programa al iniciar la computadora</small> </h4>
+
+            <div id="wrapper">
+              <label>
+                <input id="initIsChecked" type="checkbox" class="js-switch" checked/> <span id="initSpan"> Permitir</span> <span id="initNoSpan" style="display:none;"> No Permitir</span>
+              </label>
+            </div>
+
+            <br/><br/>
+            <div id="wrapper">
+              <button id="mostrar" onclick="createEmail()" type="button" class="btn btn-success">Guardar</button>
+            </div>
+            <div class="ln_solid"></div>
+            <br/>
+
+            <h4>Programar hora para el c&aacute;lculo del RCL</h4>
+
+            <div class="row" style="display: flex; justify-content: center;">
+              <div class="input-group clockpicker" data-placement="top" data-align="top" data-autoclose="true">
+                <input id="hora" type="text" class="form-control">
+                <span class="input-group-addon">
+                  <span class="glyphicon glyphicon-time"></span>
+                </span>
+              </div>
+            </div>
+            <br/>
+            <div id="wrapper">
+              <button onclick="saveHour()" type="button" class="btn btn-success">Guardar</button>
+              <button onclick="deleteHour()" type="button" class="btn btn-success">Desactivar</button>
+            </div>
+            <br/>
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div> <!-- /end PROGRAMACION -->
+
 </div>
-
-<!-- MODAL ELEMENTO LISTA-->
-<div id="modalElement" class="modal fade" role="dialog">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal">&times;</button>
-        <div class="text-divider"><h2>Modificar Elemento de Lista</h2></div>
-      </div>
-      <div class="modal-body">
-        <form id="" data-parsley-validate class="form-horizontal form-label-left">
-          
-          <div class="form-group">
-            <label class="control-label col-md-3 col-sm-3 col-xs-12" for="elementosDeListaModify">Lista Asociada</label>
-            <div class="col-md-6 col-sm-6 col-xs-12">
-              <div class="select-style">
-                <select id="elementosDeListaModify">
-                </select>
-              </div>
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="control-label col-md-3 col-sm-3 col-xs-12" for="elementoNombreUpdate">Nombre</label>
-            <div class="col-md-6 col-sm-6 col-xs-12">
-              <input type="text" id="elementoNombreUpdate" required="required" class="form-control col-md-7 col-xs-12">
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="control-label col-md-3 col-sm-3 col-xs-12" for="elementoValorUpdatename">Valor</label>
-            <div class="col-md-6 col-sm-6 col-xs-12">
-              <input type="text" id="elementoValorUpdate" name="elementoValorUpdatename" required="required" class="form-control col-md-7 col-xs-12">
-            </div>
-          </div>
-
-        </form>
-
-      </div>
-      <div class="modal-footer">
-        <button type="button" onclick="$('#modalElement').modal('toggle');" class="btn btn-info">Cancelar</button>
-        <button type="button" onclick="deleteElementList()" class="btn btn-danger">Eliminar</button>
-        <button type="button" onclick="updateElementList()" class="btn btn-success">Guardar</button>
-      </div>
-    </div>
-  </div>
-</div>
+<!-- /page content -->
 
 <script src="src/libs/switchery/dist/switchery.min.js"></script>
 

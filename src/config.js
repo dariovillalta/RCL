@@ -116,8 +116,9 @@ function filterDiv () {
 /* ******************       FIN SEARCH     ********* */
 
 /* ****************** 		LOADING IMG 	********* */
-var filepathFullLogo = '';
-var filepathSmallLogo = '';
+/*var filepathFullLogo = '';
+var filepathSmallLogo = '';*/
+var variablesDBGlobal;
 function loadVariablesIMG () {
 	const transaction = new sql.Transaction( pool1 );
     transaction.begin(err => {
@@ -145,7 +146,7 @@ function loadVariablesIMG () {
                 transaction.commit(err => {
                     // ... error checks
                     if(result.recordset.length > 0){
-                    	objetoBandera = result.recordset[0];
+                    	/*objetoBandera = result.recordset[0];
                     	if(result.recordset[0].fullLogo.length > 0){
                     		filepathFullLogo = result.recordset[0].fullLogo;
                     		$("#fullLogo").attr("src",filepathFullLogo);
@@ -155,12 +156,12 @@ function loadVariablesIMG () {
                     		filepathSmallLogo = result.recordset[0].smallLogo;
                     		$("#smallLogo").attr("src",filepathSmallLogo);
                     	} else
-                    		filepathSmallLogo = '';
-                        $("#porcentajeActual").text(result.recordset[0].minimoRCL+" %");
+                    		filepathSmallLogo = '';*/
+                        variablesDBGlobal = result.recordset[0].minimoRCL;
+                        $("#porcentajeActual").text(variablesDBGlobal+" %");
                     } else {
-                    	objetoBandera = null;
-                    	filepathFullLogo = '';
-                    	filepathSmallLogo = '';
+                    	/*filepathFullLogo = '';
+                    	filepathSmallLogo = '';*/
                     }
                 });
             }
@@ -279,7 +280,7 @@ function createMinimunRCL (monto) {
             rolledBack = true;
         });
         const request = new sql.Request(transaction);
-        request.query("insert into Variables (fullLogo, smallLogo, formula, formulaMATHLIVE, minimoRCL) values ('', '', '', '', "+monto+")", (err, result) => {
+        request.query("insert into Variables (fullLogo, smallLogo, formula, formulaMATHLIVE, minimoRCL, permisoInicio, horaProgramada) values ('', '', '', '', "+monto+", 'false','')", (err, result) => {
             if (err) {
                 if (!rolledBack) {
                     transaction.rollback(err => {
@@ -301,10 +302,10 @@ function createMinimunRCL (monto) {
                         primary: "#40D47E",
                         accent: "#27AE60",
                         message: "Monto mínimo del RCL guardado con éxito.",
-                        duration: 2,
+                        duration: 1,
                         overlay: true
                     });
-                    loadVariablesMainDB();
+                    loadVariablesIMG();
                 });
             }
         });
@@ -342,10 +343,10 @@ function updateMinimunRCL (monto) {
                         primary: "#40D47E",
                         accent: "#27AE60",
                         message: "Monto mínimo del RCL guardado con éxito.",
-                        duration: 2,
+                        duration: 1,
                         overlay: true
                     });
-                    loadVariablesMainDB();
+                    loadVariablesIMG();
                 });
             }
         });
@@ -354,44 +355,69 @@ function updateMinimunRCL (monto) {
 
 function createEmail () {
     var correo = $('#correoValue').val();
-    const transaction = new sql.Transaction( pool1 );
-    transaction.begin(err => {
-        var rolledBack = false;
-        transaction.on('rollback', aborted => {
-            // emited with aborted === true
-            rolledBack = true;
-        });
-        const request = new sql.Request(transaction);
-        request.query("insert into Correos (correo) values ('"+correo+"')", (err, result) => {
-            if (err) {
-                if (!rolledBack) {
-                    transaction.rollback(err => {
-                        $("body").overhang({
-                            type: "error",
-                            primary: "#f84a1d",
-                            accent: "#d94e2a",
-                            message: "Error en inserción de Correo.",
-                            overlay: true,
-                            closeConfirm: true
-                        });
-                    });
-                }
-            }  else {
-                transaction.commit(err => {
-                    // ... error checks
-                    $("body").overhang({
-                        type: "success",
-                        primary: "#40D47E",
-                        accent: "#27AE60",
-                        message: "Correo guardado con éxito.",
-                        duration: 2,
-                        overlay: true
-                    });
-                    loadEmails();
+    var porcentaje = $('#porcentajeCorreoValue').val().split(/[ |%|_|__]/)[0];
+    console.log(correo)
+    console.log(porcentaje)
+    if(correo.length > 0 && correo.length < 60) {
+        if(!isNaN(porcentaje)) {
+            const transaction = new sql.Transaction( pool1 );
+            transaction.begin(err => {
+                var rolledBack = false;
+                transaction.on('rollback', aborted => {
+                    // emited with aborted === true
+                    rolledBack = true;
                 });
-            }
+                const request = new sql.Request(transaction);
+                request.query("insert into Correos (correo, porcentajeEnviar) values ('"+correo+"', "+porcentaje+")", (err, result) => {
+                    if (err) {
+                        if (!rolledBack) {
+                            transaction.rollback(err => {
+                                $("body").overhang({
+                                    type: "error",
+                                    primary: "#f84a1d",
+                                    accent: "#d94e2a",
+                                    message: "Error en inserción de Correo.",
+                                    overlay: true,
+                                    closeConfirm: true
+                                });
+                            });
+                        }
+                    }  else {
+                        transaction.commit(err => {
+                            // ... error checks
+                            $("body").overhang({
+                                type: "success",
+                                primary: "#40D47E",
+                                accent: "#27AE60",
+                                message: "Correo guardado con éxito.",
+                                duration: 1,
+                                overlay: true
+                            });
+                            loadEmails();
+                        });
+                    }
+                });
+            }); // fin transaction
+        } else {
+            $("body").overhang({
+                type: "error",
+                primary: "#f84a1d",
+                accent: "#d94e2a",
+                message: "Ingrese un número válido.",
+                overlay: true,
+                closeConfirm: true
+            });
+        }
+    } else {
+        $("body").overhang({
+            type: "error",
+            primary: "#f84a1d",
+            accent: "#d94e2a",
+            message: "El campo de correo electrónico debe tener una longitud mayor a 0 y menor a 61.",
+            overlay: true,
+            closeConfirm: true
         });
-    }); // fin transaction
+    }
 }
 
 function updateEmail (id, correo) {
@@ -425,7 +451,7 @@ function updateEmail (id, correo) {
                         primary: "#40D47E",
                         accent: "#27AE60",
                         message: "Correo guardado con éxito.",
-                        duration: 2,
+                        duration: 1,
                         overlay: true
                     });
                     loadEmails();
@@ -443,7 +469,7 @@ function deleteEmail (id) {
         yesColor: "#3498DB",
         message: 'Esta seguro que desea eliminar el correo electrónico?',
         overlay: true,
-        yesMessage: "Guardar",
+        yesMessage: "Eliminar",
         noMessage: "Cancelar",
         callback: function (value) {
             if(value){
@@ -477,7 +503,7 @@ function deleteEmail (id) {
                                     primary: "#40D47E",
                                     accent: "#27AE60",
                                     message: "Correo eliminado con éxito.",
-                                    duration: 2,
+                                    duration: 1,
                                     overlay: true
                                 });
                                 loadEmails();
@@ -493,6 +519,61 @@ function deleteEmail (id) {
 function saveHour () {
     var hora = $("#hora").val();
     console.log(hora);
+}
+
+function deleteHour () {
+    $("body").overhang({
+        type: "confirm",
+        primary: "#f5a433",
+        accent: "#dc9430",
+        yesColor: "#3498DB",
+        message: 'Esta seguro que desea desactivar el cálculo de RCL automatico?',
+        overlay: true,
+        yesMessage: "Desactivar",
+        noMessage: "Cancelar",
+        callback: function (value) {
+            if(value) {
+                const transaction = new sql.Transaction( pool1 );
+                transaction.begin(err => {
+                    var rolledBack = false;
+                    transaction.on('rollback', aborted => {
+                        // emited with aborted === true
+                        rolledBack = true;
+                    });
+                    const request = new sql.Request(transaction);
+                    request.query("update Variables set horaProgramada = '' where ID = 1", (err, result) => {
+                        if (err) {
+                            if (!rolledBack) {
+                                transaction.rollback(err => {
+                                    $("body").overhang({
+                                        type: "error",
+                                        primary: "#f84a1d",
+                                        accent: "#d94e2a",
+                                        message: "Error en desactivación de cálculo de RCL automático.",
+                                        overlay: true,
+                                        closeConfirm: true
+                                    });
+                                });
+                            }
+                        }  else {
+                            transaction.commit(err => {
+                                // ... error checks
+                                $("body").overhang({
+                                    type: "success",
+                                    primary: "#40D47E",
+                                    accent: "#27AE60",
+                                    message: "Desactivación realizada con éxito.",
+                                    duration: 1,
+                                    overlay: true
+                                });
+                                //loadEmails();
+                            });
+                        }
+                    });
+                }); // fin transaction
+            }
+        }
+    });
 }
 //	**********		Fin Manual Contable y Listas		**********
 
@@ -549,10 +630,10 @@ function goConfig () {
 }
 
 function logout () {
-	$("#app_root").empty();
+	$("#app_full").empty();
     session.defaultSession.clearStorageData([], (data) => {});
     cleanup();
-    $("#app_root").load("src/login.html");
+    $("#app_full").load("src/login.html");
 }
 
 function goReports () {

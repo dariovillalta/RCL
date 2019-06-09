@@ -45,7 +45,7 @@ const pool1 = new sql.ConnectionPool(config, err => {
 		console.log('pool loaded');
 		loadUsers();
 		loadPolicies();
-		loadVariablesIMG();
+		//loadVariablesIMG();
 	}
 });
 
@@ -73,7 +73,7 @@ session.defaultSession.cookies.get({}, (error, cookies) => {
 });
 
 /* ****************** 		LOADING IMG 	********* */
-var filepathFullLogo = '';
+/*var filepathFullLogo = '';
 var filepathSmallLogo = '';
 function loadVariablesIMG () {
 	const transaction = new sql.Transaction( pool1 );
@@ -106,17 +106,11 @@ function loadVariablesIMG () {
                     	if(result.recordset[0].fullLogo.length > 0){
                     		filepathFullLogo = result.recordset[0].fullLogo;
                     		$("#fullLogo").attr("src",filepathFullLogo);
-                    		/*$("#fullLogo").css("display","block");
-                    		$("#fullLogo").css("margin-left","auto");
-                    		$("#fullLogo").css("margin-right","auto");*/
                     	} else
                     		filepathFullLogo = '';
                     	if(result.recordset[0].smallLogo.length > 0){
                     		filepathSmallLogo = result.recordset[0].smallLogo;
                     		$("#smallLogo").attr("src",filepathSmallLogo);
-                    		/*$("#smallLogo").css("display","block");
-                    		$("#smallLogo").css("margin-left","auto");
-                    		$("#smallLogo").css("margin-right","auto");*/
                     	} else
                     		filepathSmallLogo = '';
                     } else {
@@ -128,7 +122,7 @@ function loadVariablesIMG () {
             }
         });
     }); // fin transaction
-}
+}*/
 /* ****************** 		END LOADING IMG 	********* */
 
 //	**********		Users		**********
@@ -1037,7 +1031,7 @@ function saveImages () {
 	            rolledBack = true;
 	        });
 	        const request = new sql.Request(transaction);
-	        request.query("insert into Variables (fullLogo, smallLogo, formula, formulaMATHLIVE, minimoRCL) values ('"+filepathFullLogo+"','"+filepathSmallLogo+"','','', 0)", (err, result) => {
+	        request.query("insert into Variables (fullLogo, smallLogo, formula, formulaMATHLIVE, minimoRCL, permisoInicio, horaProgramada) values ('"+filepathFullLogo+"','"+filepathSmallLogo+"','','', 0, 'false','')", (err, result) => {
 	            if (err) {
 	                if (!rolledBack) {
 	                    transaction.rollback(err => {
@@ -1187,55 +1181,62 @@ function modifyImages () {
 
 //	**********		Route Change		**********
 function goVariables () {
+	//cleanup();
 	$("#app_root").empty();
     $("#app_root").load("src/variables.html");
 }
 
 function goHome () {
+	//cleanup();
 	$("#app_root").empty();
     $("#app_root").load("src/home.html");
 }
 
 function goUsers () {
+	//cleanup();
 	$("#app_root").empty();
     $("#app_root").load("src/users.html");
 }
 
 function logout () {
-	$("#app_root").empty();
 	session.defaultSession.clearStorageData([], (data) => {});
-    $("#app_root").load("src/login.html");
+	//cleanup();
+    $("#app_full").empty();
+    $("#app_full").load("src/login.html");
 }
 
 function goConnections () {
+	//cleanup();
     $("#app_root").empty();
-    //cleanup();
     $("#app_root").load("src/importaciones.html");
 }
 
 function goConfig () {
+	//cleanup();
     $("#app_root").empty();
-    //cleanup();
     $("#app_root").load("src/config.html");
 }
 
 function goRCL () {
+	//cleanup();
 	$("#app_root").empty();
     $("#app_root").load("src/rcl.html");
 }
 
 function goReports () {
+	//cleanup();
 	$("#app_root").empty();
     $("#app_root").load("src/reportes.html");
 }
 
 function goGraphics () {
+	//cleanup();
     $("#app_root").empty();
     $("#app_root").load("src/graficos.html");
 }
 
 function goLists () {
+	//cleanup();
     $("#app_root").empty();
-    //cleanup();
     $("#app_root").load("src/variablesLists.html");
 }

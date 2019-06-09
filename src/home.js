@@ -37,7 +37,7 @@ const pool1 = new sql.ConnectionPool(config, err => {
 		console.log(err);
 	else{
 		console.log('pool loaded');
-		loadVariablesMainDB();
+		//loadVariablesMainDB();
 		var hoy =  new Date();
 		var primerDia = new Date(hoy.getFullYear(), 0, 1);
 		var ultimoDia = new Date(hoy.getFullYear(), 11, 31);
@@ -99,7 +99,7 @@ session.defaultSession.cookies.get({}, (error, cookies) => {
 });
 
 /* ****************** 		LOADING IMG 	********* */
-var filepathFullLogo = '';
+/*var filepathFullLogo = '';
 var filepathSmallLogo = '';
 function loadVariablesMainDB () {
 	const transaction = new sql.Transaction( pool1 );
@@ -127,21 +127,12 @@ function loadVariablesMainDB () {
                     	if(result.recordset[0].fullLogo.length > 0){
                     		filepathFullLogo = result.recordset[0].fullLogo;
                     		$("#fullLogo").attr("src",filepathFullLogo);
-                    		//$("#fullLogo").css("height","3.3em");
-                    		/*$("#fullLogo").css("display","block");
-                    		$("#fullLogo").css("margin-left","auto");
-                    		$("#fullLogo").css("margin-right","auto");*/
-                            $("#prueba1").attr("src",filepathFullLogo);
                     	} else
                     		filepathFullLogo = '';
                     	if(result.recordset[0].smallLogo.length > 0){
                     		filepathSmallLogo = result.recordset[0].smallLogo;
                     		$("#smallLogo").attr("src",filepathSmallLogo);
                     		$("#smallLogo").css("height","3.4em");
-                            $("#prueba2").attr("src",filepathFullLogo);
-                    		/*$("#smallLogo").css("display","block");
-                    		$("#smallLogo").css("margin-left","auto");
-                    		$("#smallLogo").css("margin-right","auto");*/
                     	} else
                     		filepathSmallLogo = '';
                     } else {
@@ -152,7 +143,7 @@ function loadVariablesMainDB () {
             }
         });
     }); // fin transaction
-}
+}*/
 /* ****************** 		END LOADING IMG 	********* */
 var chart_plot_02_data = [];
 var arregloFOSEDE = [];
@@ -750,6 +741,7 @@ function getMonth(mes) {
 //	**********		Route Change		**********
 function goVariables () {
 	$("#app_root").empty();
+    cleanupSelectedList();
 	cleanup();
     $("#app_root").load("src/variables.html");
 }
@@ -762,27 +754,30 @@ function goHome () {
 
 function goUsers () {
 	$("#app_root").empty();
+    cleanupSelectedList();
 	cleanup();
     $("#app_root").load("src/users.html");
 }
 
 function goConnections () {
     $("#app_root").empty();
+    cleanupSelectedList();
     cleanup();
     $("#app_root").load("src/importaciones.html");
 }
 
 function goConfig () {
     $("#app_root").empty();
+    cleanupSelectedList();
     cleanup();
     $("#app_root").load("src/config.html");
 }
 
 function logout () {
-	$("#app_root").empty();
+    $("#app_full").empty();
     session.defaultSession.clearStorageData([], (data) => {});
-	cleanup();
-    $("#app_root").load("src/login.html");
+    cleanup();
+    $("#app_full").load("src/login.html");
 }
 
 function goRCL () {
@@ -805,24 +800,28 @@ function goGraphics () {
 
 function goAssets () {
     $("#app_root").empty();
+    cleanupSelectedList();
     cleanup();
     $("#app_root").load("src/mantenimientoActivos.html");
 }
 
 function goDeposits () {
     $("#app_root").empty();
+    cleanupSelectedList();
     cleanup();
     $("#app_root").load("src/mantenimientoDepositos.html");
 }
 
 function goLoans () {
     $("#app_root").empty();
+    cleanupSelectedList();
     cleanup();
     $("#app_root").load("src/mantenimientoPrestamos.html");
 }
 
 function goLists () {
     $("#app_root").empty();
+    cleanupSelectedList();
     cleanup();
     $("#app_root").load("src/variablesLists.html");
 }
@@ -855,6 +854,13 @@ var cleanup = function () {
     delete window.logout;
     delete window.goRCL;
 };
+
+function cleanupSelectedList () {
+    $(".side-menu li").each(function( i ) {
+        if ($(this).hasClass("active"))
+            $(this).removeClass("active")
+    });
+}
 
 
 

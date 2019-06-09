@@ -12,6 +12,7 @@ const config = {
     password: password,
     server: server,
     database: database,
+    stream: true,
     pool: {
         max: 10,
         min: 0,
@@ -32,6 +33,7 @@ const config = {
 
 const pool1 = new sql.ConnectionPool(config, err => {
 	if(err) {
+        console.log(err);
 		$("body").overhang({
             type: "error",
             primary: "#f84a1d",
@@ -44,9 +46,11 @@ const pool1 = new sql.ConnectionPool(config, err => {
 		console.log('pool loaded');
 		loadLists();
 		loadText();
-		loadVariablesMainDB();
+		//loadVariablesMainDB();
 	}
 });
+
+window.scrollTo(0, 0);
 
 var variableDeVariableReglaID = null;
 var variableDeVariableObject = null;
@@ -66,11 +70,13 @@ function loadText () {
 	$("#variableOfVariableDescription").css("text-align", "justify");
 	$("#variableOfVariableFactor").text(factorHijo);
 	$("#factorText").text(factorHijo).append('<span style="height: 3vh;">%</span>');
+    $("#factorTextEdit").text(factorHijo).append('<span style="height: 3vh;">%</span>');
 	$("#variableOfVariableFactor").css("white-space", "initial");
 	$("#variableOfVariableFactor").css("text-align", "justify");
 	variableDeVariableReglaID = variable;
 	loadRules();
 	loadVariableObject();
+    loadFilters();
 }
 
 var tablaActivos = [
@@ -98,8 +104,20 @@ var tablaDepositos = [
 	{valor: "columnaExtra2",nombre: "Columna Extra 2"}*/
 ];
 
+var tablaDepositosFiltros = [
+    {valor: "idCliente",nombre: "ID del Cliente"},
+    {valor: "nombreCliente",nombre: "Nombre del Cliente"},
+    {valor: "tipoPersona",nombre: "Tipo de Persona"},
+    {valor: "tipoSubPersona",nombre: "Tipo de Sub-Persona"},
+    {valor: "plazoResidual",nombre: "Plazo Residual"},
+    {valor: "tipoCuenta",nombre: "Tipo de Cuenta"}
+];
+
 function loadSelectCampoObjetivo (tabla) {
 	$("#campoCampoInput").empty();
+    $("#campoCampoInputEdit").empty();
+    $("#agrupacionFiltro").empty();
+    $("#agrupacionFiltroEdit").empty();
 	var content = '';
 	if(tabla == 1) {
 		for (var i = 0; i < tablaActivos.length; i++) {
@@ -110,7 +128,14 @@ function loadSelectCampoObjetivo (tabla) {
 			content+='<option value="'+tablaDepositos[i].valor+'">'+tablaDepositos[i].nombre+'</option>';
 		};
 	}
+    var content2 = '';
+    for (var i = 0; i < tablaDepositosFiltros.length; i++) {
+        content2+='<option value="'+tablaDepositosFiltros[i].valor+'">'+tablaDepositosFiltros[i].nombre+'</option>';
+    };
 	$("#campoCampoInput").append(content);
+    $("#campoCampoInputEdit").append(content);
+    $("#agrupacionFiltro").append(content2);
+    $("#agrupacionFiltroEdit").append(content2);
 }
 
 var colores = [
@@ -149,9 +174,13 @@ var colores = [
 ];
 
 var arregloListas = [];
-var arregloElementosDeListas = [];
+var arregloElementosDeListasValor = [];
 var arregloReglas = [];
 var ordenGlobal = 0;
+var arregloElementosDeListasValorEdit = [];
+var reglaSeleccionada;
+var arregloFiltros = [];
+var filtroSeleccionado;
 
 function loadRules () {
 	const transaction = new sql.Transaction( pool1 );
@@ -162,8 +191,9 @@ function loadRules () {
             rolledBack = true;
         });
         const request = new sql.Request(transaction);
-        request.query("select * from Reglas where variablePadre = "+variableDeVariableReglaID, (err, result) => {
+        request.query("select * from Reglas where variablePadre = "+variableDeVariableReglaID+" and esFiltro = 'false'", (err, result) => {
             if (err) {
+                console.log(err);
                 if (!rolledBack) {
                     transaction.rollback(err => {
                         $("body").overhang({
@@ -212,6 +242,7 @@ function loadVariableObject () {
         const request = new sql.Request(transaction);
         request.query("select * from VariablesdeVariablesFormula where ID = "+variableDeVariableReglaID, (err, result) => {
             if (err) {
+                console.log(err);
                 if (!rolledBack) {
                     transaction.rollback(err => {
                         $("body").overhang({
@@ -232,6 +263,7 @@ function loadVariableObject () {
                     } else {
                     	variableDeVariableObject = null;
                     }
+                    loadFilters();
                 });
             }
         });
@@ -240,7 +272,7 @@ function loadVariableObject () {
 
 var montoFosedeGlobal = null;
 
-function loadVariablesMainDB () {
+/*function loadVariablesMainDB () {
 	const transaction = new sql.Transaction( pool1 );
     transaction.begin(err => {
         var rolledBack = false;
@@ -272,11 +304,11 @@ function loadVariablesMainDB () {
                     	else
                     		montoFosedeGlobal = 0.00;
 
-                        if(result.recordset[0].fullLogo.length > 0){
-                            $("#fullLogo").attr("src",filepathFullLogo);
+                        if(result.recordset[0].fullLogo.length > 0) {
+                            $("#fullLogo").attr("src",result.recordset[0].fullLogo);
                         }
-                        if(result.recordset[0].smallLogo.length > 0){
-                            $("#smallLogo").attr("src",filepathSmallLogo);
+                        if(result.recordset[0].smallLogo.length > 0) {
+                            $("#smallLogo").attr("src",result.recordset[0].smallLogo);
                         }
                     } else {
                     	montoFosedeGlobal = null;
@@ -285,7 +317,7 @@ function loadVariablesMainDB () {
             }
         });
     }); // fin transaction
-}
+}*/
 
 function renderTable () {
     if ( $.fn.dataTable.isDataTable( '#tablaReglas' ) )
@@ -313,14 +345,14 @@ function renderTable () {
             { "data": "reglaPadre" },
             { "data": "campoObjetivo" },
             { "data": "Guardar" },
-            { "data": "Eliminar" }
+            { "data": "Modificar" }
         ],
         rowCallback: function(row, data, index){
             $(row).find('td:eq(2)').html(getTextRule(data));
         },
         "columnDefs": [ {
             "targets": -1,
-            "defaultContent": '<a class="btn btn-app deleteRule"> <i class="fa fa-eraser"></i> Eliminar </a>',
+            "defaultContent": '<a class="btn btn-app deleteRule"> <i class="fa fa-eraser"></i> Modificar </a>',
             "className": "text-center"
         },
         {
@@ -364,7 +396,6 @@ function renderTable () {
 
     $('#tablaReglas tbody').on( 'click', 'tr a.saveRule', function () {
         var data = table.row( $(this).parents('tr') ).data();
-        console.log(data)
         if(!isNaN(data.reglaPadre)) {
         	if(data.reglaPadre != data.ID) {
 	            $("body").overhang({
@@ -405,20 +436,8 @@ function renderTable () {
 
     $('#tablaReglas tbody').on( 'click', 'tr a.deleteRule', function () {
         var data = table.row( $(this).parents('tr') ).data();
-        $("body").overhang({
-            type: "confirm",
-            primary: "#f5a433",
-            accent: "#dc9430",
-            yesColor: "#3498DB",
-            message: 'Esta seguro que desea eliminar la variable?',
-            overlay: true,
-            yesMessage: "Eliminar",
-            noMessage: "Cancelar",
-            callback: function (value) {
-                if(value)
-                    deleteRule(data.ID);
-            }
-        });
+        reglaSeleccionada = data;
+        $('#modalEdit').modal('toggle');
     } );
 }
 
@@ -433,6 +452,7 @@ function modifyRule (id, variablePadre) {
         const request = new sql.Request(transaction);
         request.query("update Reglas set reglaPadre = "+variablePadre+" where id = "+id, (err, result) => {
             if (err) {
+                console.log(err);
                 if (!rolledBack) {
                     transaction.rollback(err => {
                         $("body").overhang({
@@ -453,7 +473,7 @@ function modifyRule (id, variablePadre) {
 					  	primary: "#40D47E",
 		  				accent: "#27AE60",
 					  	message: "Variable modificada con éxito.",
-					  	duration: 2,
+					  	duration: 1,
 					  	overlay: true
 					});
                     loadRules();
@@ -463,45 +483,61 @@ function modifyRule (id, variablePadre) {
     }); // fin transaction
 }
 
-function deleteRule (id) {
-	const transaction = new sql.Transaction( pool1 );
-    transaction.begin(err => {
-        var rolledBack = false;
-        transaction.on('rollback', aborted => {
-            // emited with aborted === true
-            rolledBack = true;
-        });
-        const request = new sql.Request(transaction);
-        request.query("delete from Reglas where id = "+id, (err, result) => {
-            if (err) {
-                if (!rolledBack) {
-                    transaction.rollback(err => {
-                        $("body").overhang({
-                            type: "error",
-                            primary: "#f84a1d",
-                            accent: "#d94e2a",
-                            message: "Error en eliminación de Variable.",
-                            overlay: true,
-                            closeConfirm: true
-                        });
+function deleteRule () {
+    $("body").overhang({
+        type: "confirm",
+        primary: "#f5a433",
+        accent: "#dc9430",
+        yesColor: "#3498DB",
+        message: 'Esta seguro que desea eliminar la variable?',
+        overlay: true,
+        yesMessage: "Eliminar",
+        noMessage: "Cancelar",
+        callback: function (value) {
+            if(value) {
+                const transaction = new sql.Transaction( pool1 );
+                transaction.begin(err => {
+                    var rolledBack = false;
+                    transaction.on('rollback', aborted => {
+                        // emited with aborted === true
+                        rolledBack = true;
                     });
-                }
-            }  else {
-                transaction.commit(err => {
-                    // ... error checks
-                    $("body").overhang({
-					  	type: "success",
-					  	primary: "#40D47E",
-		  				accent: "#27AE60",
-					  	message: "Variable eliminada con éxito.",
-					  	duration: 2,
-					  	overlay: true
-					});
-                    loadRules();
-                });
+                    const request = new sql.Request(transaction);
+                    request.query("delete from Reglas where ID = "+reglaSeleccionada.ID, (err, result) => {
+                        if (err) {
+                            console.log(err);
+                            if (!rolledBack) {
+                                transaction.rollback(err => {
+                                    $("body").overhang({
+                                        type: "error",
+                                        primary: "#f84a1d",
+                                        accent: "#d94e2a",
+                                        message: "Error en eliminación de Variable.",
+                                        overlay: true,
+                                        closeConfirm: true
+                                    });
+                                });
+                            }
+                        }  else {
+                            transaction.commit(err => {
+                                // ... error checks
+                                $("body").overhang({
+                                    type: "success",
+                                    primary: "#40D47E",
+                                    accent: "#27AE60",
+                                    message: "Variable eliminada con éxito.",
+                                    duration: 1,
+                                    overlay: true
+                                });
+                                $('#modalEdit').modal('toggle');
+                                loadRules();
+                            });
+                        }
+                    });
+                }); // fin transaction
             }
-        });
-    }); // fin transaction
+        }
+    });
 }
 
 function getTextRule (regla) {
@@ -734,10 +770,6 @@ function renderRules () {
 			        checkboxClass: 'icheckbox_flat-green',
 			        radioClass: 'iradio_flat-green'
 			    });
-			    /*if( $('#variableValorRadio').iCheck('update')[0].checked )
-		    		$("#variablesValorUL :input").prop('disabled', false);
-		    	else
-		    		$("#variablesValorUL :input").prop('disabled', true);*/
 		    }
 		}
 	});
@@ -779,6 +811,7 @@ function loadLists () {
         const request = new sql.Request(transaction);
         request.query("select * from Listas", (err, result) => {
             if (err) {
+                console.log(err);
                 if (!rolledBack) {
                     transaction.rollback(err => {
                         $("body").overhang({
@@ -800,6 +833,7 @@ function loadLists () {
                     	arregloListas = [];
                     }
                     renderListsSelect(3);
+                    renderListsSelectEdit(3);
                 });
             }
         });
@@ -817,6 +851,7 @@ function getElementsListsValue (listaID) {
         const request = new sql.Request(transaction);
         request.query("select * from ListasVariables where idLista = "+listaID, (err, result) => {
             if (err) {
+                console.log(err);
                 if (!rolledBack) {
                     transaction.rollback(err => {
                         $("body").overhang({
@@ -857,15 +892,6 @@ function renderListsSelect (tipo) {
 	if(listaTemp.length > 0) {
 		getElementsListsValue(listaTemp[0].ID);
 	}
-}
-
-function renderElementsListsCampSelect () {
-	var selectHTML = '';
-	for (var i = 0; i < arregloElementosDeListasCampo.length; i++) {
-		selectHTML+='<option value='+arregloElementosDeListasCampo[i].ID+'>'+arregloElementosDeListasCampo[i].nombre+'</option>';
-	};
-	$("#listaCampoOptionsSelect").empty();
-	$("#listaCampoOptionsSelect").append(selectHTML);
 }
 
 $('#nombreElementoListaValorRadio').on('ifChecked', function () {
@@ -968,11 +994,11 @@ function mostrarFieldsCampoSelect () {
 		$( "#elementoValorRadioLabel" ).hide();
 		$( "#listaValorField" ).hide();
 		$( "#manualValorRadioLabel" ).show();
-		$("#manualValorRadio").iCheck('check');
-		$( "#manualField" ).fadeIn( "slow", function() {
-		});
+		$("#factorValorRadio").iCheck('check');
+		$( "#manualField" ).hide();
 		$( "#factorValorRadioLabel" ).show();
-		$( "#factorField" ).hide();
+		$( "#factorField" ).fadeIn( "slow", function() {
+        });
 		$( "#sumarSiField" ).hide();
 		$("#meOperadorRadio").iCheck('check');
 		$( "#fechaValorRadioLabel" ).hide();
@@ -1047,7 +1073,7 @@ function mostrarFieldsCampoSelect () {
 	}
 }
 
-$("#date_inline").css('pointer-events', 'none');
+//$("#date_inline").css('pointer-events', 'none');
 $("#mesValorInput").prop('disabled', true);
 $("input[name='valorRadio']").on('ifClicked', function(event){
 	if(event.currentTarget.id == "manualValorRadio") {
@@ -1076,7 +1102,10 @@ function saveRule () {
 	var operacion = '';
 	var valor = '';
 	var variables = '';
-	var esFiltro = '0';
+	var esFiltro = false;
+    var filtro = -1;
+    if($('input[name=filters]:checked').length > 0)
+        filtro = $('input[name=filters]:checked').val();
 	if( $('#campoCampoRadio').is(':checked') )
 		campoObjetivo = 'COLUMNA='+$("#campoCampoInput").val();
 	else if( $('#fosedeCampoRadio').is(':checked') ) {
@@ -1120,9 +1149,21 @@ function saveRule () {
 		operacion = 'no';
 	else if( $('#multOperadorRadio').is(':checked') )
 		operacion = '*';
-	if( $('#manualValorRadio').is(':checked') )
-		valor = "COLUMNA="+parseFloat($("#manualValorInput").val().split(" ")[1].replace(/,/, ""));
-	else if( $('#elementoValorRadio').is(':checked') ) {
+	if( $('#manualValorRadio').is(':checked') ) {
+        if($("#manualValorInput").val().length > 0)
+		  valor = "COLUMNA="+parseFloat($("#manualValorInput").val().split(" ")[1].replace(/,/, ""));
+        else {
+            $("body").overhang({
+                type: "error",
+                primary: "#f84a1d",
+                accent: "#d94e2a",
+                message: "Ingrese un número.",
+                closeConfirm: true,
+                overlay: true,
+                closeConfirm: true
+            });
+        }
+	} else if( $('#elementoValorRadio').is(':checked') ) {
 		var elementosSelect = $("#elementoValorOptionSelect").val();
 		var elementos = '';
 		var aplicarNombre = "0";
@@ -1131,16 +1172,13 @@ function saveRule () {
 			aplicarNombre = "0";*/
 		if(elementosSelect != null) {
 			for (var i = 0; i < elementosSelect.length; i++) {
-				if(aplicarNombre == "1")
-					elementos+=arregloElementosDeListasValor[parseInt(elementosSelect[i])].nombre;
-				else
-					elementos+=arregloElementosDeListasValor[parseInt(elementosSelect[i])].valor;
+				elementos+=arregloElementosDeListasValor[parseInt(elementosSelect[i])].ID;
 				if( (i+1) < elementosSelect.length )
 					elementos+=',';
 			};
 			valor = 'LISTA=' + elementos;
 		} else 
-			valor = 'LISTA=' + getSelectOptions(arregloElementosDeListasValor, aplicarNombre);
+			valor = 'LISTA=' + getSelectOptions(arregloElementosDeListasValor);
 	} else if( $('#factorValorRadio').is(':checked') ) {
 		valor = "FACTOR="+variableDeVariableObject.factor;
 	} else if( $('#fechaValorRadio').is(':checked') ) {
@@ -1155,6 +1193,7 @@ function saveRule () {
 	console.log(variableDeVariableReglaID);
 	console.log(ordenGlobal);
 	console.log(ordenGlobal+1);
+    console.log("filtro = "+filtro);
 	console.log("-_------___----");
 	if(campoObjetivo.length > 0 && campoObjetivo.length < 1001) {
 		if(operacion.length > 0 && operacion.length < 3) {
@@ -1167,8 +1206,9 @@ function saveRule () {
 			            rolledBack = true;
 			        });
 			        const request = new sql.Request(transaction);
-			        request.query("insert into Reglas (variablePadre, reglaPadre, campoObjetivo, operacion, valor, variables, esFiltro, orden) values ("+variableDeVariableReglaID+","+reglaPadre+",'"+campoObjetivo+"','"+operacion+"','"+valor+"','"+variables+"','"+esFiltro+"',"+(ordenGlobal+1)+")", (err, result) => {
+			        request.query("insert into Reglas (variablePadre, reglaPadre, campoObjetivo, operacion, valor, variables, esFiltro, filtro, orden) values ("+variableDeVariableReglaID+","+reglaPadre+",'"+campoObjetivo+"','"+operacion+"','"+valor+"','"+variables+"','"+esFiltro+"',"+filtro+","+(ordenGlobal+1)+")", (err, result) => {
 			            if (err) {
+                            console.log(err);
 			                if (!rolledBack) {
 			                    transaction.rollback(err => {
 			                        $("body").overhang({
@@ -1188,8 +1228,8 @@ function saveRule () {
 								  	type: "success",
 								  	primary: "#40D47E",
 					  				accent: "#27AE60",
-								  	message: "Regla creada con éxito.",
-								  	duration: 2,
+								  	message: "Variable creada con éxito.",
+								  	duration: 1,
 								  	overlay: true
 								});
 								loadRules();
@@ -1203,7 +1243,7 @@ function saveRule () {
 				  	primary: "#f84a1d",
 					accent: "#d94e2a",
 				  	message: "El campo de valor a aplicar de la regla debe tener una longitud mayor a 0 y menor a 1001.",
-				  	duration: 3,
+				  	closeConfirm: true,
 				  	overlay: true,
                     closeConfirm: true
 				});
@@ -1214,7 +1254,7 @@ function saveRule () {
 			  	primary: "#f84a1d",
 				accent: "#d94e2a",
 			  	message: "El campo de operacion de la regla debe tener una longitud mayor a 0 y menor a 3.",
-			  	duration: 3,
+			  	closeConfirm: true,
 			  	overlay: true,
                 closeConfirm: true
 			});
@@ -1225,7 +1265,7 @@ function saveRule () {
 		  	primary: "#f84a1d",
 			accent: "#d94e2a",
 		  	message: "El campo objetivo de la regla debe tener una longitud mayor a 0 y menor a 1001.",
-		  	duration: 3,
+		  	closeConfirm: true,
 		  	overlay: true,
             closeConfirm: true
 		});
@@ -1244,7 +1284,7 @@ function saveRule () {
 	};
 	return textoOption;
 }*/
-function getSelectOptions (array, aplicarNombre) {
+/*function getSelectOptions (array, aplicarNombre) {
 	var textoOption = '';
 	for (var i = 0; i < array.length; i++) {
 		if(aplicarNombre == "1")
@@ -1255,8 +1295,834 @@ function getSelectOptions (array, aplicarNombre) {
 			textoOption+=',';
 	};
 	return textoOption;
+}*/
+function getSelectOptions (array) {
+    var textoOption = '';
+    for (var i = 0; i < array.length; i++) {
+        textoOption+=array[i].ID;
+        if( (i+1) < array.length )
+            textoOption+=',';
+    };
+    return textoOption;
 }
 /* *************	Fin Rules	************* */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* *************    Modify   ************* */
+function getElementsListsValueEdit (listaID) {
+    const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false;
+        transaction.on('rollback', aborted => {
+            // emited with aborted === true
+            rolledBack = true;
+        });
+        const request = new sql.Request(transaction);
+        request.query("select * from ListasVariables where idLista = "+listaID, (err, result) => {
+            if (err) {
+                console.log(err);
+                if (!rolledBack) {
+                    transaction.rollback(err => {
+                        $("body").overhang({
+                            type: "error",
+                            primary: "#f84a1d",
+                            accent: "#d94e2a",
+                            message: "Error en conección con la tabla de ListasVariables.",
+                            overlay: true,
+                            closeConfirm: true
+                        });
+                    });
+                }
+            }  else {
+                transaction.commit(err => {
+                    // ... error checks
+                    if(result.recordset.length > 0){
+                        arregloElementosDeListasValorEdit = result.recordset;
+                    } else {
+                        arregloElementosDeListasValorEdit = [];
+                    }
+                    renderElementsListsValueSelectEdit();
+                });
+            }
+        });
+    }); // fin transaction
+}
+
+function renderListsSelectEdit (tipo) {
+    var selectHTML = '';
+    var listaTemp = arregloListas.filter(function( object ) {
+                        return object.tipo == tipo;
+                    });
+    for (var i = 0; i < listaTemp.length; i++) {
+        selectHTML+='<option value='+listaTemp[i].ID+'>'+listaTemp[i].nombre+'</option>';
+    };
+    $("#elementoValorSelectEdit").empty();
+    $("#elementoValorSelectEdit").append(selectHTML);
+    if(listaTemp.length > 0) {
+        getElementsListsValueEdit(listaTemp[0].ID);
+    }
+}
+
+$('#nombreElementoListaValorRadioEdit').on('ifChecked', function () {
+    renderElementsListsValueSelectEdit();
+});
+$('#valorElementoListaValorRadioEdit').on('ifChecked', function () {
+    renderElementsListsValueSelectEdit();
+});
+
+function renderElementsListsValueSelectEdit () {
+    var selectHTML = '';
+    if($('#nombreElementoListaValorRadioEdit').iCheck('update')[0].checked){
+        for (var i = 0; i < arregloElementosDeListasValorEdit.length; i++) {
+            selectHTML+='<option value='+i+'>'+arregloElementosDeListasValorEdit[i].nombre+'</option>';
+        };
+    } else {
+        for (var i = 0; i < arregloElementosDeListasValor.length; i++) {
+            selectHTML+='<option value='+i+'>'+arregloElementosDeListasValorEdit[i].valor+'</option>';
+        };
+    }
+    $("#elementoValorOptionSelectEdit").empty();
+    $("#elementoValorOptionSelectEdit").append(selectHTML);
+}
+
+$("#listaCampoSelectEdit").prop('disabled', true);
+$("#listaCampoOptionsSelectEdit").prop('disabled', true);
+$("input#resultadoDisableEdit").prop('disabled', true);
+$("input[name='campoRadioEdit']").on('ifClicked', function(event){
+    if(event.currentTarget.id == "campoCampoRadioEdit"){
+        $( "#campoFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $('#variableFieldEdit').hide();
+        $('#fosedeFieldEdit').hide();
+        $( "#cuentasOperativasFieldEdit" ).hide();
+        $( "#multFieldEdit" ).hide();
+        $("#fosedeFieldEdit :input").iCheck('uncheck');
+        mostrarFieldsCampoSelectEdit();
+    } else if(event.currentTarget.id == "variablesCampoRadioEdit"){
+        $( "#variableFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $('#campoFieldEdit').hide();
+        $('#fosedeFieldEdit').hide();
+        $( "#multFieldEdit" ).hide();
+    } else if(event.currentTarget.id == "fosedeCampoRadioEdit"){
+        $( "#fosedeFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $("#hastaFOSEDECampoRadioEdit").iCheck('check');
+        $('#campoFieldEdit').hide();
+        $('#variableFieldEdit').hide();
+        $( "#cuentasOperativasFieldEdit" ).hide();
+        $('#relacionalesFieldEdit').hide();
+        $( "#ln_solidOPERACIONEdit" ).hide();
+        $( "#algebraicosFieldEdit" ).hide();
+        $( "#manualValorRadioLabelEdit" ).hide();
+        $( "#manualFieldEdit" ).hide();
+        $( "#factorFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $( "#factorValorRadioLabelEdit" ).show();
+        $("#factorValorRadioEdit").iCheck('check');
+        $( "#elementoValorRadioLabelEdit" ).hide();
+        $( "#listaValorFieldEdit" ).hide();
+        $( "#sumarSiFieldEdit" ).hide();
+        $("#multOperadorRadioEdit").iCheck('check');
+        $( "#multFieldEdit" ).fadeIn( "slow", function() {
+        });
+    } else if(event.currentTarget.id == "cuentasOperativasCampoRadioEdit"){
+        $( "#cuentasOperativasFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $("#hastaFOSEDECuentasOpCampoRadioEdit").iCheck('check');
+        $('#fosedeFieldEdit').hide();
+        $('#campoFieldEdit').hide();
+        $('#variableFieldEdit').hide();
+        $('#relacionalesFieldEdit').hide();
+        $( "#ln_solidOPERACIONEdit" ).hide();
+        $( "#algebraicosFieldEdit" ).hide();
+        $( "#manualValorRadioLabelEdit" ).hide();
+        $( "#manualFieldEdit" ).hide();
+        $( "#factorFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $( "#factorValorRadioLabelEdit" ).show();
+        $("#factorValorRadioEdit").iCheck('check');
+        $( "#elementoValorRadioLabelEdit" ).hide();
+        $( "#listaValorFieldEdit" ).hide();
+        $( "#sumarSiFieldEdit" ).hide();
+        $("#multOperadorRadioEdit").iCheck('check');
+        $( "#multFieldEdit" ).fadeIn( "slow", function() {
+        });
+    }
+});
+
+function mostrarFieldsCampoSelectEdit () {
+    var campo = $("#campoCampoInputEdit").val();
+    if(campo == 'saldo') {
+        $( "#relacionalesFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $( "#algebraicosFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $( "#ln_solidOPERACIONEdit" ).show();
+        $( "#elementoValorRadioLabelEdit" ).hide();
+        $( "#listaValorFieldEdit" ).hide();
+        $( "#manualValorRadioLabelEdit" ).show();
+        $("#factorValorRadioEdit").iCheck('check');
+        $( "#manualFieldEdit" ).hide();
+        $( "#factorValorRadioLabelEdit" ).show();
+        $( "#factorFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $( "#sumarSiFieldEdit" ).hide();
+        $("#meOperadorRadioEdit").iCheck('check');
+        $( "#fechaValorRadioLabelEdit" ).hide();
+        $( "#diasFieldEdit" ).hide();
+    } else if(campo == 'plazoResidual') {
+        $( "#relacionalesFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $( "#algebraicosFieldEdit" ).hide();
+        $( "#ln_solidOPERACIONEdit" ).hide();
+        $( "#elementoValorRadioLabelEdit" ).hide();
+        $( "#listaValorFieldEdit" ).hide();
+        $( "#manualValorRadioLabelEdit" ).hide();
+        $( "#manualFieldEdit" ).hide();
+        $( "#factorValorRadioLabelEdit" ).hide();
+        $( "#factorFieldEdit" ).hide();
+        $( "#sumarSiFieldEdit" ).hide();
+        $("#meOperadorRadioEdit").iCheck('check');
+        $("#fechaValorRadioLabelEdit").show();
+        $("#fechaValorRadioEdit").iCheck('check');
+        $( "#diasFieldEdit" ).fadeIn( "slow", function() {
+        });
+    } else {
+        $( "#sumarSiFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $( "#relacionalesFieldEdit" ).hide();
+        $( "#algebraicosFieldEdit" ).hide();
+        $( "#ln_solidOPERACIONEdit" ).hide();
+        $("#sumarSiOperadorRadioEdit").iCheck('check');
+        $( "#fechaValorRadioLabelEdit" ).hide();
+        $( "#diasFieldEdit" ).hide();
+    }
+    if(campo == 'tipoPersona') {
+        renderListsSelectEdit(4);
+        $( "#elementoValorRadioLabelEdit" ).show();
+        $("#elementoValorRadioLabelEdit").iCheck('check');
+        $( "#listaValorFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $( "#manualValorRadioLabelEdit" ).hide();
+        $( "#manualFieldEdit" ).hide();
+        $( "#factorValorRadioLabelEdit" ).hide();
+        $( "#factorFieldEdit" ).hide();
+    } else if(campo == 'tipoSubPersona') {
+        renderListsSelectEdit(5);
+        $( "#elementoValorRadioLabelEdit" ).show();
+        $("#elementoValorRadioLabelEdit").iCheck('check');
+        $( "#listaValorFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $( "#manualValorRadioLabelEdit" ).hide();
+        $( "#manualFieldEdit" ).hide();
+        $( "#factorValorRadioLabelEdit" ).hide();
+        $( "#factorFieldEdit" ).hide();
+    } else if(campo == 'idCliente' || campo == 'nombreCliente') {
+        renderListsSelectEdit(3);
+        $( "#elementoValorRadioLabelEdit" ).show();
+        $("#elementoValorRadioLabelEdit").iCheck('check');
+        $( "#listaValorFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $( "#manualValorRadioLabelEdit" ).hide();
+        $( "#manualFieldEdit" ).hide();
+        $( "#factorValorRadioLabelEdit" ).hide();
+        $( "#factorFieldEdit" ).hide();
+    } else if(campo == 'tipoCuenta') {
+        renderListsSelectEdit(9);
+        $( "#elementoValorRadioLabelEdit" ).show();
+        $("#elementoValorRadioLabelEdit").iCheck('check');
+        $( "#listaValorFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $( "#manualValorRadioLabelEdit" ).hide();
+        $( "#manualFieldEdit" ).hide();
+        $( "#factorValorRadioLabelEdit" ).hide();
+        $( "#factorFieldEdit" ).hide();
+    }
+}
+
+//$("#date_inlineEdit").css('pointer-events', 'none');
+//$("#mesValorInput").prop('disabled', true);
+$("input[name='valorRadioEdit']").on('ifClicked', function(event){
+    if(event.currentTarget.id == "manualValorRadioEdit") {
+        $( "#manualFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $( "#factorFieldEdit" ).hide();
+    } else if(event.currentTarget.id == "factorValorRadioEdit") {
+        $( "#factorFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $( "#manualFieldEdit" ).hide();
+    }
+});
+
+function modifyRule () {
+    $("body").overhang({
+        type: "confirm",
+        primary: "#f5a433",
+        accent: "#dc9430",
+        yesColor: "#3498DB",
+        message: 'Esta seguro que desea modificar la variable?',
+        overlay: true,
+        yesMessage: "Modificar",
+        noMessage: "Cancelar",
+        callback: function (value) {
+            if(value) {
+                var campoObjetivo = '';
+                var operacion = '';
+                var valor = '';
+                var variables = '';
+                var filtro = -1;
+                if($('input[name=filtersEdit]:checked').length > 0)
+                    filtro = $('input[name=filtersEdit]:checked').val();
+                if( $('#campoCampoRadioEdit').is(':checked') )
+                    campoObjetivo = 'COLUMNA='+$("#campoCampoInputEdit").val();
+                else if( $('#fosedeCampoRadioEdit').is(':checked') ) {
+                    if( $('#hastaFOSEDECampoRadioEdit').is(':checked') )
+                        campoObjetivo = 'hastaFOSEDE';
+                    else
+                        campoObjetivo = 'mayorFOSEDE';
+                } else if( $('#cuentasOperativasCampoRadioEdit').is(':checked') ) { 
+                    if( $('#hastaFOSEDECuentasOpCampoRadioEdit').is(':checked') )
+                        campoObjetivo = 'CONCUENTAS=hastaFOSEDE';
+                    else if( $('#mayorFOSEDECuentasOpCampoRadioEdit').is(':checked') )
+                        campoObjetivo = 'CONCUENTAS=mayorFOSEDE';
+                    else if( $('#hastaFOSEDENoCuentasOpCampoRadioEdit').is(':checked') )
+                        campoObjetivo = 'SINCUENTAS=hastaFOSEDE';
+                    else
+                        campoObjetivo = 'SINCUENTAS=mayorFOSEDE';
+                }
+                if( $('#meOperadorRadioEdit').is(':checked') )
+                    operacion = '<';
+                else if( $('#meigOperadorRadioEdit').is(':checked') )
+                    operacion = '<=';
+                else if( $('#maOperadorRadioEdit').is(':checked') )
+                    operacion = '>';
+                else if( $('#maigOperadorRadioEdit').is(':checked') )
+                    operacion = '>=';
+                else if( $('#igOperadorRadioEdit').is(':checked') )
+                    operacion = '==';
+                else if( $('#noigOperadorRadioEdit').is(':checked') )
+                    operacion = '!=';
+                else if( $('#masOperadorRadioEdit').is(':checked') )
+                    operacion = '+';
+                else if( $('#porOperadorRadioEdit').is(':checked') )
+                    operacion = '*';
+                else if( $('#menOperadorRadioEdit').is(':checked') )
+                    operacion = '-';
+                else if( $('#entOperadorRadioEdit').is(':checked') )
+                    operacion = '/';
+                else if( $('#sumarSiOperadorRadioEdit').is(':checked') )
+                    operacion = 'en';
+                else if( $('#sumarSiNoOperadorRadioEdit').is(':checked') )
+                    operacion = 'no';
+                else if( $('#multOperadorRadioEdit').is(':checked') )
+                    operacion = '*';
+                if( $('#manualValorRadioEdit').is(':checked') )
+                    valor = "COLUMNA="+parseFloat($("#manualValorInputEdit").val().split(" ")[1].replace(/,/, ""));
+                else if( $('#elementoValorRadioEdit').is(':checked') ) {
+                    var elementosSelect = $("#elementoValorOptionSelectEdit").val();
+                    var elementos = '';
+                    if(elementosSelect != null) {
+                        for (var i = 0; i < elementosSelect.length; i++) {
+                            elementos+=arregloElementosDeListasValorEdit[parseInt(elementosSelect[i])].ID;
+                            if( (i+1) < elementosSelect.length )
+                                elementos+=',';
+                        };
+                        valor = 'LISTA=' + elementos;
+                    } else 
+                        valor = 'LISTA=' + getSelectOptions(arregloElementosDeListasValorEdit);
+                } else if( $('#factorValorRadioEdit').is(':checked') ) {
+                    valor = "FACTOR="+variableDeVariableObject.factor;
+                } else if( $('#fechaValorRadioEdit').is(':checked') ) {
+                    valor = "FECHA";
+                }
+                /*console.log("-_------___----");
+                //console.log(reglaPadre);
+                console.log(campoObjetivo);
+                console.log(operacion);
+                console.log(valor);
+                console.log(variables);
+                console.log(variableDeVariableReglaID);
+                console.log(ordenGlobal);
+                console.log(ordenGlobal+1);
+                console.log("-_------___----");*/
+                if(campoObjetivo.length > 0 && campoObjetivo.length < 1001) {
+                    if(operacion.length > 0 && operacion.length < 3) {
+                        if(valor.toString().length > 0 && valor.toString().length < 1001) {
+                            const transaction = new sql.Transaction( pool1 );
+                            transaction.begin(err => {
+                                var rolledBack = false;
+                                transaction.on('rollback', aborted => {
+                                    // emited with aborted === true
+                                    rolledBack = true;
+                                });
+                                const request = new sql.Request(transaction);
+                                request.query("update Reglas set campoObjetivo = '"+campoObjetivo+"', operacion = '"+operacion+"', valor = '"+valor+"', variables = '"+variables+"', filtro = "+filtro+" where ID = "+reglaSeleccionada.ID, (err, result) => {
+                                    if (err) {
+                                        console.log(err);
+                                        if (!rolledBack) {
+                                            transaction.rollback(err => {
+                                                $("body").overhang({
+                                                    type: "error",
+                                                    primary: "#f84a1d",
+                                                    accent: "#d94e2a",
+                                                    message: "Error en inserción de nueva variable.",
+                                                    overlay: true,
+                                                    closeConfirm: true
+                                                });
+                                            });
+                                        }
+                                    }  else {
+                                        transaction.commit(err => {
+                                            // ... error checks
+                                            $("body").overhang({
+                                                type: "success",
+                                                primary: "#40D47E",
+                                                accent: "#27AE60",
+                                                message: "Variable modificada con éxito.",
+                                                duration: 1,
+                                                overlay: true
+                                            });
+                                            $('#modalEdit').modal('toggle');
+                                            loadRules();
+                                        });
+                                    }
+                                });
+                            }); // fin transaction
+                        } else {
+                            $("body").overhang({
+                                type: "error",
+                                primary: "#f84a1d",
+                                accent: "#d94e2a",
+                                message: "El campo de valor a aplicar de la regla debe tener una longitud mayor a 0 y menor a 1001.",
+                                closeConfirm: true,
+                                overlay: true,
+                                closeConfirm: true
+                            });
+                        }
+                    } else {
+                        $("body").overhang({
+                            type: "error",
+                            primary: "#f84a1d",
+                            accent: "#d94e2a",
+                            message: "El campo de operacion de la regla debe tener una longitud mayor a 0 y menor a 3.",
+                            closeConfirm: true,
+                            overlay: true,
+                            closeConfirm: true
+                        });
+                    }
+                } else {
+                    $("body").overhang({
+                        type: "error",
+                        primary: "#f84a1d",
+                        accent: "#d94e2a",
+                        message: "El campo objetivo de la regla debe tener una longitud mayor a 0 y menor a 1001.",
+                        closeConfirm: true,
+                        overlay: true,
+                        closeConfirm: true
+                    });
+                }
+            }
+        }
+    });
+}
+/* *************    Fin Modify   ************* */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* *************    Filter   ************* */
+function loadFilters () {
+    const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false;
+        transaction.on('rollback', aborted => {
+            // emited with aborted === true
+            rolledBack = true;
+        });
+        const request = new sql.Request(transaction);
+        request.query("select * from Reglas where variablePadre = "+variableDeVariableReglaID+" and esFiltro = 'true'", (err, result) => {
+            if (err) {
+                console.log(err);
+                if (!rolledBack) {
+                    transaction.rollback(err => {
+                        $("body").overhang({
+                            type: "error",
+                            primary: "#f84a1d",
+                            accent: "#d94e2a",
+                            message: "Error en conección con la tabla de reglas.",
+                            overlay: true,
+                            closeConfirm: true
+                        });
+                    });
+                }
+            }  else {
+                transaction.commit(err => {
+                    // ... error checks
+                    if(result.recordset.length > 0) {
+                        arregloFiltros = result.recordset;
+                    } else {
+                        arregloFiltros = [];
+                    }
+                    renderFilters();
+                });
+            }
+        });
+    }); // fin transaction
+}
+
+function renderFilters () {
+    $("#listFilters").empty();
+    var listContent = '';
+    for (var i = 0; i < arregloFiltros.length; i++) {
+        var regla = arregloFiltros[i].valor;
+        listContent = '';
+        listContent+='<li><p><input type="radio" name="filters" class="flat" value="'+arregloFiltros[i].ID+'"> '+ regla +' </p> <button style="position: absolute; right: 10px; margin: 0; position: absolute; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%);" onclick="selectFilter('+i+')">Modificar</button> </li>';
+        $("#listFilters").append(listContent);
+    };
+    $("input[name='filters']").iCheck({
+        checkboxClass: 'icheckbox_flat-green',
+        radioClass: 'iradio_flat-green'
+    });
+    if(arregloFiltros.length == 0 ){
+        listContent+='<li><p> No hay filtros creadas.</p></li>';
+        $("#listFilters").append(listContent);
+    }
+    $("input[name='filters']").on('ifClicked', function(event){
+        var borrar = false;
+        if ($(this).is(':checked')) {
+            $(this).iCheck('uncheck');
+            borrar = true;
+        } else {
+            $(this).iCheck('check');
+        }
+    });
+
+    $("#listFiltersEdit").empty();
+    var listContent = '';
+    for (var i = 0; i < arregloFiltros.length; i++) {
+        var regla = arregloFiltros[i].valor;
+        listContent = '';
+        listContent+='<li><p><input type="radio" name="filtersEdit" class="flat" value="'+arregloFiltros[i].ID+'"> '+ regla +' </p> </li>';
+        $("#listFiltersEdit").append(listContent);
+    };
+    $("input[name='filtersEdit']").iCheck({
+        checkboxClass: 'icheckbox_flat-green',
+        radioClass: 'iradio_flat-green'
+    });
+    if(arregloFiltros.length == 0 ){
+        listContent+='<li><p> No hay filtros creadas.</p></li>';
+        $("#listFiltersEdit").append(listContent);
+    }
+    $("input[name='filtersEdit']").on('ifClicked', function(event){
+        var borrar = false;
+        if ($(this).is(':checked')) {
+            $(this).iCheck('uncheck');
+            borrar = true;
+        } else {
+            $(this).iCheck('check');
+        }
+    });
+}
+
+function saveFilter () {
+    var reglaPadre = 0;
+    var campoObjetivo = '';
+    var operacion = 'se';
+    var valor = '';
+    var variables = '';
+    var esFiltro = true;
+    var filtro = -1;
+    campoObjetivo = $("#agrupacionFiltro").val();
+    valor = $("#nombreFilter").val();
+    /*console.log("-_------___----");
+    console.log(reglaPadre);
+    console.log(campoObjetivo);
+    console.log(operacion);
+    console.log(valor);
+    console.log(variables);
+    console.log(variableDeVariableReglaID);
+    console.log(ordenGlobal);
+    console.log(ordenGlobal+1);
+    console.log("-_------___----");*/
+    if(campoObjetivo.length > 0 && campoObjetivo.length < 1001) {
+        if(operacion.length > 0 && operacion.length < 3) {
+            if(valor.toString().length > 0 && valor.toString().length < 1001) {
+                const transaction = new sql.Transaction( pool1 );
+                transaction.begin(err => {
+                    var rolledBack = false;
+                    transaction.on('rollback', aborted => {
+                        // emited with aborted === true
+                        rolledBack = true;
+                    });
+                    const request = new sql.Request(transaction);
+                    request.query("insert into Reglas (variablePadre, reglaPadre, campoObjetivo, operacion, valor, variables, esFiltro, filtro, orden) values ("+variableDeVariableReglaID+","+reglaPadre+",'"+campoObjetivo+"','"+operacion+"','"+valor+"','"+variables+"','"+esFiltro+"',"+filtro+","+(ordenGlobal+1)+")", (err, result) => {
+                        if (err) {
+                            console.log(err);
+                            if (!rolledBack) {
+                                transaction.rollback(err => {
+                                    $("body").overhang({
+                                        type: "error",
+                                        primary: "#f84a1d",
+                                        accent: "#d94e2a",
+                                        message: "Error en inserción de nueva variable.",
+                                        overlay: true,
+                                        closeConfirm: true
+                                    });
+                                });
+                            }
+                        }  else {
+                            transaction.commit(err => {
+                                // ... error checks
+                                $("body").overhang({
+                                    type: "success",
+                                    primary: "#40D47E",
+                                    accent: "#27AE60",
+                                    message: "Variable creada con éxito.",
+                                    duration: 1,
+                                    overlay: true
+                                });
+                                loadFilters();
+                            });
+                        }
+                    });
+                }); // fin transaction
+            } else {
+                $("body").overhang({
+                    type: "error",
+                    primary: "#f84a1d",
+                    accent: "#d94e2a",
+                    message: "Ingrese un nombre entre una longitud mayor a 0 y menor a 1001.",
+                    closeConfirm: true,
+                    overlay: true,
+                    closeConfirm: true
+                });
+            }
+        } else {
+            $("body").overhang({
+                type: "error",
+                primary: "#f84a1d",
+                accent: "#d94e2a",
+                message: "El campo de operacion de la regla debe tener una longitud mayor a 0 y menor a 3.",
+                closeConfirm: true,
+                overlay: true,
+                closeConfirm: true
+            });
+        }
+    } else {
+        $("body").overhang({
+            type: "error",
+            primary: "#f84a1d",
+            accent: "#d94e2a",
+            message: "El campo objetivo de la regla debe tener una longitud mayor a 0 y menor a 1001.",
+            closeConfirm: true,
+            overlay: true,
+            closeConfirm: true
+        });
+    }
+}
+
+function selectFilter (index) {
+    filtroSeleccionado = arregloFiltros[index];
+    $("#agrupacionFiltroEdit").val(filtroSeleccionado.campoObjetivo);
+    $("#nombreFilterEdit").val(filtroSeleccionado.valor);
+    $('#modalFilter').modal('toggle');
+}
+
+function modifyFilter (argument) {
+    $("body").overhang({
+        type: "confirm",
+        primary: "#f5a433",
+        accent: "#dc9430",
+        yesColor: "#3498DB",
+        message: 'Esta seguro que desea guardar los cambios?',
+        overlay: true,
+        yesMessage: "Modificar",
+        noMessage: "Cancelar",
+        callback: function (value) {
+            if(value) {
+                var campoObjetivo = '', valor = '';
+                campoObjetivo = $("#agrupacionFiltroEdit").val();
+                valor = $("#nombreFilterEdit").val();
+                /*console.log("-_------___----");
+                console.log(reglaPadre);
+                console.log(campoObjetivo);
+                console.log(operacion);
+                console.log(valor);
+                console.log(variables);
+                console.log(variableDeVariableReglaID);
+                console.log(ordenGlobal);
+                console.log(ordenGlobal+1);
+                console.log("-_------___----");*/
+                if(campoObjetivo.length > 0 && campoObjetivo.length < 1001) {
+                    if(valor.toString().length > 0 && valor.toString().length < 1001) {
+                        const transaction = new sql.Transaction( pool1 );
+                        transaction.begin(err => {
+                            var rolledBack = false;
+                            transaction.on('rollback', aborted => {
+                                // emited with aborted === true
+                                rolledBack = true;
+                            });
+                            const request = new sql.Request(transaction);
+                            request.query("update Reglas set campoObjetivo = '"+campoObjetivo+"', valor = '"+valor+"' where ID = "+filtroSeleccionado.ID, (err, result) => {
+                                if (err) {
+                                    console.log(err);
+                                    if (!rolledBack) {
+                                        transaction.rollback(err => {
+                                            $("body").overhang({
+                                                type: "error",
+                                                primary: "#f84a1d",
+                                                accent: "#d94e2a",
+                                                message: "Error en inserción de nueva variable.",
+                                                overlay: true,
+                                                closeConfirm: true
+                                            });
+                                        });
+                                    }
+                                }  else {
+                                    transaction.commit(err => {
+                                        // ... error checks
+                                        $("body").overhang({
+                                            type: "success",
+                                            primary: "#40D47E",
+                                            accent: "#27AE60",
+                                            message: "Variable modificada con éxito.",
+                                            duration: 1,
+                                            overlay: true
+                                        });
+                                        loadFilters();
+                                        $('#modalFilter').modal('toggle');
+                                    });
+                                }
+                            });
+                        }); // fin transaction
+                    } else {
+                        $("body").overhang({
+                            type: "error",
+                            primary: "#f84a1d",
+                            accent: "#d94e2a",
+                            message: "Ingrese un nombre entre una longitud mayor a 0 y menor a 1001.",
+                            closeConfirm: true,
+                            overlay: true,
+                            closeConfirm: true
+                        });
+                    }
+                } else {
+                    $("body").overhang({
+                        type: "error",
+                        primary: "#f84a1d",
+                        accent: "#d94e2a",
+                        message: "El campo objetivo de la regla debe tener una longitud mayor a 0 y menor a 1001.",
+                        closeConfirm: true,
+                        overlay: true,
+                        closeConfirm: true
+                    });
+                }
+            }
+        }
+    });
+}
+
+function deleteFilter () {
+    $("body").overhang({
+        type: "confirm",
+        primary: "#f5a433",
+        accent: "#dc9430",
+        yesColor: "#3498DB",
+        message: 'Esta seguro que desea eliminar el filtro?',
+        overlay: true,
+        yesMessage: "Eliminar",
+        noMessage: "Cancelar",
+        callback: function (value) {
+            if(value) {
+                reglaSeleccionada = filtroSeleccionado;
+                deleteRule();
+                $('#modalFilter').modal('toggle');
+            }
+        }
+    });
+}
+/* *************    Fin Filter   ************* */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1291,9 +2157,10 @@ function goConfig () {
 }
 
 function logout () {
-	$("#app_root").empty();
+    $("#app_full").empty();
     session.defaultSession.clearStorageData([], (data) => {});
-    $("#app_root").load("src/login.html");
+    //cleanup();
+    $("#app_full").load("src/login.html");
 }
 
 function goRCL () {

@@ -52,7 +52,7 @@ const pool1 = new sql.ConnectionPool(config, err => {
 	}
 });
 
-var session = remote.session;
+/*var session = remote.session;
 
 session.defaultSession.cookies.get({}, (error, cookies) => {
     var permisosVariables = false;
@@ -73,7 +73,7 @@ session.defaultSession.cookies.get({}, (error, cookies) => {
     };
     if(!permisosVariables)
         $("#varLabel").hide();
-});
+});*/
 
 /* *************** ORDEN ***************
 *   1)Traer sub-variables              *
@@ -139,6 +139,11 @@ var formulaGlobal = '';
 var contadorEntrarCreateFunctionsArray = 0;
 var contadorFuncionPrint = 0;
 var totalesRCL = [];    //arreglo que guarda el total por proyeccion
+var arreglodeListas = [];   //arreglo que guarda las variables de las listas
+var arreglodeCuenOpClientes = [];   //arreglo de cuentas operativas de clientes
+var banderaLlamadasListas = 0;   //total de listas a entrar
+var entradasLlamadasListas = 0;   //total de veces que ha entrado a importar listas
+var minimoRCL = 0;  //valor minimo del RCL requerido por la CNBS
 
 $('#fechaRCL').datepicker({
     format: "dd-mm-yyyy",
@@ -280,7 +285,7 @@ function loadRules (id, i, j, k, tipo) {
             rolledBack = true;
         });
         const request = new sql.Request(transaction);
-        request.query("select * from Reglas where variablePadre = "+id, (err, result) => {
+        request.query("select * from Reglas where variablePadre = "+id+" and esFiltro = 'false'", (err, result) => {
             if (err) {
                 if (!rolledBack) {
                     transaction.rollback(err => {
@@ -414,12 +419,14 @@ function loadVariablesMainDB () {
                         MathLive.renderMathInDocument();
                         montoFosedeGlobal = result.recordset;
 
-                        if(result.recordset[0].fullLogo.length > 0){
+                        /*if(result.recordset[0].fullLogo.length > 0){
                             $("#fullLogo").attr("src",result.recordset[0].fullLogo);
                         }
                         if(result.recordset[0].smallLogo.length > 0){
                             $("#smallLogo").attr("src",result.recordset[0].smallLogo);
-                        }
+                        }*/
+
+                        minimoRCL = result.recordset[0].minimoRCL;
                     } else {
                         $("#formulas").text("$$f(x)$$");
                         MathLive.renderMathInDocument();
@@ -635,6 +642,122 @@ function loadCredit () {
     }); // fin transaction
 }
 
+function loadLists () {
+    const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false
+        transaction.on('rollback', aborted => {
+            rolledBack = true;
+        });
+        const request = new sql.Request(transaction);
+        request.query("select * from Listas where tipo != 1 and tipo != 2 and tipo != 7", (err, result) => {
+            if (err) {
+                if (!rolledBack) {
+                    transaction.rollback(err => {
+                        $("body").overhang({
+                            type: "error",
+                            primary: "#f84a1d",
+                            accent: "#d94e2a",
+                            message: "Error al conectarse con la tabla de FormulaVariables.",
+                            overlay: true,
+                            closeConfirm: true
+                        });
+                    });
+                }
+            } else {
+                transaction.commit(err => {
+                    if(result.recordset.length > 0){
+                        banderaLlamadasListas = result.recordset.length;
+                        for (var i = 0; i < result.recordset.length; i++) {
+                            if(result.recordset[i].tipo == 6) {
+                                loadListsCuentasClientes(result.recordset[i].ID);
+                            } else {
+                                loadListsVariables(result.recordset[i].ID);
+                            }
+                        };
+                    }
+                });
+            }
+        });
+    }); // fin transaction
+}
+
+function loadListsCuentasClientes (id) {
+    const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false
+        transaction.on('rollback', aborted => {
+            rolledBack = true;
+        });
+        const request = new sql.Request(transaction);
+        request.query("select * from ListasVariables where idLista = "+id, (err, result) => {
+            if (err) {
+                if (!rolledBack) {
+                    transaction.rollback(err => {
+                        $("body").overhang({
+                            type: "error",
+                            primary: "#f84a1d",
+                            accent: "#d94e2a",
+                            message: "Error al conectarse con la tabla de FormulaVariables.",
+                            overlay: true,
+                            closeConfirm: true
+                        });
+                    });
+                }
+            } else {
+                transaction.commit(err => {
+                    if(result.recordset.length > 0) {
+                        arreglodeCuenOpClientes = result.recordset;
+                    }
+                    entradasLlamadasListas++;
+                    verificarBanderaListas();
+                });
+            }
+        });
+    }); // fin transaction
+}
+
+function loadListsVariables (id) {
+    const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false
+        transaction.on('rollback', aborted => {
+            rolledBack = true;
+        });
+        const request = new sql.Request(transaction);
+        request.query("select * from ListasVariables where idLista = "+id, (err, result) => {
+            if (err) {
+                if (!rolledBack) {
+                    transaction.rollback(err => {
+                        $("body").overhang({
+                            type: "error",
+                            primary: "#f84a1d",
+                            accent: "#d94e2a",
+                            message: "Error al conectarse con la tabla de FormulaVariables.",
+                            overlay: true,
+                            closeConfirm: true
+                        });
+                    });
+                }
+            } else {
+                transaction.commit(err => {
+                    if(result.recordset.length > 0){
+                        $.merge( arreglodeListas, result.recordset );
+                    }
+                    entradasLlamadasListas++;
+                    verificarBanderaListas();
+                });
+            }
+        });
+    }); // fin transaction
+}
+
+
+
+
+
+
+
 
 
 
@@ -736,6 +859,8 @@ function checkFormulaExists () {
                     arregloAgencias = [];
                     totalesClientes = [];
                     totalesRCL = [];
+                    banderaLlamadasListas = 0;
+                    entradasLlamadasListas = 0;
                     for (var i = 0; i < formulaGlobal.length; i++) {
                         if(formulaGlobal.charAt(i) != "(" && formulaGlobal.charAt(i) != ")" && formulaGlobal.charAt(i) != "<" && formulaGlobal.charAt(i) != ">" && 
                             formulaGlobal.charAt(i) != "!" && formulaGlobal.charAt(i) != "=" && formulaGlobal.charAt(i) != "/" && formulaGlobal.charAt(i) != "*" && 
@@ -745,7 +870,8 @@ function checkFormulaExists () {
                             i+=pal.length;
                         }
                     };
-                    searchAndCreateArrays();
+                    //searchAndCreateArrays();
+                    loadLists();
                 } else {
                     $("body").overhang({
                         type: "error",
@@ -776,6 +902,12 @@ function checkFormulaExists () {
             overlay: true,
             closeConfirm: true
         });
+    }
+}
+
+function verificarBanderaListas () {
+    if(banderaLlamadasListas == entradasLlamadasListas){
+        searchAndCreateArrays();
     }
 }
 
@@ -1008,24 +1140,43 @@ function divideAssetsRules () {
 
                                             var listaCuentas = reglasActivos[i][j][k][n].valor.split("=")[1].split(",");
                                             for (var l = 0; l < listaCuentas.length; l++) {
-                                                activosCuerpo.push("\tif ( arregloActivos[i].cuenta.localeCompare('"+listaCuentas[l]+"') == 0 ) {")
-                                                activosCuerpo.push("\t\tvar saldoConFactor = arregloActivos[i].saldo * getFactor("+reglasActivos[i][j][k][n].variablePadre+");");
-                                                activosCuerpo.push("\t\t"+reglasActivos[i][j][k][n].variables+subvariablesSolas[i][j][k].tipoProyeccion+"+=saldoConFactor;");
-                                                activosCuerpo.push("\t\tinsertarCuenta(arregloActivos[i].cuenta, arregloActivos[i].saldo, "+subvariablesSolas[i][j][k].tipoProyeccion+", "+k+", "+n+", arregloActivos[i].moneda.toLowerCase(), arregloActivos[i].sucursal.toLowerCase());");
-                                                activosCuerpo.push("\t}");
-                                                var posCuenta = existeCuenta(listaCuentas[l], subvariablesSolas[i][j][k].tipoProyeccion);
-                                                var signo = '';
-                                                for (var f = 0; f < reglasActivos[i][j][k].length; f++) {
-                                                    //Valor porque es la segunda variable de operacion (la primera siempre es suma)
-                                                    if( reglasActivos[i][j][k][f].valor.includes(reglasActivos[i][j][k][n].variables) ) {
-                                                        signo = reglasActivos[i][j][k][f].operacion;
-                                                        //break;
-                                                    }
-                                                };
-                                                if( l > 0 )
-                                                    signo = '+';
-                                                //if( posCuenta == -1)
-                                                    arregloCuentas[i][j][k][n].push({variable: listaCuentas[l], total: 0, dia: fechaSeleccionada, tipoProyeccion: subvariablesSolas[i][j][k].tipoProyeccion, numerador: 0, denominador: 0, volumenFormula: 0, influenciaFormula: 0, moneda: "Lempira", tipoProyeccion: subvariablesSolas[i][j][k].tipoProyeccion, tablaAplicar: subvariablesSolas[i][j][k].tablaAplicar, varPadre: variablesDeSubVariablesSolas[i][j][k][variablesDeSubVariablesSolas[i][j][k].length-1].variable, signo: signo, precioUnidad: 0, sucursal: "", tipo: "cuenta", esRCL: false, totalRCL: 0, esNumerador: false, formula: ""});
+                                                if(reglasActivos[i][j][k][n].valor.split("=")[0].localeCompare("IDS") != 0) {
+                                                    activosCuerpo.push("\tif ( arregloActivos[i].cuenta.localeCompare('"+listaCuentas[l]+"') == 0 ) {")
+                                                    activosCuerpo.push("\t\tvar saldoConFactor = arregloActivos[i].saldo * getFactor("+reglasActivos[i][j][k][n].variablePadre+");");
+                                                    activosCuerpo.push("\t\t"+reglasActivos[i][j][k][n].variables+subvariablesSolas[i][j][k].tipoProyeccion+"+=saldoConFactor;");
+                                                    activosCuerpo.push("\t\tinsertarCuenta(arregloActivos[i].cuenta, arregloActivos[i].saldo, "+subvariablesSolas[i][j][k].tipoProyeccion+", "+k+", "+n+", arregloActivos[i].moneda.toLowerCase(), arregloActivos[i].sucursal.toLowerCase());");
+                                                    //(nombreVariable, valorVariable, tipoProyeccion, kFor, nFor, moneda, agencia)
+                                                    activosCuerpo.push("\t}");
+                                                    var posCuenta = existeCuenta(listaCuentas[l], subvariablesSolas[i][j][k].tipoProyeccion);
+                                                    var signo = '';
+                                                    for (var f = 0; f < reglasActivos[i][j][k].length; f++) {
+                                                        //Valor porque es la segunda variable de operacion (la primera siempre es suma)
+                                                        if( reglasActivos[i][j][k][f].valor.includes(reglasActivos[i][j][k][n].variables) ) {
+                                                            signo = reglasActivos[i][j][k][f].operacion;
+                                                            //break;
+                                                        }
+                                                    };
+                                                    if( l > 0 )
+                                                        signo = '+';
+                                                    //if( posCuenta == -1)
+                                                        arregloCuentas[i][j][k][n].push({variable: listaCuentas[l], total: 0, dia: fechaSeleccionada, tipoProyeccion: subvariablesSolas[i][j][k].tipoProyeccion, numerador: 0, denominador: 0, volumenFormula: 0, influenciaFormula: 0, moneda: "Lempira", tipoProyeccion: subvariablesSolas[i][j][k].tipoProyeccion, tablaAplicar: subvariablesSolas[i][j][k].tablaAplicar, varPadre: variablesDeSubVariablesSolas[i][j][k][variablesDeSubVariablesSolas[i][j][k].length-1].variable, signo: signo, precioUnidad: 0, sucursal: "", tipo: "cuenta", esRCL: false, totalRCL: 0, esNumerador: false, formula: ""});
+                                                } else {
+                                                    var signo = '';
+                                                    for (var f = 0; f < reglasActivos[i][j][k].length; f++) {
+                                                        //Valor porque es la segunda variable de operacion (la primera siempre es suma)
+                                                        if( reglasActivos[i][j][k][f].valor.includes(reglasActivos[i][j][k][n].variables) ) {
+                                                            signo = reglasActivos[i][j][k][f].operacion;
+                                                            //break;
+                                                        }
+                                                    };
+                                                    if( l > 0 )
+                                                        signo = '+';
+                                                    activosCuerpo.push("\tif(entrarVariablesLista) {");
+                                                    activosCuerpo.push("\t\t"+reglasActivos[i][j][k][n].variables+subvariablesSolas[i][j][k].tipoProyeccion+"+="+getListValue(listaCuentas[l], "IDS")+";");
+                                                    arregloCuentas[i][j][k][n].push({variable: reglasActivos[i][j][k][n].variables, total: 0, dia: fechaSeleccionada, tipoProyeccion: subvariablesSolas[i][j][k].tipoProyeccion, numerador: 0, denominador: 0, volumenFormula: 0, influenciaFormula: 0, moneda: "Lempira", tipoProyeccion: subvariablesSolas[i][j][k].tipoProyeccion, tablaAplicar: subvariablesSolas[i][j][k].tablaAplicar, varPadre: variablesDeSubVariablesSolas[i][j][k][variablesDeSubVariablesSolas[i][j][k].length-1].variable, signo: signo, precioUnidad: 0, sucursal: "", tipo: "cuenta", esRCL: false, totalRCL: 0, esNumerador: false, formula: ""});
+                                                    activosCuerpo.push("\t\tinsertarCuenta('"+reglasActivos[i][j][k][n].variables+"', "+getListValue(listaCuentas[l], "IDS")+", "+subvariablesSolas[i][j][k].tipoProyeccion+", "+k+", "+n+", arregloActivos[i].moneda.toLowerCase(), arregloActivos[i].sucursal.toLowerCase());");
+                                                    activosCuerpo.push("\t}");
+                                                }
                                             };
                                             /*var pos = activosAsignacionesIncisosContieneVar(variablesSolas[i][j].variable, variablesSolas[i][j].tipoProyeccion);
                                             if( pos >= 0 && n == 0) {
@@ -1477,6 +1628,7 @@ function createAssetsRCL () {
             };
         }
     };
+    content+="\tvar entrarVariablesLista = true;\n"
     content+="\tfor (var i = 0; i < arregloActivos.length; i++) {";
     for (var p = 0; p < activosCuerpo.length; p++) {
         if(p == 0){
@@ -1486,6 +1638,7 @@ function createAssetsRCL () {
         }
         content+="\t"+activosCuerpo[p]+"\n";
         if(p == activosCuerpo.length-1) {
+            content+="\t\tentrarVariablesLista = false;\n"
             //content+="\t\tif(i == arregloActivos.length-1) {\n"
             for (var i = 0; i < subvariablesSolas.length; i++) {
                 if(subvariablesSolas[i] != undefined) {
@@ -1507,19 +1660,19 @@ function createAssetsRCL () {
                                                 return 0;
                                             });
                                             //for (var z = 0; z < activosAlgebraica[i][j][k].length-1; z++) {
-                                                content+="\t\t\tvar "+activosAlgebraica[i][j][k][n].variable+" = "+activosAlgebraica[i][j][k][n].codigo+"\n";
+                                                content+="\t\tvar "+activosAlgebraica[i][j][k][n].variable+" = "+activosAlgebraica[i][j][k][n].codigo+"\n";
                                                 //content+="\t\t\t"+"saveVariableVarRule('"+activosAlgebraica[i][j][k][n].nombreVariable+"', "+activosAlgebraica[i][j][k][n].tipoProyeccion+", "+activosAlgebraica[i][j][k][n].variable+", arregloActivos[i].moneda.toLowerCase(), arregloActivos[i].sucursal.toLowerCase());\n";
                                                 //content+="\t\t\t"+"saveVariableVarRuleAgencias('"+activosAlgebraica[i][j][k][n].nombreVariable+"', "+activosAlgebraica[i][j][k][n].tipoProyeccion+", "+activosAlgebraica[i][j][k][n].variable+", arregloActivos[i].sucursal.toLowerCase());\n";
                                             //};
                                             var mayor = activosInstanciasVarReglas[i][j][k][n].orden;
                                             if(mayor < activosAlgebraica[i][j][k][activosAlgebraica[i][j][k].length-1].orden) {
-                                                content+="\t\t\t"+subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion+" = "+activosAlgebraica[i][j][k][activosAlgebraica[i][j][k].length-1].variable+";\n"
+                                                content+="\t\t"+subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion+" = "+activosAlgebraica[i][j][k][activosAlgebraica[i][j][k].length-1].variable+";\n"
                                                 //content+="\t"+"saveVariableVarRule('"+activosAlgebraica[i][j][k][activosAlgebraica[i][j][k].length-1].nombreVariable+"', "+activosAlgebraica[i][j][k][activosAlgebraica[i][j][k].length-1].tipoProyeccion+", "+activosAlgebraica[i][j][k][activosAlgebraica[i][j][k].length-1].variable+");\n";
                                             } else {
-                                                content+="\t\t\t"+subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion+" = "+activosInstanciasVarReglas[i][j][k][activosInstanciasVarReglas[i][j][k].length-1].variable+";\n"
+                                                content+="\t\t"+subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion+" = "+activosInstanciasVarReglas[i][j][k][activosInstanciasVarReglas[i][j][k].length-1].variable+";\n"
                                                 //content+="\t"+"saveVariableVarRule('"+activosInstanciasVarReglas[i][j][k][activosInstanciasVarReglas[i][j][k].length-1].nombreVariable+"', "+activosInstanciasVarReglas[i][j][k][activosInstanciasVarReglas[i][j][k].length-1].tipoProyeccion+", "+activosInstanciasVarReglas[i][j][k][activosInstanciasVarReglas[i][j][k].length-1].variable+");\n";
                                             }
-                                            content+="\t\t\t"+"saveVariableSubVar('"+subvariablesSolas[i][j][k].variable+"', "+subvariablesSolas[i][j][k].tipoProyeccion+", "+subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion+", arregloActivos[i].moneda.toLowerCase(), arregloActivos[i].sucursal.toLowerCase());\n";
+                                            content+="\t\t"+"saveVariableSubVar('"+subvariablesSolas[i][j][k].variable+"', "+subvariablesSolas[i][j][k].tipoProyeccion+", "+subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion+", arregloActivos[i].moneda.toLowerCase(), arregloActivos[i].sucursal.toLowerCase());\n";
                                             //content+="\t\t\t"+"saveVariableSubVarAgencias('"+subvariablesSolas[i][j][k].variable+"', "+subvariablesSolas[i][j][k].tipoProyeccion+", "+subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion+", arregloActivos[i].sucursal.toLowerCase());\n";
                                         } else if(reglasActivos[i] != undefined && reglasActivos[i][j] != undefined && reglasActivos[i][j][k] != undefined && activosAlgebraica[i][j][k].length == 0 && n == 0) {
                                             reglasActivos[i][j][k].sort(function(a, b) {
@@ -1527,8 +1680,8 @@ function createAssetsRCL () {
                                                 if(a.orden > b.orden) { return 1; }
                                                 return 0;
                                             });
-                                            content+="\t\t\t"+subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion+" = "+activosInstanciasVarReglas[i][j][k][activosInstanciasVarReglas[i][j][k].length-1].variable+";\n";
-                                            content+="\t\t\t"+"saveVariableSubVar('"+subvariablesSolas[i][j][k].variable+"', "+subvariablesSolas[i][j][k].tipoProyeccion+", "+subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion+", arregloActivos[i].moneda.toLowerCase(), arregloActivos[i].sucursal.toLowerCase());\n";
+                                            content+="\t\t"+subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion+" = "+activosInstanciasVarReglas[i][j][k][activosInstanciasVarReglas[i][j][k].length-1].variable+";\n";
+                                            content+="\t\t"+"saveVariableSubVar('"+subvariablesSolas[i][j][k].variable+"', "+subvariablesSolas[i][j][k].tipoProyeccion+", "+subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion+", arregloActivos[i].moneda.toLowerCase(), arregloActivos[i].sucursal.toLowerCase());\n";
                                             //content+="\t\t\t"+"saveVariableSubVarAgencias('"+subvariablesSolas[i][j][k].variable+"', "+subvariablesSolas[i][j][k].tipoProyeccion+", "+subvariablesSolas[i][j][k].variable+subvariablesSolas[i][j][k].tipoProyeccion+", arregloActivos[i].sucursal.toLowerCase());\n";
                                         }
                                     };
@@ -1545,7 +1698,7 @@ function createAssetsRCL () {
                             for (var k = 0; k < variablesDeSubVariablesSolas[i][j].length; k++) {
                                 if(variablesDeSubVariablesSolas[i][j][k] != undefined && variablesDeSubVariablesSolas[i][j][k].length > 0) {
                                     for (var n = 0; n < variablesDeSubVariablesSolas[i][j][k].length; n++) {
-                                        content+="\t\t\t"+"saveVariableVarRule('"+variablesDeSubVariablesSolas[i][j][k][n].variable+"', "+variablesDeSubVariablesSolas[i][j][k][n].tipoProyeccion+", "+variablesDeSubVariablesSolas[i][j][k][n].variable+variablesDeSubVariablesSolas[i][j][k][n].tipoProyeccion+",arregloActivos[i].moneda.toLowerCase(), arregloActivos[i].sucursal.toLowerCase());\n";
+                                        content+="\t\t"+"saveVariableVarRule('"+variablesDeSubVariablesSolas[i][j][k][n].variable+"', "+variablesDeSubVariablesSolas[i][j][k][n].tipoProyeccion+", "+variablesDeSubVariablesSolas[i][j][k][n].variable+variablesDeSubVariablesSolas[i][j][k][n].tipoProyeccion+",arregloActivos[i].moneda.toLowerCase(), arregloActivos[i].sucursal.toLowerCase());\n";
                                         //content+="\t\t\t"+"saveVariableVarRuleAgencias('"+variablesDeSubVariablesSolas[i][j][k][n].variable+"', "+variablesDeSubVariablesSolas[i][j][k][n].tipoProyeccion+", "+variablesDeSubVariablesSolas[i][j][k][n].variable+variablesDeSubVariablesSolas[i][j][k][n].tipoProyeccion+",arregloActivos[i].sucursal.toLowerCase());\n";
                                     };
                                 }
@@ -1554,11 +1707,11 @@ function createAssetsRCL () {
                     };
                 }
             };
-            /*for (var i = 0; i < arregloCuentaAlgebraica.length; i++) {
-                content+="\t\t"+arregloCuentaAlgebraica[i].codigo+"\n";
+            for (var i = 0; i < arregloCuentaAlgebraica.length; i++) {
+                content+="\t"+arregloCuentaAlgebraica[i].codigo+"\n";
                 if(i == arregloCuentaAlgebraica.length-1)
                     content+="\n";
-            };*/
+            };
             //content+="\t\t\n}"
         }
     };
@@ -2434,7 +2587,7 @@ function calculateRCL (argument) {
         var denominadoresSubVariablesConPadres = getDenominatorFraction(equacionSubVariablesConPadres);
         var numeradoresSubVariables = getNumeratorFraction(equacionSubVariables);
         var denominadoresSubVariables = getDenominatorFraction(equacionSubVariables);
-        console.log('equacionVariables');
+        /*console.log('equacionVariables');
         console.log(equacionVariables);
         console.log('equacionSubVariablesConPadres')
         console.log(equacionSubVariablesConPadres)
@@ -2477,7 +2630,7 @@ function calculateRCL (argument) {
             console.log(window["variablesDeSubVariablesSolas"+arregloMonedas[i]]);
             console.log('arregloCuentas = '+arregloMonedas[i]);
             console.log(window["arregloCuentas"+arregloMonedas[i]]);
-        };
+        };*/
         /*for (var i = 0; i < arregloAgencias.length; i++) {
             console.log('variablesSolas = '+arregloAgencias[i]);
             console.log(window["variablesSolas"+arregloAgencias[i]]);
@@ -2757,7 +2910,7 @@ function calculateRCL (argument) {
                                         }
                                         window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].total = resultado;
                                     }
-                                    break LoopChar;                                                     /// REVISAR --------------
+                                    //break LoopChar;                                                    /// REVISAR --------------     LO QUITE Y AHORA FUNCIONA
                                 }
                             } else if(j == window["variablesSolas"+arregloMonedas[p]][i].length-1) {
                                 try {
@@ -3155,7 +3308,7 @@ function calculateRCL (argument) {
                 };
             };
         };*/
-        //saveResults();
+        saveResults();
     } else if(!soloUnoNoTieneFormula) {
         $("body").overhang({
             type: "error",
@@ -3214,8 +3367,11 @@ function saveResults () {
             for (var j = 0; j < variablesSolas[i].length; j++) {
                 if(variablesSolas[i][j] != undefined) {
                     checkIfResultExists(window["variablesSolas"+arregloMonedas[p]][i][j]);
-                    if(window["variablesSolas"+arregloMonedas[p]][i][j].esRCL)
-                        totalesRCL.push({proyeccion: proyecciones[i], total: window["variablesSolas"+arregloMonedas[p]][i][j].total});
+                    if(window["variablesSolas"+arregloMonedas[p]][i][j].esRCL) {
+                        if(totalesRCL[p] == undefined)
+                            totalesRCL[p] = [];
+                        totalesRCL[p].push({proyeccion: proyecciones[i], total: window["variablesSolas"+arregloMonedas[p]][i][j].total*100});
+                    }
                 }
                 for (var k = 0; k < subvariablesSolas[i][j].length; k++) {
                     if(subvariablesSolas[i][j][k] != undefined)
@@ -3237,30 +3393,42 @@ function saveResults () {
         primary: "#40D47E",
         accent: "#27AE60",
         message: "Resultados guardados satisfactoriamente.",
-        duration: 2,
+        duration: 1,
         overlay: true
     });
     var content = '';
     var colores = ["aero", "green", "blue", "red"];
-    for (var i = 0; i < totalesRCL.length; i++) {
-        content+='<li class="media event">'+
-                    '<a class="pull-left border-aero profile_thumb">'+
-                      '<i class="fa fa-check '+colores[i]+'"></i>'+
-                    '</a>'+
-                    '<div class="media-body">'+
-                      '<a class="title" href="#">Proyección: '+totalesRCL[i].proyeccion+'</a>'+
-                      '<p><strong>'+totalesRCL[i].total+'</strong> % </p>'+
-                      '</p>'+
-                    '</div>'+
-                  '</li>';
-    };
+    for (var p = 0; p < arregloMonedas.length; p++) {
+        content+= '<div style="border-style: solid; border-width: 2px;">';
+        content+='<div id="wrapper">'+
+                    '<h5>'+arregloMonedas[p]+'</h5>'+
+                '</div>';
+        for (var i = 0; i < totalesRCL[p].length; i++) {
+            var color;
+            if( totalesRCL[p][i].total > minimoRCL)
+                color = 'green';
+            else
+                color = 'red';
+            content+='<li class="media event">'+
+                            '<a class="pull-left border-aero profile_thumb">'+
+                              '<i class="fa fa-check '+color+'"></i>'+
+                            '</a>'+
+                            '<div class="media-body">'+
+                              '<a class="title" href="#">Proyección: '+totalesRCL[p][i].proyeccion+'</a>'+
+                              '<p><strong>'+totalesRCL[p][i].total+'</strong> % </p>'+
+                              '</p>'+
+                            '</div>'+
+                        '</li>';
+        };
+        content+='</div><br/>';
+    }
     $("#totalesRCL").empty();
     $("#totalesRCL").append(content);
     $("#modalTotalRCL").modal('toggle');
 }
 
 function checkIfResultExists (variable) {
-    /*var fecha = new Date();
+    var fecha = new Date();
     const transaction = new sql.Transaction( pool1 );
     transaction.begin(err => {
         var rolledBack = false
@@ -3293,13 +3461,13 @@ function checkIfResultExists (variable) {
                     if (result.recordset.length > 0) {
                         result.recordset[0].fecha = new Date(result.recordset[0].fecha.getUTCFullYear(), result.recordset[0].fecha.getUTCMonth(), result.recordset[0].fecha.getUTCDate());
                         deleteRCL(result.recordset[0], variable);
-                    } else {*/
+                    } else {
                         saveRCL(variable);
-                    /*}
+                    }
                 });
             }
         });
-    });*/ // fin transaction
+    }); // fin transaction
 }
 
 function saveRCL (variable) {
@@ -3861,12 +4029,16 @@ function campoObjetivoDepositos (regla, arreglo, tabs, variable, proyeccion) {
                             var textoFinal = ' != 0 ';
                             if(i+1 == arregloLista.length)
                                 textoFinal += " ) {";
-                            arreglo[j] +=arregloLista[i] + "')" + textoFinal;
+                            var campo = regla.campoObjetivo.split("=")[1];
+                            var valor = getListValue(arregloLista[i], campo);
+                            arreglo[j] +=valor + "')" + textoFinal;
                         } else {
                             var textoFinal = ' != 0 ';
                             if(i+1 == arregloLista.length)
                                 textoFinal += " ) {";
-                            arreglo[j] += " && "+copiaRegla[j].split(" ( ")[1]+arregloLista[i]+"')"+textoFinal;
+                            var campo = regla.campoObjetivo.split("=")[1];
+                            var valor = getListValue(arregloLista[i], campo);
+                            arreglo[j] += " && "+copiaRegla[j].split(" ( ")[1]+valor+"')"+textoFinal;
                         }
                     }
                 };
@@ -3877,12 +4049,16 @@ function campoObjetivoDepositos (regla, arreglo, tabs, variable, proyeccion) {
                             var textoFinal = ' == 0 ';
                             if(i+1 == arregloLista.length)
                                 textoFinal += " ) {";
-                            arreglo[j] +=arregloLista[i] + "')" + textoFinal;
+                            var campo = regla.campoObjetivo.split("=")[1];
+                            var valor = getListValue(arregloLista[i], campo);
+                            arreglo[j] +=valor + "')" + textoFinal;
                         } else {
                             var textoFinal = ' == 0 ';
                             if(i+1 == arregloLista.length)
                                 textoFinal += " ) {";
-                            arreglo[j] += " || "+copiaRegla[j].split(" ( ")[1]+arregloLista[i]+"')"+textoFinal;
+                            var campo = regla.campoObjetivo.split("=")[1];
+                            var valor = getListValue(arregloLista[i], campo);
+                            arreglo[j] += " || "+copiaRegla[j].split(" ( ")[1]+valor+"')"+textoFinal;
                         }
                     }
                 };
@@ -4082,12 +4258,16 @@ function campoObjetivoPrestamos (regla, arreglo, tabs, variable, proyeccion) {
                             var textoFinal = ' != 0 ';
                             if(i+1 == arregloLista.length)
                                 textoFinal += " ) {";
-                            arreglo[j] +=arregloLista[i] + "')" + textoFinal;
+                            var campo = regla.campoObjetivo.split("=")[1];
+                            var valor = getListValue(arregloLista[i], campo);
+                            arreglo[j] +=valor + "')" + textoFinal;
                         } else {
                             var textoFinal = ' != 0 ';
                             if(i+1 == arregloLista.length)
                                 textoFinal += " ) {";
-                            arreglo[j] += " && "+copiaRegla[j].split(" ( ")[1]+arregloLista[i]+"')"+textoFinal;
+                            var campo = regla.campoObjetivo.split("=")[1];
+                            var valor = getListValue(arregloLista[i], campo);
+                            arreglo[j] += " && "+copiaRegla[j].split(" ( ")[1]+valor+"')"+textoFinal;
                         }
                     }
                 };
@@ -4098,12 +4278,16 @@ function campoObjetivoPrestamos (regla, arreglo, tabs, variable, proyeccion) {
                             var textoFinal = ' == 0 ';
                             if(i+1 == arregloLista.length)
                                 textoFinal += " ) {";
-                            arreglo[j] +=arregloLista[i] + "')" + textoFinal;
+                            var campo = regla.campoObjetivo.split("=")[1];
+                            var valor = getListValue(arregloLista[i], campo);
+                            arreglo[j] +=valor + "')" + textoFinal;
                         } else {
                             var textoFinal = ' == 0 ';
                             if(i+1 == arregloLista.length)
                                 textoFinal += " ) {";
-                            arreglo[j] += " || "+copiaRegla[j].split(" ( ")[1]+arregloLista[i]+"')"+textoFinal;
+                            var campo = regla.campoObjetivo.split("=")[1];
+                            var valor = getListValue(arregloLista[i], campo);
+                            arreglo[j] += " || "+copiaRegla[j].split(" ( ")[1]+valor+"')"+textoFinal;
                         }
                     }
                 };
@@ -4192,6 +4376,55 @@ function campoObjetivoPrestamos (regla, arreglo, tabs, variable, proyeccion) {
     }
 }
 
+//funcion para retornar el valor correspondiente de una lista dependiendo del tipo de columna
+function getListValue (id, column) {
+    if(column.localeCompare("idCliente") == 0) {
+        for (var i = 0; i < arreglodeListas.length; i++) {
+            if(arreglodeListas[i].ID == id) {
+                return arreglodeListas[i].valor;
+            }
+        };
+    } else if(column.localeCompare("nombreCliente") == 0) {
+        for (var i = 0; i < arreglodeListas.length; i++) {
+            if(arreglodeListas[i].ID == id) {
+                return arreglodeListas[i].nombre;
+            }
+        };
+    } else if(column.localeCompare("tipoPersona") == 0) {
+        for (var i = 0; i < arreglodeListas.length; i++) {
+            if(arreglodeListas[i].ID == id) {
+                return arreglodeListas[i].valor;
+            }
+        };
+    } else if(column.localeCompare("tipoSubPersona") == 0) {
+        for (var i = 0; i < arreglodeListas.length; i++) {
+            if(arreglodeListas[i].ID == id) {
+                return arreglodeListas[i].valor;
+            }
+        };
+    } else if(column.localeCompare("tipoCredito") == 0) {
+        for (var i = 0; i < arreglodeListas.length; i++) {
+            if(arreglodeListas[i].ID == id) {
+                return arreglodeListas[i].valor;
+            }
+        };
+    } else if(column.localeCompare("tipoCuenta") == 0) {
+        for (var i = 0; i < arreglodeListas.length; i++) {
+            if(arreglodeListas[i].ID == id) {
+                return arreglodeListas[i].valor;
+            }
+        };
+    } else if(column.localeCompare("IDS") == 0) {
+        for (var i = 0; i < arreglodeListas.length; i++) {
+            if(arreglodeListas[i].ID == id) {
+                return arreglodeListas[i].valor;
+            }
+        };
+    } else {
+        return false;
+    }
+}
+
 function formatDateCreationSingleDigits(date) {
     var day = date.getDate();
     var monthIndex = date.getMonth();
@@ -4231,6 +4464,7 @@ function addDays(date, days) {
 //	**********		Route Change		**********
 function goVariables () {
 	$("#app_root").empty();
+    cleanupSelectedList();
     $("#app_root").load("src/variables.html");
 }
 
@@ -4241,24 +4475,28 @@ function goHome () {
 
 function goUsers () {
 	$("#app_root").empty();
+    cleanupSelectedList();
     $("#app_root").load("src/users.html");
 }
 
 function goConnections () {
     $("#app_root").empty();
+    cleanupSelectedList();
     $("#app_root").load("src/importaciones.html");
 }
 
 function goConfig () {
     $("#app_root").empty();
+    cleanupSelectedList();
     //cleanup();
     $("#app_root").load("src/config.html");
 }
 
 function logout () {
-	$("#app_root").empty();
+    $("#app_full").empty();
     session.defaultSession.clearStorageData([], (data) => {});
-    $("#app_root").load("src/login.html");
+    //cleanup();
+    $("#app_full").load("src/login.html");
 }
 
 function goRCL () {
@@ -4278,6 +4516,14 @@ function goGraphics () {
 
 function goLists () {
     $("#app_root").empty();
+    cleanupSelectedList();
     //cleanup();
     $("#app_root").load("src/variablesLists.html");
+}
+
+function cleanupSelectedList () {
+    $(".side-menu li").each(function( i ) {
+        if ($(this).hasClass("active"))
+            $(this).removeClass("active")
+    });
 }

@@ -12,6 +12,7 @@ const config = {
     password: password,
     server: server,
     database: database,
+    stream: true,
     pool: {
         max: 10,
         min: 0,
@@ -32,6 +33,7 @@ const config = {
 
 const pool1 = new sql.ConnectionPool(config, err => {
 	if(err) {
+		console.log(err);
 		$("body").overhang({
             type: "error",
             primary: "#f84a1d",
@@ -45,9 +47,11 @@ const pool1 = new sql.ConnectionPool(config, err => {
 		loadManualContableID();
 		loadText();
 		loadAllRules();
-		loadVariablesMainDB();
+		//loadVariablesMainDB();
 	}
 });
+
+window.scrollTo(0, 0);
 
 var variableDeVariableReglaID = null;
 var variableDeVariableObject = null;
@@ -73,7 +77,7 @@ function loadText () {
 }
 
 /* ****************** 		LOADING IMG 	********* */
-function loadVariablesMainDB () {
+/*function loadVariablesMainDB () {
 	const transaction = new sql.Transaction( pool1 );
     transaction.begin(err => {
         var rolledBack = false
@@ -96,21 +100,22 @@ function loadVariablesMainDB () {
                 transaction.commit(err => {
                     // ... error checks
                     if(result.recordset.length > 0){
-                    	if(result.recordset[0].fullLogo.length > 0){
-                    		$("#fullLogo").attr("src",filepathFullLogo);
-                    	}
-                    	if(result.recordset[0].smallLogo.length > 0){
-                    		$("#smallLogo").attr("src",filepathSmallLogo);
-                    	}
+                    	if(result.recordset[0].fullLogo.length > 0) {
+                            $("#fullLogo").attr("src",result.recordset[0].fullLogo);
+                        }
+                        if(result.recordset[0].smallLogo.length > 0) {
+                            $("#smallLogo").attr("src",result.recordset[0].smallLogo);
+                        }
                     }
                 });
             }
         });
     }); // fin transaction
-}
+}*/
 /* ****************** 		END LOADING IMG 	********* */
 
 var arregloActivos = [];
+var arregloActivosEdit = [];
 var arregloReglas = [];
 var arregloTodasReglas = [];
 var arregloListas = [];
@@ -129,6 +134,7 @@ function loadRules () {
         const request = new sql.Request(transaction);
         request.query("select * from Reglas where variablePadre = "+variableDeVariableReglaID, (err, result) => {
             if (err) {
+            	console.log(err);
                 if (!rolledBack) {
                     transaction.rollback(err => {
                         $("body").overhang({
@@ -177,6 +183,7 @@ function loadAllRules () {
         const request = new sql.Request(transaction);
         request.query("select * from Reglas ", (err, result) => {
             if (err) {
+            	console.log(err);
                 if (!rolledBack) {
                     transaction.rollback(err => {
                         $("body").overhang({
@@ -214,6 +221,7 @@ function loadVariableObject () {
         const request = new sql.Request(transaction);
         request.query("select * from VariablesdeVariablesFormula where ID = "+variableDeVariableReglaID, (err, result) => {
             if (err) {
+            	console.log(err);
                 if (!rolledBack) {
                     transaction.rollback(err => {
                         $("body").overhang({
@@ -253,7 +261,8 @@ function renderRules () {
 		var clase = '';
 		/*if(arregloReglas[i].reglaPadre != 0)
 			clase = 'style="padding-left:20%;"';*/
-		listContent+='<li '+clase+'><p>'+ regla +' </p><button style="position: absolute; right: 10px; margin: 0; position: absolute; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%);" onclick="deleteRule('+i+')">Eliminar</button></li>';
+		//listContent+='<li '+clase+'><p>'+ regla +' </p><button style="position: absolute; right: 10px; margin: 0; position: absolute; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%);" onclick="deleteRule('+i+')">Eliminar</button></li>';
+		listContent+='<li '+clase+'><p>'+ regla +' </p><button style="position: absolute; right: 10px; margin: 0; position: absolute; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%);" onclick="selectVar('+i+')">Modificar</button></li>';
 		$("#listRules").append(listContent);
 	};
 	if(arregloReglas.length == 0 ){
@@ -266,10 +275,12 @@ function renderRules () {
 	$("#formulaRule").empty();
 	if(arregloReglas.length > 0) {
 		var newListContent = '';
-		if(arregloReglas[arregloReglas.length-1].campoObjetivo == 'INSTANCIACION')
-			newListContent+='<li><p> '+arregloReglas[arregloReglas.length-1].variables+" ( Cuentas = "+arregloReglas[i].valor.split("=")[1]+" )"+'</p><button style="position: absolute; right: 10px; margin: 0; position: absolute; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%);" onclick="deleteRule('+(arregloReglas.length-1)+')">Eliminar</button></li>';
-		else
+		if(arregloReglas[arregloReglas.length-1].campoObjetivo == 'INSTANCIACION') {
+			//newListContent+='<li><p> '+arregloReglas[arregloReglas.length-1].variables+" ( Cuentas = "+arregloReglas[i].valor.split("=")[1]+" )"+'</p><button style="position: absolute; right: 10px; margin: 0; position: absolute; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%);" onclick="deleteRule('+(arregloReglas.length-1)+')">Eliminar</button></li>';
+			newListContent+='<li><p> '+arregloReglas[arregloReglas.length-1].variables+" ( Cuentas = "+arregloReglas[i].valor.split("=")[1]+" )"+'</p><button style="position: absolute; right: 10px; margin: 0; position: absolute; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%);" onclick="selectVar('+(arregloReglas.length-1)+')">Modificar</button></li>';
+		} else {
 			newListContent+='<li><p> '+arregloReglas[arregloReglas.length-1].campoObjetivo.split("=")[1]+' '+arregloReglas[arregloReglas.length-1].operacion+' '+arregloReglas[arregloReglas.length-1].valor.split("=")[1]+'</p><button style="position: absolute; right: 10px; margin: 0; position: absolute; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%);" onclick="deleteRule('+(arregloReglas.length-1)+')">Eliminar</button></li>';
+		}
 		$("#formulaRule").append(newListContent);
 	} else {
 		var newListContent = '<li><p> No hay agrupaciones creadas. </p></li>';
@@ -304,6 +315,7 @@ function deleteRule (index) {
 					        const request = new sql.Request(transaction);
 					        request.query("delete from Reglas where ID = "+regla.ID, (err, result) => {
 					            if (err) {
+					            	console.log(err);
 					                if (!rolledBack) {
 					                    transaction.rollback(err => {
 					                        $("body").overhang({
@@ -325,7 +337,7 @@ function deleteRule (index) {
 							  				accent: "#27AE60",
 								            message: "Variable eliminada con éxito.",
 								            overlay: true,
-								            duration: 2
+								            duration: 1
 								        });
 					                    loadRules();
 					                    loadAllRules();
@@ -345,6 +357,7 @@ function deleteRule (index) {
 			        const request = new sql.Request(transaction);
 			        request.query("delete from Reglas where ID = "+arregloReglas[index].ID, (err, result) => {
 			            if (err) {
+			            	console.log(err);
 			                if (!rolledBack) {
 			                    transaction.rollback(err => {
 			                        $("body").overhang({
@@ -366,7 +379,7 @@ function deleteRule (index) {
 					  				accent: "#27AE60",
 						            message: "Variable eliminada con éxito.",
 						            overlay: true,
-						            duration: 2
+						            duration: 1
 						        });
 			                    loadRules();
 			                    loadAllRules();
@@ -462,8 +475,9 @@ function loadManualContableID () {
             rolledBack = true;
         });
         const request = new sql.Request(transaction);
-        request.query("select * from Listas where tipo = 1 or tipo = 2", (err, result) => {
+        request.query("select * from Listas where tipo = 1 or tipo = 2 or tipo = 10", (err, result) => {
             if (err) {
+            	console.log(err);
                 if (!rolledBack) {
                     transaction.rollback(err => {
                         $("body").overhang({
@@ -488,6 +502,7 @@ function loadManualContableID () {
                     	listaID = 0;
                     }
                     loadManualContable(listaID);
+                    loadManualContableEdit(listaID);
                     renderListsDropdown();
                 });
             }
@@ -497,11 +512,13 @@ function loadManualContableID () {
 
 function renderListsDropdown () {
 	$("#listaSelectReglasALAC").empty();
+	$("#listaSelectReglasALACEdit").empty();
 	var content = '';
 	for (var i = 0; i < arregloListas.length; i++) {
 		content+='<option value="'+arregloListas[i].ID+'">'+arregloListas[i].nombre+'</option>';
 	};
 	$("#listaSelectReglasALAC").append(content);
+	$("#listaSelectReglasALACEdit").append(content);
 }
 
 function loadManualContable (listaID) {
@@ -515,6 +532,7 @@ function loadManualContable (listaID) {
         const request = new sql.Request(transaction);
         request.query("select * from ListasVariables where idLista = "+listaID, (err, result) => {
             if (err) {
+            	console.log(err);
                 if (!rolledBack) {
                     transaction.rollback(err => {
                         $("body").overhang({
@@ -542,11 +560,58 @@ function loadManualContable (listaID) {
     }); // fin transaction
 }
 
+function loadManualContableEdit (listaID) {
+	const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false;
+        transaction.on('rollback', aborted => {
+            // emited with aborted === true
+            rolledBack = true;
+        });
+        const request = new sql.Request(transaction);
+        request.query("select * from ListasVariables where idLista = "+listaID, (err, result) => {
+            if (err) {
+            	console.log(err);
+                if (!rolledBack) {
+                    transaction.rollback(err => {
+                        $("body").overhang({
+				            type: "error",
+				            primary: "#f84a1d",
+				            accent: "#d94e2a",
+				            message: "Error en conección con la tabla de ListasVariables.",
+				            overlay: true,
+				            closeConfirm: true
+				        });
+                    });
+                }
+            }  else {
+                transaction.commit(err => {
+                    // ... error checks
+                    if(result.recordset.length > 0){
+                    	arregloActivosEdit = result.recordset;
+                    } else {
+                    	arregloActivosEdit = [];
+                    }
+                    $("#valorElementoListaALACEdit").iCheck('check');
+                    renderListsSelectEdit();
+                });
+            }
+        });
+    }); // fin transaction
+}
+
 $('#nombreElementoListaALAC').on('ifChecked', function () {
 	renderListsSelect();
 });
 $('#valorElementoListaALAC').on('ifChecked', function () {
 	renderListsSelect();
+});
+
+$('#nombreElementoListaALACEdit').on('ifChecked', function () {
+	renderListsSelectEdit();
+});
+$('#valorElementoListaALACEdit').on('ifChecked', function () {
+	renderListsSelectEdit();
 });
 
 function renderListsSelect () {
@@ -563,7 +628,31 @@ function renderListsSelect () {
 	}
 	$("#listaActivosSelect").append(content);
 	$(".select2-list").select2({
-	    allowClear: true
+	    allowClear: true,
+	    minimumInputLength: 6,
+	    //minimumInputLength: 3,
+	    language: "es"
+	});
+}
+
+function renderListsSelectEdit () {
+	$("#listaActivosSelectEdit").empty();
+	var content = '';
+	if( $('#nombreElementoListaALACEdit').iCheck('update')[0].checked ) {
+		for (var i = 0; i < arregloActivosEdit.length; i++) {
+			content+='<option value="'+arregloActivosEdit[i].nombre+'">'+arregloActivosEdit[i].nombre+'</option>';
+		};
+	} else {
+		for (var i = 0; i < arregloActivosEdit.length; i++) {
+			content+='<option value="'+arregloActivosEdit[i].valor+'">'+arregloActivosEdit[i].valor+'</option>';
+		};
+	}
+	$("#listaActivosSelectEdit").append(content);
+	$(".select2-list").select2({
+	    allowClear: true,
+	    minimumInputLength: 6,
+	    //minimumInputLength: 3,
+	    language: "es"
 	});
 }
 
@@ -592,6 +681,253 @@ function filterListSelect () {
 
 
 
+
+
+
+
+
+
+
+
+/* *************	Update	************* */
+var posicionSeleccionada;
+function selectVar (index) {
+	posicionSeleccionada = index;
+	var cuentasJuntas = arregloReglas[posicionSeleccionada].valor.split("=")[1];
+	var cuentas = cuentasJuntas.split(",");
+	var data = [];
+	for (var i = 0; i < cuentas.length; i++) {
+		data.push({id: cuentas[i], text: cuentas[i]});
+	};
+	$("#listaActivosSelectEdit").select2('data', data);
+	$("#nombreVarEdit").val(arregloReglas[posicionSeleccionada].variables);
+	$("#modalEdit").modal("toggle");
+}
+
+function modifyVar () {
+	$("body").overhang({
+	  	type: "confirm",
+	  	primary: "#f5a433",
+	  	accent: "#dc9430",
+	  	yesColor: "#3498DB",
+	  	message: 'Esta seguro que desea modificar la variable '+arregloReglas[posicionSeleccionada].variables+'?',
+	  	overlay: true,
+	  	yesMessage: "Modificar",
+	  	noMessage: "Cancelar",
+	  	callback: function (value) {
+	    	if(value){
+	    		var nombre = $("#nombreVarEdit").val();
+				var cuentas = $("#listaActivosSelectEdit").val();
+				var valor, elementos = '';
+				if(cuentas != null) {
+					for (var i = 0; i < cuentas.length; i++) {
+						elementos+=cuentas[i];
+						if( (i+1) < cuentas.length )
+							elementos+=',';
+					};
+					valor = 'LISTA=' + elementos;
+				} else 
+					valor = 'LISTA=' + getSelectOptions(arregloActivosEdit);
+	    		var entrar = true;
+				for (var i = 0; i < arregloTodasReglas.length; i++) {
+					if(arregloTodasReglas[i].variables.toLowerCase().localeCompare(nombre.toLowerCase()) == 0 && posicionSeleccionada != i)
+						entrar = false;
+				};
+				if(entrar) {
+		    		if(nombre.length > 0 && nombre.length < 51) {
+						if(!/\s/.test(nombre)) {
+				    		const transaction = new sql.Transaction( pool1 );
+						    transaction.begin(err => {
+						        var rolledBack = false;
+						        transaction.on('rollback', aborted => {
+						            // emited with aborted === true
+						            rolledBack = true;
+						        });
+						        const request = new sql.Request(transaction);
+						        request.query("update Reglas set valor = '"+valor+"', variables = '"+nombre+"' where ID = "+arregloReglas[posicionSeleccionada].ID, (err, result) => {
+						            if (err) {
+						            	console.log(err)
+						                if (!rolledBack) {
+						                    transaction.rollback(err => {
+						                        $("body").overhang({
+										            type: "error",
+										            primary: "#f84a1d",
+										            accent: "#d94e2a",
+										            message: "Error en modificación de variable.",
+										            overlay: true,
+										            closeConfirm: true
+										        });
+						                    });
+						                }
+						            }  else {
+						                transaction.commit(err => {
+						                    // ... error checks
+						                    $("body").overhang({
+											  	type: "success",
+											  	primary: "#40D47E",
+								  				accent: "#27AE60",
+											  	message: "Variable modificada con éxito.",
+											  	duration: 1,
+											  	overlay: true
+											});
+											$('#modalEdit').modal('toggle');
+											loadRules();
+											loadAllRules();
+						                });
+						            }
+						        });
+						    }); // fin transaction
+						} else {
+							$("body").overhang({
+							  	type: "error",
+							  	primary: "#f84a1d",
+								accent: "#d94e2a",
+							  	message: "El nombre de la variable no puede contener espacios.",
+							  	overlay: true,
+					            closeConfirm: true
+							});
+						}
+					} else {
+						$("body").overhang({
+						  	type: "error",
+						  	primary: "#f84a1d",
+							accent: "#d94e2a",
+						  	message: "El nombre de la variable debe tener una longitud mayor a 0 y menor a 51.",
+						  	overlay: true,
+				            closeConfirm: true
+						});
+					}
+				} else {
+					$("body").overhang({
+					  	type: "error",
+					  	primary: "#f84a1d",
+						accent: "#d94e2a",
+					  	message: "El nombre de la variable ya existe, el nombre tiene que ser único en todas las variables.",
+					  	overlay: true,
+			            closeConfirm: true
+					});
+				}
+	    	}
+	  	}
+	});
+}
+
+function deleteRuleModal () {
+	$("body").overhang({
+	  	type: "confirm",
+	  	primary: "#f5a433",
+	  	accent: "#dc9430",
+	  	yesColor: "#3498DB",
+	  	message: 'Esta seguro que desea eliminar la variable '+arregloReglas[posicionSeleccionada].variables+'?',
+	  	overlay: true,
+	  	yesMessage: "Eliminar",
+	  	noMessage: "Cancelar",
+	  	callback: function (value) {
+	    	if(value){
+	    		var nombreVar = arregloReglas[posicionSeleccionada].variables;
+	    		var nuevoArray = arregloReglas.slice();
+				for (var i = 0; i < nuevoArray.length; i++) {
+					if(nuevoArray[i].campoObjetivo.localeCompare("INSTANCIACION") != 0 && (nuevoArray[i].campoObjetivo.split("=")[1].localeCompare(nombreVar) == 0 || nuevoArray[i].valor.split("=")[1].localeCompare(nombreVar) == 0)){
+						var regla = nuevoArray[i];
+						const transaction = new sql.Transaction( pool1 );
+					    transaction.begin(err => {
+					        var rolledBack = false;
+					        transaction.on('rollback', aborted => {
+					            // emited with aborted === true
+					            rolledBack = true;
+					        });
+					        const request = new sql.Request(transaction);
+					        request.query("delete from Reglas where ID = "+regla.ID, (err, result) => {
+					            if (err) {
+					            	console.log(err);
+					                if (!rolledBack) {
+					                    transaction.rollback(err => {
+					                        $("body").overhang({
+									            type: "error",
+									            primary: "#f84a1d",
+									            accent: "#d94e2a",
+									            message: "Error en eliminación en la tabla de Reglas.",
+									            overlay: true,
+									            closeConfirm: true
+									        });
+					                    });
+					                }
+					            } else {
+					                transaction.commit(err => {
+					                    // ... error checks
+					                    $("body").overhang({
+								            type: "success",
+										  	primary: "#40D47E",
+							  				accent: "#27AE60",
+								            message: "Variable eliminada con éxito.",
+								            overlay: true,
+								            duration: 1
+								        });
+								        $('#modalEdit').modal('toggle');
+					                    loadRules();
+					                    loadAllRules();
+					                });
+					            }
+					        });
+					    }); // fin transaction
+					}
+				}
+				const transaction = new sql.Transaction( pool1 );
+			    transaction.begin(err => {
+			        var rolledBack = false;
+			        transaction.on('rollback', aborted => {
+			            // emited with aborted === true
+			            rolledBack = true;
+			        });
+			        const request = new sql.Request(transaction);
+			        request.query("delete from Reglas where ID = "+arregloReglas[posicionSeleccionada].ID, (err, result) => {
+			            if (err) {
+			            	console.log(err);
+			                if (!rolledBack) {
+			                    transaction.rollback(err => {
+			                        $("body").overhang({
+							            type: "error",
+							            primary: "#f84a1d",
+							            accent: "#d94e2a",
+							            message: "Error en eliminación en la tabla de Reglas.",
+							            overlay: true,
+							            closeConfirm: true
+							        });
+			                    });
+			                }
+			            } else {
+			                transaction.commit(err => {
+			                    // ... error checks
+			                    $("body").overhang({
+						            type: "success",
+								  	primary: "#40D47E",
+					  				accent: "#27AE60",
+						            message: "Variable eliminada con éxito.",
+						            overlay: true,
+						            duration: 1
+						        });
+			                    loadRules();
+			                    loadAllRules();
+			                });
+			            }
+			        });
+			    }); // fin transaction
+	    	}
+	  	}
+	});
+}
+/* *************	Fin Update	************* */
+
+
+
+
+
+
+
+
+
+
+
 /* *************	Rules	************* */
 function saveNewRule () {
 	var nombre = $("#nombreVar").val();
@@ -603,63 +939,102 @@ function saveNewRule () {
 	if(entrar) {
 		if(nombre.length > 0 && nombre.length < 51) {
 			if(!/\s/.test(nombre)) {
-				var campoObjetivo = 'INSTANCIACION', operacion = '=', reglaPadre = 0, esFiltro = '0', variables = nombre, orden = 0;
-				var elementosSelect = $("#listaActivosSelect").val();
+				var campoObjetivo = 'INSTANCIACION', operacion = '=', reglaPadre = 0, esFiltro = false, variables = nombre, orden = 0, valor, filtro = -1;
+				var idDeListaSel = $("#listaSelectReglasALAC").val();
+				var listaSel = arregloListas.filter(function(object) {
+                    return ( object.ID == idDeListaSel );
+                });
+                var elementosSelect = $("#listaActivosSelect").val();
 				var elementos = '';
-				if(elementosSelect != null) {
-					for (var i = 0; i < elementosSelect.length; i++) {
-						elementos+=arregloActivos[parseInt(elementosSelect[i])].valor;
-						if( (i+1) < elementosSelect.length )
-							elementos+=',';
-					};
-					valor = 'LISTA=' + elementos;
-				} else 
-					valor = 'LISTA=' + getSelectOptions(arregloActivos);
-				const transaction = new sql.Transaction( pool1 );
-			    transaction.begin(err => {
-			        var rolledBack = false;
-			        transaction.on('rollback', aborted => {
-			            // emited with aborted === true
-			            rolledBack = true;
-			        });
-			        const request = new sql.Request(transaction);
-			        request.query("insert into Reglas (variablePadre, reglaPadre, campoObjetivo, operacion, valor, variables, esFiltro, orden) values ("+variableDeVariableReglaID+","+reglaPadre+",'"+campoObjetivo+"','"+operacion+"','"+valor+"','"+variables+"','"+esFiltro+"',"+(ordenGlobal+1)+")", (err, result) => {
-			            if (err) {
-			                if (!rolledBack) {
-			                    transaction.rollback(err => {
-			                        $("body").overhang({
-							            type: "error",
-							            primary: "#f84a1d",
-							            accent: "#d94e2a",
-							            message: "Error en inserción de variable.",
-							            overlay: true,
-							            closeConfirm: true
-							        });
-			                    });
-			                }
-			            }  else {
-			                transaction.commit(err => {
-			                    // ... error checks
-			                    $("body").overhang({
-								  	type: "success",
-								  	primary: "#40D47E",
-					  				accent: "#27AE60",
-								  	message: "Variable creada con éxito.",
-								  	duration: 2,
-								  	overlay: true
-								});
-								loadRules();
-								loadAllRules();
-			                });
-			            }
-			        });
-			    }); // fin transaction
+                if(listaSel[0].tipo != 10) {
+					if(elementosSelect != null) {
+						for (var i = 0; i < elementosSelect.length; i++) {
+							elementos+=arregloActivos[parseInt(elementosSelect[i])].valor;
+							if( (i+1) < elementosSelect.length )
+								elementos+=',';
+						};
+						valor = 'LISTA=' + elementos;
+					} /*else 
+						valor = 'LISTA=' + getSelectOptions(arregloActivos);*/
+				} else {
+					if(elementosSelect != null) {
+						for (var i = 0; i < elementosSelect.length; i++) {
+							elementos+=arregloActivos[parseInt(elementosSelect[i])].ID;
+							if( (i+1) < elementosSelect.length )
+								elementos+=',';
+						};
+						valor = 'IDS=' + elementos;
+					}
+				}
+				/*console.log("-_------___----");
+				console.log(listaSel[0].tipo);
+                console.log(reglaPadre);
+                console.log(campoObjetivo);
+                console.log(operacion);
+                console.log(valor);
+                console.log(variables);
+                console.log(variableDeVariableReglaID);
+                console.log(ordenGlobal);
+                console.log(ordenGlobal+1);
+                console.log("-_------___----");*/
+                if(valor != undefined && valor.length > 0) {
+					const transaction = new sql.Transaction( pool1 );
+				    transaction.begin(err => {
+				        var rolledBack = false;
+				        transaction.on('rollback', aborted => {
+				            // emited with aborted === true
+				            rolledBack = true;
+				        });
+				        const request = new sql.Request(transaction);
+				        request.query("insert into Reglas (variablePadre, reglaPadre, campoObjetivo, operacion, valor, variables, esFiltro, filtro, orden) values ("+variableDeVariableReglaID+","+reglaPadre+",'"+campoObjetivo+"','"+operacion+"','"+valor+"','"+variables+"','"+esFiltro+"',"+filtro+","+(ordenGlobal+1)+")", (err, result) => {
+				            if (err) {
+				            	console.log(err);
+				                if (!rolledBack) {
+				                	console.log(err)
+				                    transaction.rollback(err => {
+				                        $("body").overhang({
+								            type: "error",
+								            primary: "#f84a1d",
+								            accent: "#d94e2a",
+								            message: "Error en inserción de variable.",
+								            overlay: true,
+								            closeConfirm: true
+								        });
+				                    });
+				                }
+				            }  else {
+				                transaction.commit(err => {
+				                    // ... error checks
+				                    $("body").overhang({
+									  	type: "success",
+									  	primary: "#40D47E",
+						  				accent: "#27AE60",
+									  	message: "Variable creada con éxito.",
+									  	duration: 1,
+									  	overlay: true
+									});
+									loadRules();
+									loadAllRules();
+				                });
+				            }
+				        });
+				    }); // fin transaction
+				} else {
+					$("body").overhang({
+					  	type: "error",
+					  	primary: "#f84a1d",
+						accent: "#d94e2a",
+					  	message: "Se tiene que seleccionar por lo menos una variable.",
+					  	overlay: true,
+			            closeConfirm: true
+					});
+				}
 			} else {
 				$("body").overhang({
 				  	type: "error",
 				  	primary: "#f84a1d",
 					accent: "#d94e2a",
-				  	message: "El nombre de la variable puede contener espacios.",
+				  	message: "El nombre de la variable no puede contener espacios.",
 				  	overlay: true,
 		            closeConfirm: true
 				});
@@ -688,7 +1063,8 @@ function saveNewRule () {
 
 function saveRule () {
 	var reglaPadre = 0;
-	var esFiltro = '0';
+	var esFiltro = false;
+	var filtro = -1;
 	var operacion = $("input[name='opRadio']:checked").val();
 	var id = 1;
 	for (var i = 0; i < arregloTodasReglas.length; i++) {
@@ -707,8 +1083,9 @@ function saveRule () {
 			            rolledBack = true;
 			        });
 			        const request = new sql.Request(transaction);
-			        request.query("insert into Reglas (variablePadre, reglaPadre, campoObjetivo, operacion, valor, variables, esFiltro, orden) values ("+variableDeVariableReglaID+","+reglaPadre+",'"+campoObjetivo+"','"+operacion+"','"+valor+"','"+variables+"','"+esFiltro+"',"+(ordenGlobal+1)+")", (err, result) => {
+			        request.query("insert into Reglas (variablePadre, reglaPadre, campoObjetivo, operacion, valor, variables, esFiltro, filtro, orden) values ("+variableDeVariableReglaID+","+reglaPadre+",'"+campoObjetivo+"','"+operacion+"','"+valor+"','"+variables+"','"+esFiltro+"',"+filtro+","+(ordenGlobal+1)+")", (err, result) => {
 			            if (err) {
+			            	console.log(err);
 			                if (!rolledBack) {
 			                    transaction.rollback(err => {
 			                        $("body").overhang({
@@ -729,7 +1106,7 @@ function saveRule () {
 								  	primary: "#40D47E",
 					  				accent: "#27AE60",
 								  	message: "Regla creada con éxito.",
-								  	duration: 2,
+								  	duration: 1,
 								  	overlay: true
 								});
 								loadRules();
@@ -797,53 +1174,64 @@ function getSelectOptions (array) {
 
 //	**********		Route Change		**********
 function goVariables () {
+	$(".select2-list").select2('destroy');
 	$("#app_root").empty();
     $("#app_root").load("src/variables.html");
 }
 
 function goHome () {
+	$(".select2-list").select2('destroy');
 	$("#app_root").empty();
     $("#app_root").load("src/home.html");
 }
 
 function goUsers () {
+	$(".select2-list").select2('destroy');
 	$("#app_root").empty();
     $("#app_root").load("src/users.html");
 }
 
 function goConnections () {
+	$(".select2-list").select2('destroy');
     $("#app_root").empty();
     $("#app_root").load("src/importaciones.html");
 }
 
 function goConfig () {
+	$(".select2-list").select2('destroy');
     $("#app_root").empty();
     //cleanup();
     $("#app_root").load("src/config.html");
 }
 
 function logout () {
-	$("#app_root").empty();
-	session.defaultSession.clearStorageData([], (data) => {});
-    $("#app_root").load("src/login.html");
+	$(".select2-list").select2('destroy');
+    $("#app_full").empty();
+    session.defaultSession.clearStorageData([], (data) => {});
+    //cleanup();
+    $("#app_full").load("src/login.html");
 }
 
 function goRCL () {
+	$(".select2-list").select2('destroy');
 	$("#app_root").empty();
     $("#app_root").load("src/rcl.html");
 }
 
 function goReports () {
+	$(".select2-list").select2('destroy');
 	$("#app_root").empty();
     $("#app_root").load("src/reportes.html");
 }
 
 function goGraphics () {
+	$(".select2-list").select2('destroy');
     $("#app_root").empty();
     $("#app_root").load("src/graficos.html");
 }
 
 function goLists () {
+	$(".select2-list").select2('destroy');
     $("#app_root").empty();
     //cleanup();
     $("#app_root").load("src/variablesLists.html");

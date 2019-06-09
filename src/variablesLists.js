@@ -44,10 +44,9 @@ const pool1 = new sql.ConnectionPool(config, err => {
         });
 	} else {
 		console.log('pool loaded');
-		loadVariablesIMG();
+		//loadVariablesIMG();
 		loadLists();
         loadFosede();
-        loadListListsExcelAll();
 	}
 });
 
@@ -119,7 +118,7 @@ function filterDiv () {
 var montoFosedeGlobal = null;
 
 /* ******************       LOADING IMG     ********* */
-var filepathFullLogo = '';
+/*var filepathFullLogo = '';
 var filepathSmallLogo = '';
 function loadVariablesIMG () {
     const transaction = new sql.Transaction( pool1 );
@@ -166,7 +165,7 @@ function loadVariablesIMG () {
             }
         });
     }); // fin transaction
-}
+}*/
 /* ******************       END LOADING IMG     ********* */
 
 function loadFosede () {
@@ -242,7 +241,6 @@ function loadTextFOSEDE () {
 //	**********		Manual Contable y Listas		**********
 var arregloListas = [];
 var arregloListasVariables = [];
-var arregloListasVariablesTotes = [];
 var listasVariablesSeleccionada = null;
 
 function loadLists () {
@@ -323,7 +321,7 @@ function renderListsCreateVariableSelect () {
         $("#elementoNombre").val("");
         $("#elementoValor").val("");
         $("#idClienteCueOp").val("");
-        $("#saldoCueOp").val("");
+        //$("#saldoCueOp").val("");
     } else if(arregloListas[0].tipo == 3) { //Exclusiones FOSEDE
         $("#elementoNombre").attr("placeholder", "Ingrese ID de persona");
         $("#elementoValor").attr("placeholder", "Ingrese nombre de persona");
@@ -454,43 +452,6 @@ function loadListListsExcel () {
     }); // fin transaction
 }
 
-function loadListListsExcelAll () {
-    const transaction = new sql.Transaction( pool1 );
-    transaction.begin(err => {
-        var rolledBack = false;
-        transaction.on('rollback', aborted => {
-            // emited with aborted === true
-            rolledBack = true;
-        });
-        const request = new sql.Request(transaction);
-        request.query("select * from ListasVariables", (err, result) => {
-            if (err) {
-                if (!rolledBack) {
-                    transaction.rollback(err => {
-                        $("body").overhang({
-                            type: "error",
-                            primary: "#f84a1d",
-                            accent: "#d94e2a",
-                            message: "Error en conección con la tabla de ListasVariables.",
-                            overlay: true,
-                            closeConfirm: true
-                        });
-                    });
-                }
-            }  else {
-                transaction.commit(err => {
-                    // ... error checks
-                    if(result.recordset.length > 0){
-                        arregloListasVariablesTotes = result.recordset;
-                    } else {
-                        arregloListasVariablesTotes = [];
-                    }
-                });
-            }
-        });
-    }); // fin transaction
-}
-
 $('#nombreListaOrdenRadio').on('ifChecked', function () {
     renderVariableListSelect();
 });
@@ -558,7 +519,7 @@ function createList () {
     						  	primary: "#40D47E",
     			  				accent: "#27AE60",
     						  	message: "Lista creada con éxito.",
-    						  	duration: 2,
+    						  	duration: 1,
     						  	overlay: true
     						});
     						$("#nameList").val('');
@@ -636,7 +597,7 @@ function updateList () {
 											  	primary: "#40D47E",
 								  				accent: "#27AE60",
 											  	message: "Lista creada con éxito.",
-											  	duration: 2,
+											  	duration: 1,
 											  	overlay: true
 											});
 											$("#elementoNombreEdit").val('');
@@ -723,7 +684,7 @@ function deleteList () {
 								  	primary: "#40D47E",
 					  				accent: "#27AE60",
 								  	message: "Lista creada con éxito.",
-								  	duration: 2,
+								  	duration: 1,
 								  	overlay: true
 								});
 								$("#elementoNombreEdit").val('');
@@ -739,7 +700,6 @@ function deleteList () {
 
 function connectionTest (indexTabla) {
     $("#testConnection").prop('disabled', true);
-    setTimeout(" $('#testConnection').prop('disabled', false); ", 3000);
 
     var arreglo;
     var user;
@@ -786,6 +746,7 @@ function connectionTest (indexTabla) {
                                         overlay: true
                                     });
                                 }
+                                $('#testConnection').prop('disabled', false);
                             });
                         });
                     } else {
@@ -973,8 +934,8 @@ function saveManualContable () {
                                                                                 type: "success",
                                                                                 primary: "#40D47E",
                                                                                 accent: "#27AE60",
-                                                                                message: "No se encontrarón valores para esa fecha.",
-                                                                                duration: 2,
+                                                                                message: "No se encontrarón valores para importar.",
+                                                                                duration: 1,
                                                                                 overlay: true
                                                                             });
                                                                         }
@@ -1137,7 +1098,8 @@ function createElementList () {
     } else if(listaSeleccionada[0].tipo == 6) { // Cuentas Operativas
         nombre = $("#elementoNombre").val();
         valor = $("#elementoValor").val();
-        saldo = parseFloat($("#saldoCueOp").val());
+        //saldo = parseFloat($("#saldoCueOp").val());
+        saldo = 0;
         puesto = $("#idClienteCueOp").val();
         fechaCreacion = new Date();
         fechaCaducidad = new Date();
@@ -1151,7 +1113,7 @@ function createElementList () {
         errorMessage = 'puesto';
     } else if(listaSeleccionada[0].tipo == 7) { // Agencia
         nombre = $("#elementoNombre").val();
-        valor = '';
+        valor = '0';
         fechaCreacion = new Date();
         fechaCaducidad = new Date();
         errorMessage = 'agencia';
@@ -1167,59 +1129,70 @@ function createElementList () {
             if(fechaCaducidad.getTime() > 0) {
         		if(idLista.length > 0) {
         			if(nombre.length > 0 && nombre.length < 121){
-        				if(valor.length > 0 && valor.length < 51){
-                            if(saldo.toString().length > 0){
-                                if( (listaSeleccionada[0].tipo == 6 && puesto.length>0) || (listaSeleccionada[0].tipo == 3 && puesto.length>0) || listaSeleccionada[0].tipo == 1 || listaSeleccionada[0].tipo == 2 || listaSeleccionada[0].tipo == 4 || listaSeleccionada[0].tipo == 5 || listaSeleccionada[0].tipo == 7 || listaSeleccionada[0].tipo == 8 || listaSeleccionada[0].tipo == 10) {
-                                    if(!isNaN(saldo)) {
-                    					const transaction = new sql.Transaction( pool1 );
-                    				    transaction.begin(err => {
-                    				        var rolledBack = false;
-                    				        transaction.on('rollback', aborted => {
-                    				            // emited with aborted === true
-                    				            rolledBack = true;
-                    				        });
-                    				        const request = new sql.Request(transaction);
-                    				        request.query("insert into ListasVariables (idLista, nombre, valor, saldo, fechaCreacion, fechaCaducidad, puesto) values ("+idLista+",'"+nombre+"','"+valor+"',"+saldo+",'"+formatDateCreation(fechaCreacion)+"','"+formatDateCreation(fechaCaducidad)+"','"+puesto+"')", (err, result) => {
-                    				            if (err) {
-                    				                if (!rolledBack) {
-                    				                    transaction.rollback(err => {
-                    				                        $("body").overhang({
-                                                                type: "error",
-                                                                primary: "#f84a1d",
-                                                                accent: "#d94e2a",
-                                                                message: "Error en inserción en la tabla de ListasVariables.",
-                                                                overlay: true,
-                                                                closeConfirm: true
-                                                            });
-                    				                    });
-                    				                }
-                    				            }  else {
-                    				                transaction.commit(err => {
-                    				                    // ... error checks
-                    				                    $("body").overhang({
-                    									  	type: "success",
-                    									  	primary: "#40D47E",
-                    						  				accent: "#27AE60",
-                    									  	message: "Elemento de lista creada con éxito.",
-                    									  	duration: 2,
-                    									  	overlay: true
-                    									});
-                    									$("#elementoNombre").val('');
-                    									$("#elementoValor").val('');
-                                                        $("#idClienteCueOp").val('');
-                                                        $("#elementoPuesto").val('');
-                                                        $("#saldoCueOp").val('');
-                    									loadListListsExcel();
-                    				                });
-                    				            }
-                    				        });
-                    				    }); // fin transaction
+        				if(valor.length > 0 && $.trim(valor).length < 51){
+                            if(!/\s/.test(valor)) {
+                                if(saldo.toString().length > 0){
+                                    if( (listaSeleccionada[0].tipo == 6 && $.trim(puesto).length>0) || (listaSeleccionada[0].tipo == 3 && $.trim(puesto).length>0) || listaSeleccionada[0].tipo == 1 || listaSeleccionada[0].tipo == 2 || listaSeleccionada[0].tipo == 4 || listaSeleccionada[0].tipo == 5 || listaSeleccionada[0].tipo == 7 || listaSeleccionada[0].tipo == 8 || listaSeleccionada[0].tipo == 9 || listaSeleccionada[0].tipo == 10) {
+                                        if(!isNaN(saldo)) {
+                        					const transaction = new sql.Transaction( pool1 );
+                        				    transaction.begin(err => {
+                        				        var rolledBack = false;
+                        				        transaction.on('rollback', aborted => {
+                        				            // emited with aborted === true
+                        				            rolledBack = true;
+                        				        });
+                        				        const request = new sql.Request(transaction);
+                        				        request.query("insert into ListasVariables (idLista, nombre, valor, saldo, fechaCreacion, fechaCaducidad, puesto) values ("+idLista+",'"+nombre+"','"+$.trim(valor)+"',"+saldo+",'"+formatDateCreation(fechaCreacion)+"','"+formatDateCreation(fechaCaducidad)+"','"+$.trim(puesto)+"')", (err, result) => {
+                        				            if (err) {
+                        				                if (!rolledBack) {
+                        				                    transaction.rollback(err => {
+                        				                        $("body").overhang({
+                                                                    type: "error",
+                                                                    primary: "#f84a1d",
+                                                                    accent: "#d94e2a",
+                                                                    message: "Error en inserción en la tabla de ListasVariables.",
+                                                                    overlay: true,
+                                                                    closeConfirm: true
+                                                                });
+                        				                    });
+                        				                }
+                        				            }  else {
+                        				                transaction.commit(err => {
+                        				                    // ... error checks
+                        				                    $("body").overhang({
+                        									  	type: "success",
+                        									  	primary: "#40D47E",
+                        						  				accent: "#27AE60",
+                        									  	message: "Elemento de lista creada con éxito.",
+                        									  	duration: 1,
+                        									  	overlay: true
+                        									});
+                        									$("#elementoNombre").val('');
+                        									$("#elementoValor").val('');
+                                                            $("#idClienteCueOp").val('');
+                                                            $("#elementoPuesto").val('');
+                                                            $("#saldoCueOp").val('');
+                        									loadListListsExcel();
+                        				                });
+                        				            }
+                        				        });
+                        				    }); // fin transaction
+                                        } else {
+                                            $("body").overhang({
+                                                type: "error",
+                                                primary: "#f84a1d",
+                                                accent: "#d94e2a",
+                                                message: "Ingrese un número válido para el saldo.",
+                                                overlay: true,
+                                                closeConfirm: true
+                                            });
+                                        }
                                     } else {
                                         $("body").overhang({
                                             type: "error",
                                             primary: "#f84a1d",
                                             accent: "#d94e2a",
-                                            message: "Ingrese un número válido para el saldo.",
+                                            message: "Ingrese un valor válido para el "+errorMessage+".",
                                             overlay: true,
                                             closeConfirm: true
                                         });
@@ -1229,7 +1202,7 @@ function createElementList () {
                                         type: "error",
                                         primary: "#f84a1d",
                                         accent: "#d94e2a",
-                                        message: "Ingrese un valor válido para el "+errorMessage+".",
+                                        message: "Ingrese un valor para el saldo.",
                                         overlay: true,
                                         closeConfirm: true
                                     });
@@ -1239,7 +1212,7 @@ function createElementList () {
                                     type: "error",
                                     primary: "#f84a1d",
                                     accent: "#d94e2a",
-                                    message: "Ingrese un valor para el saldo.",
+                                    message: "El valor del elemento no puede contener espacios.",
                                     overlay: true,
                                     closeConfirm: true
                                 });
@@ -1308,28 +1281,28 @@ function createElementList () {
 
 function updateElementList () {
 	var idLista = $("#elementosDeListaModify").val();
+    var encontroLista = arregloListas.filter(function(object) {
+                    return ( object.ID == idLista );
+                });
 	var nombre = $("#nombreCuentaUpdate").val();
 	var valor = $("#numeroCuentaUpdate").val();
-    var saldo = $("#saldoCuentaUpdate").val();
+    //var saldo = $("#saldoCuentaUpdate").val();
+    var saldo = 0;
     if(isNaN(saldo))
         saldo = 0;
     var fechaInicio =  new Date();
     var fechaFin =  new Date();
-    if(idLista == 1) {
+    if(encontroLista[0].tipo == 1) {
         fechaInicio = $("#fechaCreacionModalUpdate").datepicker('getDate');
         fechaFin = $("#fechaCaducidadModalUpdate").datepicker('getDate');
     }
     var puesto = $("#saldoCuentaUpdate").val();
-    console.log("idLista = "+idLista)
-    console.log("nombre = "+nombre)
-    console.log("valor = "+valor)
-    console.log("saldo = "+saldo)
-    console.log(fechaInicio)
-    console.log(fechaFin)
-    console.log("puesto = "+puesto)
+    if(encontroLista[0].tipo == 6) {
+        puesto = $("#idClienteModalUpdate").val();
+    }
 	if(idLista.length > 0) {
 		if(nombre.length > 0 && nombre.length < 121){
-			if(nombre.length > 0 && nombre.length < 51){
+			if(valor.length > 0 && valor.length < 51){
 				$("body").overhang({
 				  	type: "confirm",
 				  	primary: "#f5a433",
@@ -1372,7 +1345,7 @@ function updateElementList () {
 											  	primary: "#40D47E",
 								  				accent: "#27AE60",
 											  	message: "Elemento de lista modificado con éxito.",
-											  	duration: 2,
+											  	duration: 1,
 											  	overlay: true
 											});
 											loadListListsExcel();
@@ -1460,7 +1433,7 @@ function deleteElementList () {
 								  	primary: "#40D47E",
 					  				accent: "#27AE60",
 								  	message: "Elemento de lista eliminado con éxito.",
-								  	duration: 2,
+								  	duration: 1,
 								  	overlay: true
 								});
 								$("#elementoNombreUpdate").val('');
@@ -1495,10 +1468,12 @@ function showListsFieldsUpdate (id) {
         $('#labelNombreExcelUpdate').text("Nombre de Elemento");
         $('#labelCuentaExcelUpdate').text("# de Cuenta de Elemento");
         $('#labelFechaCreacionExcelUpdate').text("Inicio de vigencia de Elemento");
+        $('#labelFechaCaducidadExcelUpdate').show();
+        $('#astVigencia').show();
         $('#labelFechaCaducidadExcelUpdate').text("Fin de vigencia de Elemento");
         $("#nombreCuentaUpdate").attr("placeholder", "Nombre de Elemento");
         $("#numeroCuentaUpdate").attr("placeholder", "Cuenta de Elemento");
-        $('#saldoModalFieldUpdate').hide();
+        //$('#saldoModalFieldUpdate').hide();
         $('#fechasModalFieldUpdate').show();
         $('#labelCuentaExcelUpdate').show();
         $("#nombreCuentaUpdate").val(listasVariablesSeleccionada.nombre);
@@ -1522,25 +1497,28 @@ function showListsFieldsUpdate (id) {
         $("#numeroCuentaUpdate").show();
         $("#asteriskNumUpdate").show();
         $("#cuentOpFieldUpdate").hide();
+        $("#saldoModalFieldUpdate").hide();
     } else if(valor == 6) {
         $('#labelNombreExcelUpdate').text("Nombre de Elemento");
         $('#labelCuentaExcelUpdate').text("# de Cuenta de Elemento");
         $('#labelFechaCreacionExcelUpdate').text("ID de Cliente");
-        $('#labelFechaCaducidadExcelUpdate').text("Saldo de la cuenta del cliente");
+        $('#labelFechaCaducidadExcelUpdate').hide();
+        $('#astVigencia').hide();
         $("#nombreCuentaUpdate").attr("placeholder", "Nombre de Elemento");
         $("#numeroCuentaUpdate").attr("placeholder", "Cuenta de Elemento");
         /*$("#fechaCreacionModalUpdate").attr("placeholder", "ID de Cliente");
         $("#fechaCaducidadModalUpdate").attr("placeholder", "Saldo de cuenta");*/
-        $('#saldoModalFieldUpdate').hide();
+        //$('#saldoModalFieldUpdate').hide();
         $('#fechasModalFieldUpdate').show();
         $('#labelCuentaExcelUpdate').show();
         $("#nombreCuentaUpdate").val(listasVariablesSeleccionada.nombre);
         $("#numeroCuentaUpdate").val(listasVariablesSeleccionada.valor);
-        $("#idClienteModalUpdate").val(listasVariablesSeleccionada.nombre);
+        $("#idClienteModalUpdate").val(listasVariablesSeleccionada.puesto);
         $("#saldoClienteModalUpdate").val(listasVariablesSeleccionada.saldo);
         $("#numeroCuentaUpdate").show();
         $("#asteriskNumUpdate").show();
         $("#cuentOpFieldUpdate").show();
+        $("#saldoModalFieldUpdate").hide();
     } else if(valor == 3) {
         $('#labelNombreExcelUpdate').text("Nombre de Cliente");
         $('#labelCuentaExcelUpdate').text("ID de Cliente");
@@ -1549,35 +1527,38 @@ function showListsFieldsUpdate (id) {
         $("#numeroCuentaUpdate").attr("placeholder", "ID de Cliente");
         $("#saldoCuentaUpdate").attr("placeholder", "Nombre de puesto");
         $('#fechasModalFieldUpdate').hide();
-        $('#saldoModalFieldUpdate').show();
+        //$('#saldoModalFieldUpdate').show();
         $('#labelCuentaExcelUpdate').show();
         $("#nombreCuentaUpdate").val(listasVariablesSeleccionada.nombre);
         $("#numeroCuentaUpdate").val(listasVariablesSeleccionada.valor);
         $("#saldoCuentaUpdate").val(listasVariablesSeleccionada.puesto);
         $("#numeroCuentaUpdate").show();
         $("#asteriskNumUpdate").show();
+        $("#saldoModalFieldUpdate").show();
     } else if(valor == 7) {
         $('#labelNombreExcelUpdate').text("El nombre de la agencia");
         $('#labelCuentaExcelUpdate').hide();
         $("#numeroCuentaUpdate").hide();
         $('#fechasModalFieldUpdate').hide();
-        $('#saldoModalFieldUpdate').hide();
+        //$('#saldoModalFieldUpdate').hide();
         $("#nombreCuentaUpdate").val(listasVariablesSeleccionada.nombre);
         $("#asteriskNumUpdate").hide();
         $("#cuentOpFieldUpdate").hide();
+        $("#saldoModalFieldUpdate").hide();
     } else {
         $('#labelNombreExcelUpdate').text("El nombre del elemento");
         $('#labelCuentaExcelUpdate').text("El valor a comparar en las tablas");
         $("#nombreCuentaUpdate").attr("placeholder", "Nombre del elemento");
         $("#numeroCuentaUpdate").attr("placeholder", "El valor del elemento");
         $('#fechasModalFieldUpdate').hide();
-        $('#saldoModalFieldUpdate').hide();
+        //$('#saldoModalFieldUpdate').hide();
         $('#labelCuentaExcelUpdate').show();
         $("#nombreCuentaUpdate").val(listasVariablesSeleccionada.nombre);
         $("#numeroCuentaUpdate").val(listasVariablesSeleccionada.valor);
         $("#numeroCuentaUpdate").show();
         $("#asteriskNumUpdate").show();
         $("#cuentOpFieldUpdate").hide();
+        $("#saldoModalFieldUpdate").hide();
     }
 }
 
@@ -2529,7 +2510,6 @@ function printErrorFile () {
                 overlay: true,
                 closeConfirm: true
             });
-            loadListListsExcelAll();
             loadListListsExcel();
         } else if(insertoEnDBListas) {
             $(".loadingScreen").hide();
@@ -2539,10 +2519,9 @@ function printErrorFile () {
                 primary: "#40D47E",
                 accent: "#27AE60",
                 message: "Importación con éxito.",
-                duration: 2,
+                duration: 1,
                 overlay: true
             });
-            loadListListsExcelAll();
             loadListListsExcel();
         } else {
             $(".loadingScreen").hide();
@@ -2785,7 +2764,7 @@ function createFOSEDEVariablesDB (simbolo, moneda, montoFosede) {
                         primary: "#40D47E",
                         accent: "#27AE60",
                         message: "Variable modificada con éxito.",
-                        duration: 2,
+                        duration: 1,
                         overlay: true
                     });
                     loadFosede();
@@ -2826,7 +2805,7 @@ function updateFOSEDEVariablesDB (montoFosede, id) {
 					  	primary: "#40D47E",
 		  				accent: "#27AE60",
 					  	message: "Variable modificada con éxito.",
-					  	duration: 2,
+					  	duration: 1,
 					  	overlay: true
 					});
                     loadFosede();
@@ -2905,10 +2884,10 @@ function goConfig () {
 }
 
 function logout () {
-	$("#app_root").empty();
+    $("#app_full").empty();
     session.defaultSession.clearStorageData([], (data) => {});
     cleanup();
-    $("#app_root").load("src/login.html");
+    $("#app_full").load("src/login.html");
 }
 
 function goReports () {

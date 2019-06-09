@@ -1,4 +1,5 @@
-$("#app_root").load("src/login.html");
+$("#app_full").empty();
+$("#app_full").load("src/login.html");
 //setTimeout(function(){ $("#app_root").empty(); }, 4000);
 
 var variableDeVariableID = null;

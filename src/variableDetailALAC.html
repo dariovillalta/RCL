@@ -3,354 +3,273 @@
 <link href="src/libs/overhang/overhang.min.css" rel="stylesheet">
 <link type="text/css" rel="stylesheet" href="src/libs/select2/select2.css" />
 <link href="src/libs/custom.min.css" rel="stylesheet">
-<div class="container body">
-  <div class="main_container">
-    <div class="col-md-3 left_col">
-      <div class="left_col scroll-view">
-        <div class="navbar nav_title" style="border: 0;" id="wrapper">
-          <a onclick="goHome()" style="height: 100%;" class="site_title cursorHand"><img id="fullLogo" src="src/img/full-logo-example.png" class="logo_company"> <img id="smallLogo" src="src/img/small-logo-example.png" alt="" class="logo_company_solo"></a>
-        </div>
-
-        <div class="clearfix"></div>
-
-        <!-- menu profile quick info -->
-        <div class="profile clearfix">
-          <div class="profile_info">
-            <span>Bienvenido,</span>
-            <h2 id="nameUser"></h2>
-          </div>
-        </div>
-        <!-- /menu profile quick info -->
-
-        <br />
-
-        <!-- sidebar menu -->
-        <div id="sidebar-menu" class="main_menu_side hidden-print main_menu">
-          <div class="menu_section">
-            <h3>General</h3>
-            <ul class="nav side-menu">
-              <li><a onclick="goHome()"><i class="fa fa-home"></i> Home </a>
-              </li>
-              <li><a onclick="goRCL()"><i class="fa fa-bar-chart"></i> C&aacute;lculo Diario de RCL </a>
-              </li>
-              <li><a onclick="goReports()"><i class="fa fa-list-alt"></i> Reporter&iacute;a </a>
-              </li>
-              <li><a onclick="goGraphics()"><i class="fa fa-bar-chart"></i> Gr&aacute;ficos </a>
-              </li>
-            </ul>
-          </div>
-
-        </div>
-        <!-- /sidebar menu -->
-      </div>
+<!-- page content -->
+<div>
+  
+  <div class="clearfix"></div>
+  
+  <a onclick="goVariables()" style="margin: 1%;">
+    <div style="border-radius: 15px; background-color: #EDEDED; height: 3em; width: 5vw; text-align: center; cursor: pointer; padding: 1%; display: flex; align-items: center; justify-content: center;">
+      <i class="fa fa-arrow-circle-o-left" style="font-size: 2em;"></i>
     </div>
+  </a>
 
-    <!-- top navigation -->
-    <div class="top_nav">
-      <div class="nav_menu">
-        <nav>
-          <div class="nav toggle">
-            <a id="menu_toggle"><i class="fa fa-bars"></i></a>
-          </div>
-
-          <ul class="nav navbar-nav navbar-right">
-            <li class="">
-              <a href="javascript:;" class="user-profile dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
-                <img src="" alt=""> <span id="navbar_name"></span>
-                <span class=" fa fa-angle-down"></span>
-              </a>
-              <ul class="dropdown-menu dropdown-usermenu pull-right">
-                <li id="varLabel"><a onclick="goVariables()"> Editar Variables de F&oacute;rmula </a></li>
-                <li id="configLabel"><a onclick="goLists()"> Mantenimiento de Listas </a></li>
-                <li id="userLabel"><a onclick="goUsers()"> Control de Usuarios y Logo </a></li>
-                <li id="importLabel"><a onclick="goConnections()"> Importar Tablas </a></li>
-                <li id="configLabel"><a onclick="goConfig()"> Configuraci&oacute;n de Rutina </a></li>
-                <li><a onclick="logout()"><i class="fa fa-sign-out pull-right"></i> Cerrar Sesi&oacute;n</a></li>
-              </ul>
-            </li>
-
-            <!-- <li role="presentation" class="dropdown">
-              <a href="javascript:;" class="dropdown-toggle info-number" data-toggle="dropdown" aria-expanded="false">
-                <i class="fa fa-envelope-o"></i>
-                <span class="badge bg-green">6</span>
-              </a>
-              <ul id="menu1" class="dropdown-menu list-unstyled msg_list" role="menu">
-                <li>
-                  <a>
-                    <span class="image"><img src="" alt="Profile Image" /></span>
-                    <span>
-                      <span>John Smith</span>
-                      <span class="time">3 mins ago</span>
-                    </span>
-                    <span class="message">
-                      Film festivals used to be do-or-die moments for movie makers. They were where...
-                    </span>
-                  </a>
-                </li>
-                <li>
-                  <a>
-                    <span class="image"><img src="" alt="Profile Image" /></span>
-                    <span>
-                      <span>John Smith</span>
-                      <span class="time">3 mins ago</span>
-                    </span>
-                    <span class="message">
-                      Film festivals used to be do-or-die moments for movie makers. They were where...
-                    </span>
-                  </a>
-                </li>
-                <li>
-                  <a>
-                    <span class="image"><img src="" alt="Profile Image" /></span>
-                    <span>
-                      <span>John Smith</span>
-                      <span class="time">3 mins ago</span>
-                    </span>
-                    <span class="message">
-                      Film festivals used to be do-or-die moments for movie makers. They were where...
-                    </span>
-                  </a>
-                </li>
-                <li>
-                  <a>
-                    <span class="image"><img src="" alt="Profile Image" /></span>
-                    <span>
-                      <span>John Smith</span>
-                      <span class="time">3 mins ago</span>
-                    </span>
-                    <span class="message">
-                      Film festivals used to be do-or-die moments for movie makers. They were where...
-                    </span>
-                  </a>
-                </li>
-                <li>
-                  <div class="text-center">
-                    <a>
-                      <strong>See All Alerts</strong>
-                      <i class="fa fa-angle-right"></i>
-                    </a>
-                  </div>
-                </li>
-              </ul>
-            </li> -->
-          </ul>
-        </nav>
-      </div>
-    </div>
-    <!-- /top navigation -->
-
-    <!-- page content -->
-    <div class="right_col" role="main">
-      
-      <div class="clearfix"></div>
-      
-      <a onclick="goVariables()" style="margin: 1%;">
-        <div style="border-radius: 15px; background-color: #EDEDED; height: 3em; width: 5vw; text-align: center; cursor: pointer; padding: 1%; display: flex; align-items: center; justify-content: center;">
-          <i class="fa fa-arrow-circle-o-left" style="font-size: 2em;"></i>
-        </div>
-      </a>
-
-      <div id="variables_div" class="row">
-        <div class="col-md-12">
-          <div class="x_panel">
-            
-            <div class="message_wrapper">
-              <blockquote class="message">
-                <div class="row">
-                  <div class="col-xs-12 tile_stats_count" id="wrapper">
-                    <div class="row">
-                      <div class="col-xs-4">
-                        <div style='font-family:"Helvetica Neue",Roboto,Arial,"Droid Sans",sans-serif; font-size:30px;line-height:47px;'>Nombre:</div>
-                      </div>
-                      <div class="col-xs-8">
-                        <div id="variableOfVariableName" style='font-size:30px;line-height:47px;' class="count"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="ln_solid"></div>
-                <div class="row">
-                  <div class="col-xs-12 tile_stats_count" id="wrapper">
-                    <div class="row">
-                      <div class="col-xs-4">
-                        <div style='font-family:"Helvetica Neue",Roboto,Arial,"Droid Sans",sans-serif; font-size:30px;line-height:47px;'>Descripci&oacute;n:</div>
-                      </div>
-                      <div class="col-xs-8">
-                        <div id="variableOfVariableDescription" style='font-size:30px;line-height:47px;' class="count"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="ln_solid"></div>
-                <div class="row">
-                  <div class="col-xs-12 tile_stats_count" id="wrapper">
-                    <div class="row">
-                      <div class="col-xs-4">
-                        <div style='font-family:"Helvetica Neue",Roboto,Arial,"Droid Sans",sans-serif; font-size:30px;line-height:47px;'>Factor:</div>
-                      </div>
-                      <div class="col-xs-8">
-                        <div id="variableOfVariableFactor" style='font-size:30px;line-height:47px;' class="count"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <br/>
-                <!-- <div class="row" id="wrapper">
-                  <button type="button" onclick="importExcel()" class="btn btn-success">Guardar</button>
-                </div> -->
-              </blockquote>
-              <br />
-            </div>
-
+  <div id="variables_div" class="row">
+    <div class="col-md-12">
+      <div class="x_panel">
+        
+        <div class="message_wrapper">
+          <blockquote class="message">
             <div class="row">
-              <div class="x_panel" role="tabpanel" data-example-id="togglable-tabs">
-                <div id="wrapper">
-                  <h4>Creaci&oacute;n de Agrupaciones</h4>
-                </div>
-                <div class="clearfix"></div>
-                  <div class="row">
-                    <div class="row" style="margin: 0% 5%;">
-                      <h2>Agrupaciones Creadas </h2>
-                      <ul id="listRules" class="to_do text-center">
-                      </ul>
-                    </div>
-                    <div class="row" style="margin: 0% 5%;">
-                      <h2>F&oacute;rmula </h2>
-                      <ul id="formulaRule" class="to_do text-center" style="word-wrap: break-word;">
-                      </ul>
-                    </div>
-                    <hr class="style11">
-
-                    <div class="row">
-                      <h2 style="padding-left: 5%;">Creaci&oacute;n de Variables</h2>
-                      <br/>
-                      <div class="col-xs-6">
-                        <div class="row">
-                          <div id="wrapper">
-                            <h5>Variable 1</h5>
-                          </div>
-                          <ul id="variables1List" class="to_do text-center" style="margin: 0% 10%;">
-                          </ul>
-                        </div>
-                        <br/><br/>
-                        <div class="row">
-                          <div id="wrapper">
-                            <h5>Variable 2</h5>
-                          </div>
-                          <ul id="variables2List" class="to_do text-center" style="margin: 0% 10%;">
-                          </ul>
-                        </div>
-                      </div>
-                      <div class="col-xs-6">
-                        <div class="row">
-                          <div class="col-xs-8 col-xs-offset-2">
-                            <form class="form-horizontal form-label-left">
-                              <div class="form-group">
-                                <label>Ingrese Nueva Variable</label>
-                                <input id="nombreVar" type="text" class="form-control" placeholder="Nombre de Variable">
-                              </div>
-                            </form>
-                          </div>
-                        </div>
-                        <div class="row">
-                          <form class="form-horizontal form-label-left" style="width: 80%; display: block; margin: 0 auto;">
-                            <div class="form-group">
-                              <label>Seleccionar Lista</label>
-                              <div class="select-style">
-                                <select id="listaSelectReglasALAC" onchange="loadManualContable($('#listaSelectReglasALAC').val())">
-                                </select>
-                              </div>
-                            </div>
-                          </form>
-                          <div class="col-xs-12">
-                            <select id="listaActivosSelect" class="select2-list form-control" multiple="multiple"></select>
-                          </div>
-                          <br/><br/><br/>
-                          <div id="wrapper">
-                            <label>
-                              <input id="nombreElementoListaALAC" type="radio" class="flat" name="listaValorRadioALAC" checked/> Campo Nombre de Elemento
-                            </label>
-                            <label>
-                              <input id="valorElementoListaALAC" type="radio" class="flat" name="listaValorRadioALAC"/> Campo Valor de Elemento
-                            </label>
-                          </div>
-                          <br/><br/>
-                          <div class="row">
-                            <div id="wrapper">
-                              <button onclick="saveNewRule()" type="button" class="btn btn-success">Crear</button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <hr class="style11">
-
-                    <div id="agrupacionReglasALAC" class="row">
-                      <h2 style="padding-left: 5%;">Creaci&oacute;n Algebraica</h2>
-                      <br/>
-                      <div class="col-xs-4">
-                        <div id="wrapper">
-                          <h5>Variable 1</h5>
-                        </div>
-                        <select id="listaSelectVariable1" class="select2_multiple form-control" size="10" multiple="multiple"></select>
-                      </div>
-                      <div class="col-xs-4">
-                        <div class="row">
-                          <div class="col-xs-2 col-xs-offset-1">
-                            <label>
-                              <input id="masOperadorRadio" type="radio" class="flat" name="opRadio" value="+"> +
-                            </label>
-                          </div>
-                          <div class="col-xs-2 col-xs-offset-1">
-                            <label>
-                              <input id="porOperadorRadio" type="radio" class="flat" name="opRadio" value="x"> x
-                            </label>
-                          </div>
-                          <div class="col-xs-2 col-xs-offset-1">
-                            <label>
-                              <input id="menOperadorRadio" type="radio" class="flat" name="opRadio" value="-"> -
-                            </label>
-                          </div>
-                          <div class="col-xs-2 col-xs-offset-1">
-                            <label>
-                              <input id="entOperadorRadio" type="radio" class="flat" name="opRadio" value="/"> /
-                            </label>
-                          </div>
-                        </div>
-                        <br/><br/>
-                        <div class="row">
-                          <div id="wrapper">
-                            <button onclick="saveRule()" type="button" class="btn btn-success">Crear</button>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="col-xs-4">
-                        <div id="wrapper">
-                          <h5>Variable 2</h5>
-                        </div>
-                        <select id="listaSelectVariable2" class="select2_multiple form-control" size="10" multiple="multiple"></select>
-                      </div>
-                    </div>
-
+              <div class="col-xs-12 tile_stats_count" id="wrapper">
+                <div class="row">
+                  <div class="col-xs-4">
+                    <div style='font-family:"Helvetica Neue",Roboto,Arial,"Droid Sans",sans-serif; font-size:30px;line-height:47px;'>Nombre:</div>
+                  </div>
+                  <div class="col-xs-8">
+                    <div id="variableOfVariableName" style='font-size:30px;line-height:47px;' class="count"></div>
                   </div>
                 </div>
               </div>
             </div>
+            <div class="ln_solid"></div>
+            <div class="row">
+              <div class="col-xs-12 tile_stats_count" id="wrapper">
+                <div class="row">
+                  <div class="col-xs-4">
+                    <div style='font-family:"Helvetica Neue",Roboto,Arial,"Droid Sans",sans-serif; font-size:30px;line-height:47px;'>Descripci&oacute;n:</div>
+                  </div>
+                  <div class="col-xs-8">
+                    <div id="variableOfVariableDescription" style='font-size:30px;line-height:47px;' class="count"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="ln_solid"></div>
+            <div class="row">
+              <div class="col-xs-12 tile_stats_count" id="wrapper">
+                <div class="row">
+                  <div class="col-xs-4">
+                    <div style='font-family:"Helvetica Neue",Roboto,Arial,"Droid Sans",sans-serif; font-size:30px;line-height:47px;'>Factor:</div>
+                  </div>
+                  <div class="col-xs-8">
+                    <div id="variableOfVariableFactor" style='font-size:30px;line-height:47px;' class="count"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <br/>
+            <!-- <div class="row" id="wrapper">
+              <button type="button" onclick="importExcel()" class="btn btn-success">Guardar</button>
+            </div> -->
+          </blockquote>
+          <br />
+        </div>
 
+        <div class="row">
+          <div class="x_panel" role="tabpanel" data-example-id="togglable-tabs">
+            <div id="wrapper">
+              <h4>Creaci&oacute;n de Agrupaciones</h4>
+            </div>
+            <div class="clearfix"></div>
+              <div class="row">
+                <div class="row" style="margin: 0% 5%;">
+                  <h2>Agrupaciones Creadas </h2>
+                  <ul id="listRules" class="to_do text-center">
+                  </ul>
+                </div>
+                <div class="row" style="margin: 0% 5%;">
+                  <h2>F&oacute;rmula </h2>
+                  <ul id="formulaRule" class="to_do text-center" style="word-wrap: break-word;">
+                  </ul>
+                </div>
+                <hr class="style11">
+
+                <div class="row">
+                  <h2 style="padding-left: 5%;">Creaci&oacute;n de Variables</h2>
+                  <br/>
+                  <div class="col-xs-6">
+                    <div class="row">
+                      <div id="wrapper">
+                        <h5>Variable 1</h5>
+                      </div>
+                      <ul id="variables1List" class="to_do text-center" style="margin: 0% 10%;">
+                      </ul>
+                    </div>
+                    <br/><br/>
+                    <div class="row">
+                      <div id="wrapper">
+                        <h5>Variable 2</h5>
+                      </div>
+                      <ul id="variables2List" class="to_do text-center" style="margin: 0% 10%;">
+                      </ul>
+                    </div>
+                  </div>
+                  <div class="col-xs-6">
+                    <div class="row">
+                      <div class="col-xs-8 col-xs-offset-2">
+                        <form class="form-horizontal form-label-left">
+                          <div class="form-group">
+                            <label>Ingrese Nueva Variable</label>
+                            <input id="nombreVar" type="text" class="form-control" placeholder="Nombre de Variable">
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                    <div class="row">
+                      <form class="form-horizontal form-label-left" style="width: 80%; display: block; margin: 0 auto;">
+                        <div class="form-group">
+                          <label>Seleccionar Lista</label>
+                          <div class="select-style">
+                            <select id="listaSelectReglasALAC" onchange="loadManualContable($('#listaSelectReglasALAC').val())">
+                            </select>
+                          </div>
+                        </div>
+                      </form>
+                      <div class="col-xs-12">
+                        <select id="listaActivosSelect" class="select2-list form-control" multiple="multiple"></select>
+                      </div>
+                      <br/><br/><br/>
+                      <div id="wrapper">
+                        <label>
+                          <input id="nombreElementoListaALAC" type="radio" class="flat" name="listaValorRadioALAC" checked/> Campo Nombre de Elemento
+                        </label>
+                        <label>
+                          <input id="valorElementoListaALAC" type="radio" class="flat" name="listaValorRadioALAC"/> Campo Valor de Elemento
+                        </label>
+                      </div>
+                      <br/><br/>
+                      <div class="row">
+                        <div id="wrapper">
+                          <button onclick="saveNewRule()" type="button" class="btn btn-success">Crear</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <hr class="style11">
+
+                <div id="agrupacionReglasALAC" class="row">
+                  <h2 style="padding-left: 5%;">Creaci&oacute;n Algebraica</h2>
+                  <br/>
+                  <div class="col-xs-4">
+                    <div id="wrapper">
+                      <h5>Variable 1</h5>
+                    </div>
+                    <select id="listaSelectVariable1" class="select2_multiple form-control" size="10" multiple="multiple"></select>
+                  </div>
+                  <div class="col-xs-4">
+                    <div class="row">
+                      <div class="col-xs-2 col-xs-offset-1">
+                        <label>
+                          <input id="masOperadorRadio" type="radio" class="flat" name="opRadio" value="+"> +
+                        </label>
+                      </div>
+                      <div class="col-xs-2 col-xs-offset-1">
+                        <label>
+                          <input id="porOperadorRadio" type="radio" class="flat" name="opRadio" value="x"> x
+                        </label>
+                      </div>
+                      <div class="col-xs-2 col-xs-offset-1">
+                        <label>
+                          <input id="menOperadorRadio" type="radio" class="flat" name="opRadio" value="-"> -
+                        </label>
+                      </div>
+                      <div class="col-xs-2 col-xs-offset-1">
+                        <label>
+                          <input id="entOperadorRadio" type="radio" class="flat" name="opRadio" value="/"> /
+                        </label>
+                      </div>
+                    </div>
+                    <br/><br/>
+                    <div class="row">
+                      <div id="wrapper">
+                        <button onclick="saveRule()" type="button" class="btn btn-success">Crear</button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-xs-4">
+                    <div id="wrapper">
+                      <h5>Variable 2</h5>
+                    </div>
+                    <select id="listaSelectVariable2" class="select2_multiple form-control" size="10" multiple="multiple"></select>
+                  </div>
+                </div>
+
+              </div>
+            </div>
           </div>
         </div>
-      </div> <!-- /end VARIABLES -->
 
+      </div>
     </div>
-    <!-- /page content -->
+  </div> <!-- /end VARIABLES -->
 
+</div>
+<!-- /page content -->
+
+<!-- MODAL ELEMENTO LISTA-->
+<div id="modalEdit" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <div class="text-divider"><h2>Modificar Variable</h2></div>
+      </div>
+      <div class="modal-body">
+        <form id="" data-parsley-validate class="form-horizontal form-label-left">
+
+          <div class="row">
+            <div class="col-xs-10 col-xs-offset-1">
+              <form class="form-horizontal form-label-left">
+                <div class="form-group">
+                  <label id="labelNombreExcelUpdate">Nombre de Variable</label>
+                  <input id="nombreVarEdit" type="text" class="form-control" placeholder="Nombre de Variable">
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <form class="form-horizontal form-label-left" style="width: 80%; display: block; margin: 0 auto;">
+            <div class="form-group">
+              <label>Seleccionar Lista</label>
+              <div class="select-style">
+                <select id="listaSelectReglasALACEdit" onchange="loadManualContableEdit($('#listaSelectReglasALACEdit').val())">
+                </select>
+              </div>
+            </div>
+          </form>
+          <div class="col-xs-10 col-xs-offset-1">
+            <select id="listaActivosSelectEdit" class="select2-list form-control" multiple="multiple"></select>
+          </div>
+          <br/><br/><br/>
+          <div id="wrapper">
+            <label>
+              <input id="nombreElementoListaALACEdit" type="radio" class="flat" name="listaValorRadioALACEdit"/> Campo Nombre de Elemento
+            </label>
+            <label>
+              <input id="valorElementoListaALACEdit" type="radio" class="flat" name="listaValorRadioALACEdit" checked/> Campo Valor de Elemento
+            </label>
+          </div>
+
+        </form>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" onclick="$('#modalEdit').modal('toggle');" class="btn btn-info">Cancelar</button>
+        <button type="button" onclick="deleteRuleModal()" class="btn btn-danger">Eliminar</button>
+        <button type="button" onclick="modifyVar()" class="btn btn-success">Guardar</button>
+      </div>
+    </div>
   </div>
 </div>
 
 <script src="src/libs/jquery.inputmask/dist/min/jquery.inputmask.bundle.min.js"></script>
 
 <script src="src/libs/select2/select2.min.js"></script>
+
+<script src="src/libs/select2/i18n/select2_locale_es.js"></script>
 
 <script src="src/libs/jquery-ui/jquery-ui.min.js"></script>
 

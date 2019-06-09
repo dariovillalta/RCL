@@ -43,7 +43,7 @@ const pool1 = new sql.ConnectionPool(config, err => {
         });
 	} else {
 		console.log('pool loaded');
-		loadVariablesIMG();
+		//loadVariablesIMG();
 		var hoy = new Date();
         loadAssets(hoy, hoy);
 	}
@@ -83,7 +83,7 @@ var arregloActivos = [];
 
 
 /* ****************** 		LOADING IMG 	****************** */
-var filepathFullLogo = '';
+/*var filepathFullLogo = '';
 var filepathSmallLogo = '';
 function loadVariablesIMG () {
 	const transaction = new sql.Transaction( pool1 );
@@ -116,17 +116,11 @@ function loadVariablesIMG () {
                     	if(result.recordset[0].fullLogo.length > 0){
                     		filepathFullLogo = result.recordset[0].fullLogo;
                     		$("#fullLogo").attr("src",filepathFullLogo);
-                    		/*$("#fullLogo").css("display","block");
-                    		$("#fullLogo").css("margin-left","auto");
-                    		$("#fullLogo").css("margin-right","auto");*/
                     	} else
                     		filepathFullLogo = '';
                     	if(result.recordset[0].smallLogo.length > 0){
                     		filepathSmallLogo = result.recordset[0].smallLogo;
                     		$("#smallLogo").attr("src",filepathSmallLogo);
-                    		/*$("#smallLogo").css("display","block");
-                    		$("#smallLogo").css("margin-left","auto");
-                    		$("#smallLogo").css("margin-right","auto");*/
                     	} else
                     		filepathSmallLogo = '';
                     } else {
@@ -138,7 +132,7 @@ function loadVariablesIMG () {
             }
         });
     }); // fin transaction
-}
+}*/
 /* ****************** 		END LOADING IMG 	****************** */
 
 /* ******************       LOADING TOTALS  ********* */
@@ -485,10 +479,10 @@ function goConfig () {
 }
 
 function logout () {
-	$("#app_root").empty();
+    $("#app_full").empty();
     session.defaultSession.clearStorageData([], (data) => {});
     //cleanup();
-    $("#app_root").load("src/login.html");
+    $("#app_full").load("src/login.html");
 }
 
 function goRCL () {

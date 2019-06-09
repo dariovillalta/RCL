@@ -40,7 +40,10 @@ const fs = require('fs');
           protocol: 'file:',
           slashes: true
         }) )
-        win.openDevTools();
+        //win.openDevTools();
+        win.webContents.once('dom-ready', () => {
+          win.webContents.openDevTools()
+        })
 
         //win.setMenu(null)
       

@@ -23,7 +23,6 @@
     "mssql": "4.3.0",
     "nodemailer": "6.1.1",
     "safer-buffer": "2.1.2",
-    "trip.js": "3.3.3",
     "xlsx-style": "0.8.13"
   },
   "build": {

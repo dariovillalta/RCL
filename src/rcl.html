@@ -5,137 +5,63 @@
 <link href="src/libs/overhang/overhang.min.css" rel="stylesheet">
 <link href="src/libs/iCheck/skins/flat/green.css" rel="stylesheet">
 <link href="src/libs/bootstrap-datepicker/datepicker3.css" rel="stylesheet">
-<div class="container body">
-  <div class="main_container">
-    <div class="col-md-3 left_col">
-      <div class="left_col scroll-view">
-        <div class="navbar nav_title" style="border: 0;" id="wrapper">
-          <a onclick="goHome()" style="height: 100%;" class="site_title cursorHand"><img id="fullLogo" src="src/img/full-logo-example.png" class="logo_company"> <img id="smallLogo" src="src/img/small-logo-example.png" alt="" class="logo_company_solo"></a>
+<!-- page content -->
+<div>
+  
+  <div class="clearfix"></div>
+
+  <div id="variables_div" class="row" style="overflow-x: scroll;">
+    <div class="col-md-12">
+      <div class="x_panel">
+        <div class="x_title">
+          <h2>C&aacute;lculo del Ratio de Cobertura de Liquidez</h2>
+          <div class="clearfix"></div>
         </div>
 
-        <div class="clearfix"></div>
+        <div class="x_content">
 
-        <!-- menu profile quick info -->
-        <div class="profile clearfix">
-          <div class="profile_info">
-            <span>Bienvenido,</span>
-            <h2 id="nameUser"></h2>
-          </div>
-        </div>
-        <!-- /menu profile quick info -->
-
-        <br />
-
-        <!-- sidebar menu -->
-        <div id="sidebar-menu" class="main_menu_side hidden-print main_menu">
-          <div class="menu_section">
-            <h3>General</h3>
-            <ul class="nav side-menu">
-              <li><a onclick="goHome()"><i class="fa fa-home"></i> Home </a>
-              </li>
-              <li class="active"><a><i class="fa fa-bar-chart"></i> C&aacute;lculo Diario de RCL </a>
-              </li>
-              <li><a onclick="goReports()"><i class="fa fa-list-alt"></i> Reporter&iacute;a </a>
-              </li>
-              <li><a onclick="goGraphics()"><i class="fa fa-bar-chart"></i> Gr&aacute;ficos </a>
-              </li>
-            </ul>
-          </div>
-
-        </div>
-        <!-- /sidebar menu -->
-      </div>
-    </div>
-
-    <!-- top navigation -->
-    <div class="top_nav">
-      <div class="nav_menu">
-        <nav>
-          <div class="nav toggle">
-            <a id="menu_toggle"><i class="fa fa-bars"></i></a>
-          </div>
-
-          <ul class="nav navbar-nav navbar-right">
-            <li class="">
-              <a href="javascript:;" class="user-profile dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
-                <img src="" alt=""> <span id="navbar_name"></span>
-                <span class=" fa fa-angle-down"></span>
-              </a>
-              <ul class="dropdown-menu dropdown-usermenu pull-right">
-                <li id="varLabel"><a onclick="goVariables()"> Editar Variables de F&oacute;rmula </a></li>
-                <li id="configLabel"><a onclick="goLists()"> Mantenimiento de Listas </a></li>
-                <li id="userLabel"><a onclick="goUsers()"> Control de Usuarios y Logo </a></li>
-                <li id="importLabel"><a onclick="goConnections()"> Importar Tablas </a></li>
-                <li id="configLabel"><a onclick="goConfig()"> Configuraci&oacute;n de Rutina </a></li>
-                <li><a onclick="logout()"><i class="fa fa-sign-out pull-right"></i> Cerrar Sesi&oacute;n</a></li>
-              </ul>
-            </li>
-          </ul>
-        </nav>
-      </div>
-    </div>
-    <!-- /top navigation -->
-
-    <!-- page content -->
-    <div class="right_col" role="main">
-      
-      <div class="clearfix"></div>
-
-      <div id="variables_div" class="row">
-        <div class="col-md-12">
-          <div class="x_panel">
-            <div class="x_title">
-              <h2>C&aacute;lculo del Ratio de Cobertura de Liquidez</h2>
-              <div class="clearfix"></div>
+          <div class="col-md-12 col-sm-12 col-xs-12">
+            <div class="row" id="wrapper">
+              <h3 for="">Formula</h3>
             </div>
-
-            <div class="x_content">
-
-              <div class="col-md-12 col-sm-12 col-xs-12">
-                <div class="row" id="wrapper">
-                  <h3 for="">Formula</h3>
-                </div>
-                <br/>
-                <div class="row" id="wrapper">
-                  <div id="formulas" style="font-size: 1.5em; border-radius: 10px; border: 1px solid #D3D3D3;">
-                  </div>
-                </div>
-                <br/><br/>
-                <div class="row">
-                  <div id="wrapper">
-                    <label>Horizonte de D&iacute;as a Calcular</label>
-                  </div>
-                  <ul class="to_do text-center" style="display: flex; justify-content: center;">
-                    <li><p><input type="checkbox" name="dias" class="flat" checked value="30"> 30 d&iacute;as </p></li>
-                    <li><p><input type="checkbox" name="dias" class="flat" checked value="60"> 60 d&iacute;as </p></li>
-                    <li><p><input type="checkbox" name="dias" class="flat" checked value="90"> 90 d&iacute;as </p></li>
-                    <li><p><input type="checkbox" name="dias" class="flat" checked value="120"> 120 d&iacute;as </p></li>
-                  </ul>
-                </div>
-                <br/>
-                <div id="wrapper">
-                  <label>D&iacute;a a Calcular</label>
-                </div>
-                <div class="row" style="display: flex; justify-content: center;">
-                  <div id="fechaRCL" class="center-block"></div>
-                </div>
-                <br/>
-                <div class="row">
-                  <button type="button" onclick="checkFormulaExists()" class="btn btn-success col-xs-10 col-xs-offset-1" style="height: 2.5em; font-size: 2em;">Calcular</button>
-                </div>
-                <br/>
+            <br/>
+            <div class="row" id="wrapper">
+              <div id="formulas" style="font-size: 1.5em; border-radius: 10px; border: 1px solid #D3D3D3;">
               </div>
-
             </div>
+            <br/><br/>
+            <div class="row">
+              <div id="wrapper">
+                <label>Horizonte de D&iacute;as a Calcular</label>
+              </div>
+              <ul class="to_do text-center" style="display: flex; justify-content: center;">
+                <li><p><input type="checkbox" name="dias" class="flat" checked value="30"> 30 d&iacute;as </p></li>
+                <li><p><input type="checkbox" name="dias" class="flat" checked value="60"> 60 d&iacute;as </p></li>
+                <li><p><input type="checkbox" name="dias" class="flat" checked value="90"> 90 d&iacute;as </p></li>
+                <li><p><input type="checkbox" name="dias" class="flat" checked value="120"> 120 d&iacute;as </p></li>
+              </ul>
+            </div>
+            <br/>
+            <div id="wrapper">
+              <label>D&iacute;a a Calcular</label>
+            </div>
+            <div class="row" style="display: flex; justify-content: center;">
+              <div id="fechaRCL" class="center-block"></div>
+            </div>
+            <br/>
+            <div class="row">
+              <button type="button" onclick="checkFormulaExists()" class="btn btn-success col-xs-10 col-xs-offset-1" style="height: 2.5em; font-size: 2em;">Calcular</button>
+            </div>
+            <br/>
           </div>
+
         </div>
       </div>
-
     </div>
-    <!-- /page content -->
-
   </div>
+
 </div>
+<!-- /page content -->
 
 <!-- MODAL RESULTADO-->
 <div id="modalTotalRCL" class="modal fade" role="dialog">
@@ -147,7 +73,7 @@
       </div>
       <div class="modal-body">
         
-        <ul id="totalesRCL" class="list-unstyled top_profiles scroll-view">
+        <ul id="totalesRCL" class="list-unstyled top_profiles scroll-view" style="overflow-y: scroll;">
         </ul>
 
       </div>

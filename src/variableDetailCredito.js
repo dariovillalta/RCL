@@ -12,6 +12,7 @@ const config = {
     password: password,
     server: server,
     database: database,
+    stream: true,
     pool: {
         max: 10,
         min: 0,
@@ -31,21 +32,31 @@ const config = {
 }*/
 
 const pool1 = new sql.ConnectionPool(config, err => {
-	if(err)
+	if(err) {
 		console.log(err);
-	else{
+        $("body").overhang({
+            type: "error",
+            primary: "#f84a1d",
+            accent: "#d94e2a",
+            message: "Error en conección con la base de datos.",
+            overlay: true,
+            closeConfirm: true
+        });
+	} else {
 		console.log('pool loaded');
 		loadLists();
 		loadText();
-        loadVariablesIMG();
+        //loadVariablesIMG();
 	}
 });
+
+window.scrollTo(0, 0);
 
 var variableDeVariableReglaID = null;
 var variableDeVariableObject = null;
 
 /* ******************       LOADING IMG     ********* */
-function loadVariablesIMG () {
+/*function loadVariablesIMG () {
     const transaction = new sql.Transaction( pool1 );
     transaction.begin(err => {
         var rolledBack = false;
@@ -56,6 +67,7 @@ function loadVariablesIMG () {
         const request = new sql.Request(transaction);
         request.query("select * from Variables", (err, result) => {
             if (err) {
+                console.log(err);
                 if (!rolledBack) {
                     transaction.rollback(err => {
                         $("body").overhang({
@@ -73,17 +85,17 @@ function loadVariablesIMG () {
                     // ... error checks
                     if(result.recordset.length > 0){
                         if(result.recordset[0].fullLogo.length > 0) {
-                            $("#fullLogo").attr("src",filepathFullLogo);
+                            $("#fullLogo").attr("src",result.recordset[0].fullLogo);
                         }
                         if(result.recordset[0].smallLogo.length > 0) {
-                            $("#smallLogo").attr("src",filepathSmallLogo);
+                            $("#smallLogo").attr("src",result.recordset[0].smallLogo);
                         }
                     }
                 });
             }
         });
     }); // fin transaction
-}
+}*/
 /* ******************       END LOADING IMG     ********* */
 
 function loadText () {
@@ -101,6 +113,7 @@ function loadText () {
 	$("#variableOfVariableDescription").css("text-align", "justify");
 	$("#variableOfVariableFactor").text(factorHijo);
 	$("#factorText").text(factorHijo).append('<span style="height: 3vh;">%</span>');
+    $("#factorTextEdit").text(factorHijo).append('<span style="height: 3vh;">%</span>');
 	$("#variableOfVariableFactor").css("white-space", "initial");
 	$("#variableOfVariableFactor").css("text-align", "justify");
 	variableDeVariableReglaID = variable;
@@ -144,23 +157,35 @@ var tablaPrestamosAgrupacion = [
 
 function loadSelectCampoObjetivo (tabla) {
 	$("#campoCampoInput").empty();
+    $("#campoCampoInputEdit").empty();
 	var content = '';
 	for (var i = 0; i < tablaPrestamos.length; i++) {
 		content+='<option value="'+tablaPrestamos[i].valor+'">'+tablaPrestamos[i].nombre+'</option>';
 	};
 	$("#campoCampoInput").append(content);
+    $("#campoCampoInputEdit").append(content);
 	$("#agrupacionCampoInput").empty();
-	var content = '';
+    $("#agrupacionCampoInputEdit").empty();
+    $("#agrupacionFiltro").empty();
+    $("#agrupacionFiltroEdit").empty();
+	var content2 = '';
 	for (var i = 0; i < tablaPrestamosAgrupacion.length; i++) {
-		content+='<option value="'+tablaPrestamosAgrupacion[i].valor+'">'+tablaPrestamosAgrupacion[i].nombre+'</option>';
+		content2+='<option value="'+tablaPrestamosAgrupacion[i].valor+'">'+tablaPrestamosAgrupacion[i].nombre+'</option>';
 	};
-	$("#agrupacionCampoInput").append(content);
+	$("#agrupacionCampoInput").append(content2);
+    $("#agrupacionCampoInputEdit").append(content2);
+    $("#agrupacionFiltro").append(content2);
+    $("#agrupacionFiltroEdit").append(content2);
 }
 
 var arregloListas = [];
-var arregloElementosDeListas = [];
+var arregloElementosDeListasValorEdit = [];
+var arregloElementosDeListasValorAgrupacionEdit = [];
 var arregloReglas = [];
 var arregloElementosDeListasValorAgrupacion = [];
+var reglaSeleccionada;
+var arregloFiltros = [];
+var filtroSeleccionado;
 
 function loadRules () {
 	const transaction = new sql.Transaction( pool1 );
@@ -173,10 +198,11 @@ function loadRules () {
             rolledBack = true
         })
         const request = new sql.Request(transaction);
-        request.query("select * from Reglas where variablePadre = "+variableDeVariableReglaID, (err, result) => {
+        request.query("select * from Reglas where variablePadre = "+variableDeVariableReglaID+" and esFiltro = 'false'", (err, result) => {
             if (err) {
                 if (!rolledBack) {
                     console.log('error en rolledBack MainDB Variables');
+                    console.log(err);
                     transaction.rollback(err => {
                         console.log('error en rolledBack');
                         console.log(err);
@@ -185,8 +211,6 @@ function loadRules () {
             } else {
                 transaction.commit(err => {
                     // ... error checks
-                    console.log("Transaction committed MainDB Variables");
-                    console.log(result);
                     if(result.recordset.length > 0){
                     	arregloReglas = result.recordset;
                     } else {
@@ -215,6 +239,7 @@ function loadVariableObject () {
             if (err) {
                 if (!rolledBack) {
                     console.log('error en rolledBack MainDB Variables');
+                    console.log(err);
                     transaction.rollback(err => {
                         console.log('error en rolledBack');
                         console.log(err);
@@ -223,8 +248,6 @@ function loadVariableObject () {
             } else {
                 transaction.commit(err => {
                     // ... error checks
-                    console.log("Transaction committed MainDB Variables");
-                    console.log(result);
                     if(result.recordset.length > 0){
                     	variableDeVariableObject = result.recordset[0];
                     } else {
@@ -262,14 +285,14 @@ function renderTable () {
             { "data": "reglaPadre" },
             { "data": "campoObjetivo" },
             { "data": "Guardar" },
-            { "data": "Eliminar" }
+            { "data": "Modificar" }
         ],
         rowCallback: function(row, data, index){
             $(row).find('td:eq(2)').html(getTextRule(data));
         },
         "columnDefs": [ {
             "targets": -1,
-            "defaultContent": '<a class="btn btn-app deleteRule"> <i class="fa fa-eraser"></i> Eliminar </a>',
+            "defaultContent": '<a class="btn btn-app deleteRule"> <i class="fa fa-eraser"></i> Modificar </a>',
             "className": "text-center"
         },
         {
@@ -353,25 +376,12 @@ function renderTable () {
 
     $('#tablaReglas tbody').on( 'click', 'tr a.deleteRule', function () {
         var data = table.row( $(this).parents('tr') ).data();
-        $("body").overhang({
-            type: "confirm",
-            primary: "#f5a433",
-            accent: "#dc9430",
-            yesColor: "#3498DB",
-            message: 'Esta seguro que desea eliminar la variable?',
-            overlay: true,
-            yesMessage: "Eliminar",
-            noMessage: "Cancelar",
-            callback: function (value) {
-                if(value)
-                    deleteRule(data.ID);
-            }
-        });
-    } );
+        reglaSeleccionada = data;
+        $('#modalEdit').modal('toggle');
+    });
 }
 
 function modifyRule (id, variablePadre) {
-    console.log(variablePadre)
 	const transaction = new sql.Transaction( pool1 );
     transaction.begin(err => {
         var rolledBack = false;
@@ -403,7 +413,7 @@ function modifyRule (id, variablePadre) {
 					  	primary: "#40D47E",
 		  				accent: "#27AE60",
 					  	message: "Variable modificada con éxito.",
-					  	duration: 2,
+					  	duration: 1,
 					  	overlay: true
 					});
                     loadRules();
@@ -413,45 +423,61 @@ function modifyRule (id, variablePadre) {
     }); // fin transaction
 }
 
-function deleteRule (id) {
-	const transaction = new sql.Transaction( pool1 );
-    transaction.begin(err => {
-        var rolledBack = false;
-        transaction.on('rollback', aborted => {
-            // emited with aborted === true
-            rolledBack = true;
-        });
-        const request = new sql.Request(transaction);
-        request.query("delete from Reglas where id = "+id, (err, result) => {
-            if (err) {
-                if (!rolledBack) {
-                    transaction.rollback(err => {
-                        $("body").overhang({
-                            type: "error",
-                            primary: "#f84a1d",
-                            accent: "#d94e2a",
-                            message: "Error en eliminación de Variable.",
-                            overlay: true,
-                            closeConfirm: true
-                        });
+function deleteRule () {
+    $("body").overhang({
+        type: "confirm",
+        primary: "#f5a433",
+        accent: "#dc9430",
+        yesColor: "#3498DB",
+        message: 'Esta seguro que desea eliminar la variable?',
+        overlay: true,
+        yesMessage: "Eliminar",
+        noMessage: "Cancelar",
+        callback: function (value) {
+            if(value) {
+                const transaction = new sql.Transaction( pool1 );
+                transaction.begin(err => {
+                    var rolledBack = false;
+                    transaction.on('rollback', aborted => {
+                        // emited with aborted === true
+                        rolledBack = true;
                     });
-                }
-            }  else {
-                transaction.commit(err => {
-                    // ... error checks
-                    $("body").overhang({
-					  	type: "success",
-					  	primary: "#40D47E",
-		  				accent: "#27AE60",
-					  	message: "Variable eliminada con éxito.",
-					  	duration: 2,
-					  	overlay: true
-					});
-                    loadRules();
-                });
+                    const request = new sql.Request(transaction);
+                    request.query("delete from Reglas where ID = "+reglaSeleccionada.ID, (err, result) => {
+                        if (err) {
+                            console.log(err);
+                            if (!rolledBack) {
+                                transaction.rollback(err => {
+                                    $("body").overhang({
+                                        type: "error",
+                                        primary: "#f84a1d",
+                                        accent: "#d94e2a",
+                                        message: "Error en eliminación de Variable.",
+                                        overlay: true,
+                                        closeConfirm: true
+                                    });
+                                });
+                            }
+                        }  else {
+                            transaction.commit(err => {
+                                // ... error checks
+                                $("body").overhang({
+                                    type: "success",
+                                    primary: "#40D47E",
+                                    accent: "#27AE60",
+                                    message: "Variable eliminada con éxito.",
+                                    duration: 1,
+                                    overlay: true
+                                });
+                                $('#modalEdit').modal('toggle');
+                                loadRules();
+                            });
+                        }
+                    });
+                }); // fin transaction
             }
-        });
-    }); // fin transaction
+        }
+    });
 }
 
 function getTextRule (regla) {
@@ -750,6 +776,7 @@ function renderRules () {
 					        const request = new sql.Request(transaction);
 					        request.query("delete from Reglas where ID = "+regla.ID, (err, result) => {
 					            if (err) {
+                                   console.log(err);
 					                if (!rolledBack) {
 					                    transaction.rollback(err => {
 					                        $("body").overhang({
@@ -771,7 +798,7 @@ function renderRules () {
 							  				accent: "#27AE60",
 								            message: "Variable eliminada con éxito.",
 								            overlay: true,
-								            duration: 2
+								            duration: 1
 								        });
 					                    loadRules();
 					                    loadAllRules();
@@ -791,6 +818,7 @@ function renderRules () {
 			        const request = new sql.Request(transaction);
 			        request.query("delete from Reglas where ID = "+arregloReglas[index].ID, (err, result) => {
 			            if (err) {
+                            console.log(err);
 			                if (!rolledBack) {
 			                    transaction.rollback(err => {
 			                        $("body").overhang({
@@ -812,7 +840,7 @@ function renderRules () {
 					  				accent: "#27AE60",
 						            message: "Variable eliminada con éxito.",
 						            overlay: true,
-						            duration: 2
+						            duration: 1
 						        });
 			                    loadRules();
 			                    loadAllRules();
@@ -841,6 +869,7 @@ function loadLists () {
             if (err) {
                 if (!rolledBack) {
                     console.log('error en rolledBack MainDB Variables');
+                    console.log(err);
                     transaction.rollback(err => {
                         console.log('error en rolledBack');
                         console.log(err);
@@ -849,14 +878,13 @@ function loadLists () {
             } else {
                 transaction.commit(err => {
                     // ... error checks
-                    console.log("Transaction committed MainDB Variables");
-                    console.log(result);
                     if(result.recordset.length > 0){
                     	arregloListas = result.recordset;
                     } else {
                     	arregloListas = [];
                     }
                     renderListsSelect(3);
+                    renderListsSelectEdit(3);
                 });
             }
         });
@@ -878,6 +906,7 @@ function getElementsListsValue (listaID) {
             if (err) {
                 if (!rolledBack) {
                     console.log('error en rolledBack MainDB Variables');
+                    console.log(err);
                     transaction.rollback(err => {
                         console.log('error en rolledBack');
                         console.log(err);
@@ -886,8 +915,6 @@ function getElementsListsValue (listaID) {
             }  else {
                 transaction.commit(err => {
                     // ... error checks
-                    console.log("Transaction committed MainDB Variables");
-                    console.log(result);
                     if(result.recordset.length > 0){
                     	arregloElementosDeListasValor = result.recordset;
                     } else {
@@ -913,15 +940,6 @@ function renderListsSelect (tipo) {
 	if(listaTemp.length > 0) {
 		getElementsListsValue(listaTemp[0].ID);
 	}
-}
-
-function renderElementsListsCampSelect () {
-	var selectHTML = '';
-	for (var i = 0; i < arregloElementosDeListasCampo.length; i++) {
-		selectHTML+='<option value='+arregloElementosDeListasCampo[i].ID+'>'+arregloElementosDeListasCampo[i].nombre+'</option>';
-	};
-	$("#listaCampoOptionsSelect").empty();
-	$("#listaCampoOptionsSelect").append(selectHTML);
 }
 
 $('#nombreElementoListaValorRadio').on('ifChecked', function () {
@@ -961,6 +979,7 @@ function getElementsListsValueAgrupacion (listaTipo) {
             if (err) {
                 if (!rolledBack) {
                     console.log('error en rolledBack MainDB Variables');
+                    console.log(err);
                     transaction.rollback(err => {
                         console.log('error en rolledBack');
                         console.log(err);
@@ -969,8 +988,6 @@ function getElementsListsValueAgrupacion (listaTipo) {
             }  else {
                 transaction.commit(err => {
                     // ... error checks
-                    console.log("Transaction committed MainDB Variables");
-                    console.log(result);
                     if(result.recordset.length > 0){
                     	var listaID = -1;
                     	for (var i = result.recordset.length - 1; i >= 0; i--) {
@@ -994,6 +1011,7 @@ function getElementsListsValueAgrupacion (listaTipo) {
 						            if (err) {
 						                if (!rolledBack) {
 						                    console.log('error en rolledBack MainDB Variables');
+                                            console.log(err);
 						                    transaction1.rollback(err => {
 						                        console.log('error en rolledBack');
 						                        console.log(err);
@@ -1002,8 +1020,6 @@ function getElementsListsValueAgrupacion (listaTipo) {
 						            }  else {
 						                transaction1.commit(err => {
 						                    // ... error checks
-						                    console.log("Transaction committed MainDB Variables");
-						                    console.log(result);
 						                    if(result.recordset.length > 0){
 						                    	arregloElementosDeListasValorAgrupacion = result.recordset;
 						                    } else {
@@ -1025,7 +1041,7 @@ function getElementsListsValueAgrupacion (listaTipo) {
 function renderElementsListsValueSelectAgrupacion () {
 	var selectHTML = '';
 	for (var i = 0; i < arregloElementosDeListasValorAgrupacion.length; i++) {
-		selectHTML+='<option value='+arregloElementosDeListasValorAgrupacion[i].valor+'>'+arregloElementosDeListasValorAgrupacion[i].nombre+'</option>';
+		selectHTML+='<option value='+i+'>'+arregloElementosDeListasValorAgrupacion[i].nombre+'</option>';
 	};
 	$("#agrupacionValorOptionSelect").empty();
 	$("#agrupacionValorOptionSelect").append(selectHTML);
@@ -1070,9 +1086,6 @@ function loadAgrupacionSelect () {
 }
 
 /* *************	Radios	************* */
-$("#listaCampoSelect").prop('disabled', true);
-$("#listaCampoOptionsSelect").prop('disabled', true);
-$("input#resultadoDisable").prop('disabled', true);
 $("input[name='campoRadio']").on('ifClicked', function(event){
 	if(event.currentTarget.id == "campoCampoRadio"){
 		$( "#campoField" ).fadeIn( "slow", function() {
@@ -1120,6 +1133,7 @@ $("input[name='campoRadio']").on('ifClicked', function(event){
 		$( "#igualBoolField" ).hide();
 		$( "#booleansField" ).hide();
 		$( "#factorValorFinanciacionField" ).hide();
+        $( "#existeBoolField" ).hide();
 		loadAgrupacionSelect();
 	}
 });
@@ -1135,12 +1149,12 @@ function mostrarFieldsCampoSelect () {
 		$( "#elementoValorRadioLabel" ).hide();
 		$( "#listaValorField" ).hide();
 		$( "#manualValorRadioLabel" ).show();
-		$("#manualValorRadio").iCheck('check');
-		$( "#manualField" ).fadeIn( "slow", function() {
-		});
+		$("#factorValorRadio").iCheck('check');
+		$( "#manualField" ).hide();
 		$( "#factorValorRadioLabel" ).show();
 		$( "#factorManualValorRadioLabel" ).show();
-		$( "#factorField" ).hide();
+		$( "#factorField" ).fadeIn( "slow", function() {
+        });
 		$( "#sumarSiField" ).hide();
 		$("#meOperadorRadio").iCheck('check');
 		$( "#moraField" ).hide();
@@ -1388,9 +1402,6 @@ $("input[name='operadorRadio']").on('ifChanged', function(event){
 });
 
 
-$("#date_inline").css('pointer-events', 'none');
-//$("#diaValorInput").prop('disabled', true);
-$("#mesValorInput").prop('disabled', true);
 $("input[name='valorRadio']").on('ifClicked', function(event){
 	if(event.currentTarget.id == "manualValorRadio") {
 		$( "#manualField" ).fadeIn( "slow", function() {
@@ -1419,11 +1430,27 @@ function saveRule () {
 	var valor = '';
 	var variables = '';
 	var esFiltro = '0';
+    var orden = 0;
+    var filtro = -1;
+    if($('input[name=filters]:checked').length > 0)
+        filtro = $('input[name=filters]:checked').val();
 	if( $('#campoCampoRadio').is(':checked') ) {
 		//if($("#campoCampoInput").val().localeCompare("valorFinanciacion") == 0)
 		campoObjetivo = 'COLUMNA='+$("#campoCampoInput").val();
 	}  else {
-		campoObjetivo = 'NOUAGRUPACION='+$("#agrupacionValorOptionSelect").val();
+		campoObjetivo = 'NOUAGRUPACION='+$("#agrupacionCampoInput").val();
+        campoObjetivo+=',';
+        var elementosSelect = $("#agrupacionValorOptionSelect").val();
+        if(elementosSelect != null) {
+            for (var i = 0; i < elementosSelect.length; i++) {
+                campoObjetivo+=arregloElementosDeListasValorAgrupacion[parseInt(elementosSelect[i])].ID;
+                if( (i+1) < elementosSelect.length )
+                    campoObjetivo+=',';
+            };
+        } else
+            campoObjetivo = '';
+        if($("#porcentajeCampo").val().length == 0)
+            campoObjetivo = '';
 	}
 	if( $('#meOperadorRadio').is(':checked') )
 		operacion = '<';
@@ -1457,36 +1484,49 @@ function saveRule () {
 	if( $('#agruparCampoRadio').is(':checked') )
 		variables = $("#porcentajeCampo").val().split(/[_|%]/)[0];
 	
-	if( $('#manualValorRadio').is(':checked') )
-		valor = "MANUAL="+parseInt($("#manualValorInput").val().split(" ")[1]);
-	else if( $('#fechaValorRadio').is(':checked') ) {
-		if($('#moraField').is(":visible"))
-			valor = 'MORA='+$("#moraValorInput").val();
-		else
+	if( $('#manualValorRadio').is(':checked') ) {
+        if($("#manualValorInput").val().length > 0)
+            valor = "MANUAL="+parseFloat($("#manualValorInput").val().split(" ")[1]);
+        else {
+            $("body").overhang({
+                type: "error",
+                primary: "#f84a1d",
+                accent: "#d94e2a",
+                message: "Ingrese un número.",
+                closeConfirm: true,
+                overlay: true,
+                closeConfirm: true
+            });
+        }
+	} else if( $('#fechaValorRadio').is(':checked') ) {
+		if($('#moraField').is(":visible")) {
+            if($("#moraValorInput").val().length > 0)
+                valor = 'MORA='+$("#moraValorInput").val();
+		} else
 			valor = 'FECHA';
 	} else if( $('#elementoValorRadio').is(':checked') ) {
 		var elementosSelect = $("#elementoValorOptionSelect").val();
 		var elementos = '';
-		var aplicarNombre = "0";
-		/*var aplicarNombre = "1";
-		if($('#valorElementoListaValorRadio').is(':checked'))
-			aplicarNombre = "0";*/
 		if(elementosSelect != null) {
 			for (var i = 0; i < elementosSelect.length; i++) {
-				elementos+=arregloElementosDeListasValor[parseInt(elementosSelect[i])].valor;
+				elementos+=arregloElementosDeListasValor[parseInt(elementosSelect[i])].ID;
 				if( (i+1) < elementosSelect.length )
 					elementos+=',';
 			};
 			valor = 'LISTA=' + elementos;
 		} else 
-			valor = 'LISTA=' + getSelectOptions(arregloElementosDeListasValor, aplicarNombre);
+			valor = 'LISTA=' + getSelectOptions(arregloElementosDeListasValor);
 	} else if( $('#booleanValorRadio').is(':checked') ) {
 		if( $('#trueOperadorRadio').is(':checked') )
 			valor = 'BOOLEAN=true';
 		else
 			valor = 'BOOLEAN=false';
-	} else
-		valor = "FACTOR="+variableDeVariableObject.factor;
+	} else {
+        if( $('#factorValorRadio').is(':checked') )
+            valor = "FACTOR="+variableDeVariableObject.factor;
+        else
+            valor = "FACTOR=MANUAL";
+    }
 	/*console.log("-_------___----");
 	console.log('reglaPadre = '+reglaPadre);
 	console.log('campoObjetivo = '+campoObjetivo);
@@ -1508,10 +1548,11 @@ function saveRule () {
 			            rolledBack = true
 			        })
 			        const request = new sql.Request(transaction);
-			        request.query("insert into Reglas (variablePadre, reglaPadre, campoObjetivo, operacion, valor, variables, esFiltro) values ("+variableDeVariableReglaID+","+reglaPadre+",'"+campoObjetivo+"','"+operacion+"','"+valor+"','"+variables+"','"+esFiltro+"')", (err, result) => {
+			        request.query("insert into Reglas (variablePadre, reglaPadre, campoObjetivo, operacion, valor, variables, esFiltro ,filtro, orden) values ("+variableDeVariableReglaID+","+reglaPadre+",'"+campoObjetivo+"','"+operacion+"','"+valor+"','"+variables+"','"+esFiltro+"',"+filtro+","+orden+")", (err, result) => {
 			            if (err) {
 			                if (!rolledBack) {
 			                    console.log('error en rolledBack New Variables');
+                                console.log(err);
 			                    transaction.rollback(err => {
 			                        console.log('error en rolledBack');
 			                        console.log(err);
@@ -1527,7 +1568,7 @@ function saveRule () {
 								  	primary: "#40D47E",
 					  				accent: "#27AE60",
 								  	message: "Regla creada con éxito.",
-								  	duration: 2,
+								  	duration: 1,
 								  	overlay: true
 								});
 								loadRules();
@@ -1541,7 +1582,7 @@ function saveRule () {
 				  	primary: "#f84a1d",
 					accent: "#d94e2a",
 				  	message: "El campo de valor a aplicar de la regla debe tener una longitud mayor a 0 y menor a 1001.",
-				  	duration: 3,
+				  	closeConfirm: true,
 				  	overlay: true,
                     closeConfirm: true
 				});
@@ -1552,7 +1593,7 @@ function saveRule () {
 			  	primary: "#f84a1d",
 				accent: "#d94e2a",
 			  	message: "El campo de operacion de la regla debe tener una longitud mayor a 0 y menor a 3.",
-			  	duration: 3,
+			  	closeConfirm: true,
 			  	overlay: true,
                 closeConfirm: true
 			});
@@ -1563,7 +1604,7 @@ function saveRule () {
 		  	primary: "#f84a1d",
 			accent: "#d94e2a",
 		  	message: "El campo objetivo de la regla debe tener una longitud mayor a 0 y menor a 1001.",
-		  	duration: 3,
+		  	closeConfirm: true,
 		  	overlay: true,
             closeConfirm: true
 		});
@@ -1582,7 +1623,7 @@ function saveRule () {
 	};
 	return textoOption;
 }*/
-function getSelectOptions (array, aplicarNombre) {
+/*function getSelectOptions (array, aplicarNombre) {
 	var textoOption = '';
 	for (var i = 0; i < array.length; i++) {
 		textoOption+=array[i].nombre + "-" + array[i].valor + '$' + aplicarNombre;
@@ -1590,8 +1631,1158 @@ function getSelectOptions (array, aplicarNombre) {
 			textoOption+=',';
 	};
 	return textoOption;
+}*/
+function getSelectOptions (array) {
+    var textoOption = '';
+    for (var i = 0; i < array.length; i++) {
+        textoOption+=array[i].ID;
+        if( (i+1) < array.length )
+            textoOption+=',';
+    };
+    return textoOption;
 }
 /* *************	Fin Rules	************* */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* *************    Modify   ************* */
+function getElementsListsValueEdit (listaID) {
+    const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false
+ 
+        transaction.on('rollback', aborted => {
+            // emited with aborted === true
+     
+            rolledBack = true
+        })
+        const request = new sql.Request(transaction);
+        request.query("select * from ListasVariables where idLista = "+listaID, (err, result) => {
+            if (err) {
+                if (!rolledBack) {
+                    console.log('error en rolledBack MainDB Variables');
+                    console.log(err);
+                    transaction.rollback(err => {
+                        console.log('error en rolledBack');
+                        console.log(err);
+                    });
+                }
+            }  else {
+                transaction.commit(err => {
+                    // ... error checks
+                    if(result.recordset.length > 0){
+                        arregloElementosDeListasValorEdit = result.recordset;
+                    } else {
+                        arregloElementosDeListasValorEdit = [];
+                    }
+                    renderElementsListsValueSelectEdit();
+                });
+            }
+        });
+    }); // fin transaction
+}
+
+function renderListsSelectEdit (tipo) {
+    var selectHTML = '';
+    var listaTemp = arregloListas.filter(function( object ) {
+                        return object.tipo == tipo;
+                    });
+    for (var i = 0; i < listaTemp.length; i++) {
+        selectHTML+='<option value='+listaTemp[i].ID+'>'+listaTemp[i].nombre+'</option>';
+    };
+    $("#elementoValorSelectEdit").empty();
+    $("#elementoValorSelectEdit").append(selectHTML);
+    if(listaTemp.length > 0) {
+        getElementsListsValueEdit(listaTemp[0].ID);
+    }
+}
+
+$('#nombreElementoListaValorRadioEdit').on('ifChecked', function () {
+    renderElementsListsValueSelectEdit();
+});
+$('#valorElementoListaValorRadioEdit').on('ifChecked', function () {
+    renderElementsListsValueSelectEdit();
+});
+
+function renderElementsListsValueSelectEdit () {
+    var selectHTML = '';
+    if($('#nombreElementoListaValorRadioEdit').iCheck('update')[0].checked){
+        for (var i = 0; i < arregloElementosDeListasValorEdit.length; i++) {
+            selectHTML+='<option value='+i+'>'+arregloElementosDeListasValorEdit[i].nombre+'</option>';
+        };
+    } else {
+        for (var i = 0; i < arregloElementosDeListasValorEdit.length; i++) {
+            selectHTML+='<option value='+i+'>'+arregloElementosDeListasValorEdit[i].valor+'</option>';
+        };
+    }
+    $("#elementoValorOptionSelectEdit").empty();
+    $("#elementoValorOptionSelectEdit").append(selectHTML);
+}
+
+function getElementsListsValueAgrupacionEdit (listaTipo) {
+    const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false
+ 
+        transaction.on('rollback', aborted => {
+            // emited with aborted === true
+     
+            rolledBack = true
+        })
+        const request = new sql.Request(transaction);
+        request.query("select * from Listas", (err, result) => {
+            if (err) {
+                if (!rolledBack) {
+                    console.log('error en rolledBack MainDB Variables');
+                    console.log(err);
+                    transaction.rollback(err => {
+                        console.log('error en rolledBack');
+                        console.log(err);
+                    });
+                }
+            }  else {
+                transaction.commit(err => {
+                    // ... error checks
+                    if(result.recordset.length > 0){
+                        var listaID = -1;
+                        for (var i = result.recordset.length - 1; i >= 0; i--) {
+                            if(result.recordset[i].tipo == listaTipo) {
+                                listaID = result.recordset[i].ID;
+                                break;
+                            }
+                        };
+                        if(listaID != -1) {
+                            const transaction1 = new sql.Transaction( pool1 );
+                            transaction1.begin(err => {
+                                var rolledBack = false
+                         
+                                transaction1.on('rollback', aborted => {
+                                    // emited with aborted === true
+                             
+                                    rolledBack = true
+                                })
+                                const request1 = new sql.Request(transaction1);
+                                request1.query("select * from ListasVariables where idLista = "+listaID, (err, result) => {
+                                    if (err) {
+                                        if (!rolledBack) {
+                                            console.log('error en rolledBack MainDB Variables');
+                                            console.log(err);
+                                            transaction1.rollback(err => {
+                                                console.log('error en rolledBack');
+                                                console.log(err);
+                                            });
+                                        }
+                                    }  else {
+                                        transaction1.commit(err => {
+                                            // ... error checks
+                                            if(result.recordset.length > 0){
+                                                arregloElementosDeListasValorAgrupacionEdit = result.recordset;
+                                            } else {
+                                                arregloElementosDeListasValorAgrupacionEdit = [];
+                                            }
+                                            renderElementsListsValueSelectAgrupacionEdit();
+                                        });
+                                    }
+                                });
+                            }); // fin transaction1
+                        }
+                    }
+                });
+            }
+        });
+    }); // fin transaction
+}
+
+function renderElementsListsValueSelectAgrupacionEdit () {
+    var selectHTML = '';
+    for (var i = 0; i < arregloElementosDeListasValorAgrupacionEdit.length; i++) {
+        selectHTML+='<option value='+i+'>'+arregloElementosDeListasValorAgrupacionEdit[i].nombre+'</option>';
+    };
+    $("#agrupacionValorOptionSelectEdit").empty();
+    $("#agrupacionValorOptionSelectEdit").append(selectHTML);
+}
+
+function loadAgrupacionSelectEdit () {
+    if($("#agrupacionCampoInputEdit").val().localeCompare("idCliente") == 0) {
+        getElementsListsValueAgrupacionEdit(3);
+        $( "#listaCampoFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $('#booleanCampoFieldEdit').hide();
+        $('#manualCampoFieldEdit').hide();
+    } else if($("#agrupacionCampoInputEdit").val().localeCompare("tipoPersona") == 0) {
+        getElementsListsValueAgrupacionEdit(4);
+        $( "#listaCampoFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $('#booleanCampoFieldEdit').hide();
+        $('#manualCampoFieldEdit').hide();
+    } else if($("#agrupacionCampoInputEdit").val().localeCompare("tipoSubPersona") == 0) {
+        getElementsListsValueAgrupacionEdit(5);
+        $( "#listaCampoFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $('#booleanCampoFieldEdit').hide();
+        $('#manualCampoFieldEdit').hide();
+    } else if($("#agrupacionCampoInputEdit").val().localeCompare("tipoCredito") == 0) {
+        getElementsListsValueAgrupacionEdit(8);
+        $( "#listaCampoFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $('#booleanCampoFieldEdit').hide();
+        $('#manualCampoFieldEdit').hide();
+    } else if($("#agrupacionCampoInputEdit").val().localeCompare("diasMora") == 0 || $("#agrupacionCampoInputEdit").val().localeCompare("utilizable") == 0) {
+        $('#listaCampoFieldEdit').hide();
+        $('#booleanCampoFieldEdit').hide();
+        $( "#manualCampoFieldEdit" ).fadeIn( "slow", function() {
+        });
+    } else if($("#agrupacionCampoInputEdit").val().localeCompare("clausulasRestrictivas") == 0 || $("#agrupacionCampoInputEdit").val().localeCompare("esFinanciacionGarantizada") == 0) {
+        $('#listaCampoFieldEdit').hide();
+        $( "#booleanCampoFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $('#manualCampoFieldEdit').hide();
+    }
+}
+
+$("input[name='campoRadioEdit']").on('ifClicked', function(event){
+    if(event.currentTarget.id == "campoCampoRadioEdit"){
+        $( "#campoFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $('#variableFieldEdit').hide();
+        $( "#cuentasOperativasFieldEdit" ).hide();
+        $( "#multFieldEdit" ).hide();
+        $( "#porcentajeFieldEdit" ).hide();
+        $('#listaCampoFieldEdit').hide();
+        $( "#booleanCampoFieldEdit" ).hide();
+        $('#manualCampoFieldEdit').hide();
+        $( "#agrupacionFieldEdit" ).hide();
+        mostrarFieldsCampoSelectEdit();
+    } else if(event.currentTarget.id == "agruparCampoRadioEdit"){
+        $('#campoFieldEdit').hide();
+        $('#fosedeFieldEdit').hide();
+        $( "#multFieldEdit" ).hide();
+        $( "#porcentajeFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $( "#agrupacionFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $('#relacionalesFieldEdit').hide();
+        $('#algebraicosFieldEdit').hide();
+        $('#sumarSiFieldEdit').hide();
+        $('#igualBoolFieldEdit').hide();
+        $('#multFieldEdit').hide();
+        $( "#relacionalesFieldEdit" ).hide();
+        $( "#algebraicosFieldEdit" ).hide();
+        $( "#ln_solidOPERACIONEdit" ).hide();
+        $( "#elementoValorRadioLabelEdit" ).hide();
+        $( "#listaValorFieldEdit" ).hide();
+        $( "#manualValorRadioLabelEdit" ).hide();
+        $( "#manualFieldEdit" ).hide();
+        $( "#factorValorRadioLabelEdit" ).fadeIn( "slow", function() {
+        });
+        $( "#factorManualValorRadioLabelEdit" ).fadeIn( "slow", function() {
+        });
+        $("#factorValorRadioLabelEdit").iCheck('check');
+        $( "#factorFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $( "#sumarSiFieldEdit" ).hide();
+        $( "#moraFieldEdit" ).hide();
+        $( "#diasFieldEdit" ).hide();
+        $("#fechaValorRadioLabelEdit").hide();
+        $( "#igualBoolFieldEdit" ).hide();
+        $( "#booleansFieldEdit" ).hide();
+        $( "#factorValorFinanciacionFieldEdit" ).hide();
+        $( "#existeBoolFieldEdit" ).hide();
+        loadAgrupacionSelectEdit();
+    }
+});
+
+function mostrarFieldsCampoSelectEdit () {
+    var campo = $("#campoCampoInputEdit").val();
+    if(campo == 'saldo') {
+        $( "#relacionalesFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $( "#algebraicosFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $( "#ln_solidOPERACIONEdit" ).show();
+        $( "#elementoValorRadioLabelEdit" ).hide();
+        $( "#listaValorFieldEdit" ).hide();
+        $( "#manualValorRadioLabelEdit" ).show();
+        $("#factorValorRadioEdit").iCheck('check');
+        $( "#manualFieldEdit" ).hide();
+        $( "#factorValorRadioLabelEdit" ).show();
+        $( "#factorManualValorRadioLabelEdit" ).show();
+        $( "#factorFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $( "#sumarSiFieldEdit" ).hide();
+        $("#meOperadorRadioEdit").iCheck('check');
+        $( "#moraFieldEdit" ).hide();
+        $( "#diasFieldEdit" ).hide();
+        $("#fechaValorRadioLabelEdit").hide();
+        $( "#igualBoolFieldEdit" ).hide();
+        $( "#booleansFieldEdit" ).hide();
+        $("#manualValorInputEdit").val("");
+        $( "#existeBoolFieldEdit" ).hide();
+        $( "#factorValorFinanciacionFieldEdit" ).hide();
+        $( "#booleanValorRadioLabelEdit" ).hide();
+    } else if(campo == 'diasMora' || campo == 'fechaFinal') {
+        $( "#relacionalesFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $( "#algebraicosFieldEdit" ).hide();
+        $( "#ln_solidOPERACIONEdit" ).hide();
+        $( "#elementoValorRadioLabelEdit" ).hide();
+        $( "#listaValorFieldEdit" ).hide();
+        $( "#manualValorRadioLabelEdit" ).hide();
+        $( "#manualFieldEdit" ).hide();
+        $( "#factorValorRadioLabelEdit" ).hide();
+        $( "#factorManualValorRadioLabelEdit" ).hide();
+        $( "#factorFieldEdit" ).hide();
+        $( "#sumarSiFieldEdit" ).hide();
+        $("#meOperadorRadioEdit").iCheck('check');
+        $( "#moraFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $( "#diasFieldEdit" ).hide();
+        $("#fechaValorRadioLabelEdit").show();
+        $("#fechaValorRadioEdit").iCheck('check');
+        $( "#igualBoolFieldEdit" ).hide();
+        $( "#booleansFieldEdit" ).hide();
+        $("#diaValorInputEdit").val("");
+        $( "#existeBoolFieldEdit" ).hide();
+        $( "#factorValorFinanciacionFieldEdit" ).hide();
+        $( "#booleanValorRadioLabelEdit" ).hide();
+    } else if(campo == 'utilizable' || campo == 'vencimiento') {
+        $( "#relacionalesFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $( "#algebraicosFieldEdit" ).hide();
+        $( "#ln_solidOPERACIONEdit" ).hide();
+        $( "#elementoValorRadioLabelEdit" ).hide();
+        $( "#listaValorFieldEdit" ).hide();
+        $( "#manualValorRadioLabelEdit" ).hide();
+        $( "#manualFieldEdit" ).hide();
+        $( "#factorValorRadioLabelEdit" ).hide();
+        $( "#factorManualValorRadioLabelEdit" ).hide();
+        $( "#factorFieldEdit" ).hide();
+        $( "#sumarSiFieldEdit" ).hide();
+        $("#meOperadorRadioEdit").iCheck('check');
+        $( "#moraFieldEdit" ).hide();
+        $( "#diasFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $("#fechaValorRadioLabelEdit").show();
+        $("#fechaValorRadioEdit").iCheck('check');
+        $( "#igualBoolFieldEdit" ).hide();
+        $( "#booleansFieldEdit" ).hide();
+        $( "#existeBoolFieldEdit" ).hide();
+        $( "#factorValorFinanciacionFieldEdit" ).hide();
+        $( "#booleanValorRadioLabelEdit" ).hide();
+    } else if(campo == 'esFinanciacionGarantizada' || campo == 'clausulasRestrictivas') {
+        $( "#relacionalesFieldEdit" ).hide();
+        $( "#algebraicosFieldEdit" ).hide();
+        $( "#ln_solidOPERACIONEdit" ).hide();
+        $( "#elementoValorRadioLabelEdit" ).hide();
+        $( "#listaValorFieldEdit" ).hide();
+        $( "#manualValorRadioLabelEdit" ).hide();
+        $( "#manualFieldEdit" ).hide();
+        $( "#factorValorRadioLabelEdit" ).hide();
+        $( "#factorManualValorRadioLabelEdit" ).hide();
+        $( "#factorFieldEdit" ).hide();
+        $( "#sumarSiFieldEdit" ).hide();
+        $("#IgBoolOperadorRadioEdit").iCheck('check');
+        $( "#moraFieldEdit" ).hide();
+        $( "#diasFieldEdit" ).hide();
+        $("#fechaValorRadioLabelEdit").hide();
+        $( "#igualBoolFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $( "#booleansFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $("#trueOperadorRadioEdit").iCheck('check');
+        $("#manualValorInputEdit").val("");
+        $( "#existeBoolFieldEdit" ).hide();
+        $( "#factorValorFinanciacionFieldEdit" ).hide();
+        $( "#booleanValorRadioLabelEdit" ).fadeIn( "slow", function() {
+        });
+        $("#booleanValorRadioEdit").iCheck('check');
+    } else if(campo == 'montoOtorgado') {
+        $( "#relacionalesFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $( "#algebraicosFieldEdit" ).hide();
+        $( "#ln_solidOPERACIONEdit" ).hide();
+        $( "#elementoValorRadioLabelEdit" ).hide();
+        $( "#listaValorFieldEdit" ).hide();
+        $( "#manualValorRadioLabelEdit" ).show();
+        $( "#manualFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $( "#factorValorRadioLabelEdit" ).hide();
+        $( "#factorManualValorRadioLabelEdit" ).hide();
+        $( "#factorFieldEdit" ).hide();
+        $( "#sumarSiFieldEdit" ).hide();
+        $("#meOperadorRadioEdit").iCheck('check');
+        $("#manualValorRadioLabelEdit").iCheck('check');
+        $( "#moraFieldEdit" ).hide();
+        $( "#diasFieldEdit" ).hide();
+        $("#fechaValorRadioLabelEdit").hide();
+        $( "#booleansFieldEdit" ).hide();
+        $( "#igualBoolFieldEdit" ).hide();
+        $("#manualValorInputEdit").val("");
+        $( "#existeBoolFieldEdit" ).hide();
+        $( "#factorValorFinanciacionFieldEdit" ).hide();
+        $( "#booleanValorRadioLabelEdit" ).hide();
+    } else if(campo == 'alac') {
+        $( "#relacionalesFieldEdit" ).hide();
+        $( "#algebraicosFieldEdit" ).hide();
+        $( "#ln_solidOPERACIONEdit" ).hide();
+        $( "#elementoValorRadioLabelEdit" ).hide();
+        $( "#listaValorFieldEdit" ).hide();
+        $( "#manualValorRadioLabelEdit" ).hide();
+        $( "#manualFieldEdit" ).hide();
+        $( "#factorValorRadioLabelEdit" ).hide();
+        $( "#factorManualValorRadioLabelEdit" ).hide();
+        $( "#factorFieldEdit" ).hide();
+        $( "#sumarSiFieldEdit" ).hide();
+        $("#ExBoolOperadorRadioEdit").iCheck('check');
+        $( "#moraFieldEdit" ).hide();
+        $( "#diasFieldEdit" ).hide();
+        $("#fechaValorRadioLabelEdit").hide();
+        $( "#igualBoolFieldEdit" ).hide();
+        $( "#booleansFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $("#trueOperadorRadioEdit").iCheck('check');
+        $("#manualValorInputEdit").val("");
+        $( "#existeBoolFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $( "#factorValorFinanciacionFieldEdit" ).hide();
+        $( "#booleanValorRadioLabelEdit" ).hide();
+    } else if(campo == 'valorFinanciacion') {
+        $( "#relacionalesFieldEdit" ).hide();
+        $( "#algebraicosFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $( "#ln_solidOPERACIONEdit" ).hide();
+        $( "#elementoValorRadioLabelEdit" ).hide();
+        $( "#listaValorFieldEdit" ).hide();
+        $( "#manualValorRadioLabelEdit" ).hide();
+        $( "#manualFieldEdit" ).hide();
+        $( "#factorValorRadioLabelEdit" ).show();
+        $( "#factorManualValorRadioLabelEdit" ).hide();
+        $( "#factorFieldEdit" ).hide();
+        $( "#sumarSiFieldEdit" ).hide();
+        $("#factorValorRadioEdit").iCheck('check');
+        $( "#moraFieldEdit" ).hide();
+        $( "#diasFieldEdit" ).hide();
+        $("#fechaValorRadioLabelEdit").hide();
+        $( "#igualBoolFieldEdit" ).hide();
+        $( "#booleansFieldEdit" ).hide();
+        $("#manualValorInputEdit").val("");
+        $( "#existeBoolFieldEdit" ).hide();
+        $("#masOperadorRadioEdit").iCheck('check');
+        $( "#factorValorFinanciacionFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $( "#booleanValorRadioLabelEdit" ).hide();
+        mostrarSignoEdit();
+    } else {
+        $( "#sumarSiFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $( "#relacionalesFieldEdit" ).hide();
+        $( "#algebraicosFieldEdit" ).hide();
+        $( "#ln_solidOPERACIONEdit" ).hide();
+        $("#sumarSiOperadorRadioEdit").iCheck('check');
+        $( "#moraFieldEdit" ).hide();
+        $( "#diasFieldEdit" ).hide();
+        $("#fechaValorRadioLabelEdit").hide();
+        $( "#igualBoolFieldEdit" ).hide();
+        $( "#booleansFieldEdit" ).hide();
+        $("#manualValorInputEdit").val("");
+        $( "#existeBoolFieldEdit" ).hide();
+        $( "#factorValorFinanciacionFieldEdit" ).hide();
+        $( "#booleanValorRadioLabelEdit" ).hide();
+    }
+    if(campo == 'tipoPersona') {
+        renderListsSelectEdit(4);
+        $( "#elementoValorRadioLabelEdit" ).show();
+        $("#elementoValorRadioLabelEdit").iCheck('check');
+        $( "#listaValorFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $( "#manualValorRadioLabelEdit" ).hide();
+        $( "#manualFieldEdit" ).hide();
+        $( "#factorValorRadioLabelEdit" ).hide();
+        $( "#factorManualValorRadioLabelEdit" ).hide();
+        $( "#factorFieldEdit" ).hide();
+    } else if(campo == 'tipoSubPersona') {
+        renderListsSelectEdit(5);
+        $( "#elementoValorRadioLabelEdit" ).show();
+        $("#elementoValorRadioLabelEdit").iCheck('check');
+        $( "#listaValorFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $( "#manualValorRadioLabelEdit" ).hide();
+        $( "#manualFieldEdit" ).hide();
+        $( "#factorValorRadioLabelEdit" ).hide();
+        $( "#factorManualValorRadioLabelEdit" ).hide();
+        $( "#factorFieldEdit" ).hide();
+    } else if(campo == 'idCliente' || campo == 'nombreCliente') {
+        renderListsSelectEdit(3);
+        $( "#elementoValorRadioLabelEdit" ).show();
+        $("#elementoValorRadioLabelEdit").iCheck('check');
+        $( "#listaValorFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $( "#manualValorRadioLabelEdit" ).hide();
+        $( "#manualFieldEdit" ).hide();
+        $( "#factorValorRadioLabelEdit" ).hide();
+        $( "#factorManualValorRadioLabelEdit" ).hide();
+        $( "#factorFieldEdit" ).hide();
+    } else if(campo == 'tipoCredito') {
+        renderListsSelectEdit(8);
+        $( "#elementoValorRadioLabelEdit" ).show();
+        $("#elementoValorRadioLabelEdit").iCheck('check');
+        $( "#listaValorFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $( "#manualValorRadioLabelEdit" ).hide();
+        $( "#manualFieldEdit" ).hide();
+        $( "#factorValorRadioLabelEdit" ).hide();
+        $( "#factorManualValorRadioLabelEdit" ).hide();
+        $( "#factorFieldEdit" ).hide();
+    }
+}
+
+function mostrarSignoEdit () {
+    var operacion  = '';
+    if( $('#masOperadorRadioEdit').is(':checked') )
+        operacion = '+';
+    else if( $('#porOperadorRadioEdit').is(':checked') )
+        operacion = '*';
+    else if( $('#menOperadorRadioEdit').is(':checked') )
+        operacion = '-';
+    else if( $('#entOperadorRadioEdit').is(':checked') )
+        operacion = '/';
+    $("#signoEdit").text(operacion);
+}
+
+$("input[name='operadorRadioEdit']").on('ifChanged', function(event){
+    if( $('#masOperadorRadioEdit').is(':checked') || $('#porOperadorRadioEdit').is(':checked') || $('#menOperadorRadioEdit').is(':checked') || $('#entOperadorRadioEdit').is(':checked') ) {
+        mostrarSignoEdit();
+    }
+});
+
+
+$("input[name='valorRadioEdit']").on('ifClicked', function(event){
+    if(event.currentTarget.id == "manualValorRadioEdit") {
+        $( "#manualFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $( "#factorFieldEdit" ).hide();
+    } else if(event.currentTarget.id == "factorValorRadioEdit") {
+        $( "#factorFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $( "#manualFieldEdit" ).hide();
+    }
+});
+
+function modifyRule () {
+    $("body").overhang({
+        type: "confirm",
+        primary: "#f5a433",
+        accent: "#dc9430",
+        yesColor: "#3498DB",
+        message: 'Esta seguro que desea modificar la variable?',
+        overlay: true,
+        yesMessage: "Modificar",
+        noMessage: "Cancelar",
+        callback: function (value) {
+            if(value) {
+                var reglaPadre = 0;
+                if($('input[name=rulesEdit]:checked').length > 0)
+                    reglaPadre = $('input[name=rulesEdit]:checked').val();
+                var campoObjetivo = '';
+                var operacion = '';
+                var valor = '';
+                var variables = '';
+                var filtro = -1;
+                if($('input[name=filtersEdit]:checked').length > 0)
+                    filtro = $('input[name=filtersEdit]:checked').val();
+                if( $('#campoCampoRadioEdit').is(':checked') ) {
+                    //if($("#campoCampoInput").val().localeCompare("valorFinanciacion") == 0)
+                    campoObjetivo = 'COLUMNA='+$("#campoCampoInputEdit").val();
+                }  else {
+                    campoObjetivo = 'NOUAGRUPACION='+$("#agrupacionCampoInputEdit").val();
+                    campoObjetivo+=',';
+                    var elementosSelect = $("#agrupacionValorOptionSelectEdit").val();
+                    if(elementosSelect != null) {
+                        for (var i = 0; i < elementosSelect.length; i++) {
+                            campoObjetivo+=arregloElementosDeListasValorAgrupacionEdit[parseInt(elementosSelect[i])].ID;
+                            if( (i+1) < elementosSelect.length )
+                                campoObjetivo+=',';
+                        };
+                    } else
+                        campoObjetivo = '';
+                    if($("#porcentajeCampoEdit").val().length == 0)
+                        campoObjetivo = '';
+                }
+                if( $('#meOperadorRadioEdit').is(':checked') )
+                    operacion = '<';
+                else if( $('#meigOperadorRadioEdit').is(':checked') )
+                    operacion = '<=';
+                else if( $('#maOperadorRadioEdit').is(':checked') )
+                    operacion = '>';
+                else if( $('#maigOperadorRadioEdit').is(':checked') )
+                    operacion = '>=';
+                else if( $('#igOperadorRadioEdit').is(':checked') )
+                    operacion = '==';
+                else if( $('#noigOperadorRadioEdit').is(':checked') )
+                    operacion = '!=';
+                else if( $('#masOperadorRadioEdit').is(':checked') )
+                    operacion = '+';
+                else if( $('#porOperadorRadioEdit').is(':checked') )
+                    operacion = '*';
+                else if( $('#menOperadorRadioEdit').is(':checked') )
+                    operacion = '-';
+                else if( $('#entOperadorRadioEdit').is(':checked') )
+                    operacion = '/';
+                else if( $('#sumarSiOperadorRadioEdit').is(':checked') )
+                    operacion = 'en';
+                else if( $('#sumarSiNoOperadorRadioEdit').is(':checked') )
+                    operacion = 'no';
+                else if( $('#IgBoolOperadorRadioEdit').is(':checked') )
+                    operacion = '==';
+                else if( $('#ExBoolOperadorRadioEdit').is(':checked') )
+                    operacion = '==';
+
+                if( $('#agruparCampoRadioEdit').is(':checked') )
+                    variables = $("#porcentajeCampoEdit").val().split(/[_|%]/)[0];
+                
+                if( $('#manualValorRadioEdit').is(':checked') )
+                    if($("#manualValorInputEdit").val().length > 0)
+                        valor = "MANUAL="+parseFloat($("#manualValorInputEdit").val().split(" ")[1]);
+                    else {
+                        $("body").overhang({
+                            type: "error",
+                            primary: "#f84a1d",
+                            accent: "#d94e2a",
+                            message: "Ingrese un número.",
+                            closeConfirm: true,
+                            overlay: true,
+                            closeConfirm: true
+                        });
+                    }
+                else if( $('#fechaValorRadioEdit').is(':checked') ) {
+                    if($('#moraFieldEdit').is(":visible")) {
+                        if($("#moraValorInputEdit").val().length > 0)
+                            valor = 'MORA='+$("#moraValorInputEdit").val();
+                        else {
+                            $("body").overhang({
+                                type: "error",
+                                primary: "#f84a1d",
+                                accent: "#d94e2a",
+                                message: "Ingrese un número.",
+                                closeConfirm: true,
+                                overlay: true,
+                                closeConfirm: true
+                            });
+                        }
+                    } else
+                        valor = 'FECHA';
+                } else if( $('#elementoValorRadioEdit').is(':checked') ) {
+                    var elementosSelect = $("#elementoValorOptionSelectEdit").val();
+                    var elementos = '';
+                    if(elementosSelect != null) {
+                        for (var i = 0; i < elementosSelect.length; i++) {
+                            elementos+=arregloElementosDeListasValorEdit[parseInt(elementosSelect[i])].ID;
+                            if( (i+1) < elementosSelect.length )
+                                elementos+=',';
+                        };
+                        valor = 'LISTA=' + elementos;
+                    } else 
+                        valor = 'LISTA=' + getSelectOptions(arregloElementosDeListasValorEdit);
+                } else if( $('#booleanValorRadioEdit').is(':checked') ) {
+                    if( $('#trueOperadorRadioEdit').is(':checked') )
+                        valor = 'BOOLEAN=true';
+                    else
+                        valor = 'BOOLEAN=false';
+                } else {
+                    if( $('#factorValorRadioEdit').is(':checked') )
+                        valor = "FACTOR="+variableDeVariableObject.factor;
+                    else
+                        valor = "FACTOR=MANUAL";
+                }
+                console.log("-_------___----");
+                console.log('reglaPadre = '+reglaPadre);
+                console.log('campoObjetivo = '+campoObjetivo);
+                console.log('operacion = '+operacion);
+                console.log('valor = '+valor);
+                console.log('variables = '+variables);
+                console.log('variableDeVariableReglaID = '+variableDeVariableReglaID);
+                console.log("-_------___----");
+                if(campoObjetivo.length > 0 && campoObjetivo.length < 1001) {
+                    if(operacion.length > 0 && operacion.length < 3) {
+                        if(valor.toString().length > 0 && valor.toString().length < 1001) {
+                            const transaction = new sql.Transaction( pool1 );
+                            transaction.begin(err => {
+                                var rolledBack = false;
+                                transaction.on('rollback', aborted => {
+                                    // emited with aborted === true
+                                    rolledBack = true;
+                                });
+                                const request = new sql.Request(transaction);
+                                request.query("update Reglas set campoObjetivo = '"+campoObjetivo+"', operacion = '"+operacion+"', valor = '"+valor+"', variables = '"+variables+"', filtro = "+filtro+" where ID = "+reglaSeleccionada.ID, (err, result) => {
+                                    if (err) {
+                                        console.log(err);
+                                        if (!rolledBack) {
+                                            transaction.rollback(err => {
+                                                $("body").overhang({
+                                                    type: "error",
+                                                    primary: "#f84a1d",
+                                                    accent: "#d94e2a",
+                                                    message: "Error en inserción de nueva variable.",
+                                                    overlay: true,
+                                                    closeConfirm: true
+                                                });
+                                            });
+                                        }
+                                    }  else {
+                                        transaction.commit(err => {
+                                            // ... error checks
+                                            $("body").overhang({
+                                                type: "success",
+                                                primary: "#40D47E",
+                                                accent: "#27AE60",
+                                                message: "Variable modificada con éxito.",
+                                                duration: 1,
+                                                overlay: true
+                                            });
+                                            $('#modalEdit').modal('toggle');
+                                            loadRules();
+                                        });
+                                    }
+                                });
+                            }); // fin transaction
+                        } else {
+                            $("body").overhang({
+                                type: "error",
+                                primary: "#f84a1d",
+                                accent: "#d94e2a",
+                                message: "El campo de valor a aplicar de la regla debe tener una longitud mayor a 0 y menor a 1001.",
+                                closeConfirm: true,
+                                overlay: true,
+                                closeConfirm: true
+                            });
+                        }
+                    } else {
+                        $("body").overhang({
+                            type: "error",
+                            primary: "#f84a1d",
+                            accent: "#d94e2a",
+                            message: "El campo de operacion de la regla debe tener una longitud mayor a 0 y menor a 3.",
+                            closeConfirm: true,
+                            overlay: true,
+                            closeConfirm: true
+                        });
+                    }
+                } else {
+                    $("body").overhang({
+                        type: "error",
+                        primary: "#f84a1d",
+                        accent: "#d94e2a",
+                        message: "El campo objetivo de la regla debe tener una longitud mayor a 0 y menor a 1001.",
+                        closeConfirm: true,
+                        overlay: true,
+                        closeConfirm: true
+                    });
+                }
+            }
+        }
+    });
+}
+/* *************    Fin Modify   ************* */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* *************    Filter   ************* */
+function loadFilters () {
+    const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false;
+        transaction.on('rollback', aborted => {
+            // emited with aborted === true
+            rolledBack = true;
+        });
+        const request = new sql.Request(transaction);
+        request.query("select * from Reglas where variablePadre = "+variableDeVariableReglaID+" and esFiltro = 'true'", (err, result) => {
+            if (err) {
+                console.log(err);
+                if (!rolledBack) {
+                    transaction.rollback(err => {
+                        $("body").overhang({
+                            type: "error",
+                            primary: "#f84a1d",
+                            accent: "#d94e2a",
+                            message: "Error en conección con la tabla de reglas.",
+                            overlay: true,
+                            closeConfirm: true
+                        });
+                    });
+                }
+            }  else {
+                transaction.commit(err => {
+                    // ... error checks
+                    if(result.recordset.length > 0) {
+                        arregloFiltros = result.recordset;
+                    } else {
+                        arregloFiltros = [];
+                    }
+                    renderFilters();
+                });
+            }
+        });
+    }); // fin transaction
+}
+
+function renderFilters () {
+    $("#listFilters").empty();
+    var listContent = '';
+    for (var i = 0; i < arregloFiltros.length; i++) {
+        var regla = arregloFiltros[i].valor;
+        listContent = '';
+        listContent+='<li><p><input type="radio" name="filters" class="flat" value="'+arregloFiltros[i].ID+'"> '+ regla +' </p> <button style="position: absolute; right: 10px; margin: 0; position: absolute; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%);" onclick="selectFilter('+i+')">Modificar</button> </li>';
+        $("#listFilters").append(listContent);
+    };
+    $("input[name='filters']").iCheck({
+        checkboxClass: 'icheckbox_flat-green',
+        radioClass: 'iradio_flat-green'
+    });
+    if(arregloFiltros.length == 0 ){
+        listContent+='<li><p> No hay filtros creadas.</p></li>';
+        $("#listFilters").append(listContent);
+    }
+    $("input[name='filters']").on('ifClicked', function(event){
+        var borrar = false;
+        if ($(this).is(':checked')) {
+            $(this).iCheck('uncheck');
+            borrar = true;
+        } else {
+            $(this).iCheck('check');
+        }
+    });
+
+    $("#listFiltersEdit").empty();
+    var listContent = '';
+    for (var i = 0; i < arregloFiltros.length; i++) {
+        var regla = arregloFiltros[i].valor;
+        listContent = '';
+        listContent+='<li><p><input type="radio" name="filtersEdit" class="flat" value="'+arregloFiltros[i].ID+'"> '+ regla +' </p> </li>';
+        $("#listFiltersEdit").append(listContent);
+    };
+    $("input[name='filtersEdit']").iCheck({
+        checkboxClass: 'icheckbox_flat-green',
+        radioClass: 'iradio_flat-green'
+    });
+    if(arregloFiltros.length == 0 ){
+        listContent+='<li><p> No hay filtros creadas.</p></li>';
+        $("#listFiltersEdit").append(listContent);
+    }
+    $("input[name='filtersEdit']").on('ifClicked', function(event){
+        var borrar = false;
+        if ($(this).is(':checked')) {
+            $(this).iCheck('uncheck');
+            borrar = true;
+        } else {
+            $(this).iCheck('check');
+        }
+    });
+}
+
+function saveFilter () {
+    var reglaPadre = 0;
+    var campoObjetivo = '';
+    var operacion = 'se';
+    var valor = '';
+    var variables = '';
+    var esFiltro = true;
+    var filtro = -1;
+    campoObjetivo = $("#agrupacionFiltro").val();
+    valor = $("#nombreFilter").val();
+    /*console.log("-_------___----");
+    console.log(reglaPadre);
+    console.log(campoObjetivo);
+    console.log(operacion);
+    console.log(valor);
+    console.log(variables);
+    console.log(variableDeVariableReglaID);
+    console.log(ordenGlobal);
+    console.log(ordenGlobal+1);
+    console.log("-_------___----");*/
+    if(campoObjetivo.length > 0 && campoObjetivo.length < 1001) {
+        if(operacion.length > 0 && operacion.length < 3) {
+            if(valor.toString().length > 0 && valor.toString().length < 1001) {
+                const transaction = new sql.Transaction( pool1 );
+                transaction.begin(err => {
+                    var rolledBack = false;
+                    transaction.on('rollback', aborted => {
+                        // emited with aborted === true
+                        rolledBack = true;
+                    });
+                    const request = new sql.Request(transaction);
+                    request.query("insert into Reglas (variablePadre, reglaPadre, campoObjetivo, operacion, valor, variables, esFiltro, filtro, orden) values ("+variableDeVariableReglaID+","+reglaPadre+",'"+campoObjetivo+"','"+operacion+"','"+valor+"','"+variables+"','"+esFiltro+"',"+filtro+","+(ordenGlobal+1)+")", (err, result) => {
+                        if (err) {
+                            console.log(err);
+                            if (!rolledBack) {
+                                transaction.rollback(err => {
+                                    $("body").overhang({
+                                        type: "error",
+                                        primary: "#f84a1d",
+                                        accent: "#d94e2a",
+                                        message: "Error en inserción de nueva variable.",
+                                        overlay: true,
+                                        closeConfirm: true
+                                    });
+                                });
+                            }
+                        }  else {
+                            transaction.commit(err => {
+                                // ... error checks
+                                $("body").overhang({
+                                    type: "success",
+                                    primary: "#40D47E",
+                                    accent: "#27AE60",
+                                    message: "Variable creada con éxito.",
+                                    duration: 1,
+                                    overlay: true
+                                });
+                                loadFilters();
+                            });
+                        }
+                    });
+                }); // fin transaction
+            } else {
+                $("body").overhang({
+                    type: "error",
+                    primary: "#f84a1d",
+                    accent: "#d94e2a",
+                    message: "Ingrese un nombre entre una longitud mayor a 0 y menor a 1001.",
+                    closeConfirm: true,
+                    overlay: true,
+                    closeConfirm: true
+                });
+            }
+        } else {
+            $("body").overhang({
+                type: "error",
+                primary: "#f84a1d",
+                accent: "#d94e2a",
+                message: "El campo de operacion de la regla debe tener una longitud mayor a 0 y menor a 3.",
+                closeConfirm: true,
+                overlay: true,
+                closeConfirm: true
+            });
+        }
+    } else {
+        $("body").overhang({
+            type: "error",
+            primary: "#f84a1d",
+            accent: "#d94e2a",
+            message: "El campo objetivo de la regla debe tener una longitud mayor a 0 y menor a 1001.",
+            closeConfirm: true,
+            overlay: true,
+            closeConfirm: true
+        });
+    }
+}
+
+function selectFilter (index) {
+    filtroSeleccionado = arregloFiltros[index];
+    $("#agrupacionFiltroEdit").val(filtroSeleccionado.campoObjetivo);
+    $("#nombreFilterEdit").val(filtroSeleccionado.valor);
+    $('#modalFilter').modal('toggle');
+}
+
+function modifyFilter (argument) {
+    $("body").overhang({
+        type: "confirm",
+        primary: "#f5a433",
+        accent: "#dc9430",
+        yesColor: "#3498DB",
+        message: 'Esta seguro que desea guardar los cambios?',
+        overlay: true,
+        yesMessage: "Modificar",
+        noMessage: "Cancelar",
+        callback: function (value) {
+            if(value) {
+                var campoObjetivo = '', valor = '';
+                campoObjetivo = $("#agrupacionFiltroEdit").val();
+                valor = $("#nombreFilterEdit").val();
+                /*console.log("-_------___----");
+                console.log(reglaPadre);
+                console.log(campoObjetivo);
+                console.log(operacion);
+                console.log(valor);
+                console.log(variables);
+                console.log(variableDeVariableReglaID);
+                console.log(ordenGlobal);
+                console.log(ordenGlobal+1);
+                console.log("-_------___----");*/
+                if(campoObjetivo.length > 0 && campoObjetivo.length < 1001) {
+                    if(valor.toString().length > 0 && valor.toString().length < 1001) {
+                        const transaction = new sql.Transaction( pool1 );
+                        transaction.begin(err => {
+                            var rolledBack = false;
+                            transaction.on('rollback', aborted => {
+                                // emited with aborted === true
+                                rolledBack = true;
+                            });
+                            const request = new sql.Request(transaction);
+                            request.query("update Reglas set campoObjetivo = '"+campoObjetivo+"', valor = '"+valor+"' where ID = "+filtroSeleccionado.ID, (err, result) => {
+                                if (err) {
+                                    console.log(err);
+                                    if (!rolledBack) {
+                                        transaction.rollback(err => {
+                                            $("body").overhang({
+                                                type: "error",
+                                                primary: "#f84a1d",
+                                                accent: "#d94e2a",
+                                                message: "Error en inserción de nueva variable.",
+                                                overlay: true,
+                                                closeConfirm: true
+                                            });
+                                        });
+                                    }
+                                }  else {
+                                    transaction.commit(err => {
+                                        // ... error checks
+                                        $("body").overhang({
+                                            type: "success",
+                                            primary: "#40D47E",
+                                            accent: "#27AE60",
+                                            message: "Variable modificada con éxito.",
+                                            duration: 1,
+                                            overlay: true
+                                        });
+                                        loadFilters();
+                                        $('#modalFilter').modal('toggle');
+                                    });
+                                }
+                            });
+                        }); // fin transaction
+                    } else {
+                        $("body").overhang({
+                            type: "error",
+                            primary: "#f84a1d",
+                            accent: "#d94e2a",
+                            message: "Ingrese un nombre entre una longitud mayor a 0 y menor a 1001.",
+                            closeConfirm: true,
+                            overlay: true,
+                            closeConfirm: true
+                        });
+                    }
+                } else {
+                    $("body").overhang({
+                        type: "error",
+                        primary: "#f84a1d",
+                        accent: "#d94e2a",
+                        message: "El campo objetivo de la regla debe tener una longitud mayor a 0 y menor a 1001.",
+                        closeConfirm: true,
+                        overlay: true,
+                        closeConfirm: true
+                    });
+                }
+            }
+        }
+    });
+}
+
+function deleteFilter () {
+    $("body").overhang({
+        type: "confirm",
+        primary: "#f5a433",
+        accent: "#dc9430",
+        yesColor: "#3498DB",
+        message: 'Esta seguro que desea eliminar el filtro?',
+        overlay: true,
+        yesMessage: "Eliminar",
+        noMessage: "Cancelar",
+        callback: function (value) {
+            if(value) {
+                reglaSeleccionada = filtroSeleccionado;
+                deleteRule();
+                $('#modalFilter').modal('toggle');
+            }
+        }
+    });
+}
+/* *************    Fin Filter   ************* */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1626,9 +2817,10 @@ function goConfig () {
 }
 
 function logout () {
-	$("#app_root").empty();
+    $("#app_full").empty();
     session.defaultSession.clearStorageData([], (data) => {});
-    $("#app_root").load("src/login.html");
+    //cleanup();
+    $("#app_full").load("src/login.html");
 }
 
 function goRCL () {
@@ -1976,8 +3168,6 @@ function campoValor (regla, arreglo) {
 			};
 		}
 	}
-	console.log('arreglo Valor');
-	console.log(arreglo);
 
 	agregarCuerpo(regla, arreglo);
 }
@@ -1992,12 +3182,8 @@ function agregarCuerpo (regla, arreglo) {
 			arregloCuerpo.concat( campoObjetivo(cuerpo[i]) );
 		};
 		arreglo.concat(arregloCuerpo);
-		console.log('1');
-		console.log(arreglo);
 		return arreglo;
 	} else {
-		console.log('2');
-		console.log(arreglo);
 		return arreglo;
 	}
 }
