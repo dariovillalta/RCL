@@ -82,103 +82,7 @@ session.defaultSession.cookies.get({}, (error, cookies) => {
 	};
 });
 
-/* ******************       SEARCH     ********* */
-function filterDiv () {
-    var text = $( "#buscarDiv" ).val();
-    console.log("111");
-    var posiciones = [];
-    $(".filtrarRow>div>div>div>h2").each( function( key, value ) {
-        var $BOX_PANEL = $(this).closest('.x_panel'),
-            $ICON = $(this).find('i'),
-            $BOX_CONTENT = $BOX_PANEL.find('.x_content');
-        if($(this).text().indexOf(text) == -1) {
-            //$(this).siblings().find(".collapse-link").trigger("click");
-            console.log("11");
-            console.log($(this));
-            console.log($BOX_CONTENT);
-            console.log($BOX_PANEL);
-            $BOX_CONTENT.slideToggle(200, function(){
-                $BOX_PANEL.removeAttr('style');
-            });
-            posiciones.push(0);
-            /*$BOX_CONTENT.slideToggle(200);
-            $BOX_PANEL.css('height', 'auto');*/
-        } else {
-            console.log("22");
-            console.log($(this));
-            console.log($BOX_CONTENT);
-            console.log($BOX_PANEL);
-            posiciones.push(1);
-            /*$BOX_CONTENT.slideToggle(200, function(){
-                $BOX_PANEL.removeAttr('style');
-            });*/
-            $BOX_CONTENT.slideToggle(200);
-            $BOX_PANEL.css('height', 'auto');
-        }
-        $ICON.toggleClass('fa-chevron-up fa-chevron-down');
-    });
-    for (var i = 0; i < posiciones.length; i++) {
-        if(posiciones[i] == 1) {
-            //
-        }
-    };
-    console.log("YEAAAH");
-    console.log($(".filtrarRow>div>div>div>ul>li>a"));
-}
-/* ******************       FIN SEARCH     ********* */
-
 var montoFosedeGlobal = null;
-
-/* ******************       LOADING IMG     ********* */
-/*var filepathFullLogo = '';
-var filepathSmallLogo = '';
-function loadVariablesIMG () {
-    const transaction = new sql.Transaction( pool1 );
-    transaction.begin(err => {
-        var rolledBack = false;
-        transaction.on('rollback', aborted => {
-            // emited with aborted === true
-            rolledBack = true;
-        });
-        const request = new sql.Request(transaction);
-        request.query("select * from Variables", (err, result) => {
-            if (err) {
-                if (!rolledBack) {
-                    transaction.rollback(err => {
-                        $("body").overhang({
-                            type: "error",
-                            primary: "#f84a1d",
-                            accent: "#d94e2a",
-                            message: "Error en conección con la tabla de Variables.",
-                            overlay: true,
-                            closeConfirm: true
-                        });
-                    });
-                }
-            }  else {
-                transaction.commit(err => {
-                    // ... error checks
-                    if(result.recordset.length > 0){
-                        if(result.recordset[0].fullLogo.length > 0){
-                            filepathFullLogo = result.recordset[0].fullLogo;
-                            $("#fullLogo").attr("src",filepathFullLogo);
-                        } else
-                            filepathFullLogo = '';
-                        if(result.recordset[0].smallLogo.length > 0){
-                            filepathSmallLogo = result.recordset[0].smallLogo;
-                            $("#smallLogo").attr("src",filepathSmallLogo);
-                        } else
-                            filepathSmallLogo = '';
-                    } else {
-                        filepathFullLogo = '';
-                        filepathSmallLogo = '';
-                    }
-                });
-            }
-        });
-    }); // fin transaction
-}*/
-/* ******************       END LOADING IMG     ********* */
 
 function loadFosede () {
     const transaction = new sql.Transaction( pool1 );
@@ -207,8 +111,16 @@ function loadFosede () {
                 transaction.commit(err => {
                     // ... error checks
                     if(result.recordset.length > 0){
-                        if(result.recordset[0].montoFosede > 1)
+                        if(result.recordset[0].montoFosede > 1) {
                             montoFosedeGlobal = result.recordset;
+                            var content = '<option value="new"> Nueva Moneda </option>';
+                            $("#fosedeUpdate").empty();
+                            console.log(montoFosedeGlobal)
+                            for (var i = 0; i < montoFosedeGlobal.length; i++) {
+                                content+='<option value="'+montoFosedeGlobal[i].ID+'">'+montoFosedeGlobal[i].moneda+'</option>';
+                            };
+                            $("#fosedeUpdate").append(content);
+                        }
                         else
                             montoFosedeGlobal = 0.00;
                     } else {
@@ -223,27 +135,25 @@ function loadFosede () {
 
 function loadTextFOSEDE () {
     if(montoFosedeGlobal != null) {
-        var moneda;
-        if( $('#dollarInputRadio').is(':checked') ) {
-            moneda = "Dolar";
-        } else if( $('#euroInputRadio').is(':checked') ) {
-            moneda = "Euro";
-        } else {
-            moneda = "Lempira";
-        }
         var fosedeSeleccionado;
+        var idSeleccionada = $("#fosedeUpdate").val();
         if(isNaN(montoFosedeGlobal))
             fosedeSeleccionado = montoFosedeGlobal.filter(function(object) {
-                                    return object.moneda == moneda;
+                                    return object.ID == idSeleccionada;
                                 });
         var textoFOSEDE;
         if(isNaN(montoFosedeGlobal) && fosedeSeleccionado.length > 0)
             textoFOSEDE = fosedeSeleccionado[0].montoFosede.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
-        else if(isNaN(montoFosedeGlobal) && fosedeSeleccionado.length == 0)
+        else if(isNaN(montoFosedeGlobal) && fosedeSeleccionado.length == 0 || idSeleccionada == "new")
             textoFOSEDE = "0.00";
         else
             textoFOSEDE = montoFosedeGlobal.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
         $("#montoActual").text("L. "+textoFOSEDE);
+        if(fosedeSeleccionado != undefined && fosedeSeleccionado.length > 0) {
+            $("#nombreMoneda").val(fosedeSeleccionado[0].moneda);
+            $("#simboloMoneda").val(fosedeSeleccionado[0].simbolo);
+            $("#lempiraInput").val(fosedeSeleccionado[0].montoFosede);
+        }
     }
 }
 
@@ -308,7 +218,7 @@ function renderListsCreateVariableSelect () {
 	$("#elementosDeListaEdit").append(selectHTML);
 	if(arregloListas[0] != null)
 		$("#elementoNombreEdit").val(arregloListas[0].nombre);
-    if(arregloListas[0].tipo == 1 || arregloListas[0].tipo == 2) { //Manual Contable
+    if(arregloListas[0].tipo == 1/* || arregloListas[0].tipo == 2*/) { //Manual Contable
         $("#elementoNombre").attr("placeholder", "Ingrese nombre de cuenta");
         $("#elementoValor").attr("placeholder", "Ingrese número de cuenta");
         $("#elementoValor").show();
@@ -369,7 +279,7 @@ function showListsFields (idLista) {
     var tipoLista = arregloListas.filter(function(object) {
                         return object.ID == idLista;
                     });
-    if(tipoLista[0].tipo == 1 || tipoLista[0].tipo == 2) { //Manual Contable
+    if(tipoLista[0].tipo == 1 /*|| tipoLista[0].tipo == 2*/) { //Manual Contable
         $("#elementoNombre").attr("placeholder", "Ingrese nombre de cuenta");
         $("#elementoValor").attr("placeholder", "Ingrese número de cuenta");
         $("#elementoValor").show();
@@ -868,7 +778,18 @@ function saveManualContable () {
                                                                 user: user,
                                                                 password: password,
                                                                 server: server,
-                                                                database: database
+                                                                database: database,
+                                                                stream: true,
+                                                                connectionTimeout: 900000,
+                                                                requestTimeout: 900000,
+                                                                pool: {
+                                                                    max: 40,
+                                                                    min: 0,
+                                                                    idleTimeoutMillis: 30000
+                                                                },
+                                                                options: {
+                                                                    useUTC: false
+                                                                }
                                                             });
 
                                                             pool.connect(err => {
@@ -894,8 +815,50 @@ function saveManualContable () {
                                                                                 if(valorArreglo[nombre].length < 150) {
                                                                                     if(Date.parse(valorArreglo[fechaInicio])) {
                                                                                         if(Date.parse(valorArreglo[fechaFinal])) {
-                                                                                            valorArreglo[fechaInicio] = new Date(valorArreglo[fechaInicio].getUTCFullYear(), valorArreglo[fechaInicio].getUTCMonth(), valorArreglo[fechaInicio].getUTCDate());
-                                                                                            valorArreglo[fechaFinal] = new Date(valorArreglo[fechaFinal].getUTCFullYear(), valorArreglo[fechaFinal].getUTCMonth(), valorArreglo[fechaFinal].getUTCDate());
+                                                                                            if (Object.prototype.toString.call(valorArreglo[fechaInicio]) === "[object Date]") {
+                                                                                                if (!isNaN(valorArreglo[fechaInicio].getTime())) {
+                                                                                                    if(valorArreglo[fechaInicio] != undefined && valorArreglo[fechaInicio].length != 0 ) {
+                                                                                                        valorArreglo[fechaInicio] = new Date(valorArreglo[fechaInicio].getUTCFullYear(), valorArreglo[fechaInicio].getUTCMonth(), valorArreglo[fechaInicio].getUTCDate());
+                                                                                                        valorArreglo[fechaInicio] = formatDateCreation(valorArreglo[fechaInicio]);
+                                                                                                    } else {
+                                                                                                        valorArreglo[fechaInicio] = '2001-01-01';
+                                                                                                    }
+                                                                                                } else {
+                                                                                                    if(valorArreglo[fechaInicio] != undefined && valorArreglo[fechaInicio].length != 0 ) {
+                                                                                                        valorArreglo[fechaInicio] = formatDateCreationString(valorArreglo[fechaInicio]);
+                                                                                                    } else {
+                                                                                                        valorArreglo[fechaInicio] = '2001-01-01';
+                                                                                                    }
+                                                                                                }
+                                                                                            } else {
+                                                                                                if(valorArreglo[fechaInicio] != undefined && valorArreglo[fechaInicio].length != 0 ) {
+                                                                                                    valorArreglo[fechaInicio] = formatDateCreationString(valorArreglo[fechaInicio]);
+                                                                                                } else {
+                                                                                                    valorArreglo[fechaInicio] = '2001-01-01';
+                                                                                                }
+                                                                                            }
+                                                                                            if (Object.prototype.toString.call(valorArreglo[fechaFinal]) === "[object Date]") {
+                                                                                                if (!isNaN(valorArreglo[fechaFinal].getTime())) {
+                                                                                                    if(valorArreglo[fechaFinal] != undefined && valorArreglo[fechaFinal].length != 0 ) {
+                                                                                                        valorArreglo[fechaFinal] = new Date(valorArreglo[fechaFinal].getUTCFullYear(), valorArreglo[fechaFinal].getUTCMonth(), valorArreglo[fechaFinal].getUTCDate());
+                                                                                                        valorArreglo[fechaFinal] = formatDateCreation(valorArreglo[fechaFinal]);
+                                                                                                    } else {
+                                                                                                        valorArreglo[fechaFinal] = '2001-01-01';
+                                                                                                    }
+                                                                                                } else {
+                                                                                                    if(valorArreglo[fechaFinal] != undefined && valorArreglo[fechaFinal].length != 0 ) {
+                                                                                                        valorArreglo[fechaFinal] = formatDateCreationString(valorArreglo[fechaFinal]);
+                                                                                                    } else {
+                                                                                                        valorArreglo[fechaFinal] = '2001-01-01';
+                                                                                                    }
+                                                                                                }
+                                                                                            } else {
+                                                                                                if(valorArreglo[fechaFinal] != undefined && valorArreglo[fechaFinal].length != 0 ) {
+                                                                                                    valorArreglo[fechaFinal] = formatDateCreationString(valorArreglo[fechaFinal]);
+                                                                                                } else {
+                                                                                                    valorArreglo[fechaFinal] = '2001-01-01';
+                                                                                                }
+                                                                                            }
                                                                                             const transaction = new sql.Transaction( pool1 );
                                                                                             transaction.begin(err => {
                                                                                                 var rolledBack = false;
@@ -903,7 +866,7 @@ function saveManualContable () {
                                                                                                     rolledBack = true;
                                                                                                 });
                                                                                                 const request = new sql.Request(transaction);
-                                                                                                request.query("insert into ListasVariables (idLista, nombre, valor, saldo, fechaCreacion, fechaCaducidad, puesto) values ("+idLista+",'"+valorArreglo[nombre]+"','"+valorArreglo[cuenta]+"',0,'"+formatDateCreation(valorArreglo[fechaInicio])+"','"+formatDateCreation(valorArreglo[fechaFinal])+"','')", (err, result) => {
+                                                                                                request.query("insert into ListasVariables (idLista, nombre, valor, saldo, fechaCreacion, fechaCaducidad, puesto) values ("+idLista+",'"+$.trim(valorArreglo[nombre])+"','"+$.trim(valorArreglo[cuenta])+"',0,'"+valorArreglo[fechaInicio]+"','"+valorArreglo[fechaFinal]+"','')", (err, result) => {
                                                                                                     if (err) {
                                                                                                         if (!rolledBack) {
                                                                                                             transaction.rollback(err => {
@@ -1074,6 +1037,25 @@ function formatDateCreation(date) {
     return year + '-' + (monthIndex+1) + '-' + day;
 }
 
+function formatDateCreationString(date) {
+    //formato si es STRING
+    //aaaa/mm/dd
+    //aaaa-mm-dd
+    var partes = [];
+    if(date.includes("-"))
+        partes = date.split("-");
+    else if(date.includes("/"))
+        partes = date.split("/");
+    else return false;
+    var monthNames = [
+        "Ene", "Feb", "Mar",
+        "Abr", "May", "Jun", "Jul",
+        "Ago", "Sep", "Oct",
+        "Nov", "Dec"
+    ];
+    return partes[0] + '-' + partes[1] + '-' + partes[2];
+}
+
 $('#fechaCreacionManCon').datepicker({
     format: "dd-mm-yyyy",
     todayHighlight: true,
@@ -1102,7 +1084,7 @@ function createElementList () {
         saldo = 0;*/
     var hoy = formatDateCreation( new Date() );
     var errorMessage = '';
-    if(listaSeleccionada[0].tipo == 1 || listaSeleccionada[0].tipo == 2) { // Manual Contable y Cuentas Op Balance Gen
+    if(listaSeleccionada[0].tipo == 1 /*|| listaSeleccionada[0].tipo == 2*/) { // Manual Contable y Cuentas Op Balance Gen
         nombre = $("#elementoNombre").val();
         valor = $("#elementoValor").val();
         fechaCreacion = $('#fechaCreacionManCon').datepicker('getDate');
@@ -1142,7 +1124,7 @@ function createElementList () {
         		if(idLista.length > 0) {
         			if(nombre.length > 0 && nombre.length < 121){
         				if(valor.length > 0 && $.trim(valor).length < 51){
-                            if(!/\s/.test(valor)) {
+                            //if(!/\s/.test(valor)) {
                                 if(saldo.toString().length > 0){
                                     if( (listaSeleccionada[0].tipo == 6 && $.trim(puesto).length>0) || (listaSeleccionada[0].tipo == 3 && $.trim(puesto).length>0) || listaSeleccionada[0].tipo == 1 || listaSeleccionada[0].tipo == 2 || listaSeleccionada[0].tipo == 4 || listaSeleccionada[0].tipo == 5 || listaSeleccionada[0].tipo == 7 || listaSeleccionada[0].tipo == 8 || listaSeleccionada[0].tipo == 9 || listaSeleccionada[0].tipo == 10) {
                                         if(!isNaN(saldo)) {
@@ -1154,7 +1136,7 @@ function createElementList () {
                         				            rolledBack = true;
                         				        });
                         				        const request = new sql.Request(transaction);
-                        				        request.query("insert into ListasVariables (idLista, nombre, valor, saldo, fechaCreacion, fechaCaducidad, puesto) values ("+idLista+",'"+nombre+"','"+$.trim(valor)+"',"+saldo+",'"+formatDateCreation(fechaCreacion)+"','"+formatDateCreation(fechaCaducidad)+"','"+$.trim(puesto)+"')", (err, result) => {
+                        				        request.query("insert into ListasVariables (idLista, nombre, valor, saldo, fechaCreacion, fechaCaducidad, puesto) values ("+idLista+",'"+$.trim(nombre)+"','"+$.trim(valor)+"',"+saldo+",'"+formatDateCreation(fechaCreacion)+"','"+formatDateCreation(fechaCaducidad)+"','"+$.trim(puesto)+"')", (err, result) => {
                         				            if (err) {
                         				                if (!rolledBack) {
                         				                    transaction.rollback(err => {
@@ -1219,7 +1201,7 @@ function createElementList () {
                                         closeConfirm: true
                                     });
                                 }
-                            } else {
+                            /*} else {
                                 $("body").overhang({
                                     type: "error",
                                     primary: "#f84a1d",
@@ -1228,7 +1210,7 @@ function createElementList () {
                                     overlay: true,
                                     closeConfirm: true
                                 });
-                            }
+                            }*/
         				} else {
         					$("body").overhang({
         					  	type: "error",
@@ -1334,7 +1316,7 @@ function updateElementList () {
 						            rolledBack = true;
 						        });
 						        const request = new sql.Request(transaction);
-						        request.query("update ListasVariables set idLista = "+idLista+", nombre = '"+nombre+"', valor = '"+valor+"', saldo = "+saldo+", fechaCreacion = '"+formatDateCreation(fechaInicio)+"', fechaCaducidad = '"+formatDateCreation(fechaFin)+"', puesto = '"+puesto+"' where ID = "+listasVariablesSeleccionada.ID, (err, result) => {
+						        request.query("update ListasVariables set idLista = "+idLista+", nombre = '"+$.trim(nombre)+"', valor = '"+$.trim(valor)+"', saldo = "+saldo+", fechaCreacion = '"+formatDateCreation(fechaInicio)+"', fechaCaducidad = '"+formatDateCreation(fechaFin)+"', puesto = '"+$.trim(puesto)+"' where ID = "+listasVariablesSeleccionada.ID, (err, result) => {
 						            if (err) {
 						                if (!rolledBack) {
                                             console.log(err)
@@ -1476,7 +1458,7 @@ function showListsFieldsUpdate (id) {
                     return (id == object.ID);
                 });
     var valor = tipo[0].tipo;
-    if(valor == 1 || valor == 2) {
+    if(valor == 1 /*|| valor == 2*/) {
         $('#labelNombreExcelUpdate').text("Nombre de Elemento");
         $('#labelCuentaExcelUpdate').text("# de Cuenta de Elemento");
         $('#labelFechaCreacionExcelUpdate').text("Inicio de vigencia de Elemento");
@@ -1578,7 +1560,7 @@ $("input[name='listaRadio']").on('ifChanged', function(event){
     var valor = $("input[name='listaRadio']:checked").val();
     if (valor != undefined) {
         console.log(valor)
-        if(valor == 1 || valor == 2) {
+        if(valor == 1 /*|| valor == 2*/) {
             $('#labelNombreExcel').text("Columna de Nombre de Elemento");
             $('#labelCuentaExcel').text("Columna de Cuenta de Elemento");
             $('#labelFechaCreacionExcel').text("Columna de inicio de vigencia de Elemento");
@@ -2207,7 +2189,7 @@ function createListExcel (nombre, tipo, callback) {
             rolledBack = true;
         });
         const request = new sql.Request(transaction);
-        request.query("insert into Listas (nombre, tipo) values ('"+nombre+"',"+tipo+")", (err, result) => {
+        request.query("insert into Listas (nombre, tipo) values ('"+$.trim(nombre)+"',"+tipo+")", (err, result) => {
             if (err) {
                 if (!rolledBack) {
                     console.log(err)
@@ -2216,7 +2198,7 @@ function createListExcel (nombre, tipo, callback) {
                             type: "error",
                             primary: "#f84a1d",
                             accent: "#d94e2a",
-                            message: "Error en crear lista "+nombre+".",
+                            message: "Error en crear lista "+$.trim(nombre)+".",
                             overlay: true,
                             closeConfirm: true
                         });
@@ -2289,7 +2271,7 @@ function createElementListExcel (idLista, nombre, valor, saldo, fechaCreacion, f
             rolledBack = true;
         });
         const request = new sql.Request(transaction);
-        request.query("insert into ListasVariables (idLista, nombre, valor, saldo, fechaCreacion, fechaCaducidad, puesto) values ("+idLista+",'"+nombre+"','"+valor+"',"+saldo+",'"+fechaCreacion+"','"+fechaCaducidad+"','"+puesto+"')", (err, result) => {
+        request.query("insert into ListasVariables (idLista, nombre, valor, saldo, fechaCreacion, fechaCaducidad, puesto) values ("+idLista+",'"+$.trim(nombre)+"','"+$.trim(valor)+"',"+saldo+",'"+fechaCreacion+"','"+fechaCaducidad+"','"+$.trim(puesto)+"')", (err, result) => {
             if (err) {
                 if (!rolledBack) {
                     transaction.rollback(err => {
@@ -2310,41 +2292,57 @@ function createElementListExcel (idLista, nombre, valor, saldo, fechaCreacion, f
 }
 
 function cleanList (ID) {
-    const transaction = new sql.Transaction( pool1 );
-    transaction.begin(err => {
-        var rolledBack = false;
-        transaction.on('rollback', aborted => {
-            // emited with aborted === true
-            rolledBack = true;
-        });
-        const request = new sql.Request(transaction);
-        request.query("delete * from ListasVariables where idLista = "+ID, (err, result) => {
-            if (err) {
-                console.log(err);
-                if (!rolledBack) {
-                    transaction.rollback(err => {
+    var ID = $("#elementosDeListaEdit").val();
+    if(ID != undefined) {
+        const transaction = new sql.Transaction( pool1 );
+        transaction.begin(err => {
+            var rolledBack = false;
+            transaction.on('rollback', aborted => {
+                // emited with aborted === true
+                rolledBack = true;
+            });
+            const request = new sql.Request(transaction);
+            request.query("delete from ListasVariables where idLista = "+ID, (err, result) => {
+                if (err) {
+                    console.log(err);
+                    if (!rolledBack) {
+                        transaction.rollback(err => {
+                            $("body").overhang({
+                                type: "error",
+                                primary: "#f84a1d",
+                                accent: "#d94e2a",
+                                message: "Error en conección con la tabla de ListasVariables.",
+                                overlay: true,
+                                closeConfirm: true
+                            });
+                        });
+                    }
+                } else {
+                    transaction.commit(err => {
+                        // ... error checks
+                        loadLists();
                         $("body").overhang({
-                            type: "error",
-                            primary: "#f84a1d",
-                            accent: "#d94e2a",
-                            message: "Error en conección con la tabla de variablePadre.",
-                            overlay: true,
-                            closeConfirm: true
+                            type: "success",
+                            primary: "#40D47E",
+                            accent: "#27AE60",
+                            message: "Elementos eliminados con éxito.",
+                            duration: 1,
+                            overlay: true
                         });
                     });
                 }
-            } else {
-                transaction.commit(err => {
-                    // ... error checks
-                    if(result.recordset.length > 0){
-                        arregloTodasReglas = result.recordset;
-                    } else {
-                        arregloTodasReglas = [];
-                    }
-                });
-            }
+            });
+        }); // fin transaction
+    } else {
+        $("body").overhang({
+            type: "error",
+            primary: "#f84a1d",
+            accent: "#d94e2a",
+            message: "Seleccione una lista primero.",
+            overlay: true,
+            closeConfirm: true
         });
-    }); // fin transaction
+    }
 }
 
 function toColumnName(num) {
@@ -2689,74 +2687,82 @@ $.fn.digits = function(){
 }
 
 function verifyAndSaveFOSEDE () {
-    if($("#dollarInput").val().length > 0 || $("#lempiraInput").val().length > 0 || $("#euroInput").val().length > 0){
-        if( ($("#dollarInput").val().length > 0 && $("#lempiraInputCambio").val().length > 0) || ($("#euroInput").val().length > 0 && $("#lempiraInputCambio").val().length > 0) || $("#lempiraInput").val().length > 0 ) {
-            var tasa, montoF,simbolo, moneda;
-            if( $('#dollarInputRadio').is(':checked') ) {
-                montoF = parseFloat($("#dollarInput").val().split(" ")[1].replace(/,/g,""));
-                //tasa = parseFloat($("#lempiraInputCambio").val().split(" ")[1].replace(/,/g,""));
-                tasa = 1;
-                simbolo = "$ ";
-                moneda = "Dólar";
-            }else if( $('#euroInputRadio').is(':checked') ) {
-                montoF = parseFloat($("#euroInput").val().split(" ")[1].replace(/,/g,""));
-                //tasa = parseFloat($("#lempiraInputCambio").val().split(" ")[1].replace(/,/g,""));
-                tasa = 1;
-                simbolo = "€ ";
-                moneda = "Euro";
-            } else {
-                montoF = parseFloat($("#lempiraInput").val().split(" ")[1].replace(/,/g,""));
-                tasa = 1;
-                simbolo = "L ";
-                moneda = "Lempira";
-            }
-            var fosede;
-            fosede = math.round(montoF, 4);
-            tasa = math.round(tasa, 4);
-            fosede = math.multiply(math.bignumber(fosede), math.bignumber(tasa));
-            if( fosede > 0){
-                var textoFOSEDE;
-                if(!isNaN(montoFosedeGlobal))
-                    textoFOSEDE = '0.00';
-                else if(isNaN(montoFosedeGlobal)) {
-                    fosedeExiste = montoFosedeGlobal.filter(function(object) {
-                                    return object.moneda == moneda;
-                                });
-                    if(fosedeExiste.length > 0)
-                        textoFOSEDE = fosedeExiste[0].montoFosede.toString();
-                    else
-                        textoFOSEDE = '0.00';
-                }
-                var nuevoFosede = fosede.toString();
-                $("body").overhang({
-                    type: "confirm",
-                    primary: "#f5a433",
-                    accent: "#dc9430",
-                    yesColor: "#3498DB",
-                    message: 'Esta seguro que desea modificar el monto FOSEDE de '+textoFOSEDE.replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,")+' a '+nuevoFosede.replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,")+'?',
-                    overlay: true,
-                    yesMessage: "Modificar",
-                    noMessage: "Cancelar",
-                    callback: function (value) {
-                        if(value){
-                            var fosedeExiste = [];
-                            if(isNaN(montoFosedeGlobal))
-                                fosedeExiste = montoFosedeGlobal.filter(function(object) {
-                                    return object.moneda == moneda;
-                                });
-                            if(fosedeExiste.length == 0)
-                                createFOSEDEVariablesDB(simbolo, moneda, fosede);
-                            else if(isNaN(montoFosedeGlobal))
-                                updateFOSEDEVariablesDB(fosede, fosedeExiste[0].ID);
-                        }
+    //if($("#dollarInput").val().length > 0 || $("#lempiraInput").val().length > 0 || $("#euroInput").val().length > 0){
+        //if( ($("#dollarInput").val().length > 0 && $("#lempiraInputCambio").val().length > 0) || ($("#euroInput").val().length > 0 && $("#lempiraInputCambio").val().length > 0) || $("#lempiraInput").val().length > 0 ) {
+    var textoFOSEDE, idSeleccionado = $("#fosedeUpdate").val(), fosedeExiste = [];
+    if(!isNaN(montoFosedeGlobal))
+        textoFOSEDE = '0.00';
+    else if(isNaN(montoFosedeGlobal)) {
+        fosedeExiste = montoFosedeGlobal.filter(function(object) {
+                        return object.ID == idSeleccionado;
+                    });
+        if(fosedeExiste.length > 0)
+            textoFOSEDE = fosedeExiste[0].montoFosede.toString();
+        else
+            textoFOSEDE = '0.00';
+    }
+    var simbolo = $("#simboloMoneda").val();
+    var moneda = $("#nombreMoneda").val();
+    if($("#lempiraInput").val().length > 0) {
+        if(simbolo.length > 0) {
+            if( !/\./.test(simbolo) ) {
+                if(moneda.length > 0) {
+                    var montoF;
+                    montoF = parseFloat($("#lempiraInput").val().split(" ")[1].replace(/,/g,""));
+                    console.log(montoF)
+                    if( montoF > 0){
+                        var nuevoFosede = montoF.toString();
+                        $("body").overhang({
+                            type: "confirm",
+                            primary: "#f5a433",
+                            accent: "#dc9430",
+                            yesColor: "#3498DB",
+                            message: 'Esta seguro que desea modificar el monto FOSEDE de '+textoFOSEDE.replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,")+' a '+nuevoFosede.replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,")+'?',
+                            overlay: true,
+                            yesMessage: "Modificar",
+                            noMessage: "Cancelar",
+                            callback: function (value) {
+                                if(value){
+                                    /*var fosedeExiste = [];
+                                    if(isNaN(montoFosedeGlobal))
+                                        fosedeExiste = montoFosedeGlobal.filter(function(object) {
+                                            return object.ID == idSeleccionado;
+                                        });*/
+                                    if(fosedeExiste.length == 0) {
+                                        createFOSEDEVariablesDB(simbolo, moneda, montoF);
+
+                                    } else if(isNaN(montoFosedeGlobal)) {
+                                        updateFOSEDEVariablesDB(simbolo, moneda, montoF, fosedeExiste[0].ID);
+                                    }
+                                }
+                            }
+                        });
+                    } else {
+                        $("body").overhang({
+                            type: "error",
+                            primary: "#f84a1d",
+                            accent: "#d94e2a",
+                            message: "El monto FOSEDE no puede ser igual a 0.",
+                            overlay: true,
+                            closeConfirm: true
+                        });
                     }
-                });
+                } else {
+                    $("body").overhang({
+                        type: "error",
+                        primary: "#f84a1d",
+                        accent: "#d94e2a",
+                        message: "Ingrese un nombre para la moneda menor a 71 caracteres.",
+                        overlay: true,
+                        closeConfirm: true
+                    });
+                }
             } else {
                 $("body").overhang({
                     type: "error",
                     primary: "#f84a1d",
                     accent: "#d94e2a",
-                    message: "El monto FOSEDE no puede ser igual a 0.",
+                    message: "El simbolo no puede llevar un punto.",
                     overlay: true,
                     closeConfirm: true
                 });
@@ -2766,11 +2772,21 @@ function verifyAndSaveFOSEDE () {
                 type: "error",
                 primary: "#f84a1d",
                 accent: "#d94e2a",
-                message: "Ingrese un valor para la tasa de cambio.",
+                message: "Ingrese un simbolo para la moneda menor a 6 caracteres.",
                 overlay: true,
                 closeConfirm: true
             });
         }
+        /*} else {
+            $("body").overhang({
+                type: "error",
+                primary: "#f84a1d",
+                accent: "#d94e2a",
+                message: "Ingrese un valor para la tasa de cambio.",
+                overlay: true,
+                closeConfirm: true
+            });
+        }*/
     } else {
         $("body").overhang({
             type: "error",
@@ -2824,7 +2840,7 @@ function createFOSEDEVariablesDB (simbolo, moneda, montoFosede) {
     }); // fin transaction
 }
 
-function updateFOSEDEVariablesDB (montoFosede, id) {
+function updateFOSEDEVariablesDB (monedaNombre, simbolo, montoFosede, id) {
 	const transaction = new sql.Transaction( pool1 );
     transaction.begin(err => {
         var rolledBack = false;
@@ -2833,9 +2849,10 @@ function updateFOSEDEVariablesDB (montoFosede, id) {
             rolledBack = true;
         });
         const request = new sql.Request(transaction);
-        request.query("update FOSEDE set montoFosede = "+montoFosede+" where ID = "+id, (err, result) => {
+        request.query("update FOSEDE set moneda = '"+monedaNombre+"', simbolo = '"+simbolo+"', montoFosede = "+montoFosede+" where ID = "+id, (err, result) => {
             if (err) {
                 if (!rolledBack) {
+                    console.log(err);
                     transaction.rollback(err => {
                         $("body").overhang({
                             type: "error",

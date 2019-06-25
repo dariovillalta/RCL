@@ -210,6 +210,10 @@
               <button type="button" onclick="deleteList()" class="btn btn-danger col-sm-1 col-xs-12"><span class="glyphicon glyphicon-trash"></span></button>
             </div>
             <br/>
+            <div class="row">
+              <button type="button" onclick="cleanList()" class="btn btn-danger col-sm-5 col-sm-offset-4 col-xs-12">Borrar Todos los Elementos de la Lista <span class="glyphicon glyphicon-trash"></span></button>
+            </div>
+            <br/>
             <div class="ln_solid"></div>
             <h4>Mantenimiento de listas:</h4>
             <div class="row" style="padding-left:5%;">
@@ -325,64 +329,45 @@
             <br/>
             <form class="form-horizontal form-label-left">
 
+              <div class="row">
+                <div class="col-sm-4 col-xs-12 col-sm-offset-3">
+                  <div class="select-style">
+                    <select id="fosedeUpdate" onchange="loadTextFOSEDE()">
+                      <option value="new">Nueva Moneda</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <br/>
+
+              <div class="form-group">
+                <label class="control-label col-md-3 col-sm-3 col-xs-12" for="first-name">Valor de campo moneda en tablas:</label>
+                <div class="col-md-3 col-sm-3 col-xs-12">
+                  <input type="text" id="nombreMoneda" required="required" class="form-control col-md-7 col-xs-12">
+                </div>
+                <label class="control-label col-md-3 col-sm-3 col-xs-6" for="first-name">Simbolo de Moneda:</label>
+                <div class="col-md-2 col-sm-2 col-xs-6">
+                  <input type="text" id="simboloMoneda" required="required" class="form-control col-md-7 col-xs-12">
+                </div>
+              </div>
+
               <div class="form-group">
                 <label class="control-label col-md-3 col-sm-3 col-xs-12" for="first-name">Ingresar Monto:</label>
                 <div class="col-md-3 col-sm-3 col-xs-12">
-                  <input type="text" id="lempiraInput" required="required" class="form-control col-md-7 col-xs-12" data-inputmask-alias="currency" data-inputmask-prefix="L " data-inputmask-clearmaskonlostfocus="true" style="display:none;">
-                  <input type="text" id="euroInput" required="required" class="form-control col-md-7 col-xs-12" data-inputmask-alias="currency" data-inputmask-prefix="€ " data-inputmask-clearmaskonlostfocus="true" style="display:none;">
-                  <input type="text" id="dollarInput" required="required" class="form-control col-md-7 col-xs-12" data-inputmask-alias="currency" data-inputmask-clearmaskonlostfocus="true" >
+                  <input type="text" id="lempiraInput" required="required" class="form-control col-md-7 col-xs-12" data-inputmask-alias="currency" data-inputmask-prefix="L " data-inputmask-clearmaskonlostfocus="true">
                 </div>
                 <div class="col-md-2 col-md-offset-1 col-sm-2 col-sm-offset-1 col-xs-3 col-xs-offset-3">
-                  <label class="control-label" for="first-name">Moneda:</label>
                 </div>
                 <div class="col-md-3 col-sm-3 col-xs-6">
-                  <div class="radio">
-                    <label>
-                      <input id="dollarInputRadio" onclick="showDollar()" type="radio" checked name="moneda"> Dolar
-                    </label>
-                  </div>
-                  <div class="radio">
-                    <label>
-                      <input id="lempiraInputRadio" onclick="showLempira()" type="radio" name="moneda"> Lempira
-                    </label>
-                  </div>
-                  <div class="radio">
-                    <label>
-                      <input id="euroInputRadio" onclick="showEuro()" type="radio" name="moneda"> Euro
-                    </label>
-                  </div>
                 </div>
               </div>
 
-              <div class="form-group">
-                <label class="control-label col-md-3 col-sm-3 col-xs-12" for="first-name">Tasa de Cambio:</label>
-                <div class="col-md-3 col-sm-3 col-xs-12">
-                  <input type="text" id="lempiraInputCambio" required="required" class="form-control col-md-7 col-xs-12" data-inputmask-alias="currency" data-inputmask-prefix="L " data-inputmask-clearmaskonlostfocus="true">
-                  <!-- <input type="text" id="dollarInputCambio" required="required" class="form-control col-md-7 col-xs-12" data-inputmask-alias="currency" data-inputmask-clearmaskonlostfocus="true" data-inputmask-digits="3" style="display:none;"> -->
-                </div>
-                <div class="col-md-2 col-md-offset-1 col-sm-2 col-sm-offset-1 col-xs-3 col-xs-offset-3">
-                  <!-- <label class="control-label" for="first-name">Moneda:</label> -->
-                </div>
-                <div class="col-md-3 col-sm-3 col-xs-6">
-                  <!-- <div class="radio">
-                    <label>
-                      <input id="dollarRadio" type="radio" name="cambio" disabled="disabled"> Dolar
-                    </label>
-                  </div> -->
-                  <!-- <div class="radio">
-                    <label>
-                      <input id="lempiraRadio" type="radio" checked name="cambio" disabled="disabled"> Lempira
-                    </label>
-                  </div> -->
-                </div>
-              </div>
-
-              <div class="row tile_count">
+              <!-- <div class="row tile_count">
                 <div class="tile_stats_count" id="wrapper">
                   <span class="count_top">Total:</span>
                   <div class="count" id="totalTasaCambio"></div>
                 </div>
-              </div>
+              </div> -->
 
             </form>
 

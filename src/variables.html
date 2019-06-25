@@ -340,8 +340,6 @@
         i+=tipo.length;
       }
     }
-    console.log('resultado 1');
-    console.log(resultado);
     var banderaPosiciones = [];
     for (var i = 0; i < resultado.length; i++) {
       var fraccion = '';
@@ -351,8 +349,6 @@
         resultado = [resultado.slice(0, i), resultado.slice(i+1, posNumerado+1), "/", resultado.slice(posNumerado+1) ].join('');
       }
     }
-    console.log('resultado 2');
-    console.log(resultado);
     verifyAndSaveFormula(resultado, formula);
   }
 

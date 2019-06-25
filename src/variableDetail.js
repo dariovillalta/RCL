@@ -181,6 +181,9 @@ var arregloElementosDeListasValorEdit = [];
 var reglaSeleccionada;
 var arregloFiltros = [];
 var filtroSeleccionado;
+var arreglodeListas = [];
+var entradasLlamadasListas = 0;
+var banderaLlamadasListas = 0;
 
 function loadRules () {
 	const transaction = new sql.Transaction( pool1 );
@@ -223,8 +226,8 @@ function loadRules () {
                     	if(ordenGlobal < arregloReglas[i].orden)
                     		ordenGlobal = arregloReglas[i].orden;
                     };
-                    renderRules();
-                    renderTable();
+                    entradasLlamadasListas = 0;
+                    loadListsText();
                 });
             }
         });
@@ -268,6 +271,85 @@ function loadVariableObject () {
             }
         });
     }); // fin transaction
+}
+
+function loadListsText () {
+    const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false
+        transaction.on('rollback', aborted => {
+            rolledBack = true;
+        });
+        const request = new sql.Request(transaction);
+        request.query("select * from Listas where tipo != 1 and tipo != 2 and tipo != 7 and tipo != 6", (err, result) => {
+            if (err) {
+                if (!rolledBack) {
+                    transaction.rollback(err => {
+                        $("body").overhang({
+                            type: "error",
+                            primary: "#f84a1d",
+                            accent: "#d94e2a",
+                            message: "Error al conectarse con la tabla de FormulaVariables.",
+                            overlay: true,
+                            closeConfirm: true
+                        });
+                    });
+                }
+            } else {
+                transaction.commit(err => {
+                    if(result.recordset.length > 0){
+                        banderaLlamadasListas = result.recordset.length;
+                        arreglodeListas = [];
+                        for (var i = 0; i < result.recordset.length; i++) {
+                            loadListsVariables(result.recordset[i].ID);
+                        };
+                    }
+                });
+            }
+        });
+    }); // fin transaction
+}
+
+function loadListsVariables (id) {
+    const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false
+        transaction.on('rollback', aborted => {
+            rolledBack = true;
+        });
+        const request = new sql.Request(transaction);
+        request.query("select * from ListasVariables where idLista = "+id, (err, result) => {
+            if (err) {
+                if (!rolledBack) {
+                    transaction.rollback(err => {
+                        $("body").overhang({
+                            type: "error",
+                            primary: "#f84a1d",
+                            accent: "#d94e2a",
+                            message: "Error al conectarse con la tabla de FormulaVariables.",
+                            overlay: true,
+                            closeConfirm: true
+                        });
+                    });
+                }
+            } else {
+                transaction.commit(err => {
+                    if(result.recordset.length > 0){
+                        $.merge( arreglodeListas, result.recordset );
+                    }
+                    entradasLlamadasListas++;
+                    verificarBanderaListas();
+                });
+            }
+        });
+    }); // fin transaction
+}
+
+function verificarBanderaListas () {
+    if(entradasLlamadasListas == banderaLlamadasListas){
+        renderRules();
+        renderTable();
+    }
 }
 
 var montoFosedeGlobal = null;
@@ -409,7 +491,7 @@ function renderTable () {
 	                noMessage: "Cancelar",
 	                callback: function (value) {
 	                    if(value)
-	                        modifyRule(data.ID, data.reglaPadre);
+	                        modifyRuleParent(data.ID, data.reglaPadre);
 	                }
 	            });
 	           } else {
@@ -441,7 +523,7 @@ function renderTable () {
     } );
 }
 
-function modifyRule (id, variablePadre) {
+function modifyRuleParent (id, variablePadre) {
 	const transaction = new sql.Transaction( pool1 );
     transaction.begin(err => {
         var rolledBack = false;
@@ -549,8 +631,10 @@ function getTextRule (regla) {
 		else
 			campoObjetivo = regla.campoObjetivo;
 		var valor;
-		if(regla.valor.split("=").length > 1)
-			valor = regla.valor.split("=")[1];
+		if(regla.valor.split("=").length > 1 && regla.valor.split("=")[0].localeCompare("FACTOR") != 0)
+			valor = getListValue(regla.valor.split("=")[1]);
+        else if(regla.valor.split("=")[0].localeCompare("Factor") != 0)
+            valor = "Factor";
 		else
 			valor = regla.valor;
 		reglaTexto+=campoObjetivo +" "+ regla.operacion +" "+ valor;
@@ -561,8 +645,10 @@ function getTextRule (regla) {
 		else
 			campoObjetivo = regla.campoObjetivo;
 		var valor;
-		if(regla.valor.split("=").length > 1)
-			valor = regla.valor.split("=")[1];
+		if(regla.valor.split("=").length > 1 && regla.valor.indexOf("COLUMNA") != 0)
+			valor = getListValue(regla.valor.split("=")[1]);
+        else if(regla.valor.split("=").length > 1 && regla.valor.indexOf("COLUMNA") == 0)
+            valor = regla.valor.split("=")[1];
 		else
 			valor = regla.valor;
 		reglaTexto+="Si "+campoObjetivo +" "+ regla.operacion +" "+ valor;
@@ -581,7 +667,7 @@ function getTextRule (regla) {
 			campoObjetivo = regla.campoObjetivo;
 		var valor;
 		if(regla.valor.split("=").length > 1)
-			valor = regla.valor.split("=")[1];
+			valor = getListValue(regla.valor.split("=")[1]);
 		else
 			valor = regla.valor;
 		/*if(regla.operacion)
@@ -799,6 +885,21 @@ function getCampo (campo) {
 		return"Tipo de Cuenta";
 }
 
+//funcion para retornar el valor correspondiente de una lista dependiendo del tipo de columna
+function getListValue (id) {
+    var valores = id.split(","), texto = '';
+    for (var j = 0; j < valores.length; j++) {
+        for (var i = 0; i < arreglodeListas.length; i++) {
+            if(arreglodeListas[i].ID == valores[j]) {
+                texto += arreglodeListas[i].valor;
+                if(j != valores.length-1)
+                    texto += ',';
+            }
+        };
+    };
+    return texto;
+}
+
 
 function loadLists () {
 	const transaction = new sql.Transaction( pool1 );
@@ -882,7 +983,7 @@ function getElementsListsValue (listaID) {
 function renderListsSelect (tipo) {
 	var selectHTML = '';
 	var listaTemp = arregloListas.filter(function( object ) {
-						return object.tipo == tipo;
+						return object.tipo == tipo || object.tipo == 10;
 					});
 	for (var i = 0; i < listaTemp.length; i++) {
 		selectHTML+='<option value='+listaTemp[i].ID+'>'+listaTemp[i].nombre+'</option>';
@@ -1151,7 +1252,7 @@ function saveRule () {
 		operacion = '*';
 	if( $('#manualValorRadio').is(':checked') ) {
         if($("#manualValorInput").val().length > 0)
-		  valor = "COLUMNA="+parseFloat($("#manualValorInput").val().split(" ")[1].replace(/,/, ""));
+		  valor = "COLUMNA="+parseFloat($("#manualValorInput").val().split(" ")[1].replace(/,/g, ""));
         else {
             $("body").overhang({
                 type: "error",
@@ -1370,7 +1471,7 @@ function getElementsListsValueEdit (listaID) {
 function renderListsSelectEdit (tipo) {
     var selectHTML = '';
     var listaTemp = arregloListas.filter(function( object ) {
-                        return object.tipo == tipo;
+                        return object.tipo == tipo || object.tipo == 10;
                     });
     for (var i = 0; i < listaTemp.length; i++) {
         selectHTML+='<option value='+listaTemp[i].ID+'>'+listaTemp[i].nombre+'</option>';
@@ -1637,7 +1738,7 @@ function modifyRule () {
                 else if( $('#multOperadorRadioEdit').is(':checked') )
                     operacion = '*';
                 if( $('#manualValorRadioEdit').is(':checked') )
-                    valor = "COLUMNA="+parseFloat($("#manualValorInputEdit").val().split(" ")[1].replace(/,/, ""));
+                    valor = "COLUMNA="+parseFloat($("#manualValorInputEdit").val().split(" ")[1].replace(/,/g, ""));
                 else if( $('#elementoValorRadioEdit').is(':checked') ) {
                     var elementosSelect = $("#elementoValorOptionSelectEdit").val();
                     var elementos = '';
@@ -1785,7 +1886,7 @@ function loadFilters () {
             rolledBack = true;
         });
         const request = new sql.Request(transaction);
-        request.query("select * from Reglas where variablePadre = "+variableDeVariableReglaID+" and esFiltro = 'true'", (err, result) => {
+        request.query("select * from Reglas where esFiltro = 'true'", (err, result) => {
             if (err) {
                 console.log(err);
                 if (!rolledBack) {
@@ -1874,7 +1975,7 @@ function saveFilter () {
     var campoObjetivo = '';
     var operacion = 'se';
     var valor = '';
-    var variables = '';
+    var variables = '2';
     var esFiltro = true;
     var filtro = -1;
     campoObjetivo = $("#agrupacionFiltro").val();

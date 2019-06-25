@@ -813,6 +813,8 @@ function loadVariablesTable () {
         ]
     });
 
+    table.page('last').draw('page');
+
     // Array to track the ids of the details displayed rows
     var detailRows = [];
  
@@ -1997,6 +1999,8 @@ function loadVariablesofVariableTable () {
             }
         ]
     });
+
+    table.page('last').draw('page');
 
     $('#datatable_variablesOfVariables tbody').on( 'click', 'tr a.updateVariableOfVariable', function () {
         var data = table.row( $(this).parents('tr') ).data();

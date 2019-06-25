@@ -65,7 +65,6 @@ var mailOptions = {
 };
 
 function mail () {
-    console.log('llamado');
     transporter.sendMail(mailOptions, function(error, info){
       if (error) {
         console.log(error);
@@ -767,62 +766,62 @@ function goConnections () {
 }
 
 function goConfig () {
-    $("#app_root").empty();
     cleanupSelectedList();
     cleanup();
+    $("#app_root").empty();
     $("#app_root").load("src/config.html");
 }
 
 function logout () {
-    $("#app_full").empty();
     session.defaultSession.clearStorageData([], (data) => {});
     cleanup();
+    $("#app_full").empty();
     $("#app_full").load("src/login.html");
 }
 
 function goRCL () {
+    cleanup();
 	$("#app_root").empty();
-	cleanup();
     $("#app_root").load("src/rcl.html");
 }
 
 function goReports () {
+    cleanup();
 	$("#app_root").empty();
-	cleanup();
     $("#app_root").load("src/reportes.html");
 }
 
 function goGraphics () {
-    $("#app_root").empty();
     cleanup();
+    $("#app_root").empty();
     $("#app_root").load("src/graficos.html");
 }
 
 function goAssets () {
-    $("#app_root").empty();
     cleanupSelectedList();
     cleanup();
+    $("#app_root").empty();
     $("#app_root").load("src/mantenimientoActivos.html");
 }
 
 function goDeposits () {
-    $("#app_root").empty();
     cleanupSelectedList();
     cleanup();
+    $("#app_root").empty();
     $("#app_root").load("src/mantenimientoDepositos.html");
 }
 
 function goLoans () {
-    $("#app_root").empty();
     cleanupSelectedList();
     cleanup();
+    $("#app_root").empty();
     $("#app_root").load("src/mantenimientoPrestamos.html");
 }
 
 function goLists () {
-    $("#app_root").empty();
     cleanupSelectedList();
     cleanup();
+    $("#app_root").empty();
     $("#app_root").load("src/variablesLists.html");
 }
 

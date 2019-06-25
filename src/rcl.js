@@ -49,6 +49,7 @@ const pool1 = new sql.ConnectionPool(config, err => {
         loadAllRules();
         //loadAllTotes();
         loadFosede();
+        loadEmails();
 	}
 });
 
@@ -144,6 +145,9 @@ var arreglodeCuenOpClientes = [];   //arreglo de cuentas operativas de clientes
 var banderaLlamadasListas = 0;   //total de listas a entrar
 var entradasLlamadasListas = 0;   //total de veces que ha entrado a importar listas
 var minimoRCL = 0;  //valor minimo del RCL requerido por la CNBS
+var arregloDeCorreos = [];  //valor que contiene las direcciones de correo electronicos y su respectivo porcentaje a enviar
+var tieneFiltroDepositos = false;   //var para ver si las reglas tienen filtro en depositos
+var tieneFiltroPrestamos = false;   //var para ver si las reglas tienen filtro en prestamos
 
 $('#fechaRCL').datepicker({
     format: "dd-mm-yyyy",
@@ -319,6 +323,14 @@ function loadRules (id, i, j, k, tipo) {
                             if(reglasActivos[i][j][k] == undefined)
                                 reglasActivos[i][j][k] = [];
                             reglasActivos[i][j][k] = result.recordset;
+                            if(!tieneFiltroDepositos) {
+                                for (var q = 0; q < result.recordset.length; q++) {
+                                    if(result.recordset[q].filtro != -1) {
+                                        tieneFiltroDepositos = true;
+                                        break;
+                                    }
+                                };
+                            }
                         } else if(tipo == 3) {
                             if(reglasActivos[i] == undefined)
                                 reglasActivos[i] = [];
@@ -327,6 +339,14 @@ function loadRules (id, i, j, k, tipo) {
                             if(reglasActivos[i][j][k] == undefined)
                                 reglasActivos[i][j][k] = [];
                             reglasActivos[i][j][k] = result.recordset;
+                            if(!tieneFiltroPrestamos) {
+                                for (var q = 0; q < result.recordset.length; q++) {
+                                    if(result.recordset[q].filtro != -1) {
+                                        tieneFiltroPrestamos = true;
+                                        break;
+                                    }
+                                };
+                            }
                         }
                     } else {
                         if(tipo == 1) {
@@ -535,12 +555,15 @@ function loadAssets () {
                 transaction.commit(err => {
                     if(result.recordset.length > 0){
                         arregloActivos = result.recordset;
+                        console.log('Adding Date arregloActivos...');
                         for (var i = 0; i < arregloActivos.length; i++) {
                             arregloActivos[i].fecha = new Date(arregloActivos[i].fecha.getUTCFullYear(), arregloActivos[i].fecha.getUTCMonth(), arregloActivos[i].fecha.getUTCDate());
                         };
                     } else {
                         arregloActivos = [];
                     }
+                    console.log('arregloActivos');
+                    console.log(arregloActivos);
                     entroActivosGetFromTable = true;
                     if(variablesAgrupadas[1].length > 0)
                         loadDeposits();
@@ -581,6 +604,7 @@ function loadDeposits () {
                 transaction.commit(err => {
                     if(result.recordset.length > 0){
                         arregloDepositos = result.recordset;
+                        console.log('Adding Date arregloDepositos...');
                         for (var i = 0; i < arregloDepositos.length; i++) {
                             arregloDepositos[i].fecha = new Date(arregloDepositos[i].fecha.getUTCFullYear(), arregloDepositos[i].fecha.getUTCMonth(), arregloDepositos[i].fecha.getUTCDate());
                         };
@@ -588,6 +612,22 @@ function loadDeposits () {
                         arregloDepositos = [];
                     }
                     entroDepositosGetFromTable = true;
+                    console.log('Grouping arregloDepositos...');
+                    if(tieneFiltroDepositos) {
+                        for (var i = 0; i < arregloDeFiltros.length; i++) {
+                            if(arregloDeFiltros[i].variables.localeCompare('2') == 0) {
+                                window['arregloDepositos'+arregloDeFiltros[i].ID] = [];
+                                for (var j = 0; j < arregloDepositos.length; j++) {
+                                    addToArrayDeposits (arregloDeFiltros[i].ID, arregloDeFiltros[i].campoObjetivo, arregloDepositos[j]);
+                                    console.log('j = '+j);
+                                };
+                                console.log('arregloDepositos Filtro = '+arregloDeFiltros[i].variables);
+                                console.log(window['arregloDepositos'+arregloDeFiltros[i].ID]);
+                            }
+                        };
+                    }
+                    console.log('arregloDepositos');
+                    console.log(arregloDepositos);
                     if(variablesAgrupadas[2].length > 0)
                         loadCredit();
                     else {
@@ -626,6 +666,7 @@ function loadCredit () {
                 transaction.commit(err => {
                     if(result.recordset.length > 0){
                         arregloPrestamos = result.recordset;
+                        console.log('Adding Date arregloPrestamos...');
                         for (var i = 0; i < arregloPrestamos.length; i++) {
                             arregloPrestamos[i].fecha = new Date(arregloPrestamos[i].fecha.getUTCFullYear(), arregloPrestamos[i].fecha.getUTCMonth(), arregloPrestamos[i].fecha.getUTCDate());
                             arregloPrestamos[i].fechaInicio = new Date(arregloPrestamos[i].fechaInicio.getUTCFullYear(), arregloPrestamos[i].fechaInicio.getUTCMonth(), arregloPrestamos[i].fechaInicio.getUTCDate());
@@ -635,6 +676,22 @@ function loadCredit () {
                         arregloPrestamos = [];
                     }
                     entroPrestamosGetFromTable = true;
+                    console.log('Grouping arregloPrestamos...');
+                    if(tieneFiltroPrestamos) {
+                        for (var i = 0; i < arregloDeFiltros.length; i++) {
+                            if(arregloDeFiltros[i].variables.localeCompare('3') == 0) {
+                                window['arregloPrestamos'+arregloDeFiltros[i].ID] = [];
+                                for (var j = 0; j < arregloPrestamos.length; j++) {
+                                    addToArrayCredits (arregloDeFiltros[i].ID, arregloDeFiltros[i].campoObjetivo, arregloPrestamos[j]);
+                                    console.log('j = '+j);
+                                };
+                                console.log('arregloPrestamos Filtro = '+arregloDeFiltros[i].variables);
+                                console.log(window['arregloPrestamos'+arregloDeFiltros[i].ID]);
+                            }
+                        };
+                    }
+                    console.log('arregloPrestamos');
+                    console.log(arregloPrestamos);
                     createMethods();
                 });
             }
@@ -744,6 +801,8 @@ function loadListsVariables (id) {
                     if(result.recordset.length > 0){
                         $.merge( arreglodeListas, result.recordset );
                     }
+                    console.log('arreglodeListas')
+                    console.log(arreglodeListas)
                     entradasLlamadasListas++;
                     verificarBanderaListas();
                 });
@@ -751,6 +810,274 @@ function loadListsVariables (id) {
         });
     }); // fin transaction
 }
+
+function loadFilter () {
+    const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false
+        transaction.on('rollback', aborted => {
+            rolledBack = true;
+        });
+        const request = new sql.Request(transaction);
+        request.query("select * from Reglas where esFiltro = '"+true+"'", (err, result) => {
+            if (err) {
+                if (!rolledBack) {
+                    transaction.rollback(err => {
+                        $("body").overhang({
+                            type: "error",
+                            primary: "#f84a1d",
+                            accent: "#d94e2a",
+                            message: "Error al conectarse con la tabla de FormulaVariables.",
+                            overlay: true,
+                            closeConfirm: true
+                        });
+                    });
+                }
+            } else {
+                transaction.commit(err => {
+                    if(result.recordset.length > 0){
+                        arregloDeFiltros = result.recordset;
+                    } else {
+                        arregloDeFiltros = [];
+                    }
+                    loadLists();
+                });
+            }
+        });
+    }); // fin transaction
+}
+
+/*function addToArrayDeposits (id, field, newObject) {
+    var entro = false;
+    for (var i = 0; i < window['arregloDepositos'+id].length; i++) {
+        if(window['arregloDepositos'+id][i][field].localeCompare(newObject[field]) == 0) {
+            window['arregloDepositos'+id][i].saldo += newObject.saldo;
+            entro = true;
+            break;
+        }
+    };
+    if(!entro) {
+        window['arregloDepositos'+id].push({idCliente: newObject.idCliente, numCuenta: newObject.numCuenta, nombreCliente: newObject.nombreCliente, tipoPersona: newObject.tipoPersona, tipoSubPersona: newObject.tipoSubPersona, saldo: newObject.saldo, moneda: newObject.moneda, fechaInicio: newObject.fechaInicio, fechaFinal: newObject.fechaFinal, tipoCuenta: newObject.tipoCuenta, sucursal: newObject.sucursal, fecha: newObject.fecha});
+    }
+}*/
+
+function addToArrayDeposits (id, field, newObject) {
+    binaryInsert(newObject, window['arregloDepositos'+id], field)
+}
+
+function addToArrayCredits (id, field, newObject) {
+    binaryInsert(newObject, window['arregloPrestamos'+id], field);
+    /*var entro = false;
+    for (var i = 0; i < window['arregloPrestamos'+id].length; i++) {
+        if(window['arregloPrestamos'+id][i][field].localeCompare(newObject[field]) == 0) {
+            window['arregloPrestamos'+id][i].saldo += newObject.saldo;
+            entro = true;
+            break;
+        }
+    };
+    if(!entro) {
+        window['arregloPrestamos'+id].push({idCliente: newObject.idCliente, nombreCliente: newObject.nombreCliente, tipoPersona: newObject.tipoPersona, tipoSubPersona: newObject.tipoSubPersona, numPrestamo: newObject.numPrestamo, saldo: newObject.saldo, moneda: newObject.moneda, diasMora: newObject.diasMora, amortizacion: newObject.amortizacion, sobregiro: newObject.sobregiro, contingente: newObject.contingente, clasificacionCartera: newObject.clasificacionCartera, tipoCredito: newObject.tipoCredito, pago30: newObject.pago30, pago60: newObject.pago60, pago90: newObject.pago90, pago120: newObject.pago120, clausulasRestrictivas: newObject.clausulasRestrictivas, esFinanciacionGarantizada: newObject.esFinanciacionGarantizada, valorFinanciacion: newObject.valorFinanciacion, alac: newObject.alac, factor: newObject.factor, fechaInicio: newObject.fechaInicio, fechaFinal: newObject.fechaFinal, montoOtorgado: newObject.montoOtorgado, sucursal: newObject.sucursal, fecha: newObject.fecha});
+    }*/
+}
+
+/*HACER QUE REGRESE EL INDEX SI LO ENCONTRO, SINO QUE REGRESE UN VALOR PARA REPRESENTAR SI INSERTAR AL
+INICIO O FINAL DEL ARREGLO, O EN UNA POS DE ENMEDIO*/
+
+/*function binarySearch(arr, field, newObject) {
+    var mid = Math.floor(arr.length / 2);
+    console.log("==============");
+    console.log(arr);
+    console.log(arr[mid]);
+    console.log(newObject);
+    if(arr[mid] != undefined)
+        console.log(arr[mid][field].localeCompare(newObject[field]));
+    if (arr[mid] != undefined && arr[mid][field].localeCompare(newObject[field]) == 0) {
+        console.log(arr[mid][field]);
+        console.log(newObject[field]);
+        console.log('match', arr[mid], newObject);
+        return arr[mid];
+    } else if (arr[mid] != undefined && arr[mid][field].localeCompare(newObject[field]) < 0 && arr.length > 1) {
+        console.log(arr[mid][field]);
+        console.log(newObject[field]);
+        console.log('mid lower', arr[mid], newObject);
+        return binarySearch(arr.splice(mid, arr.length), field, newObject);
+    } else if (arr[mid] != undefined && arr[mid][field].localeCompare(newObject[field]) > 0 && arr.length > 1) {
+        console.log(arr[mid][field]);
+        console.log(newObject[field]);
+        console.log('mid higher', arr[mid], newObject);
+        return binarySearch(arr.splice(0, mid), field, newObject);
+    } else {
+        console.log('not here', newObject);
+        if(arr.length == 0)
+            return -1;
+        else
+            return mid;
+    }
+}*/
+/*function binarySearch(arr, field, newObject, pos) {
+    var mid = Math.floor(arr.length / 2);
+    console.log("////////////");
+    //console.log("tam = "+arr.length);
+    //console.log("mid = "+mid);
+    console.log("pos = "+pos);
+    for (var i = 0; i < arr.length; i++) {
+        console.log(arr[i]);
+    };
+    console.log("----------");
+    if (arr[mid] != undefined && arr[mid][field].localeCompare(newObject[field]) == 0) {
+        console.log("11")
+        return "EN"+mid;
+    } else if (arr[mid] != undefined && arr[mid][field].localeCompare(newObject[field]) < 0 && arr.length > 1) {
+        pos = pos + Math.floor(arr.splice(mid, arr.length).length / 2);
+        console.log("22")
+        return binarySearch(arr.splice(mid, arr.length), field, newObject, pos);
+    } else if (arr[mid] != undefined && arr[mid][field].localeCompare(newObject[field]) > 0 && arr.length > 1) {
+        pos = pos - Math.floor(arr.splice(mid, arr.length).length / 2);
+        console.log("33")
+        return binarySearch(arr.splice(0, mid), field, newObject, pos);
+    } else {
+        console.log("44")
+        /*if(arr.length == 1) {
+            console.log("+=")
+            console.log(arr[mid][field])
+            if (arr[mid] != undefined && arr[mid][field].localeCompare(newObject[field]) < 0) {
+                console.log("+=1")
+                return pos;
+            } else {
+                console.log("+=2")
+                return pos;
+            }
+        }*/
+        //console.log(mid);
+        //console.log("pos = "+pos);
+        /*if(arr.length == 0)
+            return 0;
+        else*/
+            /*return pos;
+    }
+}*/
+
+/*function insertAt(item, sortedList, field, low = 0,high = (sortedList.length - 1)) {
+    console.log('item[field]')
+    console.log(item)
+
+    if (low == high) {
+        // hit end of sortedList - done
+        console.log('MOOOO')
+        console.log(low)
+        return low;
+    }
+
+    // get midpoint of list and item value
+    let mid = low + Math.floor((high - low) / 2),
+        itemCompare = sortedList[mid];
+    //console.log('mid')
+    //console.log(mid)
+    if(itemCompare != undefined) {
+        console.log('item[field]')
+        console.log(item)
+        console.log('itemCompare[field]')
+        console.log(itemCompare)
+
+        if (item[field].localeCompare(itemCompare[field]) > 0) {
+            // work higher end of list
+            console.log('1')
+            return insertAt(item, sortedList, field, mid + 1, high);
+        }
+
+        if (item[field].localeCompare(itemCompare[field]) < 0) {
+            // work lower end of list
+            console.log('2')
+            return insertAt(item, sortedList, field, low, mid);
+        }
+        console.log('3')
+
+        // found equal value - done
+        return mid;
+    } else {
+        return 0;
+    }
+}*/
+
+function binaryInsert(value, array, field, startVal, endVal){
+    var length = array.length;
+    var start = typeof(startVal) != 'undefined' ? startVal : 0;
+    var end = typeof(endVal) != 'undefined' ? endVal : length - 1;//!! endVal could be 0 don't use || syntax
+    var m = start + Math.floor((end - start)/2);
+    if(length == 0) {
+        array.push(value);
+        return;
+    }
+    if(value[field] == array[m][field]){
+        array[m].saldo+=value.saldo;
+        return;
+    }
+    if(value[field] > array[end][field]){
+        array.splice(end + 1, 0, value);
+        return;
+    }
+    if(value[field] < array[start][field]) {//!!
+        array.splice(start, 0, value);
+        return;
+    }
+    if(start >= end){
+        return;
+    }
+    if(value[field] < array[m][field]){
+        binaryInsert(value, array, field, start, m - 1);
+        return;
+    }
+    if(value[field] > array[m][field]){
+        binaryInsert(value, array, field, m + 1, end);
+        return;
+    }
+    //we don't insert duplicates
+}
+
+function loadEmails () {
+    const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false
+        transaction.on('rollback', aborted => {
+            rolledBack = true;
+        });
+        const request = new sql.Request(transaction);
+        request.query("select * from Correos", (err, result) => {
+            if (err) {
+                if (!rolledBack) {
+                    transaction.rollback(err => {
+                        $("body").overhang({
+                            type: "error",
+                            primary: "#f84a1d",
+                            accent: "#d94e2a",
+                            message: "Error al conectarse con la tabla de FormulaVariables.",
+                            overlay: true,
+                            closeConfirm: true
+                        });
+                    });
+                }
+            } else {
+                transaction.commit(err => {
+                    if(result.recordset.length > 0) {
+                        arregloDeCorreos = result.recordset;
+                    } else {
+                        arregloDeCorreos = [];
+                    }
+                });
+            }
+        });
+    }); // fin transaction
+}
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -774,6 +1101,7 @@ function checkFormulaExists () {
     if(proyecciones.length > 0) {
         //fechaSeleccionada = $("#fechaRCL").datepicker('getDate');
         fechaSeleccionada = new Date($("#fechaRCL").datepicker('getDate').getFullYear(), $("#fechaRCL").datepicker('getDate').getMonth(), $("#fechaRCL").datepicker('getDate').getDate());
+        console.log('fechaSeleccionada = '+fechaSeleccionada)
         if (Object.prototype.toString.call(fechaSeleccionada) === "[object Date]") {
             if (isNaN(fechaSeleccionada.getTime())) {
                 $("body").overhang({
@@ -861,6 +1189,9 @@ function checkFormulaExists () {
                     totalesRCL = [];
                     banderaLlamadasListas = 0;
                     entradasLlamadasListas = 0;
+                    tieneFiltroDepositos = false;
+                    tieneFiltroPrestamos = false;
+                    timer = 0;
                     for (var i = 0; i < formulaGlobal.length; i++) {
                         if(formulaGlobal.charAt(i) != "(" && formulaGlobal.charAt(i) != ")" && formulaGlobal.charAt(i) != "<" && formulaGlobal.charAt(i) != ">" && 
                             formulaGlobal.charAt(i) != "!" && formulaGlobal.charAt(i) != "=" && formulaGlobal.charAt(i) != "/" && formulaGlobal.charAt(i) != "*" && 
@@ -871,7 +1202,8 @@ function checkFormulaExists () {
                         }
                     };
                     //searchAndCreateArrays();
-                    loadLists();
+                    //loadLists();
+                    loadFilter();
                 } else {
                     $("body").overhang({
                         type: "error",
@@ -1000,6 +1332,9 @@ function searchAndCreateArrays () {
 }
 
 function groupArray () {
+    myInterval = setInterval(myTimer, 1000);
+    $( ".loadingScreen" ).fadeIn( "slow", function() {
+    });
     variablesAgrupadas[0] = [];
     variablesAgrupadas[1] = [];
     variablesAgrupadas[2] = [];
@@ -1097,7 +1432,6 @@ function groupArray () {
 function divideAssetsRules () {
     if(contadorActivosReglasDespues == contadorActivosReglasAntes) {
         //var fechaSeleccionada = $("#fechaRCL").datepicker('getDate');
-        console.log(fechaSeleccionada)
         for (var i = 0; i < reglasActivos.length; i++) {
             if(reglasActivos[i] != undefined) {
                 if(variablesDeSubVariablesSolas[i] == undefined)
@@ -1311,8 +1645,8 @@ function divideDepositsRules () {
                                     }*/
                                     for (var n = 0; n < reglasActivos[i][j][k].length; n++) {
                                         if(reglasActivos[i][j][k][n] != undefined && reglasActivos[i][j][k][n].reglaPadre == 0) {
-                                            var resultado = campoObjetivoDepositos(reglasActivos[i][j][k][n], [], 1, subvariablesSolas[i][j][k].variable, subvariablesSolas[i][j][k].tipoProyeccion);
-                                            resultado[0] = "\n"+resultado[0];
+                                            var resultado = campoObjetivoDepositos(reglasActivos[i][j][k][n], [], 2, subvariablesSolas[i][j][k].variable, subvariablesSolas[i][j][k].tipoProyeccion);
+                                            resultado[0].codigo = "\n"+resultado[0].codigo;
                                             $.merge( depositosCuerpo, resultado );
                                         }
                                     };
@@ -1384,7 +1718,7 @@ function divideCreditRules () {
                                     for (var n = 0; n < reglasActivos[i][j][k].length; n++) {
                                         if(reglasActivos[i][j][k][n] != undefined && reglasActivos[i][j][k][n].reglaPadre == 0) {
                                             var resultado = campoObjetivoPrestamos(reglasActivos[i][j][k][n], [], 2, subvariablesSolas[i][j][k].variable, subvariablesSolas[i][j][k].tipoProyeccion);
-                                            resultado[0] = "\n"+resultado[0];
+                                            resultado[0].codigo = "\n"+resultado[0].codigo;
                                             $.merge( prestamosCuerpo, resultado );
                                         }
                                     };
@@ -1508,6 +1842,7 @@ function obtenerVariables (i, j) {
 
 function checkLoadRules () {
     if(entroActivosGetRules && entroDepositosGetRules && entroPrestamosGetRules) {
+        console.log("LLEGEU")
         if(variablesAgrupadas[0].length > 0) {
             if(variablesAgrupadas[1].length == 0)
                 entroDepositosGetFromTable = true;
@@ -1544,10 +1879,34 @@ function createMethods () {
             contentDeposits+="\tcalculateRCL();\n";
         else                                            //activos
             contentAssets+="\tcalculateRCL();\n";*/
+
         var content = '';
         content += createAssetsRCL();
-        content += createCreditRCL();
-        content += createDepositsRCL();
+        var agregarInstanciaciones = true, entro = false;
+        for (var n = 0; n < arregloDeFiltros.length; n++) {
+            if(arregloDeFiltros[n].variables.localeCompare("3") == 0) {
+                content += createCreditRCL(arregloDeFiltros[n].ID, agregarInstanciaciones);
+                agregarInstanciaciones = false;
+                entro = true;
+            }
+        }
+        if(!entro)
+            agregarInstanciaciones = true;
+        content += createCreditRCL(-1, agregarInstanciaciones);
+        //content += createCreditRCL();
+        agregarInstanciaciones = true;
+        entro = false;
+        for (var n = 0; n < arregloDeFiltros.length; n++) {
+            if(arregloDeFiltros[n].variables.localeCompare("2") == 0) {
+                content += createDepositsRCL(arregloDeFiltros[n].ID, agregarInstanciaciones);
+                agregarInstanciaciones = false;
+                entro = true;
+            }
+        }
+        if(!entro)
+            agregarInstanciaciones = true;
+        content += createDepositsRCL(-1, agregarInstanciaciones);
+        //content += createDepositsRCL();
         content+="\tcalculateRCL();\n";
         window['calculoRCL'] = new Function(
          'return function anonRCL(){'+
@@ -1789,25 +2148,39 @@ function createAssetsRCL () {
     return content;
 }
 
-function createDepositsRCL () {
+function createDepositsRCL (filtro, soloAgregarUnaVezInstanciaciones) {
     var content = '';
-    for (var i = 0; i < depositosInstanciasIncisos.length; i++) {
-        content+="\n"+depositosInstanciasIncisos[i].codigo;
-    };
-    for (var i = 0; i < depositosInstanciasSubVariables.length; i++) {
-        content+="\n"+depositosInstanciasSubVariables[i].codigo;
-    };
-    content+="\n\tfor (var i = 0; i < arregloDepositos.length; i++) {";
+    if(soloAgregarUnaVezInstanciaciones) {
+        for (var i = 0; i < depositosInstanciasIncisos.length; i++) {
+            content+="\n"+depositosInstanciasIncisos[i].codigo;
+        };
+        for (var i = 0; i < depositosInstanciasSubVariables.length; i++) {
+            content+="\n"+depositosInstanciasSubVariables[i].codigo;
+        };
+    }
+    var idFiltro = '', entro = false;
+    if(filtro != -1)
+        idFiltro = filtro;
+    content+="\n\tfor (var i = 0; i < arregloDepositos"+idFiltro+".length; i++) {";
     for (var i = 0; i < depositosCuerpo.length; i++) {
-        content+=depositosCuerpo[i]+"\n";
+        if(i == 0){
+            content+="\n";
+            content+="\t\tinsertMoneyArray(arregloDepositos"+idFiltro+"[i].moneda.toLowerCase());\n";
+        }
+        if(depositosCuerpo[i].filtro == filtro) {
+            content+=depositosCuerpo[i].codigo+"\n";
+            entro = true;
+        }
         if(i == depositosCuerpo.length-1) {
             for (var j = 0; j < depositosInstanciasSubVariables.length; j++) {
-                content+="\n\t"+"saveVariableSubVar('"+depositosInstanciasSubVariables[j].nombreVariable+"',"+depositosInstanciasSubVariables[j].tipoProyeccion+","+depositosInstanciasSubVariables[j].variable+",arregloDepositos[i].moneda.toLowerCase(), arregloDepositos[i].sucursal.toLowerCase());";
+                content+="\n\t\t"+"saveVariableSubVar('"+depositosInstanciasSubVariables[j].nombreVariable+"',"+depositosInstanciasSubVariables[j].tipoProyeccion+","+depositosInstanciasSubVariables[j].variable+",arregloDepositos"+idFiltro+"[i].moneda.toLowerCase(), arregloDepositos"+idFiltro+"[i].sucursal.toLowerCase());";
                 //content+="\n\t"+"saveVariableSubVarAgencias('"+depositosInstanciasSubVariables[j].nombreVariable+"',"+depositosInstanciasSubVariables[j].tipoProyeccion+","+depositosInstanciasSubVariables[j].variable+",arregloDepositos[i].sucursal.toLowerCase());";
             };
         }
     };
-    content+="\t}\n";
+    content+="\n\t}\n";
+    if(!entro)
+        content = '';
     /*for (var i = 0; i < depositosInstanciasSubVariables.length; i++) {
         content+="\n\t"+"saveVariableSubVar('"+depositosInstanciasSubVariables[i].nombreVariable+"',"+depositosInstanciasSubVariables[i].tipoProyeccion+","+depositosInstanciasSubVariables[i].variable+",arregloDepositos[i].moneda.toLowerCase());";
     };
@@ -1820,22 +2193,34 @@ function createDepositsRCL () {
     return content;
 }
 
-function createCreditRCL (argument) {
+function createCreditRCL (filtro, soloAgregarUnaVezInstanciaciones) {
     var content = '';
-    for (var i = 0; i < prestamosInstanciasIncisos.length; i++) {
-        content+="\n"+prestamosInstanciasIncisos[i].codigo;
-    };
-    for (var i = 0; i < prestamosInstanciasSubVariables.length; i++) {
-        content+="\n"+prestamosInstanciasSubVariables[i].codigo;
-    };
-    content+="\n\tfor (var i = 0; i < arregloPrestamos.length; i++) {";
+    if(soloAgregarUnaVezInstanciaciones) {
+        for (var i = 0; i < prestamosInstanciasIncisos.length; i++) {
+            content+="\n"+prestamosInstanciasIncisos[i].codigo;
+        };
+        for (var i = 0; i < prestamosInstanciasSubVariables.length; i++) {
+            content+="\n"+prestamosInstanciasSubVariables[i].codigo;
+        };
+    }
+    var idFiltro = '', entro = false;
+    if(filtro != -1)
+        idFiltro = filtro;
+    content+="\n\tfor (var i = 0; i < arregloPrestamos"+idFiltro+".length; i++) {";
     for (var i = 0; i < prestamosCuerpo.length; i++) {
-        content+=prestamosCuerpo[i]+"\n";
+        if(i == 0){
+            content+="\n";
+            content+="\t\tinsertMoneyArray(arregloPrestamos"+idFiltro+"[i].moneda.toLowerCase());\n";
+        }
+        if(prestamosCuerpo[i].filtro == filtro) {
+            content+=prestamosCuerpo[i].codigo+"\n";
+            entro = true;
+        }
         if(i == prestamosCuerpo.length-1) {
             //aplicarFactores == factores de agrupaciones de credito
             for (var j = 0; j < aplicarFactores.length; j++) {
                 if(j == 0) {
-                    content += "\n\t\tif( i == arregloPrestamos.length-1) {\n";
+                    content += "\n\t\tif( i == arregloPrestamos"+idFiltro+".length-1) {\n";
                 }
                 content += "\t\t\t"+aplicarFactores[j];
                 if(j == aplicarFactores.length-1) {
@@ -1843,14 +2228,16 @@ function createCreditRCL (argument) {
                 }
             };
             for (var j = 0; j < prestamosInstanciasSubVariables.length; j++) {
-                content+="\n\t"+"saveVariableSubVar('"+prestamosInstanciasSubVariables[j].nombreVariable+"',"+prestamosInstanciasSubVariables[j].tipoProyeccion+","+prestamosInstanciasSubVariables[j].variable+",arregloPrestamos[i].moneda.toLowerCase(), arregloPrestamos[i].sucursal.toLowerCase());";
+                content+="\n\t\t"+"saveVariableSubVar('"+prestamosInstanciasSubVariables[j].nombreVariable+"',"+prestamosInstanciasSubVariables[j].tipoProyeccion+","+prestamosInstanciasSubVariables[j].variable+",arregloPrestamos"+idFiltro+"[i].moneda.toLowerCase(), arregloPrestamos"+idFiltro+"[i].sucursal.toLowerCase());";
                 //content+="\n\t"+"saveVariableSubVarAgencias('"+prestamosInstanciasSubVariables[j].nombreVariable+"',"+prestamosInstanciasSubVariables[j].tipoProyeccion+","+prestamosInstanciasSubVariables[j].variable+",arregloPrestamos[i].sucursal.toLowerCase());";
                 if(j == 0)
                     content+="\n";
             };
         }
     };
-    content+="\t}\n";
+    content+="\n\t}\n";
+    if(!entro)
+        content = '';
     /*for (var i = 0; i < prestamosInstanciasSubVariables.length; i++) {
         content+="\n\t"+"saveVariableSubVar('"+prestamosInstanciasSubVariables[i].nombreVariable+"',"+prestamosInstanciasSubVariables[i].tipoProyeccion+","+prestamosInstanciasSubVariables[i].variable+",arregloPrestamos[i].moneda.toLowerCase());";
         if(i == 0)
@@ -2222,6 +2609,7 @@ function getFactor (idVariable) {
 }
 
 function calculateRCL (argument) {
+    console.log("finishing, making final calculations...");
     var equacion1 = formulaGlobal.split("=")[0].split(/[+|-|*|\/]+/), equacion2 = formulaGlobal.split("=")[1].split(/[+|-|*|\/]+/);;
     var todasTienenFormula = true;
     var soloUnoNoTieneFormula = false;
@@ -2587,7 +2975,7 @@ function calculateRCL (argument) {
         var denominadoresSubVariablesConPadres = getDenominatorFraction(equacionSubVariablesConPadres);
         var numeradoresSubVariables = getNumeratorFraction(equacionSubVariables);
         var denominadoresSubVariables = getDenominatorFraction(equacionSubVariables);
-        /*console.log('equacionVariables');
+        console.log('equacionVariables');
         console.log(equacionVariables);
         console.log('equacionSubVariablesConPadres')
         console.log(equacionSubVariablesConPadres)
@@ -2630,7 +3018,7 @@ function calculateRCL (argument) {
             console.log(window["variablesDeSubVariablesSolas"+arregloMonedas[i]]);
             console.log('arregloCuentas = '+arregloMonedas[i]);
             console.log(window["arregloCuentas"+arregloMonedas[i]]);
-        };*/
+        };
         /*for (var i = 0; i < arregloAgencias.length; i++) {
             console.log('variablesSolas = '+arregloAgencias[i]);
             console.log(window["variablesSolas"+arregloAgencias[i]]);
@@ -2908,7 +3296,7 @@ function calculateRCL (argument) {
                                         } catch(err) {
                                             resultado = 0;
                                         }
-                                        window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].total = resultado;
+                                        window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].total = math.round(resultado, 2);
                                     }
                                     //break LoopChar;                                                    /// REVISAR --------------     LO QUITE Y AHORA FUNCIONA
                                 }
@@ -2918,7 +3306,26 @@ function calculateRCL (argument) {
                                 } catch(err) {
                                     resultado = 0;
                                 }
-                                window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].total = resultado;
+                                console.log(ecuacionResuelta);
+                                console.log(resultado);
+                                /*try {
+                                    window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].total = math.round(resultado, 2);
+                                    window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].esRCL = true;
+                                    window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].volumenFormula = 100;
+                                    window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].influenciaFormula = 100;
+                                    window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].numerador = 100;
+                                    window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].denominador = 100;
+                                } catch (err) {
+                                    console.log(err);
+                                    window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].total = resultado;
+                                    window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].esRCL = true;
+                                    window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].volumenFormula = 100;
+                                    window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].influenciaFormula = 100;
+                                    window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].numerador = 100;
+                                    window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].denominador = 100;
+                                }*/
+                                if(!isNaN(resultado))
+                                    window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].total = math.round(resultado, 2);
                                 window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].esRCL = true;
                                 window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].volumenFormula = 100;
                                 window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].influenciaFormula = 100;
@@ -2980,15 +3387,15 @@ function calculateRCL (argument) {
             for (var i = 0; i < proyecciones.length; i++) {
                 for (var j = 0; j < window["variablesSolas"+arregloMonedas[p]][i].length; j++) {
                     if(window["variablesSolas"+arregloMonedas[p]][i][j] != undefined) {
-                        window["variablesSolas"+arregloMonedas[p]][i][j].totalRCL = window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].total;
+                        window["variablesSolas"+arregloMonedas[p]][i][j].totalRCL = math.round(window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].total, 2);
                         for (var k = 0; k < window["subvariablesSolas"+arregloMonedas[p]][i][j].length; k++) {
                             if(window["subvariablesSolas"+arregloMonedas[p]][i][j][k] != undefined) {
-                                window["subvariablesSolas"+arregloMonedas[p]][i][j][k].totalRCL = window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].total;
+                                window["subvariablesSolas"+arregloMonedas[p]][i][j][k].totalRCL = math.round(window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].total, 2);
                                 for (var n = 0; n < window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k].length; n++) {
                                     if(window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k][n] != undefined) {
-                                        window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k][n].totalRCL = window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].total;
+                                        window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k][n].totalRCL = math.round(window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].total, 2);
                                         for (var z = 0; z < arregloCuentas[i][j][k][n].length; z++) {
-                                            window["arregloCuentas"+arregloMonedas[p]][i][j][k][n][z].totalRCL = window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].total;
+                                            window["arregloCuentas"+arregloMonedas[p]][i][j][k][n][z].totalRCL = math.round(window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].total, 2);
                                         };
                                     }
                                 };
@@ -3250,27 +3657,57 @@ function calculateRCL (argument) {
                     if(window["variablesSolas"+arregloMonedas[p]][i][j].varPadre.length == 0) {
                         if(!window["variablesSolas"+arregloMonedas[p]][i][j].esRCL) {
                             var res = getInfluenceAndVolumeVariablesSola (window["variablesSolas"+arregloMonedas[p]][i][j], equacionVariables);
-                            window["variablesSolas"+arregloMonedas[p]][i][j].volumenFormula = res.volumen;
-                            window["variablesSolas"+arregloMonedas[p]][i][j].influenciaFormula = res.influencia;
+                            if(!isNaN(res.volumen))
+                                window["variablesSolas"+arregloMonedas[p]][i][j].volumenFormula = math.round(res.volumen, 2);
+                            else
+                                window["variablesSolas"+arregloMonedas[p]][i][j].volumenFormula = 0;
+                            if(!isNaN(res.influencia))
+                                window["variablesSolas"+arregloMonedas[p]][i][j].influenciaFormula = math.round(res.influencia, 2);
+                            else
+                                window["variablesSolas"+arregloMonedas[p]][i][j].influenciaFormula = 0;
                         }
                     } else {
                         var res = getInfluenceAndVolumeVariablesSola (window["variablesSolas"+arregloMonedas[p]][i][j], equacionSubVariablesConPadres);
-                        window["variablesSolas"+arregloMonedas[p]][i][j].volumenFormula = res.volumen;
-                        window["variablesSolas"+arregloMonedas[p]][i][j].influenciaFormula = res.influencia;
+                        if(!isNaN(res.volumen))
+                            window["variablesSolas"+arregloMonedas[p]][i][j].volumenFormula = math.round(res.volumen, 2);
+                        else
+                            window["variablesSolas"+arregloMonedas[p]][i][j].volumenFormula = 0;
+                        if(!isNaN(res.influencia))
+                            window["variablesSolas"+arregloMonedas[p]][i][j].influenciaFormula = math.round(res.influencia, 2);
+                        else
+                            window["variablesSolas"+arregloMonedas[p]][i][j].influenciaFormula = 0;
                     }
                     for (var k = 0; k < window["subvariablesSolas"+arregloMonedas[p]][i][j].length; k++) {
                         var resSub = getInfluenceAndVolumeVariablesSola (window["subvariablesSolas"+arregloMonedas[p]][i][j][k], equacionSubVariables);
-                        window["subvariablesSolas"+arregloMonedas[p]][i][j][k].volumenFormula = resSub.volumen;
-                        window["subvariablesSolas"+arregloMonedas[p]][i][j][k].influenciaFormula = resSub.influencia;
+                        if(!isNaN(resSub.volumen))
+                            window["subvariablesSolas"+arregloMonedas[p]][i][j][k].volumenFormula = math.round(resSub.volumen, 2);
+                        else
+                            window["subvariablesSolas"+arregloMonedas[p]][i][j][k].volumenFormula = 0;
+                        if(!isNaN(resSub.influencia))
+                            window["subvariablesSolas"+arregloMonedas[p]][i][j][k].influenciaFormula = math.round(resSub.influencia, 2);
+                        else
+                            window["subvariablesSolas"+arregloMonedas[p]][i][j][k].influenciaFormula = 0;
                         for (var n = 0; n < window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k].length; n++) {
                             var resSub = getInfluenceAndVolumeVariablesSola (window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k][n], equacionVarReglas);
-                            window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k][n].volumenFormula = resSub.volumen;
-                            window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k][n].influenciaFormula = resSub.influencia;
+                            if(!isNaN(resSub.volumen))
+                                window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k][n].volumenFormula = math.round(resSub.volumen, 2);
+                            else
+                                window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k][n].volumenFormula = 0;
+                            if(!isNaN(resSub.influencia))
+                                window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k][n].influenciaFormula = math.round(resSub.influencia, 2);
+                            else
+                                window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k][n].influenciaFormula = 0;
                             for (var z = 0; z < window["arregloCuentas"+arregloMonedas[p]][i][j][k][n].length; z++) {
                                 if(window["arregloCuentas"+arregloMonedas[p]][i][j][k][n][z].varDeCuenta == undefined) {
                                     var resSub = getInfluenceAndVolumeCuenta (window["arregloCuentas"+arregloMonedas[p]][i][j][k][n][z], equacionVarCuentas);
-                                    window["arregloCuentas"+arregloMonedas[p]][i][j][k][n][z].volumenFormula = resSub.volumen;
-                                    window["arregloCuentas"+arregloMonedas[p]][i][j][k][n][z].influenciaFormula = resSub.influencia;
+                                    if(!isNaN(resSub.volumen))
+                                        window["arregloCuentas"+arregloMonedas[p]][i][j][k][n][z].volumenFormula = math.round(resSub.volumen, 2);
+                                    else
+                                        window["arregloCuentas"+arregloMonedas[p]][i][j][k][n][z].volumenFormula = 0;
+                                    if(!isNaN(resSub.influencia))
+                                        window["arregloCuentas"+arregloMonedas[p]][i][j][k][n][z].influenciaFormula = math.round(resSub.influencia, 2);
+                                    else
+                                        window["arregloCuentas"+arregloMonedas[p]][i][j][k][n][z].influenciaFormula = 0;
                                 }
                             };
                         };
@@ -3362,10 +3799,21 @@ function saveResults () {
             };
         };
     };*/
+    $(".loadingScreen").hide();
+    stopTimer();
     for (var p = 0; p < arregloMonedas.length; p++) {
         for (var i = 0; i < variablesSolas.length; i++) {
             for (var j = 0; j < variablesSolas[i].length; j++) {
                 if(variablesSolas[i][j] != undefined) {
+                    if( window["variablesSolas"+arregloMonedas[p]][i][j].numerador == undefined )
+                        window["variablesSolas"+arregloMonedas[p]][i][j].numerador = 0;
+                    if( window["variablesSolas"+arregloMonedas[p]][i][j].denominador == undefined )
+                        window["variablesSolas"+arregloMonedas[p]][i][j].denominador = 0;
+                    if( window["variablesSolas"+arregloMonedas[p]][i][j].volumenFormula == undefined )
+                        window["variablesSolas"+arregloMonedas[p]][i][j].volumenFormula = 0;
+                    if( window["variablesSolas"+arregloMonedas[p]][i][j].influenciaFormula == undefined )
+                        window["variablesSolas"+arregloMonedas[p]][i][j].influenciaFormula = 0;
+                    window["variablesSolas"+arregloMonedas[p]][i][j].total = math.round(window["variablesSolas"+arregloMonedas[p]][i][j].total, 2);
                     checkIfResultExists(window["variablesSolas"+arregloMonedas[p]][i][j]);
                     if(window["variablesSolas"+arregloMonedas[p]][i][j].esRCL) {
                         if(totalesRCL[p] == undefined)
@@ -3374,14 +3822,44 @@ function saveResults () {
                     }
                 }
                 for (var k = 0; k < subvariablesSolas[i][j].length; k++) {
-                    if(subvariablesSolas[i][j][k] != undefined)
+                    if( subvariablesSolas[i][j][k] != undefined  && (window["subvariablesSolas"+arregloMonedas[p]][i][j][k] != undefined && window["subvariablesSolas"+arregloMonedas[p]][i][j][k].numerador == undefined) )
+                        window["subvariablesSolas"+arregloMonedas[p]][i][j][k].numerador = 0;
+                    if( subvariablesSolas[i][j][k] != undefined  && (window["subvariablesSolas"+arregloMonedas[p]][i][j][k] != undefined && window["subvariablesSolas"+arregloMonedas[p]][i][j][k].denominador == undefined) )
+                        window["subvariablesSolas"+arregloMonedas[p]][i][j][k].denominador = 0;
+                    if( subvariablesSolas[i][j][k] != undefined  && (window["subvariablesSolas"+arregloMonedas[p]][i][j][k] != undefined && window["subvariablesSolas"+arregloMonedas[p]][i][j][k].volumenFormula == undefined) )
+                        window["subvariablesSolas"+arregloMonedas[p]][i][j][k].volumenFormula = 0;
+                    if( subvariablesSolas[i][j][k] != undefined  && (window["subvariablesSolas"+arregloMonedas[p]][i][j][k] != undefined && window["subvariablesSolas"+arregloMonedas[p]][i][j][k].influenciaFormula == undefined) )
+                        window["subvariablesSolas"+arregloMonedas[p]][i][j][k].influenciaFormula = 0;
+                    if( subvariablesSolas[i][j][k] != undefined) {
+                        window["subvariablesSolas"+arregloMonedas[p]][i][j][k].total = math.round(window["subvariablesSolas"+arregloMonedas[p]][i][j][k].total, 2);
                         checkIfResultExists(window["subvariablesSolas"+arregloMonedas[p]][i][j][k]);
+                    }
                     for (var n = 0; n < variablesDeSubVariablesSolas[i][j][k].length; n++) {
-                        if(variablesDeSubVariablesSolas[i][j][k][n] != undefined)
+                        if( variablesDeSubVariablesSolas[i][j][k][n] != undefined && (window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k][n] != undefined && window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k][n].numerador == undefined) )
+                            window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k][n].numerador = 0;
+                        if( variablesDeSubVariablesSolas[i][j][k][n] != undefined && (window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k][n] != undefined && window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k][n].denominador == undefined) )
+                            window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k][n].denominador = 0;
+                        if( variablesDeSubVariablesSolas[i][j][k][n] != undefined && (window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k][n] != undefined && window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k][n].volumenFormula == undefined) )
+                            window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k][n].volumenFormula = 0;
+                        if( variablesDeSubVariablesSolas[i][j][k][n] != undefined && (window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k][n] != undefined && window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k][n].influenciaFormula == undefined) )
+                            window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k][n].influenciaFormula = 0;
+                        if( variablesDeSubVariablesSolas[i][j][k][n] != undefined) {
+                            window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k][n].total = math.round(window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k][n].total, 2);
                             checkIfResultExists(window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k][n]);
+                        }
                         for (var z = 0; z < arregloCuentas[i][j][k][n].length; z++) {
-                            if(arregloCuentas[i][j][k][n][z] != undefined)
+                            if( arregloCuentas[i][j][k][n][z] != undefined && (window["arregloCuentas"+arregloMonedas[p]][i][j][k][n][z] != undefined && window["arregloCuentas"+arregloMonedas[p]][i][j][k][n][z].numerador == undefined) )
+                                window["arregloCuentas"+arregloMonedas[p]][i][j][k][n][z].numerador = 0;
+                            if( arregloCuentas[i][j][k][n][z] != undefined && (window["arregloCuentas"+arregloMonedas[p]][i][j][k][n][z] != undefined && window["arregloCuentas"+arregloMonedas[p]][i][j][k][n][z].denominador == undefined) )
+                                window["arregloCuentas"+arregloMonedas[p]][i][j][k][n][z].denominador = 0;
+                            if( arregloCuentas[i][j][k][n][z] != undefined && (window["arregloCuentas"+arregloMonedas[p]][i][j][k][n][z] != undefined && window["arregloCuentas"+arregloMonedas[p]][i][j][k][n][z].volumenFormula == undefined) )
+                                window["arregloCuentas"+arregloMonedas[p]][i][j][k][n][z].volumenFormula = 0;
+                            if( arregloCuentas[i][j][k][n][z] != undefined && (window["arregloCuentas"+arregloMonedas[p]][i][j][k][n][z] != undefined && window["arregloCuentas"+arregloMonedas[p]][i][j][k][n][z].influenciaFormula == undefined) )
+                                window["arregloCuentas"+arregloMonedas[p]][i][j][k][n][z].influenciaFormula = 0;
+                            if( arregloCuentas[i][j][k][n][z] != undefined) {
+                                window["arregloCuentas"+arregloMonedas[p]][i][j][k][n][z].total = math.round(window["arregloCuentas"+arregloMonedas[p]][i][j][k][n][z].total, 2);
                                 checkIfResultExists(window["arregloCuentas"+arregloMonedas[p]][i][j][k][n][z]);
+                            }
                         };
                     };
                 };
@@ -3538,8 +4016,6 @@ function deleteRCL (oldVariable, newVariable) {
             } else {
                 transaction.commit(err => {
                     // ... error checks
-                    console.log('variable')
-                    console.log(variable)
                     saveRCL(variable);
                 });
             }
@@ -3869,26 +4345,87 @@ function getMontoFOSEDE (moneda) {
     return 0;
 }
 
-function conCuentasHastaFOSEDE () {
-    var sumaCuentas = 0;
-    for (var i = 0; i < cuentasOperativasClientes.length; i++) {
-        cuentasOperativasClientes[i]
+function conCuentasHastaFOSEDE (idCliente) {
+    var sumaCuentas = 0, tieneCuenta = false, cuentas [];
+    for (var i = 0; i < arreglodeCuenOpClientes.length; i++) {
+        if(idCliente.localeCompare(arreglodeCuenOpClientes[i].valor) == 0) {
+            if(!tieneCuenta)
+                tieneCuenta = true;
+            cuentas.push(arreglodeCuenOpClientes[i].valor);
+        }
     };
+    if(tieneCuenta) {
+        for (var i = 0; i < cuentas.length; i++) {
+            for (var j = 0; j < arregloDepositos.length; j++) {
+                if( parseInt(cuentas[i]) == arregloDepositos[j].numCuenta) {
+                    sumaCuentas+=arregloDepositos[j].saldo;
+                }
+            };
+        };
+    }
+    if(sumaCuentas == 0)
+        return -1;
     return sumaCuentas;
 }
 
-function conCuentasMayorFOSEDE () {
-    var sumaCuentas = -1;
+function conCuentasMayorFOSEDE (idCliente) {
+    var sumaCuentas = 0, tieneCuenta = false, cuentas [];
+    for (var i = 0; i < arreglodeCuenOpClientes.length; i++) {
+        if(idCliente.localeCompare(arreglodeCuenOpClientes[i].valor) == 0) {
+            if(!tieneCuenta)
+                tieneCuenta = true;
+            cuentas.push(arreglodeCuenOpClientes[i].valor);
+        }
+    };
+    if(tieneCuenta) {
+        for (var i = 0; i < cuentas.length; i++) {
+            for (var j = 0; j < arregloDepositos.length; j++) {
+                if( parseInt(cuentas[i]) == arregloDepositos[j].numCuenta) {
+                    sumaCuentas+=arregloDepositos[j].saldo;
+                }
+            };
+        };
+    }
+    if(sumaCuentas == 0)
+        return -1;
     return sumaCuentas;
 }
 
 function sinCuentasHastaFOSEDE () {
-    var sumaCuentas = -1;
+    var sumaCuentas = 0, cuentas [];
+    for (var i = 0; i < arreglodeCuenOpClientes.length; i++) {
+        if(idCliente.localeCompare(arreglodeCuenOpClientes[i].puesto) == 0) {
+            cuentas.push(arreglodeCuenOpClientes[i].valor);
+        }
+    };
+    for (var i = 0; i < cuentas.length; i++) {
+        for (var j = 0; j < arregloDepositos.length; j++) {
+            if( idCliente.localeCompare(arregloDepositos[j].idCliente) == 0 && parseInt(cuentas[i]) != arregloDepositos[j].numCuenta) {
+                sumaCuentas+=arregloDepositos[j].saldo;
+            }
+        };
+    };
+    if(sumaCuentas == 0)
+        return -1;
     return sumaCuentas;
 }
 
-function sinCuentasMayorFOSEDE () {
-    var sumaCuentas = -1;
+function sinCuentasMayorFOSEDE (idCliente) {
+    var sumaCuentas = 0, cuentas [];
+    for (var i = 0; i < arreglodeCuenOpClientes.length; i++) {
+        if(idCliente.localeCompare(arreglodeCuenOpClientes[i].puesto) == 0) {
+            cuentas.push(arreglodeCuenOpClientes[i].valor);
+        }
+    };
+    for (var i = 0; i < cuentas.length; i++) {
+        for (var j = 0; j < arregloDepositos.length; j++) {
+            if( idCliente.localeCompare(arregloDepositos[j].idCliente) == 0 && parseInt(cuentas[i]) != arregloDepositos[j].numCuenta) {
+                sumaCuentas+=arregloDepositos[j].saldo;
+            }
+        };
+    };
+    if(sumaCuentas == 0)
+        return -1;
     return sumaCuentas;
 }
 
@@ -3907,6 +4444,9 @@ function campoObjetivoDepositos (regla, arreglo, tabs, variable, proyeccion) {
         tabsText+='\t';
     };
     var posicionesIF = [];
+    var idFiltro = '';
+    if(regla.filtro != -1)
+        idFiltro = regla.filtro;
     if(regla.campoObjetivo.indexOf('COLUMNA') == 0) {
         if(esCondicion) {
             if(!regla.campoObjetivo.includes('plazoResidual')) {
@@ -3914,17 +4454,17 @@ function campoObjetivoDepositos (regla, arreglo, tabs, variable, proyeccion) {
 
                 // Agregando campo Operacion
                 if(regla.operacion=="en" || regla.operacion=="no")
-                    arreglo.push(tabsText+"if ( arregloDepositos[i]."+campo+".localeCompare('");
+                    arreglo.push({codigo: tabsText+"if ( arregloDepositos"+idFiltro+"[i]."+campo+".localeCompare('", filtro: regla.filtro});
                 else
-                    arreglo.push(tabsText+"if ( arregloDepositos[i]."+campo+" "+regla.operacion);
+                    arreglo.push({codigo: tabsText+"if ( arregloDepositos"+idFiltro+"[i]."+campo+" "+regla.operacion, filtro: regla.filtro});
                 //posicionesIF.push(arreglo.length-1);
                 posicionesIF.push(arreglo.length);
             } else {
                 noAgregarFecha = true;
                 var campo = regla.campoObjetivo.split("=")[1];
 
-                arreglo.push(tabsText+"var nuevaFecha"+regla.ID+" = new Date();\n");
-                arreglo.push(tabsText+"nuevaFecha"+regla.ID+" = addDays(nuevaFecha"+regla.ID+","+proyeccion+");\n");
+                arreglo.push({codigo: tabsText+"var nuevaFecha"+regla.ID+" = new Date();\n", filtro: regla.filtro});
+                arreglo.push({codigo: tabsText+"nuevaFecha"+regla.ID+" = addDays(nuevaFecha"+regla.ID+","+proyeccion+");\n", filtro: regla.filtro});
                 var query, agregarComparator, agregarIsSame;
                 if(regla.operacion.includes("<")) {
                     query = 'isBefore';
@@ -3932,19 +4472,19 @@ function campoObjetivoDepositos (regla, arreglo, tabs, variable, proyeccion) {
                     query = 'isAfter';
                 }
                 if(!regla.operacion.includes("!") && !regla.operacion.includes("==")) {
-                    agregarComparator = "moment(arregloDepositos[i].fechaFinal)."+query+"(moment(nuevaFecha"+regla.ID+"), 'day')";
+                    agregarComparator = "moment(arregloDepositos"+idFiltro+"[i].fechaFinal)."+query+"(moment(nuevaFecha"+regla.ID+"), 'day')";
                 } else if(regla.operacion.includes("==")) {
-                    agregarComparator = "moment(arregloDepositos[i].fechaFinal).isSame(moment(nuevaFecha"+regla.ID+"), 'day')";
+                    agregarComparator = "moment(arregloDepositos"+idFiltro+"[i].fechaFinal).isSame(moment(nuevaFecha"+regla.ID+"), 'day')";
                 } else {
-                    agregarComparator = "!moment(arregloDepositos[i].fechaFinal).isSame(moment(nuevaFecha"+regla.ID+"), 'day')";
+                    agregarComparator = "!moment(arregloDepositos"+idFiltro+"[i].fechaFinal).isSame(moment(nuevaFecha"+regla.ID+"), 'day')";
                 }
                 if(regla.operacion.includes("=") && (regla.operacion.includes("<") || regla.operacion.includes(">")) ) {
-                    agregarIsSame = " || moment(arregloDepositos[i].fechaFinal).isSame(moment(nuevaFecha"+regla.ID+"), 'day')";
+                    agregarIsSame = " || moment(arregloDepositos"+idFiltro+"[i].fechaFinal).isSame(moment(nuevaFecha"+regla.ID+"), 'day')";
                 } else {
                     agregarIsSame = "";
                 }
                 // Agregando campo Operacion
-                arreglo.push(tabsText+"if ( "+agregarComparator+" "+agregarIsSame+" ) {");
+                arreglo.push({codigo: tabsText+"if ( (arregloDepositos"+idFiltro+"[i].fechaFinal == undefined || arregloDepositos"+idFiltro+"[i].fechaFinal.toString().length == 0) || moment(arregloDepositos"+idFiltro+"[i].fechaFinal).isSame(moment('2001-01-01'), 'day') || "+agregarComparator+" "+agregarIsSame+" ) {", filtro: regla.filtro});
                 //posicionesIF.push(arreglo.length-1);
                 posicionesIF.push(arreglo.length);
             }
@@ -3952,75 +4492,77 @@ function campoObjetivoDepositos (regla, arreglo, tabs, variable, proyeccion) {
             var campo = regla.campoObjetivo.split("=")[1];
 
             // Agregando campo Operacion
-            arreglo.push(tabsText+"var totalDeposito = arregloDepositos[i].saldo;");
-            arreglo.push("\n"+tabsText+variable+proyeccion+" += totalDeposito "+regla.operacion);
+            arreglo.push({codigo: tabsText+"var totalDeposito = arregloDepositos"+idFiltro+"[i].saldo;", filtro: regla.filtro});
+            arreglo.push({codigo: "\n"+tabsText+variable+proyeccion+" += totalDeposito "+regla.operacion, filtro: regla.filtro});
         }
     } else if(regla.campoObjetivo.indexOf('hastaFOSEDE') == 0) {
         noAgregarFactor = true;
-        arreglo.push(tabsText+"var totalDeposito;");
-        arreglo.push("\n"+tabsText+"var montoFosede = getMontoFOSEDE(arregloDepositos[i].moneda);");
-        arreglo.push("\n"+tabsText+"if ( arregloDepositos[i].saldo > montoFosede )");
-        arreglo.push("\n\t"+tabsText+"totalDeposito = montoFosede;");
-        arreglo.push("\n"+tabsText+"else");
-        arreglo.push("\n\t"+tabsText+"totalDeposito = arregloDepositos[i].saldo;");
-        /*arreglo.push("\n\t"+tabsText+"console.log('total = '+totalDeposito * "+(parseInt(regla.valor.split("=")[1])/100)+");");
-        arreglo.push("\n\t"+tabsText+"console.log(arregloDepositos[i]);");
-        arreglo.push("\n\t"+tabsText+"console.log('factor = '+"+parseInt(regla.valor.split("=")[1])+");");
-        arreglo.push("\n\t"+tabsText+"console.log('porcentaje = '+"+(parseInt(regla.valor.split("=")[1])/100)+");");*/
-        arreglo.push("\n"+tabsText+variable+proyeccion+" += totalDeposito * "+(parseInt(regla.valor.split("=")[1])/100)+";");
+        arreglo.push({codigo: tabsText+"var totalDeposito;", filtro: regla.filtro});
+        arreglo.push({codigo: "\n"+tabsText+"var montoFosede = getMontoFOSEDE(arregloDepositos"+idFiltro+"[i].moneda);", filtro: regla.filtro});
+        arreglo.push({codigo: "\n"+tabsText+"if ( arregloDepositos"+idFiltro+"[i].saldo > montoFosede )", filtro: regla.filtro});
+        arreglo.push({codigo: "\n\t"+tabsText+"totalDeposito = montoFosede;", filtro: regla.filtro});
+        arreglo.push({codigo: "\n"+tabsText+"else", filtro: regla.filtro});
+        arreglo.push({codigo: "\n\t"+tabsText+"totalDeposito = arregloDepositos"+idFiltro+"[i].saldo;", filtro: regla.filtro});
+        var factorValor = getFactor(regla.variablePadre);
+        arreglo.push({codigo: "\n"+tabsText+variable+proyeccion+" += totalDeposito * "+(factorValor)+";", filtro: regla.filtro});
     } else if(regla.campoObjetivo.indexOf('mayorFOSEDE') == 0) {
         noAgregarFactor = true;
-        arreglo.push(tabsText+"var montoFosede = getMontoFOSEDE(arregloDepositos[i].moneda);");
-        arreglo.push("\n"+tabsText+"if ( arregloDepositos[i].saldo > montoFosede ) {");
-        arreglo.push("\n"+tabsText+"\tvar totalDeposito = arregloDepositos[i].saldo - montoFosede;");
-        arreglo.push("\n\t"+tabsText+(variable+proyeccion)+" += totalDeposito * "+(parseInt(regla.valor.split("=")[1])/100)+";");
-        arreglo.push("\n"+tabsText+"}");
+        arreglo.push({codigo: tabsText+"var montoFosede = getMontoFOSEDE(arregloDepositos"+idFiltro+"[i].moneda);", filtro: regla.filtro});
+        arreglo.push({codigo: "\n"+tabsText+"if ( arregloDepositos"+idFiltro+"[i].saldo > montoFosede ) {", filtro: regla.filtro});
+        arreglo.push({codigo: "\n"+tabsText+"\tvar totalDeposito = arregloDepositos"+idFiltro+"[i].saldo - montoFosede;", filtro: regla.filtro});
+        var factorValor = getFactor(regla.variablePadre);
+        arreglo.push({codigo: "\n\t"+tabsText+(variable+proyeccion)+" += totalDeposito * "+(factorValor)+";", filtro: regla.filtro});
+        arreglo.push({codigo: "\n"+tabsText+"}", filtro: regla.filtro});
     } else if(regla.campoObjetivo.indexOf('CONCUENTAS') == 0) {
         noAgregarFactor = true;
         if(regla.campoObjetivo.split("=")[1].localeCompare('hastaFOSEDE') == 0) {
-            arreglo.push(tabsText+"var totalDeposito = conCuentasHastaFOSEDE(arregloDepositos[i].idCliente);\n");
-            arreglo.push("\n"+tabsText+"var montoFosede = getMontoFOSEDE(arregloDepositos[i].moneda);");
-            arreglo.push(tabsText+"if ( arregloDepositos[i].saldo > montoFosede && totalDeposito != -1 ) {\n");
-            arreglo.push(tabsText+"\tif ( totalDeposito > montoFosede)");
-            arreglo.push("\n\t\t"+tabsText+"totalDeposito = montoFosede;");
-            arreglo.push("\n\t"+tabsText+(variable+proyeccion)+" += totalDeposito * "+(parseInt(regla.valor.split("=")[1])/100)+";");
-            arreglo.push("\n"+tabsText+"}");
+            arreglo.push({codigo: tabsText+"var totalDeposito = conCuentasHastaFOSEDE(arregloDepositos"+idFiltro+"[i].idCliente);\n", filtro: regla.filtro});
+            arreglo.push({codigo: "\n"+tabsText+"var montoFosede = getMontoFOSEDE(arregloDepositos"+idFiltro+"[i].moneda);", filtro: regla.filtro});
+            arreglo.push({codigo: tabsText+"if ( arregloDepositos"+idFiltro+"[i].saldo > montoFosede && totalDeposito != -1 ) {\n", filtro: regla.filtro});
+            arreglo.push({codigo: tabsText+"\tif ( totalDeposito > montoFosede)", filtro: regla.filtro});
+            arreglo.push({codigo: "\n\t\t"+tabsText+"totalDeposito = montoFosede;", filtro: regla.filtro});
+            var factorValor = getFactor(regla.variablePadre);
+            arreglo.push({codigo: "\n\t"+tabsText+(variable+proyeccion)+" += totalDeposito * "+(factorValor)+";", filtro: regla.filtro});
+            arreglo.push({codigo: "\n"+tabsText+"}", filtro: regla.filtro});
         } else if(regla.campoObjetivo.split("=")[1].localeCompare('mayorFOSEDE') == 0) {
-            arreglo.push(tabsText+"var totalDeposito = conCuentasMayorFOSEDE(arregloDepositos[i].idCliente);\n");
-            arreglo.push("\n"+tabsText+"var montoFosede = getMontoFOSEDE(arregloDepositos[i].moneda);");
-            arreglo.push(tabsText+"if ( arregloDepositos[i].saldo > montoFosede && totalDeposito != -1 ) {\n");
-            arreglo.push(tabsText+"\tif ( totalDeposito > montoFosede) {");
-            arreglo.push("\n\t\t"+tabsText+"totalDeposito = totalDeposito - montoFosede;");
-            arreglo.push("\n\t\t"+tabsText+(variable+proyeccion)+" += totalDeposito * "+(parseInt(regla.valor.split("=")[1])/100)+";");
-            arreglo.push("\n\t"+tabsText+"}");
-            arreglo.push("\n"+tabsText+"}");
+            arreglo.push({codigo: tabsText+"var totalDeposito = conCuentasMayorFOSEDE(arregloDepositos"+idFiltro+"[i].idCliente);\n", filtro: regla.filtro});
+            arreglo.push({codigo: "\n"+tabsText+"var montoFosede = getMontoFOSEDE(arregloDepositos"+idFiltro+"[i].moneda);", filtro: regla.filtro});
+            arreglo.push({codigo: tabsText+"if ( arregloDepositos"+idFiltro+"[i].saldo > montoFosede && totalDeposito != -1 ) {\n", filtro: regla.filtro});
+            arreglo.push({codigo: tabsText+"\tif ( totalDeposito > montoFosede) {", filtro: regla.filtro});
+            arreglo.push({codigo: "\n\t\t"+tabsText+"totalDeposito = totalDeposito - montoFosede;", filtro: regla.filtro});
+            var factorValor = getFactor(regla.variablePadre);
+            arreglo.push({codigo: "\n\t\t"+tabsText+(variable+proyeccion)+" += totalDeposito * "+(factorValor)+";", filtro: regla.filtro});
+            arreglo.push({codigo: "\n\t"+tabsText+"}", filtro: regla.filtro});
+            arreglo.push({codigo: "\n"+tabsText+"}", filtro: regla.filtro});
         }
     } else if(regla.campoObjetivo.indexOf('SINCUENTAS') == 0) {
         noAgregarFactor = true;
         if(regla.campoObjetivo.split("=")[1].localeCompare('hastaFOSEDE') == 0) {
-            arreglo.push(tabsText+"var totalDeposito = sinCuentasHastaFOSEDE(arregloDepositos[i].idCliente);\n");
-            arreglo.push("\n"+tabsText+"var montoFosede = getMontoFOSEDE(arregloDepositos[i].moneda);");
-            arreglo.push(tabsText+"if ( arregloDepositos[i].saldo > montoFosede && totalDeposito != -1 ) {\n");
-            arreglo.push(tabsText+"\tif ( totalDeposito > montoFosede)");
-            arreglo.push("\n\t\t"+tabsText+"totalDeposito = montoFosede;");
-            arreglo.push("\n\t"+tabsText+(variable+proyeccion)+" += totalDeposito * "+(parseInt(regla.valor.split("=")[1])/100)+";");
-            arreglo.push("\n"+tabsText+"}");
+            arreglo.push({codigo: tabsText+"var totalDeposito = sinCuentasHastaFOSEDE(arregloDepositos"+idFiltro+"[i].idCliente);\n", filtro: regla.filtro});
+            arreglo.push({codigo: "\n"+tabsText+"var montoFosede = getMontoFOSEDE(arregloDepositos"+idFiltro+"[i].moneda);", filtro: regla.filtro});
+            arreglo.push({codigo: tabsText+"if ( arregloDepositos"+idFiltro+"[i].saldo > montoFosede && totalDeposito != -1 ) {\n", filtro: regla.filtro});
+            arreglo.push({codigo: tabsText+"\tif ( totalDeposito > montoFosede)", filtro: regla.filtro});
+            arreglo.push({codigo: "\n\t\t"+tabsText+"totalDeposito = montoFosede;", filtro: regla.filtro});
+            var factorValor = getFactor(regla.variablePadre);
+            arreglo.push({codigo: "\n\t"+tabsText+(variable+proyeccion)+" += totalDeposito * "+(factorValor)+";", filtro: regla.filtro});
+            arreglo.push({codigo: "\n"+tabsText+"}", filtro: regla.filtro});
         } else if(regla.campoObjetivo.split("=")[1].localeCompare('mayorFOSEDE') == 0) {
-            arreglo.push(tabsText+"var totalDeposito = sinCuentasMayorFOSEDE(arregloDepositos[i].idCliente);\n");
-            arreglo.push("\n"+tabsText+"var montoFosede = getMontoFOSEDE(arregloDepositos[i].moneda);");
-            arreglo.push(tabsText+"if ( arregloDepositos[i].saldo > montoFosede && totalDeposito != -1 ) {\n");
-            arreglo.push(tabsText+"\tif ( totalDeposito > montoFosede) {");
-            arreglo.push("\n\t\t"+tabsText+"totalDeposito = totalDeposito - montoFosede;");
-            arreglo.push("\n\t\t"+tabsText+(variable+proyeccion)+" += totalDeposito * "+(parseInt(regla.valor.split("=")[1])/100)+";");
-            arreglo.push("\n\t"+tabsText+"}");
-            arreglo.push("\n"+tabsText+"}");
+            arreglo.push({codigo: tabsText+"var totalDeposito = sinCuentasMayorFOSEDE(arregloDepositos"+idFiltro+"[i].idCliente);\n", filtro: regla.filtro});
+            arreglo.push({codigo: "\n"+tabsText+"var montoFosede = getMontoFOSEDE(arregloDepositos"+idFiltro+"[i].moneda);", filtro: regla.filtro});
+            arreglo.push({codigo: tabsText+"if ( arregloDepositos"+idFiltro+"[i].saldo > montoFosede && totalDeposito != -1 ) {\n", filtro: regla.filtro});
+            arreglo.push({codigo: tabsText+"\tif ( totalDeposito > montoFosede) {", filtro: regla.filtro});
+            arreglo.push({codigo: "\n\t\t"+tabsText+"totalDeposito = totalDeposito - montoFosede;", filtro: regla.filtro});
+            var factorValor = getFactor(regla.variablePadre);
+            arreglo.push({codigo: "\n\t\t"+tabsText+(variable+proyeccion)+" += totalDeposito * "+(factorValor)+";", filtro: regla.filtro});
+            arreglo.push({codigo: "\n\t"+tabsText+"}", filtro: regla.filtro});
+            arreglo.push({codigo: "\n"+tabsText+"}", filtro: regla.filtro});
         }
     }
 
     if(regla.valor.indexOf('LISTA') == 0) {
         if(esCondicion) {
             var arregloLista = regla.valor.split("=")[1].split(",");
-            var copiaRegla = arreglo.slice();
+            var copiaRegla = $.extend(true,{},arreglo);
             var tamArreglo = arreglo.length;
             if(regla.operacion == "no") {
                 for (var j = 0; j < tamArreglo; j++) {
@@ -4031,14 +4573,14 @@ function campoObjetivoDepositos (regla, arreglo, tabs, variable, proyeccion) {
                                 textoFinal += " ) {";
                             var campo = regla.campoObjetivo.split("=")[1];
                             var valor = getListValue(arregloLista[i], campo);
-                            arreglo[j] +=valor + "')" + textoFinal;
+                            arreglo[j].codigo +=valor + "')" + textoFinal;
                         } else {
                             var textoFinal = ' != 0 ';
                             if(i+1 == arregloLista.length)
                                 textoFinal += " ) {";
                             var campo = regla.campoObjetivo.split("=")[1];
                             var valor = getListValue(arregloLista[i], campo);
-                            arreglo[j] += " && "+copiaRegla[j].split(" ( ")[1]+valor+"')"+textoFinal;
+                            arreglo[j].codigo += " && "+copiaRegla[j].codigo.split(" ( ")[1]+valor+"')"+textoFinal;
                         }
                     }
                 };
@@ -4051,14 +4593,14 @@ function campoObjetivoDepositos (regla, arreglo, tabs, variable, proyeccion) {
                                 textoFinal += " ) {";
                             var campo = regla.campoObjetivo.split("=")[1];
                             var valor = getListValue(arregloLista[i], campo);
-                            arreglo[j] +=valor + "')" + textoFinal;
+                            arreglo[j].codigo +=valor + "')" + textoFinal;
                         } else {
                             var textoFinal = ' == 0 ';
                             if(i+1 == arregloLista.length)
                                 textoFinal += " ) {";
                             var campo = regla.campoObjetivo.split("=")[1];
                             var valor = getListValue(arregloLista[i], campo);
-                            arreglo[j] += " || "+copiaRegla[j].split(" ( ")[1]+valor+"')"+textoFinal;
+                            arreglo[j].codigo += " || "+copiaRegla[j].codigo.split(" ( ")[1]+valor+"')"+textoFinal;
                         }
                     }
                 };
@@ -4066,25 +4608,27 @@ function campoObjetivoDepositos (regla, arreglo, tabs, variable, proyeccion) {
         }
     } else if(regla.valor.indexOf('FACTOR') == 0 && !noAgregarFactor) {
         if(esCondicion) {
-            var factorValor = parseInt(regla.valor.split("=")[1]);
+            //var factorValor = parseInt(regla.valor.split("=")[1]);
+            var factorValor = getFactor(regla.variablePadre);
             for (var i = 1; i < arreglo.length; i++) {
-                arreglo[i] += " "+factorValor/100 + " ) {";
+                arreglo[i].codigo += " "+factorValor + " ) {";
             };
         } else {
-            var factorValor = regla.valor.split("=")[1];
+            //var factorValor = regla.valor.split("=")[1];
+            var factorValor = getFactor(regla.variablePadre);
             for (var i = 1; i < arreglo.length; i++) {
-                arreglo[i] += " "+factorValor/100 + ";";
+                arreglo[i].codigo += " "+factorValor + ";";
             };
         }
     } else if(regla.valor.indexOf('COLUMNA') == 0) {
         if(esCondicion) {
             var columnaValor = regla.valor.split("=")[1];
             for (var i = 0; i < arreglo.length; i++) {
-                arreglo[i] += " "+columnaValor + " ) {";
+                arreglo[i].codigo += " "+columnaValor + " ) {";
             };
         } else {
             var columnaValor = regla.valor.split("=")[1];
-            arreglo[arreglo.length-1] += " "+columnaValor + ";";
+            arreglo[arreglo.length-1].codigo += " "+columnaValor + ";";
             /*for (var i = 0; i < arreglo.length; i++) {
                 arreglo[i] += " "+columnaValor + ";";
             };*/
@@ -4092,12 +4636,12 @@ function campoObjetivoDepositos (regla, arreglo, tabs, variable, proyeccion) {
     } else if(regla.valor.indexOf('FECHA') == 0 && !noAgregarFecha) {
         if(esCondicion) {
             for (var i = 0; i < arreglo.length; i++) {
-                arreglo[i] += " "+proyeccion+" ) {";
+                arreglo[i].codigo += " "+proyeccion+" ) {";
             };
         } else {
             var columnaValor = regla.valor.split("=")[1];
             for (var i = 0; i < arreglo.length; i++) {
-                arreglo[i] += " "+proyeccion+";";
+                arreglo[i].codigo += " "+proyeccion+";";
             };
         }
     }
@@ -4112,13 +4656,13 @@ function campoObjetivoDepositos (regla, arreglo, tabs, variable, proyeccion) {
             if(esCondicion)
                 cuantasTabs++;
             var retorno = campoObjetivoDepositos(cuerpo[i], [], cuantasTabs, variable, proyeccion);
-            retorno[0] = "\n"+retorno[0];
+            retorno[0].codigo = "\n"+retorno[0].codigo;
             $.merge( arregloCuerpo, retorno );
         };
         for (var i = 0; i < posicionesIF.length; i++) {
             arreglo.splice(posicionesIF[i], 0, ...arregloCuerpo);
             if(esCondicion)
-                arreglo.splice(posicionesIF[i]+arregloCuerpo.length, 0, "\n"+tabsText+"}");
+                arreglo.splice(posicionesIF[i]+arregloCuerpo.length, 0, {codigo: "\n"+tabsText+"}", filtro: regla.filtro});
             for (var j = i; j < posicionesIF.length; j++) {
                 posicionesIF[j]+=arregloCuerpo.length;
             };
@@ -4129,7 +4673,7 @@ function campoObjetivoDepositos (regla, arreglo, tabs, variable, proyeccion) {
     } else {
         if(esCondicion){
             for (var i = 0; i < posicionesIF.length; i++) {
-                arreglo.splice(posicionesIF[i], 0, "\n"+tabsText+"}")
+                arreglo.splice(posicionesIF[i], 0, {codigo: "\n"+tabsText+"}", filtro: regla.filtro})
             };
         }
         return arreglo;
@@ -4137,243 +4681,262 @@ function campoObjetivoDepositos (regla, arreglo, tabs, variable, proyeccion) {
 }
 
 function campoObjetivoPrestamos (regla, arreglo, tabs, variable, proyeccion) {
-    var esCondicion = false, noAgregarFactor = false, noAgregarFecha = false, noAgregarBoolean = false;
-    if(regla.operacion=="-" || regla.operacion=="+" || regla.operacion=="*" || regla.operacion=="/" || regla.operacion=="=")
-        esCondicion = false;
-    else
-        esCondicion = true;
-    var hasVariables = false;
-    var textVariables = [];
-    if(regla.variables.length > 0)
-        hasVariables = true;
-    var tabsText = '';
-    for (var i = 0; i < tabs; i++) {
-        tabsText+='\t';
-    };
-    var posicionesIF = [];
-    if(regla.campoObjetivo.indexOf('COLUMNA') == 0) {
-        if(regla.campoObjetivo.split("=")[1].indexOf("valorFinanciacion") != 0 && regla.campoObjetivo.split("=")[1].indexOf("utilizable") != 0 && regla.campoObjetivo.split("=")[1].indexOf("vencimiento") != 0 && regla.campoObjetivo.split("=")[1].indexOf("alac") != 0) {
-            if(esCondicion) {
+    /*try {*/
+        var esCondicion = false, noAgregarFactor = false, noAgregarFecha = false, noAgregarBoolean = false;
+        if(regla.operacion=="-" || regla.operacion=="+" || regla.operacion=="*" || regla.operacion=="/" || regla.operacion=="=")
+            esCondicion = false;
+        else
+            esCondicion = true;
+        var hasVariables = false;
+        var textVariables = [];
+        if(regla.variables.length > 0)
+            hasVariables = true;
+        var tabsText = '';
+        for (var i = 0; i < tabs; i++) {
+            tabsText+='\t';
+        };
+        var posicionesIF = [];
+        var idFiltro = '';
+        if(regla.filtro != -1)
+            idFiltro = regla.filtro;
+        if(regla.campoObjetivo.indexOf('COLUMNA') == 0) {
+            if(regla.campoObjetivo.split("=")[1].indexOf("valorFinanciacion") != 0 && regla.campoObjetivo.split("=")[1].indexOf("utilizable") != 0 && regla.campoObjetivo.split("=")[1].indexOf("vencimiento") != 0 && regla.campoObjetivo.split("=")[1].indexOf("alac") != 0) {
+                if(esCondicion) {
+                    var campo = regla.campoObjetivo.split("=")[1];
+
+                    // Agregando campo Operacion
+                    if(regla.operacion=="en" || regla.operacion=="no")
+                        arreglo.push({codigo: tabsText+"if ( arregloPrestamos"+idFiltro+"[i]."+campo+".localeCompare('", filtro: regla.filtro});
+                    else
+                        arreglo.push({codigo: tabsText+"if ( arregloPrestamos"+idFiltro+"[i]."+campo+" "+regla.operacion, filtro: regla.filtro});
+                    //posicionesIF.push(arreglo.length-1);
+                    posicionesIF.push(arreglo.length);
+                } else {
+                    var campo = regla.campoObjetivo.split("=")[1];
+
+                    // Agregando campo Operacion
+                    arreglo.push({codigo: tabsText+"var totalPrestamo = arregloPrestamos"+idFiltro+"[i].pago"+proyeccion+";", filtro: regla.filtro});
+                    arreglo.push({codigo: "\n"+tabsText+(variable+proyeccion)+" += totalPrestamo "+regla.operacion, filtro: regla.filtro});
+                }
+            } else if(regla.campoObjetivo.split("=")[1].indexOf("utilizable") == 0) {
+                noAgregarFecha = true;
                 var campo = regla.campoObjetivo.split("=")[1];
 
+                arreglo.push({codigo: tabsText+"var nuevaFecha"+regla.ID+" = new Date();\n", filtro: regla.filtro});
+                arreglo.push({codigo: tabsText+"nuevaFecha"+regla.ID+" = addDays(nuevaFecha"+regla.ID+","+proyeccion+");\n", filtro: regla.filtro});
+                var query, agregarComparator, agregarIsSame;
+                if(regla.operacion.includes("<")) {
+                    query = 'isBefore';
+                } else {
+                    query = 'isAfter';
+                }
+                if(!regla.operacion.includes("!") && !regla.operacion.includes("==")) {
+                    agregarComparator = "moment(nuevaFecha"+regla.ID+")."+query+"(moment(arregloPrestamos"+idFiltro+"[i].fechaFinal), 'day')";
+                } else if(regla.operacion.includes("==")) {
+                    agregarComparator = "moment(nuevaFecha"+regla.ID+").isSame(moment(arregloPrestamos"+idFiltro+"[i].fechaFinal), 'day')";
+                } else {
+                    agregarComparator = "!moment(nuevaFecha"+regla.ID+").isSame(moment(arregloPrestamos"+idFiltro+"[i].fechaFinal), 'day')";
+                }
+                if(regla.operacion.includes("=") && (regla.operacion.includes("<") || regla.operacion.includes(">")) ) {
+                    agregarIsSame = " || moment(nuevaFecha"+regla.ID+").isSame(moment(arregloPrestamos"+idFiltro+"[i].fechaFinal), 'day')";
+                } else {
+                    agregarIsSame = "";
+                }
                 // Agregando campo Operacion
-                if(regla.operacion=="en" || regla.operacion=="no")
-                    arreglo.push(tabsText+"if ( arregloPrestamos[i]."+campo+".localeCompare('");
-                else
-                    arreglo.push(tabsText+"if ( arregloPrestamos[i]."+campo+" "+regla.operacion);
+                arreglo.push({codigo: tabsText+"if ( arregloPrestamos"+idFiltro+"[i].fechaFinal == undefined || arregloPrestamos"+idFiltro+"[i].fechaFinal.toString().length == 0 || moment(arregloPrestamos"+idFiltro+"[i].fechaFinal).isSame(moment('2001-01-01'), 'day') || "+agregarComparator+" "+agregarIsSame+" ) {", filtro: regla.filtro});
+                //posicionesIF.push(arreglo.length-1);
+                posicionesIF.push(arreglo.length);
+            } else if(regla.campoObjetivo.split("=")[1].indexOf("vencimiento") == 0) {
+                noAgregarFecha = true;
+                var campo = regla.campoObjetivo.split("=")[1];
+
+                arreglo.push({codigo: tabsText+"var nuevaFecha"+regla.ID+" = new Date();\n", filtro: regla.filtro});
+                arreglo.push({codigo: tabsText+"nuevaFecha"+regla.ID+" = addDays(nuevaFecha"+regla.ID+","+proyeccion+");\n", filtro: regla.filtro});
+                var query, agregarComparator, agregarIsSame;
+                if(regla.operacion.includes("<")) {
+                    query = 'isBefore';
+                } else {
+                    query = 'isAfter';
+                }
+                if(!regla.operacion.includes("!") && !regla.operacion.includes("==")) {
+                    agregarComparator = "moment(arregloPrestamos"+idFiltro+"[i].fechaFinal)."+query+"(moment(nuevaFecha"+regla.ID+"), 'day')";
+                } else if(regla.operacion.includes("==")) {
+                    agregarComparator = "moment(arregloPrestamos"+idFiltro+"[i].fechaFinal).isSame(moment(nuevaFecha"+regla.ID+"), 'day')";
+                } else {
+                    agregarComparator = "!moment(arregloPrestamos"+idFiltro+"[i].fechaFinal).isSame(moment(nuevaFecha"+regla.ID+"), 'day')";
+                }
+                if(regla.operacion.includes("=") && (regla.operacion.includes("<") || regla.operacion.includes(">")) ) {
+                    agregarIsSame = " || moment(arregloPrestamos"+idFiltro+"[i].fechaFinal).isSame(moment(nuevaFecha"+regla.ID+"), 'day')";
+                } else {
+                    agregarIsSame = "";
+                }
+                // Agregando campo Operacion
+                arreglo.push({codigo: tabsText+"if ( (arregloPrestamos"+idFiltro+"[i].fechaFinal != undefined && !moment(arregloPrestamos"+idFiltro+"[i].fechaFinal).isSame(moment('2001-01-01'), 'day') ) && ("+agregarComparator+" "+agregarIsSame+") ) {", filtro: regla.filtro});
+                //posicionesIF.push(arreglo.length-1);
+                posicionesIF.push(arreglo.length);
+            } else if(regla.campoObjetivo.split("=")[1].indexOf("alac") == 0) {
+                noAgregarBoolean = true;
+                var campo = regla.campoObjetivo.split("=")[1];
+                // Agregando campo Operacion
+                arreglo.push({codigo: tabsText+"if ( arregloPrestamos"+idFiltro+"[i].alac.length > 0 ) {", filtro: regla.filtro});
                 //posicionesIF.push(arreglo.length-1);
                 posicionesIF.push(arreglo.length);
             } else {
-                var campo = regla.campoObjetivo.split("=")[1];
-
-                // Agregando campo Operacion
-                arreglo.push(tabsText+"var totalPrestamo = arregloPrestamos[i].pago"+proyeccion+";");
-                arreglo.push("\n"+tabsText+(variable+proyeccion)+" += totalPrestamo "+regla.operacion);
+                noAgregarFactor = true;
+                arreglo.push({codigo: tabsText+(variable+proyeccion)+" += arregloPrestamos"+idFiltro+"[i].valorFinanciacion - getPriceALAC(arregloPrestamos"+idFiltro+"[i].alac);", filtro: regla.filtro});
             }
-        } else if(regla.campoObjetivo.split("=")[1].indexOf("utilizable") == 0) {
-            noAgregarFecha = true;
-            var campo = regla.campoObjetivo.split("=")[1];
-
-            arreglo.push(tabsText+"var nuevaFecha"+regla.ID+" = new Date();\n");
-            arreglo.push(tabsText+"nuevaFecha"+regla.ID+" = addDays(nuevaFecha"+regla.ID+","+proyeccion+");\n");
-            var query, agregarComparator, agregarIsSame;
-            if(regla.operacion.includes("<")) {
-                query = 'isBefore';
-            } else {
-                query = 'isAfter';
-            }
-            if(!regla.operacion.includes("!") && !regla.operacion.includes("==")) {
-                agregarComparator = "moment(nuevaFecha"+regla.ID+")."+query+"(moment(arregloPrestamos[i].fechaFinal), 'day')";
-            } else if(regla.operacion.includes("==")) {
-                agregarComparator = "moment(nuevaFecha"+regla.ID+").isSame(moment(arregloPrestamos[i].fechaFinal), 'day')";
-            } else {
-                agregarComparator = "!moment(nuevaFecha"+regla.ID+").isSame(moment(arregloPrestamos[i].fechaFinal), 'day')";
-            }
-            if(regla.operacion.includes("=") && (regla.operacion.includes("<") || regla.operacion.includes(">")) ) {
-                agregarIsSame = " || moment(nuevaFecha"+regla.ID+").isSame(moment(arregloPrestamos[i].fechaFinal), 'day')";
-            } else {
-                agregarIsSame = "";
-            }
-            // Agregando campo Operacion
-            arreglo.push(tabsText+"if ( "+agregarComparator+" "+agregarIsSame+" ) {");
-            //posicionesIF.push(arreglo.length-1);
-            posicionesIF.push(arreglo.length);
-        } else if(regla.campoObjetivo.split("=")[1].indexOf("vencimiento") == 0) {
-            noAgregarFecha = true;
-            var campo = regla.campoObjetivo.split("=")[1];
-
-            arreglo.push(tabsText+"var nuevaFecha"+regla.ID+" = new Date();\n");
-            arreglo.push(tabsText+"nuevaFecha"+regla.ID+" = addDays(nuevaFecha"+regla.ID+","+proyeccion+");\n");
-            var query, agregarComparator, agregarIsSame;
-            if(regla.operacion.includes("<")) {
-                query = 'isBefore';
-            } else {
-                query = 'isAfter';
-            }
-            if(!regla.operacion.includes("!") && !regla.operacion.includes("==")) {
-                agregarComparator = "moment(arregloPrestamos[i].fechaFinal)."+query+"(moment(nuevaFecha"+regla.ID+"), 'day')";
-            } else if(regla.operacion.includes("==")) {
-                agregarComparator = "moment(arregloPrestamos[i].fechaFinal).isSame(moment(nuevaFecha"+regla.ID+"), 'day')";
-            } else {
-                agregarComparator = "!moment(arregloPrestamos[i].fechaFinal).isSame(moment(nuevaFecha"+regla.ID+"), 'day')";
-            }
-            if(regla.operacion.includes("=") && (regla.operacion.includes("<") || regla.operacion.includes(">")) ) {
-                agregarIsSame = " || moment(arregloPrestamos[i].fechaFinal).isSame(moment(nuevaFecha"+regla.ID+"), 'day')";
-            } else {
-                agregarIsSame = "";
-            }
-            // Agregando campo Operacion
-            arreglo.push(tabsText+"if ( "+agregarComparator+" "+agregarIsSame+" ) {");
-            //posicionesIF.push(arreglo.length-1);
-            posicionesIF.push(arreglo.length);
-        } else if(regla.campoObjetivo.split("=")[1].indexOf("alac") == 0) {
-            noAgregarBoolean = true;
-            var campo = regla.campoObjetivo.split("=")[1];
-            // Agregando campo Operacion
-            arreglo.push(tabsText+"if ( arregloPrestamos[i].alac.length > 0 ) {");
-            //posicionesIF.push(arreglo.length-1);
-            posicionesIF.push(arreglo.length);
-        } else {
+        } else if(regla.campoObjetivo.indexOf('NOUAGRUPACION') == 0) {
             noAgregarFactor = true;
-            arreglo.push(tabsText+(variable+proyeccion)+" += arregloPrestamos[i].valorFinanciacion - getPriceALAC(arregloPrestamos[i].alac);");
+            arreglo.push({codigo: tabsText+"if ( arregloPrestamos"+idFiltro+"[i].tipoCredito.localeCompare('"+getListValue(regla.campoObjetivo.split("=")[1], "tipoCredito")+"') == 0 ) {\n", filtro: regla.filtro});
+            arreglo.push({codigo: tabsText+"\tvar totalPrestamo = "+(regla.variables/100)+" * arregloPrestamos"+idFiltro+"[i].pago"+proyeccion+";", filtro: regla.filtro});
+            arreglo.push({codigo: "\n\t"+tabsText+(variable+proyeccion)+" += totalPrestamo;\n", filtro: regla.filtro});
+            arreglo.push({codigo: tabsText+"}", filtro: regla.filtro});
+            var factorValor = getFactor(regla.variablePadre);
+            //aplicarFactores.push((variable+proyeccion)+" = "+(variable+proyeccion)+" * "+(parseInt(regla.valor.split("=")[1])/100)+";\n");
+            aplicarFactores.push((variable+proyeccion)+" = "+(variable+proyeccion)+" * "+(factorValor)+";\n");
         }
-    } else if(regla.campoObjetivo.indexOf('NOUAGRUPACION') == 0) {
-        noAgregarFactor = true;
-        arreglo.push(tabsText+"if ( arregloPrestamos[i].tipoCredito.localeCompare('"+regla.campoObjetivo.split("=")[1]+"') == 0 ) {\n");
-        arreglo.push(tabsText+"\tvar totalPrestamo = "+(regla.variables/100)+" * arregloPrestamos[i].pago"+proyeccion+";");
-        arreglo.push("\n\t"+tabsText+(variable+proyeccion)+" += totalPrestamo;\n");
-        arreglo.push(tabsText+"}");
-        aplicarFactores.push((variable+proyeccion)+" = "+(variable+proyeccion)+" * "+(parseInt(regla.valor.split("=")[1])/100)+";\n");
-    }
 
-    if(regla.valor.indexOf('LISTA') == 0 && !noAgregarBoolean) {
-        if(esCondicion) {
-            var arregloLista = regla.valor.split("=")[1].split(",");
-            var copiaRegla = arreglo.slice();
-            var tamArreglo = arreglo.length;
-            if(regla.operacion == "no") {
-                for (var j = 0; j < tamArreglo; j++) {
-                    for (var i = 0; i < arregloLista.length; i++) {
-                        if(i==0) {
-                            var textoFinal = ' != 0 ';
-                            if(i+1 == arregloLista.length)
-                                textoFinal += " ) {";
-                            var campo = regla.campoObjetivo.split("=")[1];
-                            var valor = getListValue(arregloLista[i], campo);
-                            arreglo[j] +=valor + "')" + textoFinal;
-                        } else {
-                            var textoFinal = ' != 0 ';
-                            if(i+1 == arregloLista.length)
-                                textoFinal += " ) {";
-                            var campo = regla.campoObjetivo.split("=")[1];
-                            var valor = getListValue(arregloLista[i], campo);
-                            arreglo[j] += " && "+copiaRegla[j].split(" ( ")[1]+valor+"')"+textoFinal;
-                        }
-                    }
+        if(regla.valor.indexOf('LISTA') == 0 && !noAgregarBoolean) {
+            if(esCondicion) {
+                var arregloLista = regla.valor.split("=")[1].split(",");
+                var copiaRegla = $.extend(true,{},arreglo);
+                var tamArreglo = arreglo.length;
+                if(regla.operacion == "no") {
+                    for (var j = 0; j < tamArreglo; j++) {
+                        for (var i = 0; i < arregloLista.length; i++) {
+                            if(i==0) {
+                                var textoFinal = ' != 0 ';
+                                if(i+1 == arregloLista.length)
+                                    textoFinal += " ) {";
+                                var campo = regla.campoObjetivo.split("=")[1];
+                                var valor = getListValue(arregloLista[i], campo);
+                                arreglo[j].codigo +=valor + "')" + textoFinal;
+                            } else {
+                                var textoFinal = ' != 0 ';
+                                if(i+1 == arregloLista.length)
+                                    textoFinal += " ) {";
+                                var campo = regla.campoObjetivo.split("=")[1];
+                                var valor = getListValue(arregloLista[i], campo);
+                                arreglo[j].codigo += " && "+copiaRegla[j].codigo.split(" ( ")[1]+valor+"')"+textoFinal;
+                            }
+                        };
+                    };
+                } else {
+                    for (var j = 0; j < tamArreglo; j++) {
+                        for (var i = 0; i < arregloLista.length; i++) {
+                            if(i==0) {
+                                var textoFinal = ' == 0 ';
+                                if(i+1 == arregloLista.length)
+                                    textoFinal += " ) {";
+                                var campo = regla.campoObjetivo.split("=")[1];
+                                var valor = getListValue(arregloLista[i], campo);
+                                arreglo[j].codigo +=valor + "')" + textoFinal;
+                            } else {
+                                var textoFinal = ' == 0 ';
+                                if(i+1 == arregloLista.length)
+                                    textoFinal += " ) {";
+                                var campo = regla.campoObjetivo.split("=")[1];
+                                var valor = getListValue(arregloLista[i], campo);
+                                arreglo[j].codigo += " || "+copiaRegla[j].codigo.split(" ( ")[1]+valor+"')"+textoFinal;
+                            }
+                        };
+                    };
+                }
+            }
+        } else if(regla.valor.indexOf('FACTOR') == 0 && !noAgregarFactor) {
+            if(esCondicion) {
+                //var factorValor = parseInt(regla.valor.split("=")[1]);
+                var factorValor;
+                if(regla.valor.split("=")[1].localeCompare("MANUAL") != 0)
+                    factorValor = getFactor(regla.variablePadre);
+                else
+                    factorValor = "arregloPrestamos"+idFiltro+"[i].factor"/100;
+                for (var i = 1; i < arreglo.length; i++) {
+                    arreglo[i].codigo += " "+factorValor + " ) {";
                 };
             } else {
-                for (var j = 0; j < tamArreglo; j++) {
-                    for (var i = 0; i < arregloLista.length; i++) {
-                        if(i==0) {
-                            var textoFinal = ' == 0 ';
-                            if(i+1 == arregloLista.length)
-                                textoFinal += " ) {";
-                            var campo = regla.campoObjetivo.split("=")[1];
-                            var valor = getListValue(arregloLista[i], campo);
-                            arreglo[j] +=valor + "')" + textoFinal;
-                        } else {
-                            var textoFinal = ' == 0 ';
-                            if(i+1 == arregloLista.length)
-                                textoFinal += " ) {";
-                            var campo = regla.campoObjetivo.split("=")[1];
-                            var valor = getListValue(arregloLista[i], campo);
-                            arreglo[j] += " || "+copiaRegla[j].split(" ( ")[1]+valor+"')"+textoFinal;
-                        }
-                    }
+                //var factorValor = regla.valor.split("=")[1];
+                var factorValor;
+                if(regla.valor.split("=")[1].localeCompare("MANUAL") != 0)
+                    factorValor = getFactor(regla.variablePadre);
+                else
+                    factorValor = "arregloPrestamos"+idFiltro+"[i].factor"/100;
+                for (var i = 1; i < arreglo.length; i++) {
+                    arreglo[i].codigo += " "+factorValor + ";";
+                };
+            }
+        } else if(regla.valor.indexOf('COLUMNA') == 0) {
+            if(esCondicion) {
+                var columnaValor = regla.valor.split("=")[1];
+                for (var i = 0; i < arreglo.length; i++) {
+                    arreglo[i].codigo += " "+columnaValor + " ) {";
+                };
+            } else {
+                var columnaValor = regla.valor.split("=")[1];
+                for (var i = 0; i < arreglo.length; i++) {
+                    arreglo[i].codigo += " "+columnaValor + ";";
+                };
+            }
+        } else if(regla.valor.indexOf('FECHA') == 0 && !noAgregarFecha) {
+            if(esCondicion) {
+                for (var i = 0; i < arreglo.length; i++) {
+                    arreglo[i].codigo += " "+proyeccion+" ) {";
+                };
+            } else {
+                var columnaValor = regla.valor.split("=")[1];
+                for (var i = 0; i < arreglo.length; i++) {
+                    arreglo[i].codigo += " "+proyeccion+";";
+                };
+            }
+        } else if(regla.valor.indexOf('MANUAL') == 0 || regla.valor.indexOf('MORA') == 0 || (regla.valor.indexOf('BOOLEAN') == 0 && !noAgregarBoolean)) {
+            if(esCondicion) {
+                var columnaValor = regla.valor.split("=")[1];
+                for (var i = 0; i < arreglo.length; i++) {
+                    arreglo[i].codigo += " "+columnaValor + " ) {";
+                };
+            } else {
+                var columnaValor = regla.valor.split("=")[1];
+                for (var i = 0; i < arreglo.length; i++) {
+                    arreglo[i].codigo += " "+columnaValor + ";";
                 };
             }
         }
-    } else if(regla.valor.indexOf('FACTOR') == 0 && !noAgregarFactor) {
-        if(esCondicion) {
-            var factorValor = parseInt(regla.valor.split("=")[1]);
-            for (var i = 1; i < arreglo.length; i++) {
-                arreglo[i] += " "+factorValor/100 + " ) {";
-            };
-        } else {
-            var factorValor = regla.valor.split("=")[1];
-            for (var i = 1; i < arreglo.length; i++) {
-                arreglo[i] += " "+factorValor/100 + ";";
-            };
-        }
-    } else if(regla.valor.indexOf('COLUMNA') == 0) {
-        if(esCondicion) {
-            var columnaValor = regla.valor.split("=")[1];
-            for (var i = 0; i < arreglo.length; i++) {
-                arreglo[i] += " "+columnaValor + " ) {";
-            };
-        } else {
-            var columnaValor = regla.valor.split("=")[1];
-            for (var i = 0; i < arreglo.length; i++) {
-                arreglo[i] += " "+columnaValor + ";";
-            };
-        }
-    } else if(regla.valor.indexOf('FECHA') == 0 && !noAgregarFecha) {
-        if(esCondicion) {
-            for (var i = 0; i < arreglo.length; i++) {
-                arreglo[i] += " "+proyeccion+" ) {";
-            };
-        } else {
-            var columnaValor = regla.valor.split("=")[1];
-            for (var i = 0; i < arreglo.length; i++) {
-                arreglo[i] += " "+proyeccion+";";
-            };
-        }
-    } else if(regla.valor.indexOf('MANUAL') == 0 || regla.valor.indexOf('MORA') == 0 || (regla.valor.indexOf('BOOLEAN') == 0 && !noAgregarBoolean)) {
-        if(esCondicion) {
-            var columnaValor = regla.valor.split("=")[1];
-            for (var i = 0; i < arreglo.length; i++) {
-                arreglo[i] += " "+columnaValor + " ) {";
-            };
-        } else {
-            var columnaValor = regla.valor.split("=")[1];
-            for (var i = 0; i < arreglo.length; i++) {
-                arreglo[i] += " "+columnaValor + ";";
-            };
-        }
-    }
 
-    var cuerpo = arregloReglas.filter(function( object ) {
-        return object.reglaPadre == regla.ID;
-    });
-    if(cuerpo.length > 0) {
-        var arregloCuerpo = [];
-        for (var i = 0; i < cuerpo.length; i++) {
-            var cuantasTabs = tabs;
-            if(esCondicion)
-                cuantasTabs++;
-            var retorno = campoObjetivoPrestamos(cuerpo[i], [], cuantasTabs, variable, proyeccion);
-            retorno[0] = "\n"+retorno[0];
-            $.merge( arregloCuerpo, retorno );
-        };
-        for (var i = 0; i < posicionesIF.length; i++) {
-            arreglo.splice(posicionesIF[i], 0, ...arregloCuerpo);
-            if(esCondicion)
-                arreglo.splice(posicionesIF[i]+arregloCuerpo.length, 0, "\n"+tabsText+"}");
-            for (var j = i; j < posicionesIF.length; j++) {
-                posicionesIF[j]+=arregloCuerpo.length;
+        var cuerpo = arregloReglas.filter(function( object ) {
+            return object.reglaPadre == regla.ID;
+        });
+        if(cuerpo.length > 0) {
+            var arregloCuerpo = [];
+            for (var i = 0; i < cuerpo.length; i++) {
+                var cuantasTabs = tabs;
+                if(esCondicion)
+                    cuantasTabs++;
+                var retorno = campoObjetivoPrestamos(cuerpo[i], [], cuantasTabs, variable, proyeccion);
+                retorno[0].codigo = "\n"+retorno[0].codigo;
+                $.merge( arregloCuerpo, retorno );
             };
-        };
-        if(posicionesIF.length == 0)
-            $.merge( arreglo, arregloCuerpo );
-        return arreglo;
-    } else {
-        if(esCondicion){
             for (var i = 0; i < posicionesIF.length; i++) {
-                arreglo.splice(posicionesIF[i], 0, "\n"+tabsText+"}");
+                arreglo.splice(posicionesIF[i], 0, ...arregloCuerpo);
+                if(esCondicion)
+                    arreglo.splice(posicionesIF[i]+arregloCuerpo.length, 0, {codigo: "\n"+tabsText+"}", filtro: regla.filtro});
+                for (var j = i; j < posicionesIF.length; j++) {
+                    posicionesIF[j]+=arregloCuerpo.length;
+                };
             };
+            if(posicionesIF.length == 0)
+                $.merge( arreglo, arregloCuerpo );
+            return arreglo;
+        } else {
+            if(esCondicion){
+                for (var i = 0; i < posicionesIF.length; i++) {
+                    arreglo.splice(posicionesIF[i], 0, {codigo: "\n"+tabsText+"}", filtro: regla.filtro});
+                };
+            }
+            return arreglo;
         }
-        return arreglo;
-    }
+    /*} catch (exception) {
+        console.log(e);
+    }*/
 }
 
 //funcion para retornar el valor correspondiente de una lista dependiendo del tipo de columna
@@ -4420,9 +4983,69 @@ function getListValue (id, column) {
                 return arreglodeListas[i].valor;
             }
         };
+    } else if(column.localeCompare("idCliente") == 0) {
+        for (var i = 0; i < arreglodeListas.length; i++) {
+            if(arreglodeListas[i].ID == id) {
+                return arreglodeListas[i].valor;
+            }
+        };
+    } else if(column.localeCompare("nombreCliente") == 0) {
+        for (var i = 0; i < arreglodeListas.length; i++) {
+            if(arreglodeListas[i].ID == id) {
+                return arreglodeListas[i].nombre;
+            }
+        };
+    } else if(column.localeCompare("tipoPersona") == 0) {
+        for (var i = 0; i < arreglodeListas.length; i++) {
+            if(arreglodeListas[i].ID == id) {
+                return arreglodeListas[i].valor;
+            }
+        };
+    } else if(column.localeCompare("tipoSubPersona") == 0) {
+        for (var i = 0; i < arreglodeListas.length; i++) {
+            if(arreglodeListas[i].ID == id) {
+                return arreglodeListas[i].valor;
+            }
+        };
     } else {
         return false;
     }
+}
+
+function sendEmails () {
+    for (var p = 0; p < arregloMonedas.length; p++) {
+        for (var i = 0; i < totalesRCL[p].length; i++) {
+            for (var j = 0; j < arregloDeCorreos.length; j++) {
+                if( totalesRCL[p][i].total <= arregloDeCorreos[j]) {
+                    
+                    var transporter = nodemailer.createTransport({
+                        service: 'gmail',
+                        auth: {
+                            user: 'rcllugonhn@gmail.com',
+                            pass: 'SoFtPr0t3cT'
+                        }
+                    });
+
+                    var mailOptions = {
+                        from: 'rcllugonhn@gmail.com',
+                        to: 'dario.villalta@gmail.com',
+                        subject: 'Sending Email using Node.js',
+                        html: '<h1>Welcome</h1><p>That was easy!</p>'
+                    };
+
+                    transporter.sendMail(mailOptions, function(error, info){
+                        if (error) {
+                            console.log(error);
+                        } else {
+                            console.log('Email sent: ' + info.response);
+                        }
+                    });
+
+                    enviar = true;
+                }
+            };
+        };
+    };
 }
 
 function formatDateCreationSingleDigits(date) {
@@ -4527,3 +5150,60 @@ function cleanupSelectedList () {
             $(this).removeClass("active")
     });
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//  **********      Interval      **********
+var myInterval;
+var timer = 0;
+
+function myTimer() {
+    if($(".dots").text().length<3) {
+        $(".dots").text($(".dots").text()+".");
+    } else {
+        $(".dots").text("");
+        $(".dots").text($(".dots").text()+".");
+    }
+    timer++;
+}
+
+function stopTimer() {
+    $(".dots").text("");
+    console.log(" ==== TIEMPO ==== ");
+    console.log(timer+"s");
+    console.log(" ==== FIN TIEMPO ==== ");
+    clearInterval(myInterval);
+}
+//  **********      Fin interval      **********

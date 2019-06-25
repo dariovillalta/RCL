@@ -339,6 +339,7 @@ function deleteRule (index) {
 								            overlay: true,
 								            duration: 1
 								        });
+								        $('#modalEdit').modal('toggle');
 					                    loadRules();
 					                    loadAllRules();
 					                });
@@ -1166,6 +1167,63 @@ function getSelectOptions (array) {
 	return textoOption;
 }
 /* *************	Fin Rules	************* */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//  **********      Interval      **********
+var myInterval;
+
+function myTimer() {
+    if($(".dots").text().length<3) {
+        $(".dots").text($(".dots").text()+".");
+    } else {
+        $(".dots").text("");
+        $(".dots").text($(".dots").text()+".");
+    }
+}
+
+function stopTimer() {
+    $(".dots").text("");
+    clearInterval(myInterval);
+}
+
+//  **********      Fin interval      **********
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
