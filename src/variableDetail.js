@@ -2258,8 +2258,8 @@ function goConfig () {
 }
 
 function logout () {
-    $("#app_full").empty();
     session.defaultSession.clearStorageData([], (data) => {});
+    $("#app_full").empty();
     //cleanup();
     $("#app_full").load("src/login.html");
 }

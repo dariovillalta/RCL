@@ -45,8 +45,10 @@ const pool1 = new sql.ConnectionPool(config, err => {
         });
 	} else {
 		console.log('pool loaded');
-		loadVariablesIMG();
+		//loadVariablesIMG();
         loadEmails();
+        loadVariables();
+        loadVariablesOfVariables();
 	}
 });
 
@@ -188,6 +190,131 @@ $('#fechaProgra').datepicker({
     dateFormat: '', 
     timeFormat: 'hh:mm tt',
     timeOnly: true
+});
+
+var arregloVariables = [];
+function loadVariables () {
+    const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false;
+        transaction.on('rollback', aborted => {
+            // emited with aborted === true
+            rolledBack = true;
+        });
+        const request = new sql.Request(transaction);
+        request.query("select * from FormulaVariables", (err, result) => {
+            if (err) {
+                if (!rolledBack) {
+                    transaction.rollback(err => {
+                        $("body").overhang({
+                            type: "error",
+                            primary: "#f84a1d",
+                            accent: "#d94e2a",
+                            message: "Error en conneción con tabla de FormulaVariables.",
+                            overlay: true,
+                            closeConfirm: true
+                        });
+                    });
+                }
+            }  else {
+                transaction.commit(err => {
+                    var content = '';
+                    arregloVariables = result.recordset;
+                    for (var i = 0; i < arregloVariables.length; i++) {
+                        content+='<option value = '+i+'>'+arregloVariables[i].variables+'</option>'
+                    };
+                    $("#selectVariables").empty();
+                    $("#selectVariables").append(content);
+                    $("#selectVariablesCompar").empty();
+                    $("#selectVariablesCompar").append(content);
+                });
+            }
+        });
+    }); // fin transaction
+}
+
+var arregloSubVariables = [];
+function loadVariablesOfVariables () {
+    const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false;
+        transaction.on('rollback', aborted => {
+            // emited with aborted === true
+            rolledBack = true;
+        });
+        const request = new sql.Request(transaction);
+        request.query("select * from VariablesdeVariablesFormula", (err, result) => {
+            if (err) {
+                if (!rolledBack) {
+                    transaction.rollback(err => {
+                        $("body").overhang({
+                            type: "error",
+                            primary: "#f84a1d",
+                            accent: "#d94e2a",
+                            message: "Error en conneción con tabla de VariablesdeVariablesFormula.",
+                            overlay: true,
+                            closeConfirm: true
+                        });
+                    });
+                }
+            }  else {
+                transaction.commit(err => {
+                    var content = '';
+                    arregloSubVariables = result.recordset;
+                    for (var i = 0; i < arregloSubVariables.length; i++) {
+                        content+='<option value = '+i+'>'+arregloSubVariables[i].nombre+'</option>'
+                    };
+                    $("#selectSubVariables").empty();
+                    $("#selectSubVariables").append(content);
+                    $("#selectSubVariablesCompar").empty();
+                    $("#selectSubVariablesCompar").append(content);
+                });
+            }
+        });
+    }); // fin transaction
+}
+
+$("#selectVariablesCompar").prop("disabled", true);
+$("#selectSubVariablesCompar").prop("disabled", true);
+$("input[name='selectVerComparacionRadio']").prop("disabled", true);
+$("input[name='alertaRadio']").change(function(){
+    if($('#enviarAlerta').is(':checked')) {
+        $("#selectVariablesCompar").prop("disabled", false);
+        $("#selectSubVariablesCompar").prop("disabled", false);
+        $("input[name='selectVerComparacionRadio']").prop("disabled", false);
+        if($('#selectVerVariablesComparacion').is(':checked')) {
+            $("#selectVariablesCompar").prop("disabled", false);
+            $("#selectSubVariablesCompar").prop("disabled", true);
+        } else {
+            $("#selectVariablesCompar").prop("disabled", true);
+            $("#selectSubVariablesCompar").prop("disabled", false);
+        }
+    } else {
+        $("#selectVariablesCompar").prop("disabled", true);
+        $("#selectSubVariablesCompar").prop("disabled", true);
+        $("input[name='selectVerComparacionRadio']").prop("disabled", true);
+    }
+});
+$("input[name='selectVerComparacionRadio']").change(function(){
+    if($('#selectVerVariablesComparacion').is(':checked')) {
+        $("#selectVariablesCompar").prop("disabled", false);
+        $("#selectSubVariablesCompar").prop("disabled", true);
+    } else {
+        $("#selectVariablesCompar").prop("disabled", true);
+        $("#selectSubVariablesCompar").prop("disabled", false);
+    }
+});
+
+
+$("#selectSubVariables").prop("disabled", true);
+$("input[name='selectVerVariablesRadio']").change(function(){
+    if($('#selectVerVariables').is(':checked')) {
+        $("#selectVariables").prop("disabled", false);
+        $("#selectSubVariables").prop("disabled", true);
+    } else {
+        $("#selectVariables").prop("disabled", true);
+        $("#selectSubVariables").prop("disabled", false);
+    }
 });
 
 function loadEmails () {
@@ -356,54 +483,88 @@ function updateMinimunRCL (monto) {
 function createEmail () {
     var correo = $('#correoValue').val();
     var porcentaje = $('#porcentajeCorreoValue').val().split(/[ |%|_|__]/)[0];
-    console.log(correo)
-    console.log(porcentaje)
+    var variableID;
+    var esVarPadre;
+    var comparacionID = -1;
+    var comparacionEsVarPadre = false;
+    if($('#enviarAlerta').is(':checked')) {
+        if($('#selectVerVariablesComparacion').is(':checked')) {
+            var pos = $('#selectVariablesCompar').val();
+            comparacionID = arregloVariables[pos].ID;
+            comparacionEsVarPadre = true;
+        } else {
+            var pos = $('#selectSubVariablesCompar').val();
+            comparacionID = arregloSubVariables[pos].ID;
+            comparacionEsVarPadre = true;
+        }
+    }
+    if($('#selectVerVariables').is(':checked')) {
+        var pos = $('#selectVariables').val();
+        variableID = arregloVariables[pos].ID;
+        esVarPadre = true;
+    } else {
+        var pos = $('#selectSubVariables').val();
+        variableID = arregloSubVariables[pos].ID;
+        esVarPadre = false;
+    }
     if(correo.length > 0 && correo.length < 60) {
-        if(!isNaN(porcentaje)) {
-            const transaction = new sql.Transaction( pool1 );
-            transaction.begin(err => {
-                var rolledBack = false;
-                transaction.on('rollback', aborted => {
-                    // emited with aborted === true
-                    rolledBack = true;
-                });
-                const request = new sql.Request(transaction);
-                request.query("insert into Correos (correo, porcentajeEnviar) values ('"+correo+"', "+porcentaje+")", (err, result) => {
-                    if (err) {
-                        if (!rolledBack) {
-                            transaction.rollback(err => {
-                                $("body").overhang({
-                                    type: "error",
-                                    primary: "#f84a1d",
-                                    accent: "#d94e2a",
-                                    message: "Error en inserción de Correo.",
-                                    overlay: true,
-                                    closeConfirm: true
+        if(variableID != null && variableID != undefined) {
+            if(!isNaN(porcentaje)) {
+                const transaction = new sql.Transaction( pool1 );
+                transaction.begin(err => {
+                    var rolledBack = false;
+                    transaction.on('rollback', aborted => {
+                        // emited with aborted === true
+                        rolledBack = true;
+                    });
+                    const request = new sql.Request(transaction);
+                    request.query("insert into Correos (correo, variableID, esVarPadre, comparacionID, comparacionEsVarPadre, porcentajeEnviar) values ('"+correo+"', "+variableID+",'"+esVarPadre+"',"+comparacionID+",'"+comparacionEsVarPadre+"',"+porcentaje+")", (err, result) => {
+                        if (err) {
+                            console.log(err);
+                            if (!rolledBack) {
+                                transaction.rollback(err => {
+                                    $("body").overhang({
+                                        type: "error",
+                                        primary: "#f84a1d",
+                                        accent: "#d94e2a",
+                                        message: "Error en inserción de Correo.",
+                                        overlay: true,
+                                        closeConfirm: true
+                                    });
                                 });
+                            }
+                        }  else {
+                            transaction.commit(err => {
+                                // ... error checks
+                                $("body").overhang({
+                                    type: "success",
+                                    primary: "#40D47E",
+                                    accent: "#27AE60",
+                                    message: "Correo guardado con éxito.",
+                                    duration: 1,
+                                    overlay: true
+                                });
+                                loadEmails();
                             });
                         }
-                    }  else {
-                        transaction.commit(err => {
-                            // ... error checks
-                            $("body").overhang({
-                                type: "success",
-                                primary: "#40D47E",
-                                accent: "#27AE60",
-                                message: "Correo guardado con éxito.",
-                                duration: 1,
-                                overlay: true
-                            });
-                            loadEmails();
-                        });
-                    }
+                    });
+                }); // fin transaction
+            } else {
+                $("body").overhang({
+                    type: "error",
+                    primary: "#f84a1d",
+                    accent: "#d94e2a",
+                    message: "Ingrese un número válido.",
+                    overlay: true,
+                    closeConfirm: true
                 });
-            }); // fin transaction
+            }
         } else {
             $("body").overhang({
                 type: "error",
                 primary: "#f84a1d",
                 accent: "#d94e2a",
-                message: "Ingrese un número válido.",
+                message: "Selecciones una variable a monitorear.",
                 overlay: true,
                 closeConfirm: true
             });
@@ -600,63 +761,63 @@ function deleteHour () {
 
 //	**********		Route Change		**********
 function goVariables () {
-	$("#app_root").empty();
     cleanup();
+	$("#app_root").empty();
     $("#app_root").load("src/variables.html");
 }
 
 function goHome () {
-	$("#app_root").empty();
     cleanup();
+	$("#app_root").empty();
     $("#app_root").load("src/home.html");
 }
 
 function goUsers () {
-	$("#app_root").empty();
     cleanup();
+	$("#app_root").empty();
     $("#app_root").load("src/users.html");
 }
 
 function goConnections () {
-    $("#app_root").empty();
     cleanup();
+    $("#app_root").empty();
     $("#app_root").load("src/importaciones.html");
 }
 
 function goConfig () {
-    $("#app_root").empty();
     cleanup();
+    $("#app_root").empty();
     $("#app_root").load("src/config.html");
 }
 
 function logout () {
-	$("#app_full").empty();
     session.defaultSession.clearStorageData([], (data) => {});
     cleanup();
+	$("#app_full").empty();
     $("#app_full").load("src/login.html");
 }
 
 function goReports () {
-    $("#app_root").empty();
     cleanup();
+    $("#app_root").empty();
     $("#app_root").load("src/reportes.html");
 }
 
 function goGraphics () {
-    $("#app_root").empty();
     cleanup();
+    $("#app_root").empty();
     $("#app_root").load("src/graficos.html");
 }
 
 function goRCL () {
-	$("#app_root").empty();
     cleanup();
+	$("#app_root").empty();
     $("#app_root").load("src/rcl.html");
 }
 
 function goLists () {
-    $("#app_root").empty();
     cleanup();
+    $("#app_root").empty();
     $("#app_root").load("src/variablesLists.html");
 }
 

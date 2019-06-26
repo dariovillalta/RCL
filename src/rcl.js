@@ -1,6 +1,7 @@
 const electron = require('electron');
 const remote = require('electron').remote;
 const sql = require('mssql');
+const nodemailer = require('nodemailer');
 
 var user = getUser();
 var password = getPassword();
@@ -140,6 +141,7 @@ var formulaGlobal = '';
 var contadorEntrarCreateFunctionsArray = 0;
 var contadorFuncionPrint = 0;
 var totalesRCL = [];    //arreglo que guarda el total por proyeccion
+var totalesRCLCorreos = [];    //arreglo que guarda el total por proyeccion
 var arreglodeListas = [];   //arreglo que guarda las variables de las listas
 var arreglodeCuenOpClientes = [];   //arreglo de cuentas operativas de clientes
 var banderaLlamadasListas = 0;   //total de listas a entrar
@@ -1187,6 +1189,7 @@ function checkFormulaExists () {
                     arregloAgencias = [];
                     totalesClientes = [];
                     totalesRCL = [];
+                    totalesRCLCorreos = [];
                     banderaLlamadasListas = 0;
                     entradasLlamadasListas = 0;
                     tieneFiltroDepositos = false;
@@ -3818,7 +3821,10 @@ function saveResults () {
                     if(window["variablesSolas"+arregloMonedas[p]][i][j].esRCL) {
                         if(totalesRCL[p] == undefined)
                             totalesRCL[p] = [];
+                        if(totalesRCLCorreos[p] == undefined)
+                            totalesRCLCorreos[p] = [];
                         totalesRCL[p].push({proyeccion: proyecciones[i], total: window["variablesSolas"+arregloMonedas[p]][i][j].total*100});
+                        totalesRCLCorreos[p].push({total: window["variablesSolas"+arregloMonedas[p]][i][j].total*100, ID: window["variablesSolas"+arregloMonedas[p]][i][j].ID, esVarPadre: true});
                     }
                 }
                 for (var k = 0; k < subvariablesSolas[i][j].length; k++) {
@@ -3833,6 +3839,7 @@ function saveResults () {
                     if( subvariablesSolas[i][j][k] != undefined) {
                         window["subvariablesSolas"+arregloMonedas[p]][i][j][k].total = math.round(window["subvariablesSolas"+arregloMonedas[p]][i][j][k].total, 2);
                         checkIfResultExists(window["subvariablesSolas"+arregloMonedas[p]][i][j][k]);
+                        totalesRCLCorreos[p].push({total: window["subvariablesSolas"+arregloMonedas[p]][i][j][k].total*100, ID: window["subvariablesSolas"+arregloMonedas[p]][i][j][k].ID, esVarPadre: false});
                     }
                     for (var n = 0; n < variablesDeSubVariablesSolas[i][j][k].length; n++) {
                         if( variablesDeSubVariablesSolas[i][j][k][n] != undefined && (window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k][n] != undefined && window["variablesDeSubVariablesSolas"+arregloMonedas[p]][i][j][k][n].numerador == undefined) )
@@ -3903,6 +3910,7 @@ function saveResults () {
     $("#totalesRCL").empty();
     $("#totalesRCL").append(content);
     $("#modalTotalRCL").modal('toggle');
+    sendEmails();
 }
 
 function checkIfResultExists (variable) {
@@ -4346,7 +4354,7 @@ function getMontoFOSEDE (moneda) {
 }
 
 function conCuentasHastaFOSEDE (idCliente) {
-    var sumaCuentas = 0, tieneCuenta = false, cuentas [];
+    var sumaCuentas = 0, tieneCuenta = false, cuentas = [];
     for (var i = 0; i < arreglodeCuenOpClientes.length; i++) {
         if(idCliente.localeCompare(arreglodeCuenOpClientes[i].valor) == 0) {
             if(!tieneCuenta)
@@ -4369,7 +4377,7 @@ function conCuentasHastaFOSEDE (idCliente) {
 }
 
 function conCuentasMayorFOSEDE (idCliente) {
-    var sumaCuentas = 0, tieneCuenta = false, cuentas [];
+    var sumaCuentas = 0, tieneCuenta = false, cuentas = [];
     for (var i = 0; i < arreglodeCuenOpClientes.length; i++) {
         if(idCliente.localeCompare(arreglodeCuenOpClientes[i].valor) == 0) {
             if(!tieneCuenta)
@@ -4392,7 +4400,7 @@ function conCuentasMayorFOSEDE (idCliente) {
 }
 
 function sinCuentasHastaFOSEDE () {
-    var sumaCuentas = 0, cuentas [];
+    var sumaCuentas = 0, cuentas = [];
     for (var i = 0; i < arreglodeCuenOpClientes.length; i++) {
         if(idCliente.localeCompare(arreglodeCuenOpClientes[i].puesto) == 0) {
             cuentas.push(arreglodeCuenOpClientes[i].valor);
@@ -4411,7 +4419,7 @@ function sinCuentasHastaFOSEDE () {
 }
 
 function sinCuentasMayorFOSEDE (idCliente) {
-    var sumaCuentas = 0, cuentas [];
+    var sumaCuentas = 0, cuentas = [];
     for (var i = 0; i < arreglodeCuenOpClientes.length; i++) {
         if(idCliente.localeCompare(arreglodeCuenOpClientes[i].puesto) == 0) {
             cuentas.push(arreglodeCuenOpClientes[i].valor);
@@ -5012,40 +5020,73 @@ function getListValue (id, column) {
     }
 }
 
+var transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: 'rcllugonhn@gmail.com',
+        pass: 'SoFtPr0t3cT'
+    }
+});
+
 function sendEmails () {
+    /*var html = '<h1>Reporte de Cálculos</h1>', entro = false;
     for (var p = 0; p < arregloMonedas.length; p++) {
-        for (var i = 0; i < totalesRCL[p].length; i++) {
+        for (var i = 0; i < variablesSolas.length; i++) {
+            for (var j = 0; j < variablesSolas[i].length; j++) {
+                for (var k = 0; k < arregloDeCorreos.length; k++) {
+                    window["variablesSolas"+arregloMonedas[p]][i][j]
+                    if(window["variablesSolas"+arregloMonedas[p]][i][j].ID == arregloDeCorreos[j].variableID && arregloDeCorreos[j].esVarPadre && window["variablesSolas"+arregloMonedas[p]][i][j].total <= arregloDeCorreos[j].porcentajeEnviar)
+                }
+            }
+        }
+    }
+    for (var p = 0; p < arregloMonedas.length; p++) {
+        for (var i = 0; i < totalesRCLCorreos[p].length; i++) {
             for (var j = 0; j < arregloDeCorreos.length; j++) {
-                if( totalesRCL[p][i].total <= arregloDeCorreos[j]) {
-                    
-                    var transporter = nodemailer.createTransport({
-                        service: 'gmail',
-                        auth: {
-                            user: 'rcllugonhn@gmail.com',
-                            pass: 'SoFtPr0t3cT'
-                        }
-                    });
-
-                    var mailOptions = {
-                        from: 'rcllugonhn@gmail.com',
-                        to: 'dario.villalta@gmail.com',
-                        subject: 'Sending Email using Node.js',
-                        html: '<h1>Welcome</h1><p>That was easy!</p>'
-                    };
-
-                    transporter.sendMail(mailOptions, function(error, info){
-                        if (error) {
-                            console.log(error);
-                        } else {
-                            console.log('Email sent: ' + info.response);
-                        }
-                    });
-
-                    enviar = true;
+                if( totalesRCLCorreos[p][i].ID == arregloDeCorreos[j].variableID && totalesRCLCorreos[p][i].total <= arregloDeCorreos[j].porcentajeEnviar && totalesRCLCorreos[p][i].esVarPadre == arregloDeCorreos[j].esVarPadre) {
+                    if(!entro)
+                        entro = true;
+                    html+='<p></p>';
                 }
             };
         };
     };
+    if(entro) {
+        var mailOptions = {
+            from: 'rcllugonhn@gmail.com',
+            to: 'dario.villalta@gmail.com',
+            subject: 'Alerta de cálculo RCL',
+            html: '<p>That was easy!</p>'
+        };
+        transporter.sendMail(mailOptions, function(error, info){
+            if (error) {
+                console.log(error);
+            } else {
+                console.log('Email sent: ' + info.response);
+            }
+        });
+    }*/
+    var transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: 'rcllugonhn@gmail.com',
+            pass: 'SoFtPr0t3cT'
+        }
+    });
+
+    var mailOptions = {
+        from: 'rcllugonhn@gmail.com',
+        to: 'dario.villalta@gmail.com',
+        subject: 'Sending Email using Node.js',
+        html: '<h1>Welcome</h1><p>That was easy!</p>'
+    };
+    transporter.sendMail(mailOptions, function(error, info){
+        if (error) {
+            console.log(error);
+        } else {
+            console.log('Email sent: ' + info.response);
+        }
+    });
 }
 
 function formatDateCreationSingleDigits(date) {
