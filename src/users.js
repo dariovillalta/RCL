@@ -45,7 +45,7 @@ const pool1 = new sql.ConnectionPool(config, err => {
 		console.log('pool loaded');
 		loadUsers();
 		loadPolicies();
-		//loadVariablesIMG();
+		loadVariablesIMG();
 	}
 });
 
@@ -74,7 +74,7 @@ session.defaultSession.cookies.get({}, (error, cookies) => {
 
 /* ****************** 		LOADING IMG 	********* */
 /*var filepathFullLogo = '';
-var filepathSmallLogo = '';
+var filepathSmallLogo = '';*/
 function loadVariablesIMG () {
 	const transaction = new sql.Transaction( pool1 );
     transaction.begin(err => {
@@ -103,6 +103,7 @@ function loadVariablesIMG () {
                     // ... error checks
                     if(result.recordset.length > 0){
                     	objetoBandera = result.recordset[0];
+                    	console.log(objetoBandera);
                     	if(result.recordset[0].fullLogo.length > 0){
                     		filepathFullLogo = result.recordset[0].fullLogo;
                     		$("#fullLogo").attr("src",filepathFullLogo);
@@ -115,14 +116,14 @@ function loadVariablesIMG () {
                     		filepathSmallLogo = '';
                     } else {
                     	objetoBandera = null;
-                    	filepathFullLogo = '';
-                    	filepathSmallLogo = '';
+                    	/*filepathFullLogo = '';
+                    	filepathSmallLogo = '';*/
                     }
                 });
             }
         });
     }); // fin transaction
-}*/
+}
 /* ****************** 		END LOADING IMG 	********* */
 
 //	**********		Users		**********
@@ -1011,6 +1012,7 @@ function getBase64Image(img) {
 }
 
 function verifyImg () {
+	console.log(objetoBandera)
 	if(objetoBandera != null)
 		modifyImages();
 	else
@@ -1226,7 +1228,7 @@ function goRCL () {
 function goReports () {
 	//cleanup();
 	$("#app_root").empty();
-    $("#app_root").load("src/reportes.html");
+    $("#app_root").load("src/elegirReporteria.html");
 }
 
 function goGraphics () {

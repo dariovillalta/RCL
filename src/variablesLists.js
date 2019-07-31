@@ -110,22 +110,23 @@ function loadFosede () {
             }  else {
                 transaction.commit(err => {
                     // ... error checks
+                    $("#fosedeUpdate").empty();
+                    var content = '<option value="new"> Nueva Moneda </option>';
                     if(result.recordset.length > 0){
                         if(result.recordset[0].montoFosede > 1) {
                             montoFosedeGlobal = result.recordset;
                             var content = '<option value="new"> Nueva Moneda </option>';
-                            $("#fosedeUpdate").empty();
-                            console.log(montoFosedeGlobal)
                             for (var i = 0; i < montoFosedeGlobal.length; i++) {
                                 content+='<option value="'+montoFosedeGlobal[i].ID+'">'+montoFosedeGlobal[i].moneda+'</option>';
                             };
-                            $("#fosedeUpdate").append(content);
+                            $("#deleteFosede").hide();
                         }
                         else
                             montoFosedeGlobal = 0.00;
                     } else {
                         montoFosedeGlobal = 0.00;
                     }
+                    $("#fosedeUpdate").append(content);
                     loadTextFOSEDE();
                 });
             }
@@ -153,6 +154,9 @@ function loadTextFOSEDE () {
             $("#nombreMoneda").val(fosedeSeleccionado[0].moneda);
             $("#simboloMoneda").val(fosedeSeleccionado[0].simbolo);
             $("#lempiraInput").val(fosedeSeleccionado[0].montoFosede);
+            $("#deleteFosede").show();
+        } else {
+            $("#deleteFosede").hide();
         }
     }
 }
@@ -209,12 +213,8 @@ function renderListsCreateVariableSelect () {
 		selectHTML+='<option value='+arregloListas[i].ID+'>'+arregloListas[i].nombre+'</option>';
 	};
 	$("#elementosDeLista").empty();
-	$("#elementosDeListaUpdate").empty();
-	$("#elementosDeListaModify").empty();
 	$("#elementosDeListaEdit").empty();
 	$("#elementosDeLista").append(selectHTML);
-	$("#elementosDeListaUpdate").append(selectHTML);
-	$("#elementosDeListaModify").append(selectHTML);
 	$("#elementosDeListaEdit").append(selectHTML);
 	if(arregloListas[0] != null)
 		$("#elementoNombreEdit").val(arregloListas[0].nombre);
@@ -271,7 +271,6 @@ function renderListsCreateVariableSelect () {
         $("#columnasRestoField").show();
         $("#fechasField").hide();
     }
-	loadListListsExcel();
 }
 
 //$("#elementoSaldo").val("0");//para que no tire error al crear sin mover de dropdown
@@ -332,77 +331,6 @@ function showListsFields (idLista) {
         $("#columnasRestoField").show();
         $("#fechasField").hide();
     }
-}
-
-function loadListListsExcel () {
-	var idLista = $("#elementosDeListaUpdate").val();
-	const transaction = new sql.Transaction( pool1 );
-    transaction.begin(err => {
-        var rolledBack = false;
-        transaction.on('rollback', aborted => {
-            // emited with aborted === true
-            rolledBack = true;
-        });
-        const request = new sql.Request(transaction);
-        request.query("select * from ListasVariables where idLista = "+idLista, (err, result) => {
-            if (err) {
-                if (!rolledBack) {
-                    transaction.rollback(err => {
-                        $("body").overhang({
-                            type: "error",
-                            primary: "#f84a1d",
-                            accent: "#d94e2a",
-                            message: "Error en conección con la tabla de ListasVariables.",
-                            overlay: true,
-                            closeConfirm: true
-                        });
-                    });
-                }
-            }  else {
-                transaction.commit(err => {
-                    // ... error checks
-                    if(result.recordset.length > 0){
-                    	arregloListasVariables = result.recordset;
-                    } else {
-                    	arregloListasVariables = [];
-                    	listasVariablesSeleccionada = null;
-                    }
-                    renderVariableListSelect();
-                });
-            }
-        });
-    }); // fin transaction
-}
-
-$('#nombreListaOrdenRadio').on('ifChecked', function () {
-    renderVariableListSelect();
-});
-$('#valorListaOrdenRadio').on('ifChecked', function () {
-    renderVariableListSelect();
-});
-
-function renderVariableListSelect () {
-	var ulHTML = '';
-    if($('#nombreListaOrdenRadio').iCheck('update')[0].checked) {
-        arregloListasVariables.sort(function(a, b){
-            if(a.nombre < b.nombre) { return -1; }
-            if(a.nombre > b.nombre) { return 1; }
-            return 0;
-        });
-    } else {
-        arregloListasVariables.sort(function(a, b){
-            if(a.valor < b.valor) { return -1; }
-            if(a.valor > b.valor) { return 1; }
-            return 0;
-        });
-    }
-	for (var i = 0; i < arregloListasVariables.length; i++) {
-		ulHTML+='<li><p><button type="button" class="flat" onclick="showModalEditListVariable('+i+')">Editar</button>';
-		ulHTML+=arregloListasVariables[i].nombre;
-        ulHTML+='<span style="float:right;">'+arregloListasVariables[i].valor+'</span></p></li>';
-	};
-	$("#listsElements").empty();
-	$("#listsElements").append(ulHTML);
 }
 
 function createList () {
@@ -1166,7 +1094,6 @@ function createElementList () {
                                                             $("#idClienteCueOp").val('');
                                                             $("#elementoPuesto").val('');
                                                             $("#saldoCueOp").val('');
-                        									loadListListsExcel();
                         				                });
                         				            }
                         				        });
@@ -1273,293 +1200,9 @@ function createElementList () {
 	}
 }
 
-function updateElementList () {
-	var idLista = $("#elementosDeListaModify").val();
-    var encontroLista = arregloListas.filter(function(object) {
-                    return ( object.ID == idLista );
-                });
-	var nombre = $("#nombreCuentaUpdate").val();
-	var valor = $("#numeroCuentaUpdate").val();
-    //var saldo = $("#saldoCuentaUpdate").val();
-    var saldo = 0;
-    if(isNaN(saldo))
-        saldo = 0;
-    var fechaInicio =  new Date();
-    var fechaFin =  new Date();
-    if(encontroLista[0].tipo == 1) {
-        fechaInicio = $("#fechaCreacionModalUpdate").datepicker('getDate');
-        fechaFin = $("#fechaCaducidadModalUpdate").datepicker('getDate');
-    }
-    var puesto = $("#saldoCuentaUpdate").val();
-    if(encontroLista[0].tipo == 6) {
-        puesto = $("#idClienteModalUpdate").val();
-    }
-	if(idLista.length > 0) {
-		if(nombre.length > 0 && nombre.length < 121){
-			if(valor.length > 0 && valor.length < 51){
-				$("body").overhang({
-				  	type: "confirm",
-				  	primary: "#f5a433",
-				  	accent: "#dc9430",
-				  	yesColor: "#3498DB",
-				  	message: 'Esta seguro que desea modificar elemento '+listasVariablesSeleccionada.nombre+'?',
-				  	overlay: true,
-				  	yesMessage: "Modificar",
-				  	noMessage: "Cancelar",
-				  	callback: function (value) {
-				    	if(value){
-				    		const transaction = new sql.Transaction( pool1 );
-						    transaction.begin(err => {
-						        var rolledBack = false;
-						        transaction.on('rollback', aborted => {
-						            // emited with aborted === true
-						            rolledBack = true;
-						        });
-						        const request = new sql.Request(transaction);
-						        request.query("update ListasVariables set idLista = "+idLista+", nombre = '"+$.trim(nombre)+"', valor = '"+$.trim(valor)+"', saldo = "+saldo+", fechaCreacion = '"+formatDateCreation(fechaInicio)+"', fechaCaducidad = '"+formatDateCreation(fechaFin)+"', puesto = '"+$.trim(puesto)+"' where ID = "+listasVariablesSeleccionada.ID, (err, result) => {
-						            if (err) {
-						                if (!rolledBack) {
-                                            console.log(err)
-						                    transaction.rollback(err => {
-						                        $("body").overhang({
-                                                    type: "error",
-                                                    primary: "#f84a1d",
-                                                    accent: "#d94e2a",
-                                                    message: "Error en modificación en la tabla de ListasVariables.",
-                                                    overlay: true,
-                                                    closeConfirm: true
-                                                });
-						                    });
-						                }
-						            }  else {
-						                transaction.commit(err => {
-						                    // ... error checks
-						                    $("body").overhang({
-											  	type: "success",
-											  	primary: "#40D47E",
-								  				accent: "#27AE60",
-											  	message: "Elemento de lista modificado con éxito.",
-											  	duration: 1,
-											  	overlay: true
-											});
-											loadListListsExcel();
-											$('#modalElement').modal('toggle');
-						                });
-						            }
-						        });
-						    }); // fin transaction
-				    	}
-				  	}
-				});
-			} else {
-				$("body").overhang({
-				  	type: "error",
-				  	primary: "#f84a1d",
-					accent: "#d94e2a",
-				  	message: "El valor del elemento de la lista debe tener una longitud mayor a 0 y menor a 51.",
-				  	overlay: true,
-                    closeConfirm: true
-				});
-			}
-		} else {
-			$("body").overhang({
-			  	type: "error",
-			  	primary: "#f84a1d",
-				accent: "#d94e2a",
-			  	message: "El nombre del elemento de la lista debe tener una longitud mayor a 0 y menor a 121.",
-			  	overlay: true,
-                closeConfirm: true
-			});
-		}
-	} else {
-		$("body").overhang({
-		  	type: "error",
-		  	primary: "#f84a1d",
-			accent: "#d94e2a",
-		  	message: "Seleccione una lista.",
-		  	overlay: true,
-            closeConfirm: true
-		});
-	}
-}
-
-function deleteElementList () {
-	$("body").overhang({
-	  	type: "confirm",
-	  	primary: "#f5a433",
-	  	accent: "#dc9430",
-	  	yesColor: "#3498DB",
-	  	message: 'Esta seguro que desea eliminar elemento '+listasVariablesSeleccionada.nombre+'?',
-	  	overlay: true,
-	  	yesMessage: "Eliminar",
-	  	noMessage: "Cancelar",
-	  	callback: function (value) {
-	    	if(value){
-	    		const transaction = new sql.Transaction( pool1 );
-			    transaction.begin(err => {
-			        var rolledBack = false
-			 
-			        transaction.on('rollback', aborted => {
-			            // emited with aborted === true
-			     
-			            rolledBack = true
-			        })
-			        const request = new sql.Request(transaction);
-			        request.query("delete from ListasVariables where ID = "+listasVariablesSeleccionada.ID, (err, result) => {
-			            if (err) {
-			                if (!rolledBack) {
-			                    transaction.rollback(err => {
-			                        $("body").overhang({
-                                        type: "error",
-                                        primary: "#f84a1d",
-                                        accent: "#d94e2a",
-                                        message: "Error en modificación en la tabla de ListasVariables.",
-                                        overlay: true,
-                                        closeConfirm: true
-                                    });
-			                    });
-			                }
-			            }  else {
-			                transaction.commit(err => {
-			                    // ... error checks
-			                    $("body").overhang({
-								  	type: "success",
-								  	primary: "#40D47E",
-					  				accent: "#27AE60",
-								  	message: "Elemento de lista eliminado con éxito.",
-								  	duration: 1,
-								  	overlay: true
-								});
-								$("#elementoNombreUpdate").val('');
-								$("#elementoValorUpdate").val('');
-			                    loadListListsExcel();
-			                    $('#modalElement').modal('toggle');
-			                });
-			            }
-			        });
-			    }); // fin transaction
-	    	}
-	  	}
-	});
-}
-
-function showModalEditListVariable (index) {
-	listasVariablesSeleccionada = arregloListasVariables[index];
-	$('#elementosDeListaModify').val(listasVariablesSeleccionada.idLista);
-    var tipo = arregloListas.filter(function(object) {
-                    return (listasVariablesSeleccionada.idLista == object.ID);
-                });
-    showListsFieldsUpdate(tipo[0].ID);
-	$('#modalElement').modal('toggle');
-}
-
-function showListsFieldsUpdate (id) {
-    var tipo = arregloListas.filter(function(object) {
-                    return (id == object.ID);
-                });
-    var valor = tipo[0].tipo;
-    if(valor == 1 /*|| valor == 2*/) {
-        $('#labelNombreExcelUpdate').text("Nombre de Elemento");
-        $('#labelCuentaExcelUpdate').text("# de Cuenta de Elemento");
-        $('#labelFechaCreacionExcelUpdate').text("Inicio de vigencia de Elemento");
-        $('#labelFechaCaducidadExcelUpdate').show();
-        $('#astVigencia').show();
-        $('#labelFechaCaducidadExcelUpdate').text("Fin de vigencia de Elemento");
-        $("#nombreCuentaUpdate").attr("placeholder", "Nombre de Elemento");
-        $("#numeroCuentaUpdate").attr("placeholder", "Cuenta de Elemento");
-        //$('#saldoModalFieldUpdate').hide();
-        $('#fechasModalFieldUpdate').show();
-        $('#labelCuentaExcelUpdate').show();
-        $("#nombreCuentaUpdate").val(listasVariablesSeleccionada.nombre);
-        $("#numeroCuentaUpdate").val(listasVariablesSeleccionada.valor);
-        $('#fechaCreacionModalUpdate').datepicker({
-            format: "dd-mm-yyyy",
-            todayHighlight: true,
-            viewMode: "days", 
-            minViewMode: "days",
-            language: 'es'
-        });
-        $('#fechaCreacionModalUpdate').datepicker("setDate", new Date(listasVariablesSeleccionada.fechaCreacion) );
-        $('#fechaCaducidadModalUpdate').datepicker({
-            format: "dd-mm-yyyy",
-            todayHighlight: true,
-            viewMode: "days", 
-            minViewMode: "days",
-            language: 'es'
-        });
-        $('#fechaCaducidadModalUpdate').datepicker("setDate", new Date(listasVariablesSeleccionada.fechaCaducidad) );
-        $("#numeroCuentaUpdate").show();
-        $("#asteriskNumUpdate").show();
-        $("#cuentOpFieldUpdate").hide();
-        $("#saldoModalFieldUpdate").hide();
-    } else if(valor == 6) {
-        $('#labelNombreExcelUpdate').text("Nombre de Elemento");
-        $('#labelCuentaExcelUpdate').text("# de Cuenta de Elemento");
-        $('#labelFechaCreacionExcelUpdate').text("ID de Cliente");
-        $('#labelFechaCaducidadExcelUpdate').hide();
-        $('#astVigencia').hide();
-        $("#nombreCuentaUpdate").attr("placeholder", "Nombre de Elemento");
-        $("#numeroCuentaUpdate").attr("placeholder", "Cuenta de Elemento");
-        /*$("#fechaCreacionModalUpdate").attr("placeholder", "ID de Cliente");
-        $("#fechaCaducidadModalUpdate").attr("placeholder", "Saldo de cuenta");*/
-        //$('#saldoModalFieldUpdate').hide();
-        $('#fechasModalFieldUpdate').show();
-        $('#labelCuentaExcelUpdate').show();
-        $("#nombreCuentaUpdate").val(listasVariablesSeleccionada.nombre);
-        $("#numeroCuentaUpdate").val(listasVariablesSeleccionada.valor);
-        $("#idClienteModalUpdate").val(listasVariablesSeleccionada.puesto);
-        $("#saldoClienteModalUpdate").val(listasVariablesSeleccionada.saldo);
-        $("#numeroCuentaUpdate").show();
-        $("#asteriskNumUpdate").show();
-        $("#cuentOpFieldUpdate").show();
-        $("#saldoModalFieldUpdate").hide();
-    } else if(valor == 3) {
-        $('#labelNombreExcelUpdate').text("Nombre de Cliente");
-        $('#labelCuentaExcelUpdate').text("ID de Cliente");
-        $('#labelModalExcelUpdate').text("Nombre de puesto de la persona");
-        $("#nombreCuentaUpdate").attr("placeholder", "Nombre de Cliente");
-        $("#numeroCuentaUpdate").attr("placeholder", "ID de Cliente");
-        $("#saldoCuentaUpdate").attr("placeholder", "Nombre de puesto");
-        $('#fechasModalFieldUpdate').hide();
-        //$('#saldoModalFieldUpdate').show();
-        $('#labelCuentaExcelUpdate').show();
-        $("#nombreCuentaUpdate").val(listasVariablesSeleccionada.nombre);
-        $("#numeroCuentaUpdate").val(listasVariablesSeleccionada.valor);
-        $("#saldoCuentaUpdate").val(listasVariablesSeleccionada.puesto);
-        $("#numeroCuentaUpdate").show();
-        $("#asteriskNumUpdate").show();
-        $("#saldoModalFieldUpdate").show();
-    } else if(valor == 7) {
-        $('#labelNombreExcelUpdate').text("El nombre de la agencia");
-        $('#labelCuentaExcelUpdate').hide();
-        $("#numeroCuentaUpdate").hide();
-        $('#fechasModalFieldUpdate').hide();
-        //$('#saldoModalFieldUpdate').hide();
-        $("#nombreCuentaUpdate").val(listasVariablesSeleccionada.nombre);
-        $("#asteriskNumUpdate").hide();
-        $("#cuentOpFieldUpdate").hide();
-        $("#saldoModalFieldUpdate").hide();
-    } else {
-        $('#labelNombreExcelUpdate').text("El nombre del elemento");
-        $('#labelCuentaExcelUpdate').text("El valor a comparar en las tablas");
-        $("#nombreCuentaUpdate").attr("placeholder", "Nombre del elemento");
-        $("#numeroCuentaUpdate").attr("placeholder", "El valor del elemento");
-        $('#fechasModalFieldUpdate').hide();
-        //$('#saldoModalFieldUpdate').hide();
-        $('#labelCuentaExcelUpdate').show();
-        $("#nombreCuentaUpdate").val(listasVariablesSeleccionada.nombre);
-        $("#numeroCuentaUpdate").val(listasVariablesSeleccionada.valor);
-        $("#numeroCuentaUpdate").show();
-        $("#asteriskNumUpdate").show();
-        $("#cuentOpFieldUpdate").hide();
-        $("#saldoModalFieldUpdate").hide();
-    }
-}
-
 $("input[name='listaRadio']").on('ifChanged', function(event){
     var valor = $("input[name='listaRadio']:checked").val();
     if (valor != undefined) {
-        console.log(valor)
         if(valor == 1 /*|| valor == 2*/) {
             $('#labelNombreExcel').text("Columna de Nombre de Elemento");
             $('#labelCuentaExcel').text("Columna de Cuenta de Elemento");
@@ -2017,8 +1660,6 @@ function importExcel (idLista) {
                                                                         }
                     												};
                     											}
-                                                                console.log('arregloDeElementos')
-                                                                console.log(arregloDeElementos)
                     											modifyListExcel(tipo, function(ID) {
                     												for (var i = 0; i < arregloDeElementos.length; i++) {
                                                                         if(arregloDeElementos[i].nombre.length < 121) {
@@ -2558,7 +2199,6 @@ function printErrorFile () {
                 overlay: true,
                 closeConfirm: true
             });
-            loadListListsExcel();
         } else if(insertoEnDBListas) {
             $(".loadingScreen").hide();
             stopTimer();
@@ -2570,7 +2210,6 @@ function printErrorFile () {
                 duration: 1,
                 overlay: true
             });
-            loadListListsExcel();
         } else {
             $(".loadingScreen").hide();
             stopTimer();
@@ -2709,7 +2348,6 @@ function verifyAndSaveFOSEDE () {
                 if(moneda.length > 0) {
                     var montoF;
                     montoF = parseFloat($("#lempiraInput").val().split(" ")[1].replace(/,/g,""));
-                    console.log(montoF)
                     if( montoF > 0){
                         var nuevoFosede = montoF.toString();
                         $("body").overhang({
@@ -2840,7 +2478,7 @@ function createFOSEDEVariablesDB (simbolo, moneda, montoFosede) {
     }); // fin transaction
 }
 
-function updateFOSEDEVariablesDB (monedaNombre, simbolo, montoFosede, id) {
+function updateFOSEDEVariablesDB (simbolo, monedaNombre, montoFosede, id) {
 	const transaction = new sql.Transaction( pool1 );
     transaction.begin(err => {
         var rolledBack = false;
@@ -2875,6 +2513,63 @@ function updateFOSEDEVariablesDB (monedaNombre, simbolo, montoFosede, id) {
 					  	duration: 1,
 					  	overlay: true
 					});
+                    loadFosede();
+                });
+            }
+        });
+    }); // fin transaction
+}
+
+function verifyAndDeleteFOSEDE () {
+    var idSeleccionado = $("#fosedeUpdate").val(), fosedeExiste = [];
+    if(isNaN(montoFosedeGlobal)) {
+        fosedeExiste = montoFosedeGlobal.filter(function(object) {
+                        return object.ID == idSeleccionado;
+                    });
+        if(fosedeExiste.length > 0) {
+            deleteFOSEDEVariablesDB(fosedeExiste[0].ID);
+            $("#simboloMoneda").val("");
+            $("#nombreMoneda").val("");
+            $("#lempiraInput").val("0");
+        }
+    }
+}
+
+function deleteFOSEDEVariablesDB (id) {
+    const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false;
+        transaction.on('rollback', aborted => {
+            // emited with aborted === true
+            rolledBack = true;
+        });
+        const request = new sql.Request(transaction);
+        request.query("delete from FOSEDE where ID = "+id, (err, result) => {
+            if (err) {
+                if (!rolledBack) {
+                    console.log(err);
+                    transaction.rollback(err => {
+                        $("body").overhang({
+                            type: "error",
+                            primary: "#f84a1d",
+                            accent: "#d94e2a",
+                            message: "Error en eliminación de monto FOSEDE.",
+                            overlay: true,
+                            closeConfirm: true
+                        });
+                    });
+                }
+            }  else {
+                transaction.commit(err => {
+                    // ... error checks
+                    $("body").overhang({
+                        type: "success",
+                        primary: "#40D47E",
+                        accent: "#27AE60",
+                        message: "Variable eliminada con éxito.",
+                        duration: 1,
+                        overlay: true
+                    });
                     loadFosede();
                 });
             }
@@ -2921,64 +2616,70 @@ function stopTimer() {
 
 //	**********		Route Change		**********
 function goVariables () {
-	$("#app_root").empty();
     cleanup();
+	$("#app_root").empty();
     $("#app_root").load("src/variables.html");
 }
 
 function goHome () {
-	$("#app_root").empty();
     cleanup();
+	$("#app_root").empty();
     $("#app_root").load("src/home.html");
 }
 
 function goUsers () {
-	$("#app_root").empty();
     cleanup();
+	$("#app_root").empty();
     $("#app_root").load("src/users.html");
 }
 
 function goConnections () {
-    $("#app_root").empty();
     cleanup();
+    $("#app_root").empty();
     $("#app_root").load("src/importaciones.html");
 }
 
 function goConfig () {
-    $("#app_root").empty();
     cleanup();
+    $("#app_root").empty();
     $("#app_root").load("src/config.html");
 }
 
 function logout () {
-    $("#app_full").empty();
     session.defaultSession.clearStorageData([], (data) => {});
     cleanup();
+    $("#app_full").empty();
     $("#app_full").load("src/login.html");
 }
 
 function goReports () {
-    $("#app_root").empty();
     cleanup();
-    $("#app_root").load("src/reportes.html");
+    $("#app_root").empty();
+    $("#app_root").load("src/elegirReporteria.html");
 }
 
 function goGraphics () {
-    $("#app_root").empty();
     cleanup();
+    $("#app_root").empty();
     $("#app_root").load("src/graficos.html");
 }
 
 function goRCL () {
-	$("#app_root").empty();
     cleanup();
+	$("#app_root").empty();
     $("#app_root").load("src/rcl.html");
 }
 
 function goLists () {
-    $("#app_root").empty();
     cleanup();
+    $("#app_root").empty();
     $("#app_root").load("src/variablesLists.html");
+}
+
+function goEditLists () {
+    cleanup();
+    $("#app_root").empty();
+    $("#app_root").load("src/variableEditLists.html");
 }
 
 var cleanup = function () {
@@ -2999,9 +2700,7 @@ var cleanup = function () {
     delete window.renderListsCreateVariableSelect;
     delete window.showListsFields;
     delete window.showListsFields;
-    delete window.loadListListsExcel;
     delete window.loadListListsExcelAfterImport;
-    delete window.renderVariableListSelect;
     delete window.createList;
     delete window.updateList;
     delete window.deleteList;

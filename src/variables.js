@@ -77,7 +77,7 @@ session.defaultSession.cookies.get({}, (error, cookies) => {
 
 /*****************TIPO DE LISTAS*****************
 *   1)Manual Contable                           *
-*   2)Cuentas Operativas                        *
+*   2)Categoria de Clasificación                *
 *   3)Exclusiones FOSEDE                        *
 *   4)Tipo de Personas                          *
 *   5)Tipo de Sub-Personas                      *
@@ -681,6 +681,7 @@ function loadVariablesTable () {
 	var table = $('#datatable_variables').DataTable({
 		"data": arregloVariables,
 		dom: "Bflrtip",
+        keys: true,
 	  	buttons: [
 			{
 			  	extend: "copyHtml5",
@@ -1857,6 +1858,7 @@ function loadVariablesofVariableTable () {
     var table = $('#datatable_variablesOfVariables').DataTable({
         "data": arregloVariableDeVariables,
         dom: "Bflrtip",
+        keys: true,
         buttons: [
             {
                 extend: "copyHtml5",
@@ -2224,7 +2226,7 @@ function logout () {
 function goReports () {
     cleanup();
     $("#app_root").empty();
-    $("#app_root").load("src/reportes.html");
+    $("#app_root").load("src/elegirReporteria.html");
 }
 
 function goGraphics () {

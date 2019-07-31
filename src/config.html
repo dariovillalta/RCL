@@ -79,7 +79,42 @@
         <div class="x_content">
 
           <div class="col-md-12 col-sm-12 col-xs-12">
+
+            <div class="row">
+              <div class="col-sm-6 col-xs-12">
+                <h4>Ingresar Correo Electr&oacute;nico </h4>
+                <form class="form-horizontal form-label-left">
+                  <div id="wrapper">
+                    <input id="correoValue" class="form-control col-md-7" required="required" type="text">
+                  </div>
+                </form>
+              </div>
+              <div class="col-sm-6 col-xs-12">
+                <h4>Ingresar Nombre de la Persona</h4>
+                <form class="form-horizontal form-label-left">
+                  <div id="wrapper">
+                    <input id="nombrePersona" class="form-control col-md-7" required="required" type="text">
+                  </div>
+                </form>
+              </div>
+              <br/>
+              <br/>
+              <br/>
+              <br/>
+              <div id="wrapper">
+                <button id="mostrar" onclick="createEmail()" type="button" class="btn btn-success">Guardar</button>
+              </div>
+              <br/>
+              <h4>Lista de Correos Electr&oacute;nicos</h4>
+
+              <ul id="listaCorreos" class="to_do text-center">
+              </ul>
+              <br/>
+            </div>
+
+            <div class="ln_solid"></div>
             
+            <h4>Crear Alerta</h4>
             <div class="row" id="wrapper">
               <label>
                 <input id="selectVerVariables" type="radio" checked name="selectVerVariablesRadio"> Variables
@@ -127,7 +162,10 @@
               <h4>Ingresar Correo Electr&oacute;nico <small>Correos a donde enviar los porcentajes de RCL</small> </h4>
               <form class="form-horizontal form-label-left">
                 <div id="wrapper">
-                  <input id="correoValue" class="form-control col-md-7" required="required" type="text">
+                  <div class="select-style">
+                    <select id="correoValueSelect">
+                    </select>
+                  </div>
                 </div>
               </form>
               <br/>
@@ -144,14 +182,14 @@
             </div>
 
             <div id="wrapper">
-              <button id="mostrar" onclick="createEmail()" type="button" class="btn btn-success">Guardar</button>
+              <button id="mostrar" onclick="createAlert()" type="button" class="btn btn-success">Guardar</button>
             </div>
             <div class="ln_solid"></div>
             <br/>
 
             <h4>Lista de Alertas Creadas</h4>
 
-            <ul id="listaCorreos" class="to_do text-center">
+            <ul id="listaAlertas" class="to_do text-center">
             </ul>
             <br/>
 
@@ -227,8 +265,6 @@
 <script src="src/libs/jquery-ui/jquery-ui.min.js"></script>
 
 <script src="src/libs/overhang/overhang.min.js"></script>
-
-<script src="src/libs/jquery.inputmask/dist/min/jquery.inputmask.bundle.min.js"></script>
 
 <script src="src/libs/bootstrap-datepicker/bootstrap-datepicker.js"></script>
 

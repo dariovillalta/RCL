@@ -62,6 +62,7 @@ $("#app_root").load("src/home.html");
 
 /* ******************       LOADING IMG     ********* */
 function loadVariablesIMG () {
+    console.log("UGLY BOY");
     const transaction = new sql.Transaction( pool1 );
     transaction.begin(err => {
         var rolledBack = false
@@ -91,9 +92,14 @@ function loadVariablesIMG () {
             }  else {
                 transaction.commit(err => {
                     // ... error checks
+                    console.log("UGLY BOY 111");
                     if(result.recordset.length > 0){
+                        console.log("UGLY BOY 2222");
+                        console.log(result.recordset[0]);
                         if(result.recordset[0].fullLogo.length > 0){
                             $("#fullLogo").attr("src", result.recordset[0].fullLogo);
+                            console.log("YEEE")
+                            console.log(result.recordset[0].fullLogo)
                         }
                         if(result.recordset[0].smallLogo.length > 0){
                             $("#smallLogo").attr("src", result.recordset[0].smallLogo);

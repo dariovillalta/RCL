@@ -8,6 +8,8 @@ var password = getPassword();
 var server = getServer();
 var database = getDataBase();
 
+const myWorker = new Worker("src/loading.js");
+
 const config = {
     user: user,
     password: password,
@@ -32,6 +34,8 @@ const config = {
     }
 }*/
 
+var session = remote.session;
+
 const pool1 = new sql.ConnectionPool(config, err => {
 	if(err) {
 		$("body").overhang({
@@ -51,6 +55,7 @@ const pool1 = new sql.ConnectionPool(config, err => {
         //loadAllTotes();
         loadFosede();
         loadEmails();
+        loadAlerts();
 	}
 });
 
@@ -148,6 +153,7 @@ var banderaLlamadasListas = 0;   //total de listas a entrar
 var entradasLlamadasListas = 0;   //total de veces que ha entrado a importar listas
 var minimoRCL = 0;  //valor minimo del RCL requerido por la CNBS
 var arregloDeCorreos = [];  //valor que contiene las direcciones de correo electronicos y su respectivo porcentaje a enviar
+var arregloDeAlertas = [];  //valor que contiene las  alertas para enviar a direcciones de correo electronicos
 var tieneFiltroDepositos = false;   //var para ver si las reglas tienen filtro en depositos
 var tieneFiltroPrestamos = false;   //var para ver si las reglas tienen filtro en prestamos
 
@@ -621,10 +627,7 @@ function loadDeposits () {
                                 window['arregloDepositos'+arregloDeFiltros[i].ID] = [];
                                 for (var j = 0; j < arregloDepositos.length; j++) {
                                     addToArrayDeposits (arregloDeFiltros[i].ID, arregloDeFiltros[i].campoObjetivo, arregloDepositos[j]);
-                                    console.log('j = '+j);
                                 };
-                                console.log('arregloDepositos Filtro = '+arregloDeFiltros[i].variables);
-                                console.log(window['arregloDepositos'+arregloDeFiltros[i].ID]);
                             }
                         };
                     }
@@ -685,10 +688,7 @@ function loadCredit () {
                                 window['arregloPrestamos'+arregloDeFiltros[i].ID] = [];
                                 for (var j = 0; j < arregloPrestamos.length; j++) {
                                     addToArrayCredits (arregloDeFiltros[i].ID, arregloDeFiltros[i].campoObjetivo, arregloPrestamos[j]);
-                                    console.log('j = '+j);
                                 };
-                                console.log('arregloPrestamos Filtro = '+arregloDeFiltros[i].variables);
-                                console.log(window['arregloPrestamos'+arregloDeFiltros[i].ID]);
                             }
                         };
                     }
@@ -849,157 +849,13 @@ function loadFilter () {
     }); // fin transaction
 }
 
-/*function addToArrayDeposits (id, field, newObject) {
-    var entro = false;
-    for (var i = 0; i < window['arregloDepositos'+id].length; i++) {
-        if(window['arregloDepositos'+id][i][field].localeCompare(newObject[field]) == 0) {
-            window['arregloDepositos'+id][i].saldo += newObject.saldo;
-            entro = true;
-            break;
-        }
-    };
-    if(!entro) {
-        window['arregloDepositos'+id].push({idCliente: newObject.idCliente, numCuenta: newObject.numCuenta, nombreCliente: newObject.nombreCliente, tipoPersona: newObject.tipoPersona, tipoSubPersona: newObject.tipoSubPersona, saldo: newObject.saldo, moneda: newObject.moneda, fechaInicio: newObject.fechaInicio, fechaFinal: newObject.fechaFinal, tipoCuenta: newObject.tipoCuenta, sucursal: newObject.sucursal, fecha: newObject.fecha});
-    }
-}*/
-
 function addToArrayDeposits (id, field, newObject) {
     binaryInsert(newObject, window['arregloDepositos'+id], field)
 }
 
 function addToArrayCredits (id, field, newObject) {
     binaryInsert(newObject, window['arregloPrestamos'+id], field);
-    /*var entro = false;
-    for (var i = 0; i < window['arregloPrestamos'+id].length; i++) {
-        if(window['arregloPrestamos'+id][i][field].localeCompare(newObject[field]) == 0) {
-            window['arregloPrestamos'+id][i].saldo += newObject.saldo;
-            entro = true;
-            break;
-        }
-    };
-    if(!entro) {
-        window['arregloPrestamos'+id].push({idCliente: newObject.idCliente, nombreCliente: newObject.nombreCliente, tipoPersona: newObject.tipoPersona, tipoSubPersona: newObject.tipoSubPersona, numPrestamo: newObject.numPrestamo, saldo: newObject.saldo, moneda: newObject.moneda, diasMora: newObject.diasMora, amortizacion: newObject.amortizacion, sobregiro: newObject.sobregiro, contingente: newObject.contingente, clasificacionCartera: newObject.clasificacionCartera, tipoCredito: newObject.tipoCredito, pago30: newObject.pago30, pago60: newObject.pago60, pago90: newObject.pago90, pago120: newObject.pago120, clausulasRestrictivas: newObject.clausulasRestrictivas, esFinanciacionGarantizada: newObject.esFinanciacionGarantizada, valorFinanciacion: newObject.valorFinanciacion, alac: newObject.alac, factor: newObject.factor, fechaInicio: newObject.fechaInicio, fechaFinal: newObject.fechaFinal, montoOtorgado: newObject.montoOtorgado, sucursal: newObject.sucursal, fecha: newObject.fecha});
-    }*/
 }
-
-/*HACER QUE REGRESE EL INDEX SI LO ENCONTRO, SINO QUE REGRESE UN VALOR PARA REPRESENTAR SI INSERTAR AL
-INICIO O FINAL DEL ARREGLO, O EN UNA POS DE ENMEDIO*/
-
-/*function binarySearch(arr, field, newObject) {
-    var mid = Math.floor(arr.length / 2);
-    console.log("==============");
-    console.log(arr);
-    console.log(arr[mid]);
-    console.log(newObject);
-    if(arr[mid] != undefined)
-        console.log(arr[mid][field].localeCompare(newObject[field]));
-    if (arr[mid] != undefined && arr[mid][field].localeCompare(newObject[field]) == 0) {
-        console.log(arr[mid][field]);
-        console.log(newObject[field]);
-        console.log('match', arr[mid], newObject);
-        return arr[mid];
-    } else if (arr[mid] != undefined && arr[mid][field].localeCompare(newObject[field]) < 0 && arr.length > 1) {
-        console.log(arr[mid][field]);
-        console.log(newObject[field]);
-        console.log('mid lower', arr[mid], newObject);
-        return binarySearch(arr.splice(mid, arr.length), field, newObject);
-    } else if (arr[mid] != undefined && arr[mid][field].localeCompare(newObject[field]) > 0 && arr.length > 1) {
-        console.log(arr[mid][field]);
-        console.log(newObject[field]);
-        console.log('mid higher', arr[mid], newObject);
-        return binarySearch(arr.splice(0, mid), field, newObject);
-    } else {
-        console.log('not here', newObject);
-        if(arr.length == 0)
-            return -1;
-        else
-            return mid;
-    }
-}*/
-/*function binarySearch(arr, field, newObject, pos) {
-    var mid = Math.floor(arr.length / 2);
-    console.log("////////////");
-    //console.log("tam = "+arr.length);
-    //console.log("mid = "+mid);
-    console.log("pos = "+pos);
-    for (var i = 0; i < arr.length; i++) {
-        console.log(arr[i]);
-    };
-    console.log("----------");
-    if (arr[mid] != undefined && arr[mid][field].localeCompare(newObject[field]) == 0) {
-        console.log("11")
-        return "EN"+mid;
-    } else if (arr[mid] != undefined && arr[mid][field].localeCompare(newObject[field]) < 0 && arr.length > 1) {
-        pos = pos + Math.floor(arr.splice(mid, arr.length).length / 2);
-        console.log("22")
-        return binarySearch(arr.splice(mid, arr.length), field, newObject, pos);
-    } else if (arr[mid] != undefined && arr[mid][field].localeCompare(newObject[field]) > 0 && arr.length > 1) {
-        pos = pos - Math.floor(arr.splice(mid, arr.length).length / 2);
-        console.log("33")
-        return binarySearch(arr.splice(0, mid), field, newObject, pos);
-    } else {
-        console.log("44")
-        /*if(arr.length == 1) {
-            console.log("+=")
-            console.log(arr[mid][field])
-            if (arr[mid] != undefined && arr[mid][field].localeCompare(newObject[field]) < 0) {
-                console.log("+=1")
-                return pos;
-            } else {
-                console.log("+=2")
-                return pos;
-            }
-        }*/
-        //console.log(mid);
-        //console.log("pos = "+pos);
-        /*if(arr.length == 0)
-            return 0;
-        else*/
-            /*return pos;
-    }
-}*/
-
-/*function insertAt(item, sortedList, field, low = 0,high = (sortedList.length - 1)) {
-    console.log('item[field]')
-    console.log(item)
-
-    if (low == high) {
-        // hit end of sortedList - done
-        console.log('MOOOO')
-        console.log(low)
-        return low;
-    }
-
-    // get midpoint of list and item value
-    let mid = low + Math.floor((high - low) / 2),
-        itemCompare = sortedList[mid];
-    //console.log('mid')
-    //console.log(mid)
-    if(itemCompare != undefined) {
-        console.log('item[field]')
-        console.log(item)
-        console.log('itemCompare[field]')
-        console.log(itemCompare)
-
-        if (item[field].localeCompare(itemCompare[field]) > 0) {
-            // work higher end of list
-            console.log('1')
-            return insertAt(item, sortedList, field, mid + 1, high);
-        }
-
-        if (item[field].localeCompare(itemCompare[field]) < 0) {
-            // work lower end of list
-            console.log('2')
-            return insertAt(item, sortedList, field, low, mid);
-        }
-        console.log('3')
-
-        // found equal value - done
-        return mid;
-    } else {
-        return 0;
-    }
-}*/
 
 function binaryInsert(value, array, field, startVal, endVal){
     var length = array.length;
@@ -1065,6 +921,38 @@ function loadEmails () {
                     } else {
                         arregloDeCorreos = [];
                     }
+                });
+            }
+        });
+    }); // fin transaction
+}
+
+function loadAlerts () {
+    const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false;
+        transaction.on('rollback', aborted => {
+            // emited with aborted === true
+            rolledBack = true;
+        });
+        const request = new sql.Request(transaction);
+        request.query("select * from EnviarCorreos", (err, result) => {
+            if (err) {
+                if (!rolledBack) {
+                    transaction.rollback(err => {
+                        $("body").overhang({
+                            type: "error",
+                            primary: "#f84a1d",
+                            accent: "#d94e2a",
+                            message: "Error en conneción con tabla de enviarcorreos.",
+                            overlay: true,
+                            closeConfirm: true
+                        });
+                    });
+                }
+            }  else {
+                transaction.commit(err => {
+                    arregloDeAlertas = result.recordset;
                 });
             }
         });
@@ -1195,6 +1083,7 @@ function checkFormulaExists () {
                     tieneFiltroDepositos = false;
                     tieneFiltroPrestamos = false;
                     timer = 0;
+                    $("#descripcionLoading").text('');
                     for (var i = 0; i < formulaGlobal.length; i++) {
                         if(formulaGlobal.charAt(i) != "(" && formulaGlobal.charAt(i) != ")" && formulaGlobal.charAt(i) != "<" && formulaGlobal.charAt(i) != ">" && 
                             formulaGlobal.charAt(i) != "!" && formulaGlobal.charAt(i) != "=" && formulaGlobal.charAt(i) != "/" && formulaGlobal.charAt(i) != "*" && 
@@ -1335,7 +1224,7 @@ function searchAndCreateArrays () {
 }
 
 function groupArray () {
-    myInterval = setInterval(myTimer, 1000);
+    myWorker.postMessage("init");
     $( ".loadingScreen" ).fadeIn( "slow", function() {
     });
     variablesAgrupadas[0] = [];
@@ -3327,8 +3216,11 @@ function calculateRCL (argument) {
                                     window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].numerador = 100;
                                     window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].denominador = 100;
                                 }*/
-                                if(!isNaN(resultado))
+                                if(!isNaN(resultado) && isFinite(resultado)) {
                                     window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].total = math.round(resultado, 2);
+                                } else {
+                                    window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].total = 0;
+                                }
                                 window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].esRCL = true;
                                 window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].volumenFormula = 100;
                                 window["variablesSolas"+arregloMonedas[p]][i][indexVarRCL].influenciaFormula = 100;
@@ -3967,7 +3859,7 @@ function saveRCL (variable) {
             rolledBack = true
         })
         const request = new sql.Request(transaction);
-        request.query("insert into Totales (nombreVariable, fecha, tipoProyeccion, volumenFormula, influenciaFormula, numerador, denominador, moneda, sucursal, tipo, tablaAplicar, varPadre, esNumerador, esRCL, totalRCL, total) values ('"+variable.variable+"','"+formatDateCreation(new Date (variable.dia.getFullYear(), variable.dia.getMonth(), variable.dia.getDate()/*+diaRCL*/))+"',"+variable.tipoProyeccion+","+variable.volumenFormula+","+variable.influenciaFormula+","+variable.numerador+","+variable.denominador+",'"+variable.moneda+"','"+variable.sucursal+"','"+variable.tipo+"',"+variable.tablaAplicar+",'"+variable.varPadre+"','"+variable.esNumerador+"','"+variable.esRCL+"',"+variable.totalRCL+","+variable.total+")", (err, result) => {
+        request.query("insert into Totales (nombreVariable, fecha, tipoProyeccion, volumenFormula, influenciaFormula, numerador, denominador, moneda, sucursal, tipo, tablaAplicar, varPadre, esNumerador, esRCL, totalRCL, total) values ('"+variable.variable+"','"+formatDateCreation(new Date (variable.dia.getFullYear(), variable.dia.getMonth(), variable.dia.getDate()/*+diaRCL+1*/))+"',"+variable.tipoProyeccion+","+variable.volumenFormula+","+variable.influenciaFormula+","+variable.numerador+","+variable.denominador+",'"+variable.moneda+"','"+variable.sucursal+"','"+variable.tipo+"',"+variable.tablaAplicar+",'"+variable.varPadre+"','"+variable.esNumerador+"','"+variable.esRCL+"',"+variable.totalRCL+","+variable.total+")", (err, result) => {
             if (err) {
                 console.log(err)
                 if (!rolledBack) {
@@ -4708,7 +4600,7 @@ function campoObjetivoPrestamos (regla, arreglo, tabs, variable, proyeccion) {
         if(regla.filtro != -1)
             idFiltro = regla.filtro;
         if(regla.campoObjetivo.indexOf('COLUMNA') == 0) {
-            if(regla.campoObjetivo.split("=")[1].indexOf("valorFinanciacion") != 0 && regla.campoObjetivo.split("=")[1].indexOf("utilizable") != 0 && regla.campoObjetivo.split("=")[1].indexOf("vencimiento") != 0 && regla.campoObjetivo.split("=")[1].indexOf("alac") != 0) {
+            if(regla.campoObjetivo.split("=")[1].indexOf("valorFinanciacion") != 0 && regla.campoObjetivo.split("=")[1].indexOf("utilizable") != 0 && regla.campoObjetivo.split("=")[1].indexOf("vencimiento") != 0 && regla.campoObjetivo.split("=")[1].indexOf("alac") != 0 && regla.campoObjetivo.split("=")[1].indexOf("fechaFinal") != 0) {
                 if(esCondicion) {
                     var campo = regla.campoObjetivo.split("=")[1];
 
@@ -4723,7 +4615,10 @@ function campoObjetivoPrestamos (regla, arreglo, tabs, variable, proyeccion) {
                     var campo = regla.campoObjetivo.split("=")[1];
 
                     // Agregando campo Operacion
-                    arreglo.push({codigo: tabsText+"var totalPrestamo = arregloPrestamos"+idFiltro+"[i].pago"+proyeccion+";", filtro: regla.filtro});
+                    if(regla.campoObjetivo.split("=")[1].indexOf("pago") == 0)
+                        arreglo.push({codigo: tabsText+"var totalPrestamo = arregloPrestamos"+idFiltro+"[i].pago"+proyeccion+";", filtro: regla.filtro});
+                    else
+                        arreglo.push({codigo: tabsText+"var totalPrestamo = arregloPrestamos"+idFiltro+"[i].saldo;", filtro: regla.filtro});
                     arreglo.push({codigo: "\n"+tabsText+(variable+proyeccion)+" += totalPrestamo "+regla.operacion, filtro: regla.filtro});
                 }
             } else if(regla.campoObjetivo.split("=")[1].indexOf("utilizable") == 0) {
@@ -4788,6 +4683,15 @@ function campoObjetivoPrestamos (regla, arreglo, tabs, variable, proyeccion) {
                 // Agregando campo Operacion
                 arreglo.push({codigo: tabsText+"if ( arregloPrestamos"+idFiltro+"[i].alac.length > 0 ) {", filtro: regla.filtro});
                 //posicionesIF.push(arreglo.length-1);
+                posicionesIF.push(arreglo.length);
+            } else if(regla.campoObjetivo.split("=")[1].indexOf("fechaFinal") == 0) {
+                noAgregarBoolean = true;
+                var valor;
+                if(regla.valor.split("=")[1] == 'true')
+                    valor = '!';
+                else
+                    valor = '';
+                arreglo.push({codigo: tabsText+"if ( arregloPrestamos"+idFiltro+"[i].fechaFinal == null || arregloPrestamos"+idFiltro+"[i].fechaFinal == undefined || "+valor+"moment(arregloPrestamos"+idFiltro+"[i].fechaFinal).isSame(moment('2001-01-01') ) {", filtro: regla.filtro});
                 posicionesIF.push(arreglo.length);
             } else {
                 noAgregarFactor = true;
@@ -5029,6 +4933,48 @@ var transporter = nodemailer.createTransport({
 });
 
 function sendEmails () {
+    var mensajesAEnviar = [];
+    for (var k = 0; k < arregloDeCorreos.length; k++) {
+        for (var z = 0; z < arregloDeAlertas.length; z++) {
+            if(arregloDeAlertas[z].idCorreo == arregloDeCorreos[k].ID) {
+
+                for (var p = 0; p < arregloMonedas.length; p++) {
+                    for (var i = 0; i < variablesSolas.length; i++) {
+                        for (var j = 0; j < variablesSolas[i].length; j++) {
+                            if(variablesSolas[i][j].ID == arregloDeAlertas[z].variableID) {
+                                if(mensajesAEnviar[k] == undefined)
+                                    mensajesAEnviar[k] = [];
+                                if(window["variablesSolas"+arregloMonedas[p]][i][j].total/100 < arregloDeAlertas[z].porcentajeEnviar)
+                                    mensajesAEnviar[k].push({variable: window["variablesSolas"+arregloMonedas[p]][i][j].variable, total: window["variablesSolas"+arregloMonedas[p]][i][j].total});
+                            } // fin if  variablesSolas[i].ID == arregloDeAlertas[z].variableID
+                        }
+                    }
+                }
+                ///
+            }
+        };
+    }
+    console.log('mensajesAEnviar')
+    console.log(mensajesAEnviar)
+    for (var k = 0; k < arregloDeCorreos.length; k++) {
+        var texto = '';
+        for (var i = 0; i < mensajesAEnviar.length; i++) {
+            texto+='<p>Una variable '+mensajesAEnviar[i].variableID+' ha alcanzado el minimo recomendado</p>';
+        };
+        var mailOptions = {
+            from: 'rcllugonhn@gmail.com',
+            to: arregloDeCorreos[k].correo,
+            subject: 'Alerta de cálculo RCL',
+            html: texto
+        };
+        transporter.sendMail(mailOptions, function(error, info){
+            if (error) {
+                console.log(error);
+            } else {
+                console.log('Email sent: ' + info.response);
+            }
+        });
+    }
     /*var html = '<h1>Reporte de Cálculos</h1>', entro = false;
     for (var p = 0; p < arregloMonedas.length; p++) {
         for (var i = 0; i < variablesSolas.length; i++) {
@@ -5065,7 +5011,7 @@ function sendEmails () {
                 console.log('Email sent: ' + info.response);
             }
         });
-    }*/
+    }
     var transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
@@ -5086,7 +5032,7 @@ function sendEmails () {
         } else {
             console.log('Email sent: ' + info.response);
         }
-    });
+    });*/
 }
 
 function formatDateCreationSingleDigits(date) {
@@ -5157,8 +5103,8 @@ function goConfig () {
 }
 
 function logout () {
-    $("#app_full").empty();
     session.defaultSession.clearStorageData([], (data) => {});
+    $("#app_full").empty();
     //cleanup();
     $("#app_full").load("src/login.html");
 }
@@ -5170,7 +5116,7 @@ function goRCL () {
 
 function goReports () {
     $("#app_root").empty();
-    $("#app_root").load("src/reportes.html");
+    $("#app_root").load("src/elegirReporteria.html");
 }
 
 function goGraphics () {
@@ -5245,6 +5191,6 @@ function stopTimer() {
     console.log(" ==== TIEMPO ==== ");
     console.log(timer+"s");
     console.log(" ==== FIN TIEMPO ==== ");
-    clearInterval(myInterval);
+    clearTimeout(myInterval);
 }
 //  **********      Fin interval      **********

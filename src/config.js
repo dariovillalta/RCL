@@ -46,7 +46,6 @@ const pool1 = new sql.ConnectionPool(config, err => {
 	} else {
 		console.log('pool loaded');
 		//loadVariablesIMG();
-        loadEmails();
         loadVariables();
         loadVariablesOfVariables();
 	}
@@ -227,6 +226,7 @@ function loadVariables () {
                     $("#selectVariables").append(content);
                     $("#selectVariablesCompar").empty();
                     $("#selectVariablesCompar").append(content);
+                    loadEmails();
                 });
             }
         });
@@ -317,6 +317,9 @@ $("input[name='selectVerVariablesRadio']").change(function(){
     }
 });
 
+var correos = [];
+var alertas = [];
+
 function loadEmails () {
     const transaction = new sql.Transaction( pool1 );
     transaction.begin(err => {
@@ -344,24 +347,80 @@ function loadEmails () {
                 transaction.commit(err => {
                     correos = result.recordset;
                     renderEmails();
+                    loadAlerts();
                 });
             }
         });
     }); // fin transaction
 }
 
-var correos = [];
-
 function renderEmails () {
     var content = '';
+    var contentSelect = '';
     for (var i = 0; i < correos.length; i++) {
         content+='<li>'+
                     '<p>'+correos[i].correo+'</p>'+
                     '<button style="position: absolute; right: 10px; margin: 0; position: absolute; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%);" onclick="deleteEmail('+correos[i].ID+')">Eliminar</button>'+
                   '</li>';
+        contentSelect+='<option value="'+correos[i].ID+'">'+correos[i].correo+'</option>';
     };
     $("#listaCorreos").empty();
     $("#listaCorreos").append(content);
+    $("#correoValueSelect").empty();
+    $("#correoValueSelect").append(contentSelect);
+}
+
+function loadAlerts () {
+    const transaction = new sql.Transaction( pool1 );
+    transaction.begin(err => {
+        var rolledBack = false;
+        transaction.on('rollback', aborted => {
+            // emited with aborted === true
+            rolledBack = true;
+        });
+        const request = new sql.Request(transaction);
+        request.query("select * from EnviarCorreos", (err, result) => {
+            if (err) {
+                if (!rolledBack) {
+                    transaction.rollback(err => {
+                        $("body").overhang({
+                            type: "error",
+                            primary: "#f84a1d",
+                            accent: "#d94e2a",
+                            message: "Error en conneción con tabla de enviarcorreos.",
+                            overlay: true,
+                            closeConfirm: true
+                        });
+                    });
+                }
+            }  else {
+                transaction.commit(err => {
+                    alertas = result.recordset;
+                    renderAlerts();
+                });
+            }
+        });
+    }); // fin transaction
+}
+
+function renderAlerts () {
+    var content = '';
+    for (var i = 0; i < alertas.length; i++) {
+        var varSel = arregloVariables.filter(function(object) {
+            return ( object.ID == alertas[i].variableID );
+        });
+        var corrSel = correos.filter(function(object) {
+            return ( object.ID == alertas[i].idCorreo );
+        });
+        if(varSel.length == 1 && corrSel.length == 1) {
+            content+='<li>'+
+                        '<p>'+corrSel[0].correo+': '+varSel[0].variables+' - '+alertas[i].porcentajeEnviar+'%</p>'+
+                        '<button style="position: absolute; right: 10px; margin: 0; position: absolute; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%);" onclick="deleteAlert('+correos[i].ID+')">Eliminar</button>'+
+                      '</li>';
+        }
+    };
+    $("#listaAlertas").empty();
+    $("#listaAlertas").append(content);
 }
 
 function checkMinRCL () {
@@ -482,6 +541,72 @@ function updateMinimunRCL (monto) {
 
 function createEmail () {
     var correo = $('#correoValue').val();
+    var nombrePersona = $('#nombrePersona').val();
+    if(correo.length > 0 && correo.length < 60) {
+        if(nombrePersona.length > 0 && nombrePersona.length < 60) {
+            const transaction = new sql.Transaction( pool1 );
+            transaction.begin(err => {
+                var rolledBack = false;
+                transaction.on('rollback', aborted => {
+                    // emited with aborted === true
+                    rolledBack = true;
+                });
+                const request = new sql.Request(transaction);
+                request.query("insert into Correos (correo, nombrePersona) values ('"+correo+"', '"+nombrePersona+"')", (err, result) => {
+                    if (err) {
+                        console.log(err);
+                        if (!rolledBack) {
+                            transaction.rollback(err => {
+                                $("body").overhang({
+                                    type: "error",
+                                    primary: "#f84a1d",
+                                    accent: "#d94e2a",
+                                    message: "Error en inserción de Correo.",
+                                    overlay: true,
+                                    closeConfirm: true
+                                });
+                            });
+                        }
+                    }  else {
+                        transaction.commit(err => {
+                            // ... error checks
+                            $("body").overhang({
+                                type: "success",
+                                primary: "#40D47E",
+                                accent: "#27AE60",
+                                message: "Correo guardado con éxito.",
+                                duration: 1,
+                                overlay: true
+                            });
+                            loadEmails();
+                        });
+                    }
+                });
+            }); // fin transaction
+        } else {
+            $("body").overhang({
+                type: "error",
+                primary: "#f84a1d",
+                accent: "#d94e2a",
+                message: "El campo del nombre debe tener una longitud mayor a 0 y menor a 61.",
+                overlay: true,
+                closeConfirm: true
+            });
+        }
+    } else {
+        $("body").overhang({
+            type: "error",
+            primary: "#f84a1d",
+            accent: "#d94e2a",
+            message: "El campo de correo electrónico debe tener una longitud mayor a 0 y menor a 61.",
+            overlay: true,
+            closeConfirm: true
+        });
+    }
+}
+
+function createAlert () {
+    var correo = $('#correoValueSelect').val();
     var porcentaje = $('#porcentajeCorreoValue').val().split(/[ |%|_|__]/)[0];
     var variableID;
     var esVarPadre;
@@ -518,7 +643,7 @@ function createEmail () {
                         rolledBack = true;
                     });
                     const request = new sql.Request(transaction);
-                    request.query("insert into Correos (correo, variableID, esVarPadre, comparacionID, comparacionEsVarPadre, porcentajeEnviar) values ('"+correo+"', "+variableID+",'"+esVarPadre+"',"+comparacionID+",'"+comparacionEsVarPadre+"',"+porcentaje+")", (err, result) => {
+                    request.query("insert into EnviarCorreos (idCorreo, variableID, esVarPadre, comparacionID, comparacionEsVarPadre, porcentajeEnviar) values ("+correo+", "+variableID+",'"+esVarPadre+"',"+comparacionID+",'"+comparacionEsVarPadre+"',"+porcentaje+")", (err, result) => {
                         if (err) {
                             console.log(err);
                             if (!rolledBack) {
@@ -527,7 +652,7 @@ function createEmail () {
                                         type: "error",
                                         primary: "#f84a1d",
                                         accent: "#d94e2a",
-                                        message: "Error en inserción de Correo.",
+                                        message: "Error en inserción de Alerta.",
                                         overlay: true,
                                         closeConfirm: true
                                     });
@@ -540,11 +665,11 @@ function createEmail () {
                                     type: "success",
                                     primary: "#40D47E",
                                     accent: "#27AE60",
-                                    message: "Correo guardado con éxito.",
+                                    message: "Alerta guardado con éxito.",
                                     duration: 1,
                                     overlay: true
                                 });
-                                loadEmails();
+                                loadAlerts();
                             });
                         }
                     });
@@ -598,7 +723,7 @@ function updateEmail (id, correo) {
                             type: "error",
                             primary: "#f84a1d",
                             accent: "#d94e2a",
-                            message: "Error en modificación de Correo.",
+                            message: "Error en modificación de Alerta.",
                             overlay: true,
                             closeConfirm: true
                         });
@@ -611,7 +736,7 @@ function updateEmail (id, correo) {
                         type: "success",
                         primary: "#40D47E",
                         accent: "#27AE60",
-                        message: "Correo guardado con éxito.",
+                        message: "Alerta guardado con éxito.",
                         duration: 1,
                         overlay: true
                     });
@@ -622,7 +747,7 @@ function updateEmail (id, correo) {
     }); // fin transaction
 }
 
-function deleteEmail (id) {
+function deleteAlert (id) {
     $("body").overhang({
         type: "confirm",
         primary: "#f5a433",
@@ -642,7 +767,7 @@ function deleteEmail (id) {
                         rolledBack = true;
                     });
                     const request = new sql.Request(transaction);
-                    request.query("delete from Correos where ID = "+id, (err, result) => {
+                    request.query("delete from EnviarCorreos where ID = "+id, (err, result) => {
                         if (err) {
                             if (!rolledBack) {
                                 transaction.rollback(err => {
@@ -650,7 +775,7 @@ function deleteEmail (id) {
                                         type: "error",
                                         primary: "#f84a1d",
                                         accent: "#d94e2a",
-                                        message: "Error en eliminación de Correo.",
+                                        message: "Error en eliminación de Alerta.",
                                         overlay: true,
                                         closeConfirm: true
                                     });
@@ -663,7 +788,7 @@ function deleteEmail (id) {
                                     type: "success",
                                     primary: "#40D47E",
                                     accent: "#27AE60",
-                                    message: "Correo eliminado con éxito.",
+                                    message: "Alerta eliminado con éxito.",
                                     duration: 1,
                                     overlay: true
                                 });
@@ -800,7 +925,7 @@ function logout () {
 function goReports () {
     cleanup();
     $("#app_root").empty();
-    $("#app_root").load("src/reportes.html");
+    $("#app_root").load("src/elegirReporteria.html");
 }
 
 function goGraphics () {

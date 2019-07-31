@@ -476,7 +476,7 @@ function loadManualContableID () {
             rolledBack = true;
         });
         const request = new sql.Request(transaction);
-        request.query("select * from Listas where tipo = 1 or tipo = 2 or tipo = 10", (err, result) => {
+        request.query("select * from Listas where tipo = 1 or tipo = 10", (err, result) => {
             if (err) {
             	console.log(err);
                 if (!rolledBack) {
@@ -628,12 +628,41 @@ function renderListsSelect () {
 		};
 	}
 	$("#listaActivosSelect").append(content);
-	$(".select2-list").select2({
+	/*$(".select2-list").select2({
 	    allowClear: true,
 	    minimumInputLength: 6,
 	    //minimumInputLength: 3,
 	    language: "es"
-	});
+	});*/
+}
+
+function searchListsSelect () {
+	var texto = $('#buscar').val();
+	if(texto.length > 0) {
+		$("#listaActivosSelect").empty();
+		var content = '';
+		var myPattern = new RegExp('(\\w*'+texto.toLowerCase()+'\\w*)','gi');
+		if( $('#nombreElementoListaALAC').iCheck('update')[0].checked ) {
+			for (var i = 0; i < arregloActivos.length; i++) {
+				if(arregloActivos[i].nombre.toLowerCase().match(myPattern) != null)
+					content+='<option value="'+i+'">'+arregloActivos[i].nombre+'</option>';
+			};
+		} else {
+			for (var i = 0; i < arregloActivos.length; i++) {
+				if(arregloActivos[i].valor.toLowerCase().match(myPattern) != null)
+					content+='<option value="'+i+'">'+arregloActivos[i].valor+'</option>';
+			};
+		}
+		$("#listaActivosSelect").append(content);
+	} else {
+		renderListsSelect();
+	}
+	/*$(".select2-list").select2({
+	    allowClear: true,
+	    minimumInputLength: 6,
+	    //minimumInputLength: 3,
+	    language: "es"
+	});*/
 }
 
 function renderListsSelectEdit () {
@@ -641,20 +670,49 @@ function renderListsSelectEdit () {
 	var content = '';
 	if( $('#nombreElementoListaALACEdit').iCheck('update')[0].checked ) {
 		for (var i = 0; i < arregloActivosEdit.length; i++) {
-			content+='<option value="'+arregloActivosEdit[i].nombre+'">'+arregloActivosEdit[i].nombre+'</option>';
+			content+='<option value="'+i+'">'+arregloActivosEdit[i].nombre+'</option>';
 		};
 	} else {
 		for (var i = 0; i < arregloActivosEdit.length; i++) {
-			content+='<option value="'+arregloActivosEdit[i].valor+'">'+arregloActivosEdit[i].valor+'</option>';
+			content+='<option value="'+i+'">'+arregloActivosEdit[i].valor+'</option>';
 		};
 	}
 	$("#listaActivosSelectEdit").append(content);
-	$(".select2-list").select2({
+	/*$(".select2-list").select2({
 	    allowClear: true,
 	    minimumInputLength: 6,
 	    //minimumInputLength: 3,
 	    language: "es"
-	});
+	});*/
+}
+
+function searchListsSelectEdit () {
+	var texto = $('#buscarEdit').val();
+	if(texto.length > 0) {
+		$("#listaActivosSelectEdit").empty();
+		var content = '';
+		var myPattern = new RegExp('(\\w*'+texto.toLowerCase()+'\\w*)','gi');
+		if( $('#nombreElementoListaALACEdit').iCheck('update')[0].checked ) {
+			for (var i = 0; i < arregloActivosEdit.length; i++) {
+				if(arregloActivosEdit[i].nombre.toLowerCase().match(myPattern) != null)
+					content+='<option value="'+i+'">'+arregloActivosEdit[i].nombre+'</option>';
+			};
+		} else {
+			for (var i = 0; i < arregloActivosEdit.length; i++) {
+				if(arregloActivosEdit[i].valor.toLowerCase().match(myPattern) != null)
+					content+='<option value="'+i+'">'+arregloActivosEdit[i].valor+'</option>';
+			};
+		}
+		$("#listaActivosSelectEdit").append(content);
+	} else {
+		renderListsSelectEdit();
+	}
+	/*$(".select2-list").select2({
+	    allowClear: true,
+	    minimumInputLength: 6,
+	    //minimumInputLength: 3,
+	    language: "es"
+	});*/
 }
 
 function filterListSelect () {
@@ -698,9 +756,9 @@ function selectVar (index) {
 	var cuentas = cuentasJuntas.split(",");
 	var data = [];
 	for (var i = 0; i < cuentas.length; i++) {
-		data.push({id: cuentas[i], text: cuentas[i]});
+		data.push(cuentas[i]);
 	};
-	$("#listaActivosSelectEdit").select2('data', data);
+	$("#listaActivosSelectEdit").val(data);
 	$("#nombreVarEdit").val(arregloReglas[posicionSeleccionada].variables);
 	$("#modalEdit").modal("toggle");
 }
@@ -717,18 +775,37 @@ function modifyVar () {
 	  	noMessage: "Cancelar",
 	  	callback: function (value) {
 	    	if(value){
+	    		console.log('1')
 	    		var nombre = $("#nombreVarEdit").val();
 				var cuentas = $("#listaActivosSelectEdit").val();
-				var valor, elementos = '';
-				if(cuentas != null) {
-					for (var i = 0; i < cuentas.length; i++) {
-						elementos+=cuentas[i];
-						if( (i+1) < cuentas.length )
-							elementos+=',';
-					};
-					valor = 'LISTA=' + elementos;
-				} else 
-					valor = 'LISTA=' + getSelectOptions(arregloActivosEdit);
+				var idDeListaSel = $("#listaSelectReglasALACEdit").val();
+				var listaSel = arregloListas.filter(function(object) {
+                    return ( object.ID == idDeListaSel );
+                });
+                var elementosSelect = $("#listaActivosSelectEdit").val();
+				var elementos = '';
+				console.log(elementosSelect)
+                if(listaSel[0].tipo != 10) {
+					if(elementosSelect != null) {
+						for (var i = 0; i < elementosSelect.length; i++) {
+							elementos+=arregloActivosEdit[parseInt(elementosSelect[i])].valor;
+							if( (i+1) < elementosSelect.length )
+								elementos+=',';
+						};
+						valor = 'LISTA=' + elementos;
+					} /*else 
+						valor = 'LISTA=' + getSelectOptions(arregloActivos);*/
+				} else {
+					if(elementosSelect != null) {
+						for (var i = 0; i < elementosSelect.length; i++) {
+							elementos+=arregloActivos[parseInt(elementosSelect[i])].ID;
+							if( (i+1) < elementosSelect.length )
+								elementos+=',';
+						};
+						valor = 'IDS=' + elementos;
+					}
+				}
+				console.log('2')
 	    		var entrar = true;
 				for (var i = 0; i < arregloTodasReglas.length; i++) {
 					if(arregloTodasReglas[i].variables.toLowerCase().localeCompare(nombre.toLowerCase()) == 0 && posicionSeleccionada != i)
@@ -1232,38 +1309,38 @@ function stopTimer() {
 
 //	**********		Route Change		**********
 function goVariables () {
-	$(".select2-list").select2('destroy');
+	/*$(".select2-list").select2('destroy');*/
 	$("#app_root").empty();
     $("#app_root").load("src/variables.html");
 }
 
 function goHome () {
-	$(".select2-list").select2('destroy');
+	/*$(".select2-list").select2('destroy');*/
 	$("#app_root").empty();
     $("#app_root").load("src/home.html");
 }
 
 function goUsers () {
-	$(".select2-list").select2('destroy');
+	/*$(".select2-list").select2('destroy');*/
 	$("#app_root").empty();
     $("#app_root").load("src/users.html");
 }
 
 function goConnections () {
-	$(".select2-list").select2('destroy');
+	/*$(".select2-list").select2('destroy');*/
     $("#app_root").empty();
     $("#app_root").load("src/importaciones.html");
 }
 
 function goConfig () {
-	$(".select2-list").select2('destroy');
+	/*$(".select2-list").select2('destroy');*/
     $("#app_root").empty();
     //cleanup();
     $("#app_root").load("src/config.html");
 }
 
 function logout () {
-	$(".select2-list").select2('destroy');
+	/*$(".select2-list").select2('destroy');*/
     $("#app_full").empty();
     session.defaultSession.clearStorageData([], (data) => {});
     //cleanup();
@@ -1271,25 +1348,25 @@ function logout () {
 }
 
 function goRCL () {
-	$(".select2-list").select2('destroy');
+	/*$(".select2-list").select2('destroy');*/
 	$("#app_root").empty();
     $("#app_root").load("src/rcl.html");
 }
 
 function goReports () {
-	$(".select2-list").select2('destroy');
+	/*$(".select2-list").select2('destroy');*/
 	$("#app_root").empty();
-    $("#app_root").load("src/reportes.html");
+    $("#app_root").load("src/elegirReporteria.html");
 }
 
 function goGraphics () {
-	$(".select2-list").select2('destroy');
+	/*$(".select2-list").select2('destroy');*/
     $("#app_root").empty();
     $("#app_root").load("src/graficos.html");
 }
 
 function goLists () {
-	$(".select2-list").select2('destroy');
+	/*$(".select2-list").select2('destroy');*/
     $("#app_root").empty();
     //cleanup();
     $("#app_root").load("src/variablesLists.html");

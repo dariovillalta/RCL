@@ -716,6 +716,7 @@ function renderRules () {
 	        $(this).iCheck('check');
 	    }
 	    $("#variablesCampoUL").empty();
+        $("input[name='filters']").attr('disabled',false);
 	    if(!borrar) {
 		    var id = $(this).val();
 		    var reglas = arregloReglas.filter(function( object ) {
@@ -724,6 +725,13 @@ function renderRules () {
 		    var variables = '';
 		    if(reglas.length > 0)
 		    	variables = reglas[0].variables;
+            if(reglas[0].filtro != -1) {
+                $("input[name='filters']").attr('disabled',true);
+                $('#filtro'+reglas[0].filtro).iCheck('check');
+            } else {
+                $("input[name='filters']").attr('disabled',false);
+                $("input[name='filters']").iCheck('uncheck');
+            }
 		    var valores = variables.split("//")[1];
 		    if(valores != undefined) {
 			    var valoresIndividual = valores.split("#");
@@ -1886,7 +1894,7 @@ function loadFilters () {
             rolledBack = true;
         });
         const request = new sql.Request(transaction);
-        request.query("select * from Reglas where esFiltro = 'true'", (err, result) => {
+        request.query("select * from Reglas where esFiltro = 'true' and variables = '2'", (err, result) => {
             if (err) {
                 console.log(err);
                 if (!rolledBack) {
@@ -1922,7 +1930,7 @@ function renderFilters () {
     for (var i = 0; i < arregloFiltros.length; i++) {
         var regla = arregloFiltros[i].valor;
         listContent = '';
-        listContent+='<li><p><input type="radio" name="filters" class="flat" value="'+arregloFiltros[i].ID+'"> '+ regla +' </p> <button style="position: absolute; right: 10px; margin: 0; position: absolute; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%);" onclick="selectFilter('+i+')">Modificar</button> </li>';
+        listContent+='<li><p><input id="filtro'+arregloFiltros[i].ID+'" type="radio" name="filters" class="flat" value="'+arregloFiltros[i].ID+'"> '+ regla +' </p> <button style="position: absolute; right: 10px; margin: 0; position: absolute; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%);" onclick="selectFilter('+i+')">Modificar</button> </li>';
         $("#listFilters").append(listContent);
     };
     $("input[name='filters']").iCheck({
@@ -2271,7 +2279,7 @@ function goRCL () {
 
 function goReports () {
 	$("#app_root").empty();
-    $("#app_root").load("src/reportes.html");
+    $("#app_root").load("src/elegirReporteria.html");
 }
 
 function goGraphics () {

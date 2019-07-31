@@ -1,0 +1,199 @@
+<link rel="stylesheet" href="src/variablesStyles.css">
+<link href="src/libs/iCheck/skins/flat/green.css" rel="stylesheet">
+<link href="src/libs/bootstrap-datepicker/datepicker3.css" rel="stylesheet">
+<link href="src/libs/overhang/overhang.min.css" rel="stylesheet">
+<link href="src/libs/custom.min.css" rel="stylesheet">
+<!-- page content -->
+<div>
+  
+  <a onclick="goVariables()" style="margin: 1%;">
+    <div style="border-radius: 15px; background-color: #EDEDED; height: 3em; width: 5vw; text-align: center; cursor: pointer; padding: 1%; display: flex; align-items: center; justify-content: center;">
+      <i class="fa fa-arrow-circle-o-left" style="font-size: 2em;"></i>
+    </div>
+  </a>
+  
+  <div class="page-title">
+    <div class="title_left">
+      <h3>Editar Elementos de Listas</h3>
+    </div>
+
+    <!-- <div class="title_right">
+      <div class="col-md-5 col-sm-5 col-xs-12 form-group pull-right top_search">
+        <div class="input-group">
+          <input id="buscarDiv" type="text" class="form-control" placeholder="Buscar...">
+          <span class="input-group-btn">
+            <button class="btn btn-default" type="button" onclick="filterDiv()">Filtrar</button>
+          </span>
+        </div>
+      </div>
+    </div> -->
+  </div>
+  
+  <div class="clearfix"></div>
+
+  <div id="listas_div" class="row filtrarRow">
+    <div class="col-md-12">
+      <div class="x_panel">
+        <div class="x_title">
+          <ul class="nav navbar-right panel_toolbox">
+            <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+            </li>
+          </ul>
+          <div class="clearfix"></div>
+        </div>
+
+        <div class="x_content">
+
+          <div class="col-md-12 col-sm-12 col-xs-12">
+            <div class="row">
+              <div class="col-sm-4 col-xs-12 col-sm-offset-1">
+                <div class="row">
+                  <div class="select-style">
+                    <select id="elementosDeListaUpdate" onchange="loadListListsExcel()">
+                    </select>
+                  </div>
+                </div>
+                <br/>
+                <div class="row">
+                  <label for="">Ordenar por:</label>
+                  <div id="wrapper">
+                    <label>
+                      <input id="nombreListaOrdenRadio" type="radio" class="flat" name="listaOrdenRadio" checked/> Campo Nombre de Elemento
+                    </label>
+                    <label>
+                      <input id="valorListaOrdenRadio" type="radio" class="flat" name="listaOrdenRadio"/> Campo Valor de Elemento
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-7 col-xs-12">
+                <ul id="listsElements" class="to_do" style="max-height:50vh;overflow-y:scroll;">
+                </ul>
+              </div>
+            </div>
+
+            <br/>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div> <!-- /end Manual Contable y Listas -->
+
+</div>
+<!-- /page content -->
+
+<!-- MODAL ELEMENTO LISTA-->
+<div id="modalElement" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <div class="text-divider"><h2>Modificar Elemento de Lista</h2></div>
+      </div>
+      <div class="modal-body">
+        <form id="" data-parsley-validate class="form-horizontal form-label-left">
+          
+          <div class="form-group">
+            <label class="control-label col-md-3 col-sm-3 col-xs-12" for="elementosDeListaModify">Lista Asociada</label>
+            <div class="col-md-6 col-sm-6 col-xs-12">
+              <div class="select-style">
+                <select id="elementosDeListaModify" onchange="showListsFieldsUpdate($('#elementosDeListaModify').val())">
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-xs-5 col-xs-offset-1">
+              <form class="form-horizontal form-label-left">
+                <div class="form-group">
+                  <i style="color:red;" class="fa fa-asterisk"></i><label id="labelNombreExcelUpdate">Columna de Nombre de Elemento</label>
+                  <input id="nombreCuentaUpdate" type="text" class="form-control" placeholder="Nombre de Elemento">
+                </div>
+              </form>
+            </div>
+            <div id="cuentaModalFieldUpdate" class="col-xs-5">
+              <form class="form-horizontal form-label-left">
+                <div class="form-group">
+                  <i id="asteriskNumUpdate" style="color:red;" class="fa fa-asterisk"></i><label id="labelCuentaExcelUpdate">Columna de Cuenta de Elemento</label>
+                  <input id="numeroCuentaUpdate" type="text" class="form-control" placeholder="Cuenta de Elemento">
+                </div>
+              </form>
+            </div>
+          </div>
+          <div id="saldoModalFieldUpdate" class="row" style="display: none;">
+            <div class="col-xs-10 col-xs-offset-1">
+              <form class="form-horizontal form-label-left">
+                <div class="form-group">
+                  <i style="color:red;" class="fa fa-asterisk"></i><label id="labelModalExcelUpdate">Columna de Saldo de Elemento</label>
+                  <input id="saldoCuentaUpdate" type="text" class="form-control" placeholder="A&ntilde;os de vigencia">
+                </div>
+              </form>
+            </div>
+          </div>
+          <div id="fechasModalFieldUpdate" class="row">
+            <div class="col-xs-5 col-xs-offset-1">
+              <form class="form-horizontal form-label-left">
+                <div class="form-group">
+                  <i style="color:red;" class="fa fa-asterisk"></i><label id="labelFechaCreacionExcelUpdate">Columna de inicio de vigencia de Elemento</label>
+                  <div id="fechaCreacionModalUpdate" class="center-block"></div>
+                </div>
+              </form>
+            </div>
+            <div class="col-xs-5">
+              <form class="form-horizontal form-label-left">
+                <div class="form-group">
+                  <i id="astVigencia" style="color:red;" class="fa fa-asterisk"></i><label id="labelFechaCaducidadExcelUpdate">Columna de fin de vigencia de Elemento</label>
+                  <div id="fechaCaducidadModalUpdate" class="center-block"></div>
+                </div>
+              </form>
+            </div>
+          </div>
+          <div id="cuentOpFieldUpdate" class="row" style="display:none;">
+            <div class="col-xs-10 col-xs-offset-1">
+              <form class="form-horizontal form-label-left">
+                <div class="form-group">
+                  <input id="idClienteModalUpdate" type="text" class="form-control" placeholder="Fecha de Creaci&oacute;n">
+                </div>
+              </form>
+            </div>
+            <!-- <div class="col-xs-5">
+              <form class="form-horizontal form-label-left">
+                <div class="form-group">
+                  <input id="saldoClienteModalUpdate" type="text" class="form-control" placeholder="Fecha de Caducidad">
+                </div>
+              </form>
+            </div> -->
+          </div>
+
+        </form>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" onclick="$('#modalElement').modal('toggle');" class="btn btn-info">Cancelar</button>
+        <button type="button" onclick="deleteElementList()" class="btn btn-danger">Eliminar</button>
+        <button type="button" onclick="updateElementList()" class="btn btn-success">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="src/libs/iCheck/icheck.min.js"></script>
+
+<script src="src/libs/jquery-ui/jquery-ui.min.js"></script>
+
+<script src="src/libs/overhang/overhang.min.js"></script>
+
+<!-- <script src="src/libs/mathjs/math.js"></script> -->
+
+<script src="src/libs/jquery.inputmask/dist/min/jquery.inputmask.bundle.min.js"></script>
+
+<script src="src/libs/bootstrap-datepicker/bootstrap-datepicker.js"></script>
+
+<script src="src/libs/bootstrap-datepicker/locales/bootstrap-datepicker.es.js"></script>
+
+<script src="src/variableEditLists.js"></script>
+
+<!-- Custom Theme Scripts -->
+<script src="src/libs/custom.min.js"></script>

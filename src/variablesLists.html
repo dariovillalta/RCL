@@ -276,29 +276,8 @@
 
             <div class="row">
               <h4>Editar listas:</h4>
-              <div class="col-sm-4 col-xs-12 col-sm-offset-1">
-                <div class="row">
-                  <div class="select-style">
-                    <select id="elementosDeListaUpdate" onchange="loadListListsExcel()">
-                    </select>
-                  </div>
-                </div>
-                <br/>
-                <div class="row">
-                  <label for="">Ordenar por:</label>
-                  <div id="wrapper">
-                    <label>
-                      <input id="nombreListaOrdenRadio" type="radio" class="flat" name="listaOrdenRadio" checked/> Campo Nombre de Elemento
-                    </label>
-                    <label>
-                      <input id="valorListaOrdenRadio" type="radio" class="flat" name="listaOrdenRadio"/> Campo Valor de Elemento
-                    </label>
-                  </div>
-                </div>
-              </div>
-              <div class="col-sm-7 col-xs-12">
-                <ul id="listsElements" class="to_do" style="max-height:50vh;overflow-y:scroll;">
-                </ul>
+              <div class="text-center">
+                <button onclick="goEditLists()" type="button" style="width: 60%;" class="btn btn-success">Editar Listas</button>
               </div>
             </div>
 
@@ -375,6 +354,7 @@
             <div class="ln_solid"></div>
             <div id="wrapper">
               <!-- <button id="mostrar" onclick="calculateRateChange()" type="button" class="btn btn-info">Calcular</button> -->
+              <button id="deleteFosede" onclick="verifyAndDeleteFOSEDE()" type="button" class="btn btn-danger">Eliminar</button>
               <button id="mostrar" onclick="verifyAndSaveFOSEDE()" type="button" class="btn btn-success">Guardar</button>
             </div>
 
@@ -387,102 +367,6 @@
 
 </div>
 <!-- /page content -->
-
-<!-- MODAL ELEMENTO LISTA-->
-<div id="modalElement" class="modal fade" role="dialog">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal">&times;</button>
-        <div class="text-divider"><h2>Modificar Elemento de Lista</h2></div>
-      </div>
-      <div class="modal-body">
-        <form id="" data-parsley-validate class="form-horizontal form-label-left">
-          
-          <div class="form-group">
-            <label class="control-label col-md-3 col-sm-3 col-xs-12" for="elementosDeListaModify">Lista Asociada</label>
-            <div class="col-md-6 col-sm-6 col-xs-12">
-              <div class="select-style">
-                <select id="elementosDeListaModify" onchange="showListsFieldsUpdate($('#elementosDeListaModify').val())">
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="col-xs-5 col-xs-offset-1">
-              <form class="form-horizontal form-label-left">
-                <div class="form-group">
-                  <i style="color:red;" class="fa fa-asterisk"></i><label id="labelNombreExcelUpdate">Columna de Nombre de Elemento</label>
-                  <input id="nombreCuentaUpdate" type="text" class="form-control" placeholder="Nombre de Elemento">
-                </div>
-              </form>
-            </div>
-            <div id="cuentaModalFieldUpdate" class="col-xs-5">
-              <form class="form-horizontal form-label-left">
-                <div class="form-group">
-                  <i id="asteriskNumUpdate" style="color:red;" class="fa fa-asterisk"></i><label id="labelCuentaExcelUpdate">Columna de Cuenta de Elemento</label>
-                  <input id="numeroCuentaUpdate" type="text" class="form-control" placeholder="Cuenta de Elemento">
-                </div>
-              </form>
-            </div>
-          </div>
-          <div id="saldoModalFieldUpdate" class="row" style="display: none;">
-            <div class="col-xs-10 col-xs-offset-1">
-              <form class="form-horizontal form-label-left">
-                <div class="form-group">
-                  <i style="color:red;" class="fa fa-asterisk"></i><label id="labelModalExcelUpdate">Columna de Saldo de Elemento</label>
-                  <input id="saldoCuentaUpdate" type="text" class="form-control" placeholder="A&ntilde;os de vigencia">
-                </div>
-              </form>
-            </div>
-          </div>
-          <div id="fechasModalFieldUpdate" class="row">
-            <div class="col-xs-5 col-xs-offset-1">
-              <form class="form-horizontal form-label-left">
-                <div class="form-group">
-                  <i style="color:red;" class="fa fa-asterisk"></i><label id="labelFechaCreacionExcelUpdate">Columna de inicio de vigencia de Elemento</label>
-                  <div id="fechaCreacionModalUpdate" class="center-block"></div>
-                </div>
-              </form>
-            </div>
-            <div class="col-xs-5">
-              <form class="form-horizontal form-label-left">
-                <div class="form-group">
-                  <i id="astVigencia" style="color:red;" class="fa fa-asterisk"></i><label id="labelFechaCaducidadExcelUpdate">Columna de fin de vigencia de Elemento</label>
-                  <div id="fechaCaducidadModalUpdate" class="center-block"></div>
-                </div>
-              </form>
-            </div>
-          </div>
-          <div id="cuentOpFieldUpdate" class="row" style="display:none;">
-            <div class="col-xs-10 col-xs-offset-1">
-              <form class="form-horizontal form-label-left">
-                <div class="form-group">
-                  <input id="idClienteModalUpdate" type="text" class="form-control" placeholder="Fecha de Creaci&oacute;n">
-                </div>
-              </form>
-            </div>
-            <!-- <div class="col-xs-5">
-              <form class="form-horizontal form-label-left">
-                <div class="form-group">
-                  <input id="saldoClienteModalUpdate" type="text" class="form-control" placeholder="Fecha de Caducidad">
-                </div>
-              </form>
-            </div> -->
-          </div>
-
-        </form>
-
-      </div>
-      <div class="modal-footer">
-        <button type="button" onclick="$('#modalElement').modal('toggle');" class="btn btn-info">Cancelar</button>
-        <button type="button" onclick="deleteElementList()" class="btn btn-danger">Eliminar</button>
-        <button type="button" onclick="updateElementList()" class="btn btn-success">Guardar</button>
-      </div>
-    </div>
-  </div>
-</div>
 
 
 <!-- MODAL IMPORTAR MANUAL CONTABLE-->

@@ -788,7 +788,7 @@ function goRCL () {
 function goReports () {
     cleanup();
 	$("#app_root").empty();
-    $("#app_root").load("src/reportes.html");
+    $("#app_root").load("src/elegirReporteria.html");
 }
 
 function goGraphics () {

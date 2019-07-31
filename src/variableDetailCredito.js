@@ -128,13 +128,16 @@ var tablaPrestamos = [
 	{valor: "tipoPersona",nombre: "Tipo de Persona"},
 	{valor: "tipoSubPersona",nombre: "Tipo de Sub-Persona"},
 	{valor: "saldo",nombre: "Saldo"},
+    {valor: "pago",nombre: "Pago"},
 	{valor: "valorFinanciacion",nombre: "Valor de la Financiación"},
 	/*{valor: "moneda",nombre: "Moneda"},*/
 	{valor: "montoOtorgado",nombre: "Monto Otorgado"},
 	{valor: "tipoCredito",nombre: "Tipo de Crédito"},
+    {valor: "clasificacionCartera",nombre: "Clasificación de Crédito"},
 	{valor: "diasMora",nombre: "Días de Mora"},
 	{valor: "utilizable",nombre: "Utilizable"},
 	{valor: "vencimiento",nombre: "Fecha de Vencimiento"},
+    {valor: "fechaFinal",nombre: "Fecha Final"},
 	//{valor: "vencimiento",nombre: "Vencimiento"},
 	//{valor: "creditosRefinanciados",nombre: "Créditos Refinanciados"},
 	{valor: "clausulasRestrictivas",nombre: "Clausulas Restrictivas"},
@@ -695,6 +698,7 @@ function renderRules () {
 	        $(this).iCheck('check');
 	    }
 	    $("#variablesCampoUL").empty();
+        $("input[name='filters']").attr('disabled',false);
 	    if(!borrar) {
 		    var id = $(this).val();
 		    var reglas = arregloReglas.filter(function( object ) {
@@ -703,6 +707,13 @@ function renderRules () {
 		    var variables = '';
 		    if(reglas.length > 0)
 		    	variables = reglas[0].variables;
+            if(reglas[0].filtro != -1) {
+                $("input[name='filters']").attr('disabled',true);
+                $('#filtro'+reglas[0].filtro).iCheck('check');
+            } else {
+                $("input[name='filters']").attr('disabled',false);
+                $("input[name='filters']").iCheck('uncheck');
+            }
 		    var valores = variables.split("//")[1];
 		    if(valores != undefined) {
 			    var valoresIndividual = valores.split("#");
@@ -1242,7 +1253,7 @@ $("input[name='campoRadio']").on('ifClicked', function(event){
 
 function mostrarFieldsCampoSelect () {
 	var campo = $("#campoCampoInput").val();
-	if(campo == 'saldo') {
+	if(campo == 'saldo' || campo == 'pago') {
 		$( "#relacionalesField" ).fadeIn( "slow", function() {
 		});
 		$( "#algebraicosField" ).fadeIn( "slow", function() {
@@ -1268,7 +1279,7 @@ function mostrarFieldsCampoSelect () {
 		$( "#existeBoolField" ).hide();
 		$( "#factorValorFinanciacionField" ).hide();
 		$( "#booleanValorRadioLabel" ).hide();
-	} else if(campo == 'diasMora' || campo == 'fechaFinal') {
+	} else if(campo == 'diasMora') {
 		$( "#relacionalesField" ).fadeIn( "slow", function() {
 		});
 		$( "#algebraicosField" ).hide();
@@ -1369,7 +1380,7 @@ function mostrarFieldsCampoSelect () {
 		$( "#existeBoolField" ).hide();
 		$( "#factorValorFinanciacionField" ).hide();
 		$( "#booleanValorRadioLabel" ).hide();
-	} else if(campo == 'alac') {
+	} else if(campo == 'alac' || campo == 'fechaFinal') {
 		$( "#relacionalesField" ).hide();
 		$( "#algebraicosField" ).hide();
 		$( "#ln_solidOPERACION" ).hide();
@@ -1481,7 +1492,18 @@ function mostrarFieldsCampoSelect () {
 		$( "#factorValorRadioLabel" ).hide();
 		$( "#factorManualValorRadioLabel" ).hide();
 		$( "#factorField" ).hide();
-	}
+	} else if(campo == 'clasificacionCartera') {
+        renderListsSelect(2);
+        $( "#elementoValorRadioLabel" ).show();
+        $("#elementoValorRadioLabel").iCheck('check');
+        $( "#listaValorField" ).fadeIn( "slow", function() {
+        });
+        $( "#manualValorRadioLabel" ).hide();
+        $( "#manualField" ).hide();
+        $( "#factorValorRadioLabel" ).hide();
+        $( "#factorManualValorRadioLabel" ).hide();
+        $( "#factorField" ).hide();
+    }
 }
 
 function mostrarSigno () {
@@ -2030,7 +2052,7 @@ $("input[name='campoRadioEdit']").on('ifClicked', function(event){
 
 function mostrarFieldsCampoSelectEdit () {
     var campo = $("#campoCampoInputEdit").val();
-    if(campo == 'saldo') {
+    if(campo == 'saldo' || campo == 'pago') {
         $( "#relacionalesFieldEdit" ).fadeIn( "slow", function() {
         });
         $( "#algebraicosFieldEdit" ).fadeIn( "slow", function() {
@@ -2056,7 +2078,7 @@ function mostrarFieldsCampoSelectEdit () {
         $( "#existeBoolFieldEdit" ).hide();
         $( "#factorValorFinanciacionFieldEdit" ).hide();
         $( "#booleanValorRadioLabelEdit" ).hide();
-    } else if(campo == 'diasMora' || campo == 'fechaFinal') {
+    } else if(campo == 'diasMora') {
         $( "#relacionalesFieldEdit" ).fadeIn( "slow", function() {
         });
         $( "#algebraicosFieldEdit" ).hide();
@@ -2157,7 +2179,7 @@ function mostrarFieldsCampoSelectEdit () {
         $( "#existeBoolFieldEdit" ).hide();
         $( "#factorValorFinanciacionFieldEdit" ).hide();
         $( "#booleanValorRadioLabelEdit" ).hide();
-    } else if(campo == 'alac') {
+    } else if(campo == 'alac' || campo == 'fechaFinal') {
         $( "#relacionalesFieldEdit" ).hide();
         $( "#algebraicosFieldEdit" ).hide();
         $( "#ln_solidOPERACIONEdit" ).hide();
@@ -2260,6 +2282,17 @@ function mostrarFieldsCampoSelectEdit () {
         $( "#factorFieldEdit" ).hide();
     } else if(campo == 'tipoCredito') {
         renderListsSelectEdit(8);
+        $( "#elementoValorRadioLabelEdit" ).show();
+        $("#elementoValorRadioLabelEdit").iCheck('check');
+        $( "#listaValorFieldEdit" ).fadeIn( "slow", function() {
+        });
+        $( "#manualValorRadioLabelEdit" ).hide();
+        $( "#manualFieldEdit" ).hide();
+        $( "#factorValorRadioLabelEdit" ).hide();
+        $( "#factorManualValorRadioLabelEdit" ).hide();
+        $( "#factorFieldEdit" ).hide();
+    } else if(campo == 'clasificacionCartera') {
+        renderListsSelectEdit(2);
         $( "#elementoValorRadioLabelEdit" ).show();
         $("#elementoValorRadioLabelEdit").iCheck('check');
         $( "#listaValorFieldEdit" ).fadeIn( "slow", function() {
@@ -2610,7 +2643,7 @@ function loadFilters () {
             rolledBack = true;
         });
         const request = new sql.Request(transaction);
-        request.query("select * from Reglas where esFiltro = 'true'", (err, result) => {
+        request.query("select * from Reglas where esFiltro = 'true' and variables = '3'", (err, result) => {
             if (err) {
                 console.log(err);
                 if (!rolledBack) {
@@ -2646,7 +2679,7 @@ function renderFilters () {
     for (var i = 0; i < arregloFiltros.length; i++) {
         var regla = arregloFiltros[i].valor;
         listContent = '';
-        listContent+='<li><p><input type="radio" name="filters" class="flat" value="'+arregloFiltros[i].ID+'"> '+ regla +' </p> <button style="position: absolute; right: 10px; margin: 0; position: absolute; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%);" onclick="selectFilter('+i+')">Modificar</button> </li>';
+        listContent+='<li><p><input id="filtro'+arregloFiltros[i].ID+'" type="radio" name="filters" class="flat" value="'+arregloFiltros[i].ID+'"> '+ regla +' </p> <button style="position: absolute; right: 10px; margin: 0; position: absolute; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%);" onclick="selectFilter('+i+')">Modificar</button> </li>';
         $("#listFilters").append(listContent);
     };
     $("input[name='filters']").iCheck({
@@ -2752,6 +2785,7 @@ function saveFilter () {
                                     overlay: true
                                 });
                                 loadFilters();
+                                $("#nombreFilter").val("");
                             });
                         }
                     });
@@ -2860,6 +2894,7 @@ function modifyFilter (argument) {
                                             overlay: true
                                         });
                                         loadFilters();
+                                        $("#nombreFilterEdit").val("");
                                         $('#modalFilter').modal('toggle');
                                     });
                                 }
@@ -2989,7 +3024,7 @@ function goRCL () {
 
 function goReports () {
 	$("#app_root").empty();
-    $("#app_root").load("src/reportes.html");
+    $("#app_root").load("src/elegirReporteria.html");
 }
 
 function goGraphics () {

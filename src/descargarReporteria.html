@@ -1,0 +1,301 @@
+<link href="src/libs/overhang/overhang.min.css" rel="stylesheet">
+<link href="src/libs/iCheck/skins/flat/green.css" rel="stylesheet">
+<link href="src/libs/custom.min.css" rel="stylesheet">
+<link rel="stylesheet" href="src/variablesStyles.css">
+<!-- page content -->
+<div>
+  <div class="page-title">
+    <div class="title_left">
+      <h3> Descargar </h3>
+    </div>
+
+    <!-- <div class="title_right">
+      <div class="col-md-5 col-sm-5 col-xs-12 form-group pull-right top_search">
+        <div class="input-group">
+          <input id="buscarDiv" type="text" class="form-control" placeholder="Buscar...">
+          <span class="input-group-btn">
+            <button class="btn btn-default" type="button" onclick="filterDiv()">Filtrar</button>
+          </span>
+        </div>
+      </div>
+    </div> -->
+  </div>
+  
+  <div class="clearfix"></div>
+
+  <div class="row filtrarRow">
+    <div class="col-md-12">
+      <div class="x_panel">
+        <div class="x_title">
+          <h2>Creaci&oacute;n de Filtros</h2>
+          <ul class="nav navbar-right panel_toolbox">
+            <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+            </li>
+          </ul>
+          <div class="clearfix"></div>
+        </div>
+
+        <div class="x_content">
+
+          <div class="col-md-12 col-sm-12 col-xs-12">
+
+            <div class="row" style="height:90vh;">
+              <div class="col-xs-12 col-sm-3" style="height:100%;">
+                <h4>Seleccionar Campo</h4>
+                <div class="table-responsive" style="height:90%;">
+                  <table class="table table-striped jambo_table bulk_action" style="overflow: scroll;">
+                    <thead>
+                      <tr class="headings">
+                        <th>
+                        </th>
+                        <th>Campos </th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      <tr class="even pointer">
+                        <td class="a-center ">
+                          <input type="radio" id="esVarRCL" class="flat" name="table_records">
+                        </td>
+                        <td class="">Es Variable RCL</td>
+                      </tr>
+                      <tr class="odd pointer">
+                        <td class="a-center ">
+                          <input type="radio" id="nombreVariable" class="flat" name="table_records">
+                        </td>
+                        <td class=" ">Nombre Variable</td>
+                      </tr>
+                      <tr class="even pointer">
+                        <td class="a-center ">
+                          <input type="radio" id="esNum" class="flat" name="table_records">
+                        </td>
+                        <td class=" ">Es parte del Numerador</td>
+                      </tr>
+                      <tr class="odd pointer">
+                        <td class="a-center ">
+                          <input type="radio" id="esDen" class="flat" name="table_records">
+                        </td>
+                        <td class=" ">Es parte del Denominador</td>
+                      </tr>
+                      <!-- <tr class="even pointer">
+                        <td class="a-center ">
+                          <input type="radio" id="fecha" class="flat" name="table_records">
+                        </td>
+                        <td class=" ">Fecha</td>
+                      </tr> -->
+                      <tr class="odd pointer">
+                        <td class="a-center ">
+                          <input type="radio" id="calce" class="flat" name="table_records">
+                        </td>
+                        <td class=" ">Tipo de Proyecci&oacute;n</td>
+                      </tr>
+                      <tr class="even pointer">
+                        <td class="a-center ">
+                          <input type="radio" id="volumen" class="flat" name="table_records">
+                        </td>
+                        <td class=" ">Volumen de F&oacute;rmula</td>
+                      </tr>
+                      <tr class="odd pointer">
+                        <td class="a-center ">
+                          <input type="radio" id="influencia" class="flat" name="table_records">
+                        </td>
+                        <td class=" ">Influencia de F&oacute;rmula</td>
+                      </tr>
+
+                      <tr class="even pointer">
+                        <td class="a-center ">
+                          <input type="radio" id="numerador" class="flat" name="table_records">
+                        </td>
+                        <td class=" ">Numerador</td>
+                      </tr>
+                      <tr class="odd pointer">
+                        <td class="a-center ">
+                          <input type="radio" id="denominador" class="flat" name="table_records">
+                        </td>
+                        <td class=" ">Denominador</td>
+                      </tr>
+                      <tr class="odd pointer">
+                        <td class="a-center ">
+                          <input type="radio" id="moneda" class="flat" name="table_records">
+                        </td>
+                        <td class=" ">Moneda</td>
+                      </tr>
+                      <tr class="odd pointer">
+                        <td class="a-center ">
+                          <input type="radio" id="sucursal" class="flat" name="table_records">
+                        </td>
+                        <td class=" ">Sucursal</td>
+                      </tr>
+                      <tr class="odd pointer">
+                        <td class="a-center ">
+                          <input type="radio" id="esVariable" class="flat" name="table_records">
+                        </td>
+                        <td class=" ">Es Variable</td>
+                      </tr>
+                      <tr class="odd pointer">
+                        <td class="a-center ">
+                          <input type="radio" id="esSubVariable" class="flat" name="table_records">
+                        </td>
+                        <td class=" ">Es Sub-Variable</td>
+                      </tr>
+                      <tr class="odd pointer">
+                        <td class="a-center ">
+                          <input type="radio" id="esCuenta" class="flat" name="table_records">
+                        </td>
+                        <td class=" ">Es Cuenta</td>
+                      </tr>
+                      <tr class="odd pointer">
+                        <td class="a-center ">
+                          <input type="radio" id="totalRCL" class="flat" name="table_records">
+                        </td>
+                        <td class=" ">Total de Variable RCL</td>
+                      </tr>
+                      <tr class="odd pointer">
+                        <td class="a-center ">
+                          <input type="radio" id="total" class="flat" name="table_records">
+                        </td>
+                        <td class=" ">Total</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+              </div>
+
+              <div class="col-xs-12 col-sm-9" style="height:100%;">
+                <div class="row" style="height:30%; display: flex; justify-content: center; align-items: center; border:1px solid #ccc;">
+                  <div class="row">
+                    <h5>Campo</h5>
+                    <h1 id="campo"></h1>
+                  </div>
+                </div>
+                <div class="row" style="height:30%; display: flex; justify-content: center; align-items: center; border:1px solid #ccc;">
+
+                  <div id="operacionIgualDIV">
+                    <h1 id="operacionIgual">=</h1>
+                  </div>
+                  <div id="operacionListaDIV" style="display: none;">
+                    <label>
+                      <input id="seEncuentra" type="radio" class="flat" name="operadorRadioEdit"> Se encuentra en
+                    </label>
+                    <label>
+                      <input id="noSeEncuentra" type="radio" class="flat" name="operadorRadioEdit"> NO se encuentra en
+                    </label>
+                  </div>
+                  <div id="alegebraicaDIV" style="display: none;">
+                    <label>
+                      <input id="menor" type="radio" class="flat" name="operadorRadioEdit"> &#60;
+                    </label>
+                    <label>
+                      <input id="menorigual" type="radio" class="flat" name="operadorRadioEdit"> &le;
+                    </label>
+                    <label>
+                      <input id="mayor" type="radio" class="flat" name="operadorRadioEdit"> &#62;
+                    </label>
+                    <label>
+                      <input id="mayorigual" type="radio" class="flat" name="operadorRadioEdit"> &ge;
+                    </label>
+                    <label>
+                      <input id="igual" type="radio" class="flat" name="operadorRadioEdit"> =
+                    </label>
+                    <label>
+                      <input id="noigual" type="radio" class="flat" name="operadorRadioEdit"> &#8800;
+                    </label>
+                  </div>
+
+                </div>
+                <div class="row" style="height:30%; display: flex; justify-content: center; align-items: center; border:1px solid #ccc;" id="valor">
+
+                  <div id="valorExisteDIV">
+                    <label>
+                      <input id="existe" type="radio" class="flat" name="existeRadio"> Verdadero
+                    </label>
+                    <label>
+                      <input id="noExiste" type="radio" class="flat" name="existeRadio"> Falso
+                    </label>
+                  </div>
+                  <div id="valorInputDIV" style="display: none;">
+                    <div class="form-group">
+                      <label class="control-label col-md-3 col-sm-3 col-xs-12" for="inputLista">Ingresar Valor
+                      </label>
+                      <div class="col-md-6 col-sm-6 col-xs-12">
+                        <input type="text" id="inputLista" required="required" class="form-control col-md-7 col-xs-12">
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+                
+                <br/>
+                <div id="wrapper">
+                  <button id="mostrar" onclick="createRules()" type="button" class="btn btn-success">Crear</button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div> <!-- /end MINIMO RCL -->
+
+  <div class="row filtrarRow">
+    <div class="col-md-12">
+      <div class="x_panel">
+        <div class="x_title">
+          <h2>Descargar</h2>
+          <ul class="nav navbar-right panel_toolbox">
+            <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+            </li>
+          </ul>
+          <div class="clearfix"></div>
+        </div>
+
+        <div class="x_content">
+
+          <div class="col-md-12 col-sm-12 col-xs-12">
+        
+            <p class="lead">Filtros Creados</p>
+            <div class="table-responsive">
+              <table class="table">
+                <tbody id="tablaFiltros">
+                </tbody>
+              </table>
+            </div>
+            
+            <!-- <div style="height:30%; display: flex; justify-content: center; align-items: center; border:1px solid #ccc; border-radius: 5px;">
+              <div class="row">
+                <h4>Agrupar por</h4>
+                <label>
+                  <input id="idCliente" type="radio" class="flat" name="operadorRadioEdit" checked> ID Cliente
+                </label>
+                <label>
+                  <input id="numCuenta" type="radio" class="flat" name="operadorRadioEdit"> N&uacute;mero de Cuenta
+                </label>
+              </div>
+            </div> -->
+            <br/>
+
+            <div id="wrapper">
+              <button type="button" onclick="initCreateExcelFile()" class="btn btn-success">Descargar</button>
+            </div>
+            
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div> <!-- /end DESCARGAR -->
+
+</div>
+<!-- /page content -->
+
+<script src="src/libs/overhang/overhang.min.js"></script>
+
+<script src="src/libs/iCheck/icheck.min.js"></script>
+
+<script src="src/descargarReporteria.js"></script>
+
+<!-- Custom Theme Scripts -->
+<script src="src/libs/custom.min.js"></script>

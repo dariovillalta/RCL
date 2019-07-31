@@ -1,11 +1,12 @@
-const {app, BrowserWindow} = require('electron')
-const path = require('path')
-const url = require('url')
+const {app, BrowserWindow, Menu, ipcMain} = require('electron')
+const path = require('path');
+const url = require('url');
 const fs = require('fs');
   
   // Keep a global reference of the window object, if you don't, the window will
   // be closed automatically when the JavaScript object is garbage collected.
   let win
+  let version
   
   function createWindow () {
     /*fs.readFile('./conf.dar', 'utf-8', (err, data) => {
@@ -41,9 +42,9 @@ const fs = require('fs');
           slashes: true
         }) )
         //win.openDevTools();
-        win.webContents.once('dom-ready', () => {
+        /*win.webContents.once('dom-ready', () => {
           win.webContents.openDevTools()
-        })
+        })*/
 
         //win.setMenu(null)
       
@@ -56,6 +57,80 @@ const fs = require('fs');
           // in an array if your app supports multi windows, this is the time
           // when you should delete the corresponding element.
           win = null
+        })
+
+        const template = [
+          // { role: 'appMenu' }
+          {
+            label: "TOLOC RCL",
+            submenu: [
+              { label: 'Versión', click() {version.show()} },
+              { role: 'quit', label: 'Cerrar Programa' }
+            ]
+          },
+          // { role: 'editMenu' }
+          {
+            label: 'Edición',
+            submenu: [
+              { role: 'undo', label: 'Deshacer' },
+              { role: 'redo', label: 'Rehacer' },
+              { type: 'separator' },
+              { role: 'cut', label: 'Cortar' },
+              { role: 'copy', label: 'Copiar' },
+              { role: 'paste', label: 'Pegar' },
+              ...(process.platform === 'darwin' ? [
+                { role: 'pasteAndMatchStyle', label: 'Pegar e Igualar Estilo' },
+                { role: 'delete', label: 'Eliminar' },
+                { role: 'selectAll', label: 'Seleccionar Todo' },
+                { type: 'separator' },
+                {
+                  label: 'Voz',
+                  submenu: [
+                    { role: 'startspeaking', label: 'Empezar a hablar' },
+                    { role: 'stopspeaking', label: 'Parar de hablar' }
+                  ]
+                }
+              ] : [
+                { role: 'delete', label: 'Eliminar' },
+                { type: 'separator' },
+                { role: 'selectAll', label: 'Seleccionar Todo' }
+              ])
+            ]
+          },
+          // { role: 'viewMenu' }
+          {
+            label: 'Vista',
+            submenu: [
+              { role: 'reload', label: 'Refrescar' },
+              { role: 'forcereload', label: 'Forzar Refrescado' },
+              { role: 'toggledevtools', label: 'Herramientas de Desarrollador' },
+              { type: 'separator' },
+              { role: 'resetzoom', label: 'Reset Zoom' },
+              { role: 'zoomin', label: 'Zoom Adentro' },
+              { role: 'zoomout', label: 'Zoom Afuera' },
+              { type: 'separator' },
+              { role: 'togglefullscreen', label: 'Pantalla Completa' }
+            ]
+          }
+        ]
+        const menu = Menu.buildFromTemplate(template)
+        Menu.setApplicationMenu(menu)
+
+        version = new BrowserWindow({
+          'minHeight': 390,
+          'minWidth': 620,
+          'frame': false,
+          'show': false
+        })
+
+        version.loadURL( url.format({
+          pathname: path.join(__dirname, 'src/version.html'),
+          protocol: 'file:',
+          slashes: true
+        }) )
+
+        ipcMain.on('hide', function () {
+          version.hide()
         })
       //}
     //});

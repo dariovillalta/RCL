@@ -2,7 +2,14 @@
 <div>
     <div class="container body">
         <div class="loadingScreen" style="display: none;">
-            <p class="loadingScreenText">Espere un momento por favor <span class="dots"></span> </p>
+            <div class="row">
+                <div class="row">
+                    <p class="loadingScreenText">Espere un momento por favor <span class="dots"></span> </p>
+                </div>
+                <div class="row">
+                    <p id="descripcionLoading" class="loadingScreenText"></p>
+                </div>
+            </div>
         </div>
         <div class="main_container">
             <div class="col-md-3 left_col">
@@ -63,7 +70,7 @@
                                     <li id="configLabel"><a onclick="goLists()"> Mantenimiento de Listas y FOSEDE </a></li>
                                     <li id="userLabel"><a onclick="goUsers()"> Control de Usuarios y Logo </a></li>
                                     <li id="importLabel"><a onclick="goConnections()"> Importar Tablas </a></li>
-                                    <li id="configLabel"><a onclick="goConfig()"> Configuraci&oacute;n de Rutina </a></li>
+                                    <!-- <li id="configLabel"><a onclick="goConfig()"> Configuraci&oacute;n de Rutina </a></li> -->
                                     <li><a onclick="logout()"><i class="fa fa-sign-out pull-right"></i> Cerrar Sesi&oacute;n</a></li>
                                 </ul>
                             </li>
